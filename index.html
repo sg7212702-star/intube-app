@@ -1,31 +1,222 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intube</title>
+
 <style>
-body{
-  background:#111;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-  padding-top:100px;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
 }
-button{
-  background:red;
-  color:white;
-  border:none;
-  padding:15px 30px;
-  border-radius:10px;
-  font-size:18px;
+
+body{
+background:linear-gradient(135deg,#090909,#141414,#1f1020);
+min-height:100vh;
+color:white;
+overflow-x:hidden;
+}
+
+body::before{
+content:'';
+position:fixed;
+width:400px;
+height:400px;
+background:#ff4fd8;
+filter:blur(180px);
+top:-100px;
+right:-100px;
+opacity:.4;
+}
+
+.nav{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px;
+backdrop-filter:blur(20px);
+background:rgba(255,255,255,.05);
+border-bottom:1px solid rgba(255,255,255,.1);
+position:sticky;
+top:0;
+}
+
+.logo{
+font-size:28px;
+font-weight:bold;
+background:linear-gradient(45deg,#ff4fd8,#ffffff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.search{
+width:40%;
+padding:12px;
+border:none;
+outline:none;
+border-radius:15px;
+background:rgba(255,255,255,.08);
+color:white;
+backdrop-filter:blur(10px);
+}
+
+.profile{
+width:45px;
+height:45px;
+border-radius:50%;
+background:linear-gradient(45deg,#ff4fd8,#ff92e6);
+}
+
+.hero{
+text-align:center;
+padding:50px 20px;
+}
+
+.hero h1{
+font-size:50px;
+margin-bottom:10px;
+}
+
+.hero p{
+color:#ddd;
+}
+
+.upload-btn{
+margin-top:25px;
+padding:15px 35px;
+border:none;
+border-radius:15px;
+background:linear-gradient(45deg,#ff4fd8,#ff92e6);
+color:white;
+font-size:18px;
+cursor:pointer;
+box-shadow:0 0 30px rgba(255,79,216,.5);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:25px;
+padding:30px;
+}
+
+.card{
+background:rgba(255,255,255,.07);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.1);
+border-radius:25px;
+overflow:hidden;
+transition:.4s;
+}
+
+.card:hover{
+transform:translateY(-10px);
+box-shadow:0 0 40px rgba(255,79,216,.4);
+}
+
+.thumb{
+height:180px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,
+rgba(255,79,216,.4),
+rgba(255,255,255,.1));
+position:relative;
+}
+
+.diamond{
+width:90px;
+height:90px;
+background:linear-gradient(45deg,#fff,#ffb5f0);
+transform:rotate(45deg);
+border-radius:15px;
+box-shadow:0 0 40px #ff4fd8;
+}
+
+.card-info{
+padding:20px;
+}
+
+.card-info h3{
+margin-bottom:8px;
+}
+
+.card-info p{
+color:#ccc;
+font-size:14px;
+}
+
+footer{
+text-align:center;
+padding:30px;
+color:#aaa;
 }
 </style>
 </head>
+
 <body>
 
-<h1>🎬 Intube</h1>
-<p>Next Generation Video Sharing App</p>
+<div class="nav">
+<div class="logo">INTUBE</div>
 
-<button>Upload Video</button>
+<input
+class="search"
+placeholder="Search videos..."
+>
+
+<div class="profile"></div>
+</div>
+
+<section class="hero">
+<h1>Next Generation Video Platform</h1>
+<p>Transparent Glass Design • Premium Experience</p>
+
+<button class="upload-btn">
+Upload Video
+</button>
+</section>
+
+<div class="grid">
+
+<div class="card">
+<div class="thumb">
+<div class="diamond"></div>
+</div>
+<div class="card-info">
+<h3>Trending Video</h3>
+<p>Beautiful Glass UI Experience</p>
+</div>
+</div>
+
+<div class="card">
+<div class="thumb">
+<div class="diamond"></div>
+</div>
+<div class="card-info">
+<h3>Gaming Stream</h3>
+<p>Live Streaming Platform</p>
+</div>
+</div>
+
+<div class="card">
+<div class="thumb">
+<div class="diamond"></div>
+</div>
+<div class="card-info">
+<h3>Music Video</h3>
+<p>Crystal Pink Reflection Design</p>
+</div>
+</div>
+
+</div>
+
+<footer>
+© 2026 Intube Premium
+</footer>
 
 </body>
-  </html>
+</html>
