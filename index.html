@@ -1,442 +1,50 @@
-<!                                <div class="story-img" style="background-image: url('${s.img}')"></d<!DOCTYPE html>
-<html lang="hi" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>INTUBE - Futuristic Social Super App</title>
-  <style>
-    /* Design Tokens & Theme Engine */
-    :root[data-theme="dark"] {
-      --bg: #090a10;
-      --bg-gradient: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.25), transparent 70%);
-      --surface: rgba(22, 27, 46, 0.65);
-      --surface-card: rgba(30, 36, 60, 0.55);
-      --surface-border: rgba(255, 255, 255, 0.12);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.5);
-      --like: #ef4444;
-      --glass-blur: blur(22px);
-    }
-    :root[data-theme="amoled"] {
-      --bg: #000000;
-      --bg-gradient: radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.2), transparent 70%);
-      --surface: rgba(12, 12, 14, 0.85);
-      --surface-card: rgba(20, 20, 24, 0.7);
-      --surface-border: rgba(255, 255, 255, 0.18);
-      --text-main: #ffffff;
-      --text-muted: #71717a;
-      --accent: #ec4899;
-      --accent-glow: rgba(236, 72, 153, 0.6);
-      --like: #f43f5e;
-      --glass-blur: blur(24px);
-    }
-    :root[data-theme="light"] {
-      --bg: #f8fafc;
-      --bg-gradient: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.15), transparent 70%);
-      --surface: rgba(255, 255, 255, 0.75);
-      --surface-card: rgba(255, 255, 255, 0.85);
-      --surface-border: rgba(0, 0, 0, 0.08);
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --accent: #4f46e5;
-      --accent-glow: rgba(79, 70, 229, 0.3);
-      --like: #e11d48;
-      --glass-blur: blur(16px);
-    }
+<script type="module">
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body {
-      background: var(--bg);
-      color: var(--text-main);
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
+import {
+db,
+collection,
+getDocs
+}
+from "./firebase-config.js";
 
-    .app-viewport {
-      width: 100%;
-      max-width: 480px;
-      min-height: 100vh;
-      position: relative;
-      background: var(--bg-gradient);
-      display: flex;
-      flex-direction: column;
-      padding-bottom: 84px;
-    }
+async function loadVideos(){
 
-    /* Top Navigation */
-    .top-bar {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 20px;
-      background: var(--surface);
-      backdrop-filter: var(--glass-blur);
-      border-bottom: 1px solid var(--surface-border);
-    }
-    .brand { font-size: 1.35rem; font-weight: 900; letter-spacing: 1.5px; background: linear-gradient(135deg, var(--text-main), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-    .chip-btn {
-      background: var(--surface-card);
-      border: 1px solid var(--surface-border);
-      color: var(--text-main);
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
+const container =
+document.getElementById("videos");
 
-    /* View Switcher Engine */
-    .view-panel { display: none; flex-direction: column; animation: fadeIn 0.25s ease-out; }
-    .view-panel.active { display: flex; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+const snap =
+await getDocs(
+collection(db,"videos")
+);
 
-    /* Stories Tray */
-    .story-tray { display: flex; gap: 14px; padding: 14px 18px; overflow-x: auto; scrollbar-width: none; }
-    .story-tray::-webkit-scrollbar { display: none; }
-    .story-node { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
-    .avatar-ring {
-      width: 66px;
-      height: 66px;
-      border-radius: 50%;
-      padding: 2.5px;
-      background: linear-gradient(45deg, #f59e0b, #ec4899, #6366f1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s;
-    }
-    .avatar-ring:active { transform: scale(0.95); }
-    .avatar-inner { width: 100%; height: 100%; border-radius: 50%; background: #1e293b; border: 2px solid var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-    .story-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+container.innerHTML="";
 
-    /* Feed Cards */
-    .feed-list { display: flex; flex-direction: column; gap: 18px; padding: 0 16px; }
-    .card {
-      background: var(--surface-card);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--surface-border);
-      border-radius: 24px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      position: relative;
-    }
-    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .user-info { display: flex; align-items: center; gap: 10px; }
-    .avatar-sm { width: 42px; height: 42px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    .user-text h4 { font-size: 0.95rem; font-weight: 700; }
-    .user-text span { font-size: 0.75rem; color: var(--text-muted); }
-    .card-text { font-size: 0.92rem; line-height: 1.45; margin-bottom: 12px; }
-    .card-media {
-      width: 100%;
-      height: 250px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.25));
-      border: 1px solid var(--surface-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      position: relative;
-      user-select: none;
-      cursor: pointer;
-    }
-    .media-heart {
-      position: absolute;
-      font-size: 4rem;
-      opacity: 0;
-      transform: scale(0);
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      pointer-events: none;
-    }
-    .media-heart.animate { opacity: 1; transform: scale(1.2); }
-    .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
-    .action-btn-group { display: flex; gap: 14px; }
-    .btn-icon { background: none; border: none; color: var(--text-main); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-icon.liked { color: var(--like); }
+snap.forEach(doc=>{
 
-    /* Poll Interactive Widget */
-    .poll-box { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .poll-opt {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--surface-border);
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-    }
-    .poll-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-glow); opacity: 0.35; z-index: 1; width: 0%; transition: width 0.5s ease; }
-    .poll-text { position: relative; z-index: 2; font-weight: 600; }
+const v=doc.data();
 
-    /* Reels View */
-    .reels-view { height: calc(100vh - 150px); overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
-    .reels-view::-webkit-scrollbar { display: none; }
-    .reel-frame {
-      height: 100%;
-      scroll-snap-align: start;
-      position: relative;
-      border-radius: 24px;
-      margin: 0 14px 14px 14px;
-      background: linear-gradient(180deg, #1e1b4b, #0f172a);
-      border: 1px solid var(--surface-border);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 24px 16px;
-    }
-    .reel-overlay { position: relative; z-index: 2; max-width: 78%; }
-    .reel-actions { position: absolute; right: 14px; bottom: 30px; display: flex; flex-direction: column; gap: 18px; align-items: center; z-index: 2; }
-    .reel-btn { background: rgba(0,0,0,0.4); border: 1px solid var(--surface-border); color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
+container.innerHTML+=`
 
-    /* Explore View */
-    .explore-search { margin: 12px 16px; padding: 12px 16px; border-radius: 18px; background: var(--surface-card); border: 1px solid var(--surface-border); display: flex; gap: 10px; align-items: center; }
-    .explore-search input { background: transparent; border: none; color: var(--text-main); font-size: 0.95rem; width: 100%; outline: none; }
-    .tag-cloud { display: flex; gap: 8px; padding: 0 16px 12px 16px; overflow-x: auto; scrollbar-width: none; }
-    .tag-chip { padding: 6px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--surface-border); font-size: 0.8rem; white-space: nowrap; cursor: pointer; }
-    .masonry-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0 16px; }
-    .grid-item { border-radius: 16px; background: var(--surface-card); border: 1px solid var(--surface-border); height: 140px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-    .grid-item:nth-child(2n) { height: 190px; }
+<div class="card">
 
-    /* Chat View */
-    .chat-list { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; }
-    .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--surface-card); border: 1px solid var(--surface-border); cursor: pointer; }
-    .chat-window { display: none; flex-direction: column; height: calc(100vh - 160px); padding: 10px 16px; }
-    .chat-window.active { display: flex; }
-    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px 0; }
-    .bubble { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; }
-    .bubble.incoming { align-self: flex-start; background: var(--surface-card); border: 1px solid var(--surface-border); border-bottom-left-radius: 4px; }
-    .bubble.outgoing { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-    .chat-input-bar { display: flex; gap: 10px; padding-top: 10px; }
-    .chat-input-bar input { flex: 1; padding: 12px 16px; border-radius: 20px; background: var(--surface-card); border: 1px solid var(--surface-border); color: var(--text-main); outline: none; }
+<h3>${v.title}</h3>
 
-    /* Profile View */
-    .profile-hero { display: flex; flex-direction: column; align-items: center; padding: 20px 16px; gap: 10px; text-align: center; }
-    .profile-avatar { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(45deg, var(--accent), #ec4899); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 3px solid var(--bg); box-shadow: 0 0 20px var(--accent-glow); }
-    .stats-row { display: flex; justify-content: space-around; width: 100%; margin: 12px 0; }
-    .stat-box { display: flex; flex-direction: column; align-items: center; }
-    .stat-box strong { font-size: 1.15rem; }
-    .stat-box span { font-size: 0.75rem; color: var(--text-muted); }
+<p>${v.author}</p>
 
-    /* Floating Glass Bottom Bar */
-    .bottom-nav {
-      position: fixed;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 28px);
-      max-width: 440px;
-      background: var(--surface);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--surface-border);
-      border-radius: 30px;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 8px;
-      z-index: 50;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    }
-    .nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: 0.2s; padding: 6px 12px; border-radius: 20px; }
-    .nav-btn.active { color: var(--accent); transform: scale(1.15); }
+<a href="watch.html?id=${doc.id}">
+Watch Video
+</a>
 
-    /* Floating AI Widget & Drawer */
-    .ai-fab {
-      position: fixed;
-      right: 20px;
-      bottom: 90px;
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #ec4899);
-      border: none;
-      color: #fff;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 6px 20px var(--accent-glow);
-      z-index: 60;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .ai-drawer {
-      position: fixed;
-      left: 0; right: 0; bottom: -100%;
-      background: var(--surface);
-      backdrop-filter: var(--glass-blur);
-      border-top: 1px solid var(--surface-border);
-      border-radius: 28px 28px 0 0;
-      padding: 20px;
-      transition: bottom 0.35s cubic-bezier(0.1, 0.9, 0.2, 1);
-      z-index: 70;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .ai-drawer.open { bottom: 0; }
+</div>
 
-    /* Story Fullscreen Viewer */
-    .story-viewer-modal {
-      position: fixed;
-      inset: 0;
-      background: #000;
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 20px;
-    }
-    .story-viewer-modal.open { display: flex; }
-    .story-progress-bar { height: 3px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
-    .story-progress-fill { height: 100%; width: 0%; background: #fff; transition: width 0.1s linear; }
-  </style>
-</head>
-<body>
-  <div class="app-viewport">
-    <!-- Top Header -->
-    <header class="top-bar">
-      <div class="brand">INTUBE</div>
-      <div class="header-actions">
-        <button class="chip-btn" id="themeSwitcher">Dark 🌙</button>
-      </div>
-    </header>
+`;
 
-    <!-- VIEW 1: HOME FEED -->
-    <section class="view-panel active" id="view-home">
-      <div class="story-tray" id="storyTray"></div>
-      <div class="feed-list" id="feedContainer"></div>
-    </section>
+});
 
-    <!-- VIEW 2: REELS -->
-    <section class="view-panel" id="view-reels">
-      <div class="reels-view" id="reelsContainer"></div>
-    </section>
+}
 
-    <!-- VIEW 3: EXPLORE -->
-    <section class="view-panel" id="view-explore">
-      <div class="explore-search">
-        <span>🔍</span>
-        <input type="text" placeholder="खोजें ट्रेंडिंग क्रिएटर्स, टैग्स..." />
-      </div>
-      <div class="tag-cloud">
-        <div class="tag-chip">#VisionPro</div>
-        <div class="tag-chip">#Tech2026</div>
-        <div class="tag-chip">#LiquidGlass</div>
-        <div class="tag-chip">#UnicornStartup</div>
-        <div class="tag-chip">#CreativeCoding</div>
-      </div>
-      <div class="masonry-grid" id="exploreGrid"></div>
-    </section>
+loadVideos();
 
-    <!-- VIEW 4: CHATS -->
-    <section class="view-panel" id="view-chats">
-      <div class="chat-list" id="chatList"></div>
-      <div class="chat-window" id="chatWindow">
-        <button class="chip-btn" style="align-self: flex-start; margin-bottom: 8px;" onclick="closeChat()">← वापस</button>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input-bar">
-          <input type="text" id="chatInput" placeholder="मैसेज टाइप करें..." onkeypress="handleChatEnter(event)" />
-          <button class="chip-btn" onclick="sendMsg()">भेजें</button>
-        </div>
-      </div>
-    </section>
+</script>
 
-    <!-- VIEW 5: PROFILE -->
-    <section class="view-panel" id="view-profile">
-      <div class="profile-hero">
-        <div class="profile-avatar">👨‍💻</div>
-        <h3>आर्किटेक्ट रोहन <span style="color:var(--accent);">✓</span></h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">Google Staff Engineer • INTUBE CTO</p>
-        <div class="stats-row">
-          <div class="stat-box"><strong>128</strong><span>पोस्ट्स</span></div>
-          <div class="stat-box"><strong>48.2k</strong><span>फ़ॉलोअर्स</span></div>
-          <div class="stat-box"><strong>312</strong><span>फ़ॉलोइंग</span></div>
-        </div>
-        <button class="chip-btn" style="width: 100%; padding: 10px;">प्रोफ़ाइल एडिट करें</button>
-      </div>
-      <div class="masonry-grid" id="profileGrid"></div>
-    </section>
-
-    <!-- AI Floating Action Button & Drawer -->
-    <button class="ai-fab" onclick="toggleAIDrawer()">🤖</button>
-    <div class="ai-drawer" id="aiDrawer">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h4>INTUBE AI असिस्टेंट</h4>
-        <button class="chip-btn" onclick="toggleAIDrawer()">✕</button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 12px;">आज के ट्रेंड्स और वायरल टॉपिक्स का तुरंत विश्लेषण प्राप्त करें:</p>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="chip-btn" onclick="askAI('वायरल रील्स ट्रेंड्स क्या हैं?')">📈 वायरल ट्रेंड्स दिखाएं</button>
-        <button class="chip-btn" onclick="askAI('बेस्ट पोस्टिंग टाइम क्या है?')">⏰ बेस्ट पोस्टिंग शेड्यूल</button>
-      </div>
-      <div id="aiResponse" style="margin-top:14px; font-size:0.85rem; color:var(--accent); font-weight:600;"></div>
-    </div>
-
-    <!-- Story Viewer Modal -->
-    <div class="story-viewer-modal" id="storyModal">
-      <div>
-        <div class="story-progress-bar"><div class="story-progress-fill" id="storyProgress"></div></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; color:#fff;">
-          <h4 id="storyAuthor">क्रिएटर</h4>
-          <button class="chip-btn" onclick="closeStory()">बंद करें ✕</button>
-        </div>
-      </div>
-      <div style="text-align:center; font-size:5rem;" id="storyContent">🔥</div>
-      <div style="text-align:center; color:#fff; font-size:0.9rem;">टैप करके बंद करें</div>
-    </div>
-
-    <!-- Floating Navigation Bar -->
-    <nav class="bottom-nav">
-      <button class="nav-btn active" onclick="switchView('home', this)">🏠</button>
-      <button class="nav-btn" onclick="switchView('explore', this)">🔍</button>
-      <button class="nav-btn" onclick="switchView('reels', this)">🎬</button>
-      <button class="nav-btn" onclick="switchView('chats', this)">💬</button>
-      <button class="nav-btn" onclick="switchView('profile', this)">👤</button>
-    </nav>
-  </div>
-
-  <script>
-    /* Theme Engine */
-    const themes = ['dark', 'amoled', 'light'];
-    let curTheme = localStorage.getItem('intube_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', curTheme);
-    const themeBtn = document.getElementById('themeSwitcher');
-    themeBtn.textContent = curTheme.toUpperCase() + ' 🎨';
-
-    themeBtn.addEventListener('click', () => {
-      let idx = (themes.indexOf(curTheme) + 1) % themes.length;
-      curTheme = themes[idx];
-      document.documentElement.setAttribute('data-theme', curTheme);
-      themeBtn.textContent = curTheme.toUpperCase() + ' 🎨';
-      localStorage.setItem('intube_theme', curTheme);
-    });
-
-    /* SPA View Router */
-    function switchView(viewName, btn) {
-      document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      const target = document.getElementById('view-' + viewName);
-      if(target) target.classList.add('active');
-      if(btn) btn.classList.add('active');
-    }
-
-    /* Mock Data Store */
-    const stories = [
-      { id: 1, user: 'आकांक्षा', icon: '⚡', content: '🌟 नए प्रोजेक्ट का फर्स्ट लुक!' },
-      { id: 2, user: 'कबीर', icon: '🚀', content: '🚀 सिलिकॉन वैली मीटअप 2026' },
-      { id: 3, user: 'रिया', icon: '💎', content: '💎 लिक्विड ग्लास यूआई डिज़ाइन' },
-      { id: 4, user: 'हर्ष', icon: '🔥', content: '🔥 120 FPS स्मूथ एनीमेशन' }
-    ];
-
-    const posts = [
-      { id: 101, user: 'आकांक्षा शर्मा', role: 'UX Lead', text: 'Vision Pro के ग्लास इफ़ेक्ट्स वेब पर पूरी तरह मुमकिन हैं! क्या आपको यह स्मूथ लगा? ✨', likes: 512, liked: false, media: '🌌', poll: { opt1: 'बहुत स्मूथ', votes1: 42, opt2: 'सुधार चाहिए', votes2: 8, voted: false } },
-      { id: 102, user: 'कबीर रॉय', role: 'Staff Engineer'
+<div id="videos"></div>
