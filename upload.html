@@ -1,34 +1,28 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upload</title>
-<style>body{background:#0a0612;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}.box{background:#1e1430;padding:20px;border-radius:15px;width:90%;max-width:350px} input,textarea{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#000;color:#fff;box-sizing:border-box} button{width:100%;padding:12px;background:#a855f7;border:none;border-radius:10px;color:#fff;font-weight:bold}</style></head><body>
+<style>body{background:#0a0612;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}.box{background:#1e1430;padding:20px;border-radius:15px;width:90%;max-width:350px} input,textarea{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#000;color:#fff;box-sizing:border-box} button{width:100%;padding:12px;background:#a855f7;border:none;border-radius:10px;color:#fff;font-weight:bold} #status{font-size:12px;color:#c084fc}</style></head><body>
 <div class="box">
 <h3>Upload Video</h3>
 <input type="file" id="file" accept="video/*,image/*">
-<textarea id="cap" placeholder="Caption"></textarea>
-<p id="status" style="font-size:12px;color:#c084fc"></p>
+<textarea id="cap" placeholder="Caption likho..."></textarea>
+<p id="status"></p>
 <button id="btn">POST NOW</button>
 </div>
 <script>
-const CLOUD_NAME="kujnbe0a"; const PRESET="intube_free";
-document.getElementById("btn").onclick=async()=>{
+document.getElementById("btn").onclick=()=>{
   const file=document.getElementById("file").files[0];
   const status=document.getElementById("status");
-  if(!file){ alert("File select karo"); return; }
-  status.innerText="Uploading... please wait 20 sec";
-  try{
-    const fd=new FormData(); fd.append("file",file); fd.append("upload_preset",PRESET);
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:"POST",body:fd});
-    const data=await res.json();
-    console.log(data);
-    if(!data.secure_url){ status.innerText="Error: "+ (data.error?.message || JSON.stringify(data)); return; }
-    status.innerText="Uploaded! URL: "+data.secure_url;
-    // Save to Firebase - simple version
-    const postData={mediaUrl:data.secure_url,caption:document.getElementById("cap").value,userName:"User",likes:0,createdAt:new Date().toISOString()};
-    // Save to localStorage for now to test
+  if(!file){ alert("Pehle Video/Photo Select karo"); return; }
+  status.innerText="Saving... 2 sec ruko";
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const postData={mediaUrl:e.target.result, caption:document.getElementById("cap").value || "My new post", userName:"User", likes:0, createdAt:new Date().toISOString()};
     let posts=JSON.parse(localStorage.getItem("intube_posts")||"[]");
     posts.unshift(postData);
     localStorage.setItem("intube_posts",JSON.stringify(posts));
-    alert("Upload Ho Gaya! Ab home pe jao");
+    status.innerText="Ho Gaya!";
+    alert("Upload Ho Gaya! Ab home pe video dikhega");
     window.location.href="index.html";
-  }catch(e){ status.innerText="Error: "+e.message; alert(e.message); }
+  };
+  reader.readAsDataURL(file);
 }
-</script></body></html>>
+</script></body></html>
