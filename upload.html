@@ -1,31 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload - InTube</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{background:#120b20;color:#fff;font-family:'Poppins',sans-serif;margin:0;padding:20px;padding-bottom:90px}
+.card{background:#1e1430;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:20px;max-width:500px;margin:20px auto}
+input, textarea{width:100%;background:#2a1f45;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 14px;color:#fff;outline:none;margin-top:10px;font-size:14px;box-sizing:border-box}
+.btn{width:100%;background:linear-gradient(135deg,#c084fc,#818cf8);border:none;border-radius:12px;padding:14px;font-weight:600;color:#fff;font-size:15px;margin-top:16px;cursor:pointer}
+.btn:disabled{opacity:0.5}
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(30, 20, 48, 0.95); display: flex; justify-content: space-around; align-items: center; height: 70px; border-top: 1px solid rgba(255,255,255,0.1); }
+.nav-item { text-align: center; color: #9c92b5; text-decoration: none; font-size: 11px; }
+.nav-item.active { color: #fff; }
+.fab-btn { width: 52px; height: 52px; background: linear-gradient(135deg, #c084fc, #818cf8); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; margin-top: -18px; text-decoration: none; }
+#preview{width:100%;border-radius:12px;margin-top:12px;display:none;max-height:300px;object-fit:cover}
+</style>
+</head>
+<body>
+<h2 style="max-width:500px;margin:0 auto">Upload Reel / Post</h2>
+
+<div class="card">
+<input type="file" id="fileInput" accept="image/*,video/*">
+<img id="preview">
+<input type="text" id="title" placeholder="Title (ex: Barela Vlog)">
+<textarea id="desc" placeholder="Description / Caption..."></textarea>
+<input type="text" id="url" placeholder="Ya direct Image/Video URL paste karo (optional)">
+<button id="publishBtn" class="btn">Publish to Feed</button>
+<p id="status" style="font-size:12px;color:#9c92b5;margin-top:10px;text-align:center"></p>
+</div>
+
+<nav class="bottom-nav">
+<a href="index.html" class="nav-item">🏠 Home</a>
+<a href="feed.html" class="nav-item">🎞️ Feed</a>
+<a href="upload.html" class="fab-btn">+</a>
+<a href="explore.html" class="nav-item">📺 Explore</a>
+<a href="login.html" class="nav-item">👤 Profile</a>
+</nav>
+
 <script type="module">
+import { db, auth, storage } from "./firebase-config.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-import {
-db,
-collection,
-addDoc,
-auth
-}
-from "./firebase-config.js";
+const fileInput = document.getElementById('fileInput');
+const title = document.getElementById('title');
+const desc = document.getElementById('desc');
+const url = document.getElementById('url');
+const publishBtn = document.getElementById('publishBtn');
+const status = document.getElementById('status');
+const preview = document.getElementById('preview');
 
-publishBtn.onclick = async ()=>{
-
-await addDoc(
-collection(db,"videos"),
-{
-title:title.value,
-videoUrl:url.value,
-description:desc.value,
-author:
-auth.currentUser?.displayName ||
-"Guest",
-views:0,
-createdAt:new Date()
-}
-);
-
-alert("Uploaded");
-
+let selectedFile = null;
+fileInput.onchange = e => {
+ selectedFile = e.target.files[0];
+ if(selectedFile){
+   preview.style.display='block';
+   preview.src = URL.createObjectURL(selectedFile);
+   if(selectedFile.type.startsWith('video')){ preview.style.display='none'; status.innerText = `Video selected: ${selectedFile.name}`; }
+ }
 };
 
+publishBtn.onclick = async () => {
+ if(!title.value &&!desc.value){ alert("Title ya caption to daal"); return; }
+ publishBtn.disabled = true;
+ publishBtn.innerText = "Uploading...";
+ status.innerText = "Upload ho raha hai, ruko...";
+
+ try{
+   let finalMediaUrl = url.value.trim();
+
+   // Agar file select ki hai to Storage me upload karo
+   if(selectedFile){
+     const storageRef = ref(storage, `posts/${Date.now()}_${selectedFile.name}`);
+     await uploadBytes(storageRef, selectedFile);
+     finalMediaUrl = await getDownloadURL(storageRef);
+   }
+
+   if(!finalMediaUrl){ alert("File select karo ya URL daalo"); publishBtn.disabled=false; return; }
+
+   // Ab Firestore me 2 jagah daalo taaki dono feed kaam kare
+   const postData = {
+     title: title.value,
+     caption: desc.value || title.value,
+     mediaUrl: finalMediaUrl,
+     videoUrl: finalMediaUrl,
+     description: desc.value,
+     userName: auth.currentUser?.displayName || "sg7212",
+     userPic: auth.currentUser?.photoURL || `https://i.pravatar.cc/100`,
+     author: auth.currentUser?.displayName || "Guest",
+     likes: 0,
+     views: 0,
+     createdAt: serverTimestamp()
+   };
+
+   await addDoc(collection(db, "posts"), postData); // feed.html ke liye
+   await addDoc(collection(db, "videos"), postData); // tere purane code ke liye
+
+   alert("Uploaded! 🔥 Feed me ja ke dekh");
+   window.location.href = "feed.html";
+
+ }catch(err){
+   console.error(err);
+   status.innerText = "Error: " + err.message;
+   alert(err.message);
+   publishBtn.disabled = false;
+   publishBtn.innerText = "Publish to Feed";
+ }
+};
 </script>
+</body>
+</html>
