@@ -1,35 +1,31 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upload</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
-<style>
-body{background:radial-gradient(circle at 20% 20%, #2a1f45 0%, #120b20 40%, #0a0612 100%) fixed; color:#fff; font-family:'Poppins'; margin:0; padding:20px 20px 90px; min-height:100vh}
-.box{background:rgba(30,20,48,0.42); backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,0.13); border-radius:20px; padding:20px; max-width:500px; margin:20px auto}
-input,textarea,select{width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; color:#fff; margin-top:10px; box-sizing:border-box}
-button{width:100%; margin-top:16px; padding:14px; border-radius:999px; border:none; background:linear-gradient(135deg,#c084fc,#818cf8); color:#fff; font-weight:600; cursor:pointer}
-.bottom-nav{position:fixed; bottom:0; left:0; width:100%; background:rgba(18,11,32,0.55); backdrop-filter:blur(24px); display:flex; justify-content:space-around; align-items:center; height:70px; border-top:1px solid rgba(255,255,255,0.12)}
-.nav-item{color:#9c92b5; text-decoration:none; font-size:11px}.fab-btn{width:56px; height:56px; background:linear-gradient(135deg,#c084fc,#818cf8); border-radius:50%; display:flex; justify-content:center; align-items:center; color:#fff; font-size:26px; margin-top:-18px; text-decoration:none}
-</style></head><body>
-<div class="box"><h3>📤 New Post / Video</h3>
-<select id="type"><option value="post">Post (Insta)</option><option value="video">Video (YouTube)</option></select>
-<input type="file" id="file" accept="image/*,video/*">
-<textarea id="caption" placeholder="Caption / Title..."></textarea>
-<button id="uploadBtn">Upload Now</button><p id="status" style="color:#b8b0cc; font-size:13px; text-align:center"></p>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Upload - INTUBE</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{background:radial-gradient(circle at 20% 20%, #2a1f45 0%, #120b20 40%, #0a0612 100%) fixed!important; color:#fff; font-family:'Poppins'; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0}.box{background:rgba(30,20,48,0.6); backdrop-filter:blur(18px); padding:24px; border-radius:20px; width:90%; max-width:380px; border:1px solid rgba(255,255,255,0.15)}input,textarea{width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:12px; border-radius:12px; margin:10px 0; box-sizing:border-box; font-family:Poppins}button{width:100%; background:linear-gradient(135deg,#c084fc,#818cf8); border:none; padding:13px; border-radius:12px; color:#fff; font-weight:600; cursor:pointer; font-family:Poppins}</style></head><body>
+<div class="box">
+<h3 style="margin:0 0 10px">Upload Video 🔥</h3>
+<input type="file" id="file" accept="video/*,image/*">
+<textarea id="caption" placeholder="Caption likho..."></textarea>
+<div id="msg" style="font-size:12px; color:#c084fc; margin-top:8px"></div>
+<button id="btn">Post to INTUBE</button>
+<a href="index.html" style="display:block; text-align:center; color:#aaa; margin-top:14px; text-decoration:none; font-size:13px">← Back to Home</a>
 </div>
-<nav class="bottom-nav"><a href="index.html" class="nav-item">🏠 Home</a><a href="feed.html" class="nav-item">🎞️ Feed</a><a href="upload.html" class="fab-btn">+</a><a href="explore.html" class="nav-item">📺 Explore</a><a href="login.html" class="nav-item">👤 Profile</a></nav>
 <script type="module">
-import { db, auth, serverTimestamp } from "./firebase-config.js";
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-document.getElementById('uploadBtn').onclick=async()=>{
- const file=document.getElementById('file').files[0]; const caption=document.getElementById('caption').value;
- if(!file) return alert('File chuno'); if(!caption) return alert('Caption likho');
- document.getElementById('status').innerText='⏳ Uploading to Cloudinary...';
- const form=new FormData(); form.append('file',file); form.append('upload_preset','intube_unsigned');
+import { db, auth } from "./firebase-config.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const CLOUD_NAME="kujnbe0a"; const PRESET="intube_free";
+document.getElementById("btn").onclick=async()=>{
+ const f=document.getElementById("file").files[0]; const cap=document.getElementById("caption").value;
+ if(!f) return alert("Video select karo!");
+ const m=document.getElementById("msg"); m.innerText="Uploading... 0% - wait karo";
+ document.getElementById("btn").disabled=true;
  try{
-  const res=await fetch('https://api.cloudinary.com/v1_1/dcu3zhmui/auto/upload',{method:'POST',body:form});
-  const data=await res.json(); if(!data.secure_url) throw new Error('Cloudinary fail');
-  document.getElementById('status').innerText='⚡ Saving to Firebase...';
-  await addDoc(collection(db,'posts'),{mediaUrl:data.secure_url, caption, title:caption, userName:auth.currentUser?.displayName||'Guest', uid:auth.currentUser?.uid||'guest', likes:0, likedBy:[], followers:[], comments:[], commentsCount:0, views:0, type:document.getElementById('type').value, createdAt:serverTimestamp()});
-  document.getElementById('status').innerText='✅ Uploaded! Real-time feed me aa gaya';
-  setTimeout(()=>location.href='index.html',1000);
- }catch(e){ document.getElementById('status').innerText='❌ Error: '+e.message }
+  const fd=new FormData(); fd.append("file",f); fd.append("upload_preset",PRESET);
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:"POST",body:fd});
+  const d=await r.json();
+  if(!d.secure_url) throw new Error(d.error?.message||"Preset save nahi hua? Unsigned karo");
+  m.innerText="Saving...";
+  await addDoc(collection(db,"posts"),{mediaUrl:d.secure_url,caption:cap,userName:auth.currentUser?.email||"Guest",userId:auth.currentUser?.uid||"guest",likes:0,likedBy:[],followers:[],commentsCount:0,createdAt:serverTimestamp()});
+  alert("Ho Gaya Upload! 🔥"); location.href="index.html";
+ }catch(e){ alert(e.message); m.innerText="Error: "+e.message; document.getElementById("btn").disabled=false; }
 }
 </script></body></html>
