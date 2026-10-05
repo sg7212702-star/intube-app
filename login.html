@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTUBE Login</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+background:#0a0712;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+color:white;
+}
+
+.box{
+width:90%;
+max-width:380px;
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(20px);
+padding:25px;
+border-radius:25px;
+text-align:center;
+}
+
+h1{
+margin-bottom:20px;
+}
+
+button{
+width:100%;
+padding:15px;
+border:none;
+border-radius:15px;
+margin-top:12px;
+font-size:16px;
+font-weight:600;
+cursor:pointer;
+}
+
+.google{
+background:#4285F4;
+color:white;
+}
+
+.phone{
+background:#7f5cff;
+color:white;
+}
+
+input{
+width:100%;
+padding:15px;
+margin-top:12px;
+border:none;
+border-radius:15px;
+outline:none;
+}
+
+#recaptcha-container{
+margin-top:15px;
+}
+
+#status{
+margin-top:15px;
+font-size:14px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="box">
+
+<h1>INTUBE Login</h1>
+
+<button class="google">
+Continue with Google
+</button>
+
+<input
+type="text"
+placeholder="+91XXXXXXXXXX"
+id="phone">
+
+<button class="phone">
+Send OTP
+</button>
+
+<div id="recaptcha-container"></div>
+
+<p id="status"></p>
+
+</div>
+
+</body>
+</html>
