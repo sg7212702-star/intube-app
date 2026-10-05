@@ -1,73 +1,94 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INTUBE - Real YouTube</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in - Google Accounts</title>
 <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
 <script type="importmap">
-{"imports":{
-"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-"firebase/auth":"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-"firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
-}}
+{
+ "imports": {
+  "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+  "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
+ }
+}
 </script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{background:#000;color:#fff;overflow-x:hidden}
-.top{position:sticky;top:0;background:rgba(0,0,0,.85);backdrop-filter:blur(15px);display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #222;z-index:100}
-.top b{font-size:18px;letter-spacing:1px}
-.top input{flex:1;background:#151515;border:1px solid #222;padding:10px 16px;border-radius:25px;color:#fff;outline:none}
-.top input:focus{border-color:#ff004f;background:#1a1a1a}
-.icon{width:38px;height:38px;background:#151515;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
-.badge{position:absolute;top:-2px;right:-2px;background:#ff004f;color:#fff;font-size:10px;padding:2px 5px;border-radius:10px;display:none}
-#feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;padding:16px}
-.card{background:#111;border:1px solid #222;border-radius:20px;overflow:hidden;animation:pop.5s ease;transition:.3s}
-.card:hover{transform:translateY(-5px);border-color:#333;box-shadow:0 10px 30px rgba(255,0,79,.15)}
-@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-.card video,.card img{width:100%;height:220px;object-fit:cover;background:#000}
-.info{padding:12px}
-.user{display:flex;align-items:center;gap:8px;margin:8px 0}
-.user img{width:28px;height:28px;border-radius:50%}
-.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.actions button{background:#1a1a1a;border:1px solid #222;color:#fff;padding:7px 14px;border-radius:20px;cursor:pointer;font-size:13px}
-.actions button.liked{background:#ff004f;border-color:#ff004f}
-.comment-box{display:flex;gap:6px;margin-top:10px}
-.comment-box input{flex:1;background:#000;border:1px solid #222;padding:7px 12px;border-radius:20px;color:#fff;outline:none}
-.upload-btn{position:fixed;bottom:20px;right:20px;background:#ff004f;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;box-shadow:0 5px 20px rgba(255,0,79,.4);z-index:50}
-#loginScreen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:200}
-.loginCard{background:#111;padding:35px;border-radius:25px;border:1px solid #222;text-align:center;width:90%;max-width:380px;animation:pop.6s}
-.loginCard button{background:#fff;color:#000;border:none;padding:14px;width:100%;border-radius:30px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;margin-top:20px}
-#uploadModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Google Sans,Roboto,Arial}
+body{background:#f0f4f9;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.g-card{background:#fff;width:92%;max-width:900px;border-radius:28px;display:flex;overflow:hidden;min-height:380px}
+.left{flex:1;padding:40px}
+.right{flex:1;padding:40px;display:flex;flex-direction:column;justify-content:center}
+.logo{width:48px;margin-bottom:20px}
+h1{font-size:36px;font-weight:400;color:#1f1f1f}
+p{color:#444;margin-top:12px;font-size:14px}
+.g-btn{border:1px solid #747775;padding:12px 24px;border-radius:30px;background:#fff;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;font-weight:500;margin-top:40px;width:fit-content}
+.g-btn:hover{background:#f8f9ff}
+#msg{color:#d93025;font-size:13px;margin-top:15px}
+@media(max-width:700px){.g-card{flex-direction:column;border-radius:0;width:100%;min-height:100vh}}
 </style>
 </head>
 <body>
-<div id="loginScreen"><div class="loginCard"><h1>INTUBE 🔥</h1><p style="color:#888;margin-top:8px">Real YouTube Clone</p><button id="googleBtn"><img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Login with Google</button><p id="loginMsg" style="color:#ff004f;margin-top:12px"></p></div></div>
-<div class="top"><b>INTUBE</b><input id="search" placeholder="Search videos, users..." oninput="filterVideos()"><div class="icon" onclick="openNotif()">🔔<span id="notifBadge" class="badge">0</span></div><div class="icon" id="profilePic" onclick="logout()">👤</div></div>
-<div id="feed">Loading real videos...</div>
-<div class="upload-btn" onclick="openUpload()">+</div>
-<div id="uploadModal"><div style="background:#111;padding:20px;border-radius:20px;width:90%;max-width:400px;border:1px solid #222"><h3>Upload Video</h3><input id="vTitle" placeholder="Video title" style="width:100%;margin:12px 0;padding:10px;border-radius:12px;background:#000;border:1px solid #222;color:#fff"><input type="file" id="vFile" accept="video/*,image/*" style="width:100%;color:#888"><button id="upBtn" style="width:100%;margin-top:12px;background:#ff004f;border:none;padding:12px;border-radius:20px;color:#fff;font-weight:bold;cursor:pointer">Upload to Cloudinary</button><p id="upStatus" style="text-align:center;margin-top:10px;color:#888"></p><button onclick="closeUpload()" style="width:100%;margin-top:8px;background:#222;border:none;padding:8px;border-radius:20px;color:#fff">Cancel</button></div></div>
+<div class="g-card">
+<div class="left">
+<img class="logo" src="https://www.google.com/images/branding/product/ico/googleg_lodp.ico">
+<h1>Sign in</h1>
+<p>Use your Google Account to continue to INTUBE</p>
+</div>
+<div class="right">
+<p style="font-size:14px;color:#1f1f1f">Continue to INTUBE 🔥</p>
+<button id="googleBtn" class="g-btn">
+<img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Continue with Google
+</button>
+<p id="msg"></p>
+<p style="margin-top:40px;font-size:12px;color:#666">Secure login by Google • Firebase Auth</p>
+</div>
+</div>
+
 <script type="module">
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, arrayUnion, increment, query, orderBy } from "firebase/firestore";
-const firebaseConfig = { apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU", authDomain: "intube-61cca.firebaseapp.com", projectId: "intube-61cca", storageBucket: "intube-61cca.firebasestorage.app", messagingSenderId: "627409965607", appId: "1:627409965607:web:a1d71800d812fe668b7402" };
-const CLOUD_NAME = "dtzv2wy4z"; const UPLOAD_PRESET = "intube_preset";
-const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider();
-let allVideos = [], currentUser = null;
-document.getElementById('googleBtn').onclick = async ()=>{ try{ document.getElementById('loginMsg').innerText="Google khul raha hai..."; await signInWithPopup(auth, provider); }catch(e){ document.getElementById('loginMsg').innerText=e.message } }
-onAuthStateChanged(auth, (user)=>{ if(user){ currentUser=user; localStorage.setItem('userName', user.displayName); localStorage.setItem('userPhoto', user.photoURL); localStorage.setItem('userEmail', user.email); document.getElementById('loginScreen').style.display='none'; document.getElementById('profilePic').innerHTML=`<img src="${user.photoURL}" style="width:38px;height:38px;border-radius:50%">`; loadVideos(); checkNotifs(); } else { document.getElementById('loginScreen').style.display='flex'; loadVideos(); } });
-window.logout=()=>signOut(auth).then(()=>location.reload());
-async function loadVideos(){ try{ const snap = await getDocs(query(collection(db,"videos"), orderBy("time","desc"))); allVideos=[]; snap.forEach(d=> allVideos.push({id:d.id,...d.data()})); render(allVideos); }catch(e){ document.getElementById('feed').innerHTML = "Firestore Rule check karo: "+e.message; } }
-function render(list){ if(!list.length){ document.getElementById('feed').innerHTML="<p style='padding:20px;color:#888'>Koi video nahi hai</p>"; return } document.getElementById('feed').innerHTML = list.map(v=>` <div class="card"> ${v.url.includes('.mp4')||v.url.includes('video')? `<video src="${v.url}" controls></video>` : `<img src="${v.url}">`} <div class="info"> <b>${v.title}</b> <div class="user"><img src="${v.userPhoto||'https://i.pravatar.cc/100'}"><small>${v.userName} • ${v.time?new Date(v.time?.seconds*1000).toLocaleDateString():''}</small></div> <div class="actions"> <button onclick="likeVideo('${v.id}', this)">❤️ ${v.likes||0}</button> <button onclick="document.getElementById('c-${v.id}').focus()">💬 ${v.comments?.length||0}</button> <button onclick="followUser('${v.userEmail}', '${v.userName}')">+ Follow</button> </div> <div id="list-${v.id}">${(v.comments||[]).slice(-2).map(c=>`<p style="font-size:13px;color:#ccc;margin-top:6px"><b>${c.name}:</b> ${c.text}</p>`).join('')}</div> <div class="comment-box"><input id="c-${v.id}" placeholder="Comment..."><button onclick="addComment('${v.id}')">➤</button></div> </div> </div> `).join(''); }
-window.filterVideos=()=>{ let q=document.getElementById('search').value.toLowerCase(); render(allVideos.filter(v=> (v.title+v.userName).toLowerCase().includes(q))); }
-window.openUpload=()=> document.getElementById('uploadModal').style.display='flex';
-window.closeUpload=()=> document.getElementById('uploadModal').style.display='none';
-document.getElementById('upBtn').onclick= async ()=>{ let file=document.getElementById('vFile').files[0]; let title=document.getElementById('vTitle').value; if(!file||!title) return alert("Title + file chahiye"); document.getElementById('upStatus').innerText="Uploading..."; let fd=new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET); try{ let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:'POST',body:fd}); let data=await res.json(); if(!data.secure_url) throw new Error(data.error?.message||'Preset galat hai'); await addDoc(collection(db,"videos"),{ title, url:data.secure_url, userName:currentUser.displayName, userEmail:currentUser.email, userPhoto:currentUser.photoURL, likes:0, comments:[], time:new Date() }); document.getElementById('upStatus').innerText="PUBLIC HO GAYA 🔥"; setTimeout(()=>{closeUpload(); loadVideos();},1200); }catch(err){ document.getElementById('upStatus').innerText="Failed: "+err.message; } }
-window.likeVideo= async (id, btn)=>{ let v=allVideos.find(x=>x.id==id); await updateDoc(doc(db,"videos",id),{likes:increment(1)}); btn.classList.add('liked'); if(v.userEmail!=currentUser.email){ await addDoc(collection(db,"notifications"),{to:v.userEmail, from:currentUser.displayName, text:`ne aapki video "${v.title}" ko like kiya ❤️`, time:new Date(), seen:false}); } loadVideos(); }
-window.addComment= async (id)=>{ let input=document.getElementById('c-'+id); let text=input.value.trim(); if(!text) return; let v=allVideos.find(x=>x.id==id); await updateDoc(doc(db,"videos",id),{comments:arrayUnion({name:currentUser.displayName, text})}); if(v.userEmail!=currentUser.email){ await addDoc(collection(db,"notifications"),{to:v.userEmail, from:currentUser.displayName, text:`ne comment kiya: "${text}" 💬`, time:new Date(), seen:false}); } input.value=""; loadVideos(); }
-window.followUser= async (email, name)=>{ if(email==currentUser.email) return alert("Khud ko follow nahi kar sakte"); await addDoc(collection(db,"follows"),{from:currentUser.email, to:email, fromName:currentUser.displayName, time:new Date()}); await addDoc(collection(db,"notifications"),{to:email, from:currentUser.displayName, text:`ne aapko follow kiya 👤`, time:new Date(), seen:false}); alert(name+" ko follow kar liya ✅"); }
-async function checkNotifs(){ if(!currentUser) return; let snap=await getDocs(collection(db,"notifications")); let cnt=0; snap.forEach(d=>{ if(d.data().to==currentUser.email &&!d.data().seen) cnt++; }); if(cnt>0){ let b=document.getElementById('notifBadge'); b.style.display='block'; b.innerText=cnt; } }
-window.openNotif= async ()=>{ let snap=await getDocs(collection(db,"notifications")); let myNotifs=[]; snap.forEach(d=>{ if(d.data().to==currentUser.email) myNotifs.push(d.data()) }); myNotifs.sort((a,b)=> b.time?.seconds - a.time?.seconds); alert(myNotifs.map(n=>`${n.from} ${n.text}`).join('\n\n') || "Koi notification nahi"); }
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
+  authDomain: "intube-61cca.firebaseapp.com",
+  projectId: "intube-61cca",
+  storageBucket: "intube-61cca.firebasestorage.app",
+  messagingSenderId: "627409965607",
+  appId: "1:627409965607:web:a1d71800d812fe668b7402"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({prompt: 'select_account'});
+
+// FIX 1: Persistence
+setPersistence(auth, browserLocalPersistence);
+
+// FIX 2: Redirect Result Check
+getRedirectResult(auth).then((res)=>{
+  if(res?.user) location.href = "index.html";
+}).catch(e=>{ document.getElementById('msg').innerText = e.message; });
+
+// FIX 3: Hybrid Login
+document.getElementById('googleBtn').onclick = async ()=>{
+  document.getElementById('msg').innerText = "Opening Google...";
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(err){
+    console.log("Popup failed, redirecting...", err.code);
+    await signInWithRedirect(auth, provider);
+  }
+};
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    localStorage.setItem('userName', user.displayName);
+    localStorage.setItem('userPhoto', user.photoURL);
+    location.href = "index.html";
+  }
+});
 </script>
 </body>
 </html>
