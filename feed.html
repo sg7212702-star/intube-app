@@ -1,43 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INTUBE Feed</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
 body{
-background:#0a0712;
+background:#06152f;
 color:white;
-font-family:Poppins,sans-serif;
-padding:20px;
+overflow-x:hidden;
+padding-bottom:120px;
+}
+
+body::before{
+content:"";
+position:fixed;
+width:450px;
+height:450px;
+background:#00bfff;
+filter:blur(220px);
+top:-150px;
+left:-100px;
+opacity:.25;
+z-index:-1;
+}
+
+body::after{
+content:"";
+position:fixed;
+width:450px;
+height:450px;
+background:#7f5cff;
+filter:blur(220px);
+bottom:-150px;
+right:-100px;
+opacity:.25;
+z-index:-1;
+}
+
+.glass{
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(35px);
+-webkit-backdrop-filter:blur(35px);
+border:1px solid rgba(255,255,255,.12);
+box-shadow:
+0 8px 35px rgba(0,191,255,.15),
+inset 0 1px 1px rgba(255,255,255,.15);
+}
+
+/* Header */
+
+.header{
+margin:15px;
+padding:15px 20px;
+border-radius:28px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+font-size:28px;
+font-weight:700;
+background:linear-gradient(45deg,#ffffff,#8fd3ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.icons{
+display:flex;
+gap:10px;
+font-size:22px;
+}
+
+/* Stories */
+
+.stories{
+display:flex;
+gap:15px;
+overflow-x:auto;
+padding:0 15px 15px;
+}
+
+.stories::-webkit-scrollbar{
+display:none;
+}
+
+.story{
+min-width:75px;
+height:75px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:24px;
+font-weight:600;
+}
+
+/* Feed */
+
+#feed{
+padding:0 15px;
 }
 
 .video{
-background:#1b1329;
 padding:15px;
-border-radius:15px;
-margin-bottom:15px;
-cursor:pointer;
+border-radius:28px;
+margin-bottom:20px;
+}
+
+.user-row{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:12px;
+}
+
+.avatar{
+width:45px;
+height:45px;
+border-radius:50%;
+background:linear-gradient(45deg,#00bfff,#7f5cff);
+}
+
+.user-info h3{
+font-size:15px;
+}
+
+.user-info p{
+font-size:12px;
+opacity:.7;
 }
 
 video{
 width:100%;
-border-radius:12px;
-margin-bottom:10px;
+border-radius:22px;
+margin-top:10px;
+background:black;
 }
 
-h1{
-margin-bottom:20px;
+.actions{
+display:flex;
+justify-content:space-between;
+padding-top:12px;
+font-size:24px;
 }
+
+.left-actions{
+display:flex;
+gap:18px;
+}
+
+/* Bottom Nav */
+
+.bottom-nav{
+position:fixed;
+bottom:15px;
+left:15px;
+right:15px;
+
+height:85px;
+border-radius:30px;
+
+display:flex;
+justify-content:space-around;
+align-items:center;
+}
+
+.item{
+text-align:center;
+font-size:12px;
+cursor:pointer;
+}
+
+.item span{
+display:block;
+font-size:24px;
+margin-bottom:4px;
+}
+
+.create{
+width:65px;
+height:65px;
+border-radius:22px;
+background:linear-gradient(45deg,#00bfff,#7f5cff);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:34px;
+font-weight:700;
+box-shadow:0 0 30px rgba(0,191,255,.5);
+cursor:pointer;
+}
+
 </style>
 </head>
 
 <body>
 
-<h1>🔥 INTUBE Feed</h1>
+<!-- Header -->
+
+<div class="header glass">
+
+<div class="logo">INTUBE</div>
+
+<div class="icons">
+<span>🔍</span>
+<span>❤️</span>
+<span>💬</span>
+</div>
+
+</div>
+
+<!-- Stories -->
+
+<div class="stories">
+
+<div class="story glass">+</div>
+<div class="story glass">👤</div>
+<div class="story glass">👤</div>
+<div class="story glass">👤</div>
+<div class="story glass">👤</div>
+<div class="story glass">👤</div>
+
+</div>
+
+<!-- Feed -->
 
 <div id="feed"></div>
+
+<!-- Bottom Navigation -->
+
+<div class="bottom-nav glass">
+
+<div class="item">
+<span>🏠</span>
+Home
+</div>
+
+<div class="item">
+<span>🔍</span>
+Explore
+</div>
+
+<div class="create" onclick="location.href='upload.html'">
++
+</div>
+
+<div class="item">
+<span>🎬</span>
+Reels
+</div>
+
+<div class="item">
+<span>👤</span>
+Profile
+</div>
+
+</div>
 
 <script type="module">
 
@@ -55,6 +286,8 @@ const feed=document.getElementById("feed");
 
 async function loadVideos(){
 
+try{
+
 const q=query(
 collection(db,"videos"),
 orderBy("createdAt","desc")
@@ -68,19 +301,53 @@ snapshot.forEach((doc)=>{
 
 const data=doc.data();
 
-feed.innerHTML+=`
-<div class="video">
+feed.innerHTML += `
+
+<div class="video glass">
+
+<div class="user-row">
+
+<div class="avatar"></div>
+
+<div class="user-info">
+<h3>${data.title || "INTUBE User"}</h3>
+<p>INTUBE Creator</p>
+</div>
+
+</div>
 
 <video controls>
 <source src="${data.videoUrl}">
 </video>
 
-<h3>${data.title}</h3>
+<div class="actions">
+
+<div class="left-actions">
+<span>❤️</span>
+<span>💬</span>
+<span>📤</span>
+</div>
+
+<span>🔖</span>
 
 </div>
+
+</div>
+
 `;
 
 });
+
+}catch(error){
+
+feed.innerHTML = `
+<div class="video glass">
+<h3>⚠ Feed Load Error</h3>
+<p>${error.message}</p>
+</div>
+`;
+
+}
 
 }
 
