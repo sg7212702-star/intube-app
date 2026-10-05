@@ -1,28 +1,70 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upload</title>
-<style>body{background:#0a0612;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}.box{background:#1e1430;padding:20px;border-radius:15px;width:90%;max-width:350px} input,textarea{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#000;color:#fff;box-sizing:border-box} button{width:100%;padding:12px;background:#a855f7;border:none;border-radius:10px;color:#fff;font-weight:bold} #status{font-size:12px;color:#c084fc}</style></head><body>
-<div class="box">
-<h3>Upload Video</h3>
-<input type="file" id="file" accept="video/*,image/*">
-<textarea id="cap" placeholder="Caption likho..."></textarea>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload - INTUBE REAL</title>
+<script type="importmap">
+{ "imports": { "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js", "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" } }
+</script>
+</head>
+<body style="background:#000;color:#fff;padding:20px;font-family:sans-serif">
+<h2>Upload Video (Real Public)</h2>
+<input type="file" id="videoFile" accept="video/*"><br><br>
+<input type="text" id="caption" placeholder="Caption likho..." style="width:90%;padding:12px;border-radius:8px"><br><br>
+<button id="uploadBtn" style="padding:12px 25px;background:#ff004f;color:#fff;border:none;border-radius:8px;font-weight:bold">Upload Karo</button>
 <p id="status"></p>
-<button id="btn">POST NOW</button>
-</div>
-<script>
-document.getElementById("btn").onclick=()=>{
-  const file=document.getElementById("file").files[0];
-  const status=document.getElementById("status");
-  if(!file){ alert("Pehle Video/Photo Select karo"); return; }
-  status.innerText="Saving... 2 sec ruko";
-  const reader=new FileReader();
-  reader.onload=(e)=>{
-    const postData={mediaUrl:e.target.result, caption:document.getElementById("cap").value || "My new post", userName:"User", likes:0, createdAt:new Date().toISOString()};
-    let posts=JSON.parse(localStorage.getItem("intube_posts")||"[]");
-    posts.unshift(postData);
-    localStorage.setItem("intube_posts",JSON.stringify(posts));
-    status.innerText="Ho Gaya!";
-    alert("Upload Ho Gaya! Ab home pe video dikhega");
-    window.location.href="index.html";
-  };
-  reader.readAsDataURL(file);
-}
-</script></body></html>
+
+<script type="module">
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
+  authDomain: "intube-61cca.firebaseapp.com",
+  projectId: "intube-61cca",
+  storageBucket: "intube-61cca.firebasestorage.app",
+  messagingSenderId: "627409965607",
+  appId: "1:627409965607:web:a1d71800d812fe668b7402"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const CLOUD_NAME = "kujnbe0a";
+const UPLOAD_PRESET = "intube_free";
+
+document.getElementById('uploadBtn').onclick = async () => {
+  const file = document.getElementById('videoFile').files[0];
+  const caption = document.getElementById('caption').value;
+  if(!file){ alert("Video select karo"); return; }
+
+  document.getElementById('status').innerText = "Uploading to Cloudinary...";
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', UPLOAD_PRESET);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if(data.secure_url){
+      document.getElementById('status').innerText = "Saving to Database...";
+      await addDoc(collection(db, "videos"), {
+        videoUrl: data.secure_url,
+        caption: caption,
+        userName: localStorage.getItem('userName') || 'Intube User',
+        userPhoto: localStorage.getItem('userPhoto') || '',
+        timestamp: serverTimestamp()
+      });
+      document.getElementById('status').innerText = "✅ PUBLIC HO GAYA! Sabko dikhega.";
+      setTimeout(()=> window.location.href="index.html", 1500);
+    } else {
+      document.getElementById('status').innerText = "Error: " + data.error.message;
+    }
+  } catch(e){
+    document.getElementById('status').innerText = "Error: " + e.message;
+  }
+};
+</script>
+</body>
+</html>
