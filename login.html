@@ -3,102 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INTUBE Login</title>
+<title>INTUBE Authentication</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+
 *{
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Poppins,sans-serif;
+font-family:'Poppins',sans-serif;
 }
 
 body{
 background:#0a0712;
-color:white;
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
+overflow:hidden;
 padding:20px;
 }
 
-.box{
-width:100%;
-max-width:400px;
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(20px);
-padding:25px;
-border-radius:25px;
-text-align:center;
-border:1px solid rgba(255,255,255,.15);
+body::before{
+content:"";
+position:fixed;
+width:400px;
+height:400px;
+background:#ff4fd8;
+filter:blur(180px);
+top:-100px;
+left:-100px;
+opacity:.35;
 }
 
-h1{
+body::after{
+content:"";
+position:fixed;
+width:400px;
+height:400px;
+background:#7f5cff;
+filter:blur(180px);
+bottom:-100px;
+right:-100px;
+opacity:.35;
+}
+
+.card{
+width:100%;
+max-width:420px;
+padding:30px;
+border-radius:30px;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(30px);
+-webkit-backdrop-filter:blur(30px);
+
+border:1px solid rgba(255,255,255,.15);
+
+box-shadow:
+0 8px 40px rgba(255,79,216,.18),
+inset 0 1px 1px rgba(255,255,255,.18);
+
+color:white;
+}
+
+.logo{
+text-align:center;
+font-size:34px;
+font-weight:700;
+margin-bottom:10px;
+background:linear-gradient(45deg,#ff4fd8,#ffffff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+text-align:center;
+opacity:.8;
+margin-bottom:25px;
+}
+
+.tabs{
+display:flex;
+gap:10px;
 margin-bottom:20px;
 }
 
-button{
-width:100%;
-padding:15px;
+.tab{
+flex:1;
+padding:12px;
 border:none;
 border-radius:15px;
-margin-top:12px;
-font-size:16px;
-font-weight:600;
 cursor:pointer;
+color:white;
+background:rgba(255,255,255,.08);
 }
 
-.google{
-background:#4285F4;
-color:white;
-}
-
-.phone{
-background:#7f5cff;
-color:white;
+.active{
+background:linear-gradient(45deg,#ff4fd8,#7f5cff);
 }
 
 input{
 width:100%;
 padding:15px;
-margin-top:12px;
+margin-bottom:12px;
+border:none;
+outline:none;
+border-radius:15px;
+background:rgba(255,255,255,.08);
+color:white;
+}
+
+input::placeholder{
+color:rgba(255,255,255,.7);
+}
+
+.btn{
+width:100%;
+padding:15px;
 border:none;
 border-radius:15px;
-outline:none;
+cursor:pointer;
+font-weight:600;
+color:white;
+margin-top:5px;
+}
+
+.primary{
+background:linear-gradient(45deg,#ff4fd8,#7f5cff);
+}
+
+.google{
+background:#4285F4;
+margin-top:12px;
 }
 
 #status{
 margin-top:15px;
 font-size:14px;
+text-align:center;
+word-break:break-word;
 }
 
-#recaptcha-container{
-margin-top:15px;
+.hidden{
+display:none;
 }
+
 </style>
 </head>
-
 <body>
 
-<div class="box">
+<div class="card">
 
-<h1>INTUBE Login</h1>
+<div class="logo">INTUBE</div>
+<div class="subtitle">Watch • Upload • Connect</div>
 
-<button id="googleBtn" class="google">
-Continue with Google
-</button>
+<div class="tabs">
+<button id="loginTab" class="tab active">Login</button>
+<button id="signupTab" class="tab">Sign Up</button>
+</div>
+
+<div id="signupBox" class="hidden">
 
 <input
-type="tel"
-id="phone"
-placeholder="Enter Mobile Number">
+type="text"
+id="signupUsername"
+placeholder="Username">
 
-<button id="phoneBtn" class="phone">
-Get OTP
+<input
+type="email"
+id="signupEmail"
+placeholder="Email Address">
+
+<input
+type="password"
+id="signupPassword"
+placeholder="Password">
+
+<button
+id="signupBtn"
+class="btn primary">
+Create Account
 </button>
 
-<div id="recaptcha-container"></div>
+</div>
+
+<div id="loginBox">
+
+<input
+type="email"
+id="loginEmail"
+placeholder="Email Address">
+
+<input
+type="password"
+id="loginPassword"
+placeholder="Password">
+
+<button
+id="loginBtn"
+class="btn primary">
+Login
+</button>
+
+</div>
+
+<button
+id="googleBtn"
+class="btn google">
+Continue with Google
+</button>
 
 <p id="status"></p>
 
@@ -111,34 +228,82 @@ import { auth } from "./firebase-config.js";
 import {
 GoogleAuthProvider,
 signInWithPopup,
-RecaptchaVerifier,
-signInWithPhoneNumber
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+updateProfile
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-const googleBtn =
-document.getElementById("googleBtn");
+const loginTab =
+document.getElementById("loginTab");
 
-const phoneBtn =
-document.getElementById("phoneBtn");
+const signupTab =
+document.getElementById("signupTab");
+
+const loginBox =
+document.getElementById("loginBox");
+
+const signupBox =
+document.getElementById("signupBox");
 
 const status =
 document.getElementById("status");
 
-/* Google Login */
+/* Tabs */
 
-googleBtn.onclick = async () => {
+loginTab.onclick = () => {
+
+loginBox.classList.remove("hidden");
+signupBox.classList.add("hidden");
+
+loginTab.classList.add("active");
+signupTab.classList.remove("active");
+
+};
+
+signupTab.onclick = () => {
+
+signupBox.classList.remove("hidden");
+loginBox.classList.add("hidden");
+
+signupTab.classList.add("active");
+loginTab.classList.remove("active");
+
+};
+
+/* Signup */
+
+document
+.getElementById("signupBtn")
+.onclick = async () => {
+
+const username =
+document.getElementById("signupUsername").value;
+
+const email =
+document.getElementById("signupEmail").value;
+
+const password =
+document.getElementById("signupPassword").value;
 
 try{
 
-const provider =
-new GoogleAuthProvider();
+const userCredential =
+await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-const result =
-await signInWithPopup(auth, provider);
+await updateProfile(
+userCredential.user,
+{
+displayName: username
+}
+);
 
 status.innerHTML =
-"✅ Welcome " +
-(result.user.displayName || "User");
+"✅ Account Created Successfully";
 
 setTimeout(()=>{
 window.location.href="index.html";
@@ -153,53 +318,60 @@ status.innerHTML =
 
 };
 
-/* Recaptcha */
+/* Login */
 
-window.recaptchaVerifier =
-new RecaptchaVerifier(
-auth,
-"recaptcha-container",
-{
-size:"normal"
-}
-);
+document
+.getElementById("loginBtn")
+.onclick = async () => {
 
-/* Phone Login */
+const email =
+document.getElementById("loginEmail").value;
 
-phoneBtn.onclick = async () => {
-
-const userNumber =
-document.getElementById("phone").value.trim();
-
-if(userNumber.length !== 10){
-
-status.innerHTML =
-"❌ Enter 10 digit mobile number";
-
-return;
-
-}
-
-const phone = "+91" + userNumber;
+const password =
+document.getElementById("loginPassword").value;
 
 try{
 
-const confirmation =
-await signInWithPhoneNumber(
+await signInWithEmailAndPassword(
 auth,
-phone,
-window.recaptchaVerifier
+email,
+password
 );
 
-const otp =
-prompt("Enter OTP");
+status.innerHTML =
+"✅ Login Success";
 
-if(!otp) return;
+setTimeout(()=>{
+window.location.href="index.html";
+},1000);
 
-await confirmation.confirm(otp);
+}catch(err){
 
 status.innerHTML =
-"✅ Phone Login Success";
+"❌ " + err.message;
+
+}
+
+};
+
+/* Google Login */
+
+document
+.getElementById("googleBtn")
+.onclick = async () => {
+
+try{
+
+const provider =
+new GoogleAuthProvider();
+
+await signInWithPopup(
+auth,
+provider
+);
+
+status.innerHTML =
+"✅ Google Login Success";
 
 setTimeout(()=>{
 window.location.href="index.html";
