@@ -1,11 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
+  apiKey: "YOUR_API_KEY",
   authDomain: "intube-61cca.firebaseapp.com",
   projectId: "intube-61cca",
   storageBucket: "intube-61cca.firebasestorage.app",
@@ -15,7 +13,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-export { auth, db };
+export const auth = getAuth(app);
+export const db = getFirestore(app);
