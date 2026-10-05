@@ -1,50 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INTUBE Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{background:#120b20;color:#fff;font-family:'Poppins',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
+.card{background:#1e1430;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:32px 24px;width:100%;max-width:360px;text-align:center}
+.logo{width:64px;height:64px;background:linear-gradient(135deg,#c084fc,#818cf8);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px}
+.btn{width:100%;background:#fff;color:#000;border:none;border-radius:999px;padding:14px;font-weight:600;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px}
+.btn:hover{opacity:0.9}
+.user-info{margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)}
+.user-info img{width:64px;height:64px;border-radius:50%}
+.logout{margin-top:12px;background:#2a1f45;color:#fff}
+</style>
 </head>
 <body>
 
-<h2>Google Login</h2>
+<div class="card">
+<div class="logo">▶</div>
+<h2 style="margin:0">INTUBE Login</h2>
+<p style="color:#9c92b5;font-size:13px;margin-top:6px">Insta Lite jaisa fast login</p>
 
-<button id="loginBtn">
-Google Sign In
-</button>
+<button id="loginBtn" class="btn"><img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Google Sign In</button>
+<div id="userBox" class="user-info" style="display:none"></div>
+<button id="logoutBtn" class="btn logout" style="display:none">Logout</button>
+</div>
 
 <script type="module">
-
-import {
-auth,
-GoogleAuthProvider,
-signInWithPopup
-}
-from "./firebase-config.js";
+import { auth } from "./firebase-config.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const provider = new GoogleAuthProvider();
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const userBox = document.getElementById("userBox");
 
-document.getElementById("loginBtn").onclick = async () => {
-
-try {
-
-const result = await signInWithPopup(
-auth,
-provider
-);
-
-alert(
-"Welcome " +
-result.user.displayName
-);
-
-location.href="index.html";
-
-}
-catch(err){
-alert(err.message);
-}
-
+loginBtn.onclick = async () => {
+ try {
+   loginBtn.innerText = "Signing in...";
+   const result = await signInWithPopup(auth, provider);
+   alert("Welcome " + result.user.displayName + " 🔥");
+   location.href = "index.html";
+ } catch(err){
+   alert("Login Error: " + err.message);
+   console.error(err);
+   loginBtn.innerHTML = `<img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Google Sign In`;
+ }
 };
 
+logoutBtn.onclick = async () => {
+ await signOut(auth);
+ location.reload();
+};
+
+onAuthStateChanged(auth, (user) => {
+ if(user){
+   loginBtn.style.display = "none";
+   logoutBtn.style.display = "block";
+   userBox.style.display = "block";
+   userBox.innerHTML = `<img src="${user.photoURL}"><h3 style="margin:10px 0 0">${user.displayName}</h3><p style="color:#9c92b5;font-size:13px">${user.email}</p><p style="color:#22c55e;font-size:12px;margin-top:8px">● Logged In</p>`;
+ } else {
+   loginBtn.style.display = "flex";
+   logoutBtn.style.display = "none";
+   userBox.style.display = "none";
+ }
+});
 </script>
 
 </body>
