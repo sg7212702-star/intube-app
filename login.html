@@ -1,36 +1,51 @@
-<button id="googleLogin">Sign in with Google</button>
+<!DOCTYPE html>
+<html>
+<head>
+<title>INTUBE Login</title>
+</head>
+<body>
+
+<h2>Google Login</h2>
+
+<button id="loginBtn">
+Google Sign In
+</button>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID"
+import {
+auth,
+GoogleAuthProvider,
+signInWithPopup
+}
+from "./firebase-config.js";
+
+const provider = new GoogleAuthProvider();
+
+document.getElementById("loginBtn").onclick = async () => {
+
+try {
+
+const result = await signInWithPopup(
+auth,
+provider
+);
+
+alert(
+"Welcome " +
+result.user.displayName
+);
+
+location.href="index.html";
+
+}
+catch(err){
+alert(err.message);
+}
+
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-document.getElementById("googleLogin").addEventListener("click", async () => {
-  try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-
-    const user = result.user;
-
-    alert("Welcome " + user.displayName);
-
-    console.log(user);
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
-  }
-});
 </script>
+
+</body>
+</html>
