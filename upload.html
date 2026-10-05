@@ -8,7 +8,7 @@
 <style>
 body{
 background:#0a0712;
-font-family:Poppins,sans-serif;
+font-family:sans-serif;
 color:white;
 padding:20px;
 }
@@ -17,7 +17,6 @@ padding:20px;
 background:rgba(255,255,255,.08);
 padding:20px;
 border-radius:20px;
-backdrop-filter:blur(20px);
 }
 
 input,button{
@@ -29,9 +28,9 @@ border-radius:12px;
 }
 
 button{
-background:linear-gradient(45deg,#ff4fd8,#7f5cff);
+background:#7f5cff;
 color:white;
-font-weight:600;
+font-weight:bold;
 }
 </style>
 </head>
@@ -44,7 +43,7 @@ font-weight:600;
 
 <input type="text" id="title" placeholder="Video Title">
 
-<input type="file" id="videoFile" accept="video/*">
+<input type="text" id="videoUrl" placeholder="Video URL">
 
 <button id="uploadBtn">
 Upload Video
@@ -53,6 +52,50 @@ Upload Video
 <p id="status"></p>
 
 </div>
+
+<script type="module">
+
+import { db } from "./firebase-config.js";
+
+import {
+collection,
+addDoc,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+const btn = document.getElementById("uploadBtn");
+
+btn.onclick = async ()=>{
+
+const title = document.getElementById("title").value;
+const videoUrl = document.getElementById("videoUrl").value;
+
+if(!title || !videoUrl){
+alert("Fill all fields");
+return;
+}
+
+try{
+
+await addDoc(collection(db,"videos"),{
+title:title,
+videoUrl:videoUrl,
+createdAt:serverTimestamp()
+});
+
+document.getElementById("status").innerHTML =
+"✅ Video Uploaded Successfully";
+
+}catch(error){
+
+document.getElementById("status").innerHTML =
+"❌ "+error.message;
+
+}
+
+};
+
+</script>
 
 </body>
 </html>
