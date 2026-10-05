@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTUBE Upload</title>
+
+<style>
+body{
+background:#0a0712;
+font-family:Poppins,sans-serif;
+color:white;
+padding:20px;
+}
+
+.box{
+background:rgba(255,255,255,.08);
+padding:20px;
+border-radius:20px;
+backdrop-filter:blur(20px);
+}
+
+input,button{
+width:100%;
+padding:14px;
+margin-top:12px;
+border:none;
+border-radius:12px;
+}
+
+button{
+background:linear-gradient(45deg,#ff4fd8,#7f5cff);
+color:white;
+font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>📤 Upload Video</h2>
+
+<input type="text" id="title" placeholder="Video Title">
+
+<input type="file" id="videoFile" accept="video/*">
+
+<button id="uploadBtn">
+Upload Video
+</button>
+
+<p id="status"></p>
+
+</div>
+
+</body>
+</html>
