@@ -1,82 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch Video</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body { background: #120b20; color: #fff; font-family: 'Poppins', sans-serif; margin: 0; }
-        .player-box { width: 100%; height: 230px; background: #000; display: flex; align-items: center; justify-content: center; }
-        iframe, video { width: 100%; height: 100%; border: none; }
-        .details { padding: 20px; }
-        .details h2 { font-size: 18px; margin-bottom: 8px; }
-        .details p { color: #b0a8c2; font-size: 13px; }
-        .back-btn { display: inline-block; margin-bottom: 15px; color: #c084fc; text-decoration: none; font-size: 13px; }
-    </style>
-</head>
-<body>
+<script type="module">
 
-    <div class="player-box" id="player-container">
-        <p>Loading video...</p>
-    </div>
+import {
+db,
+doc,
+getDoc,
+updateDoc,
+increment
+}
+from "./firebase-config.js";
 
-    <div class="details">
-        <a href="index.html" class="back-link">← Back to Home</a>
-        <h2 id="title">Loading...</h2>
-        <p id="meta">-- Views • By --</p>
-        <p id="desc" style="margin-top: 15px; color: #e2d9f3; font-size: 13px;"></p>
-    </div>
+const id =
+new URLSearchParams(
+location.search
+).get("id");
 
-    <script type="module">
-        import { db, doc, getDoc, updateDoc, increment } from "./firebase-config.js";
+const ref =
+doc(db,"videos",id);
 
-        async function fetchVideoDetails() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const videoId = urlParams.get('id');
+const snap =
+await getDoc(ref);
 
-            if (!videoId) {
-                document.getElementById('title').innerText = "Video nahi mili!";
-                return;
-            }
+if(snap.exists()){
 
-            try {
-                const docRef = doc(db, "videos", videoId);
-                const docSnap = await getDoc(docRef);
+const v=snap.data();
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('title').innerText = data.title;
-                    document.getElementById('meta').innerText = `${(data.views || 0) + 1} Views • By ${data.author || 'Creator'}`;
-                    document.getElementById('desc').innerText = data.description || "Koi description uplabdh nahi hai.";
+document.getElementById("title")
+.innerText=v.title;
 
-                    // Embed Player setup
-                    const playerContainer = document.getElementById('player-container');
-                    if(data.videoUrl.includes('youtube.com') || data.videoUrl.includes('youtu.be')) {
-                        // YouTube link handling
-                        let embedUrl = data.videoUrl;
-                        if(data.videoUrl.includes('watch?v=')) {
-                            embedUrl = data.videoUrl.replace('watch?v=', 'embed/');
-                        }
-                        playerContainer.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
-                    } else {
-                        playerContainer.innerHTML = `<video controls autoplay><source src="${data.videoUrl}" type="video/mp4">Your browser does not support video.</video>`;
-                    }
+await updateDoc(
+ref,
+{
+views:increment(1)
+}
+);
 
-                    // Increment View Count
-                    await updateDoc(docRef, {
-                        views: increment(1)
-                    });
-                } else {
-                    document.getElementById('title').innerText = "Video database me nahi mili.";
-                }
-            } catch (error) {
-                console.error(error);
-                document.getElementById('title').innerText = "Error load karne me.";
-            }
-        }
+}
 
-        fetchVideoDetails();
-    </script>
-</body>
-</html>
+</script>
