@@ -21,27 +21,71 @@ margin-bottom:15px;
 cursor:pointer;
 }
 
-img{
+video{
 width:100%;
 border-radius:12px;
+margin-bottom:10px;
+}
+
+h1{
+margin-bottom:20px;
 }
 </style>
-
 </head>
+
 <body>
 
 <h1>🔥 INTUBE Feed</h1>
 
-<div class="video" onclick="openVideo()">
-<img src="https://picsum.photos/600/350">
-<h3>My First Video</h3>
-<p>1.2K Views</p>
-</div>
+<div id="feed"></div>
 
-<script>
-function openVideo(){
-window.location.href="watch.html";
+<script type="module">
+
+import { db } from "./firebase-config.js";
+
+import {
+collection,
+getDocs,
+query,
+orderBy
 }
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+const feed=document.getElementById("feed");
+
+async function loadVideos(){
+
+const q=query(
+collection(db,"videos"),
+orderBy("createdAt","desc")
+);
+
+const snapshot=await getDocs(q);
+
+feed.innerHTML="";
+
+snapshot.forEach((doc)=>{
+
+const data=doc.data();
+
+feed.innerHTML+=`
+<div class="video">
+
+<video controls>
+<source src="${data.videoUrl}">
+</video>
+
+<h3>${data.title}</h3>
+
+</div>
+`;
+
+});
+
+}
+
+loadVideos();
+
 </script>
 
 </body>
