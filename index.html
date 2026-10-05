@@ -1,281 +1,474 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>2702 Star</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Transparent Instagram UI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #e94560);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        /* Phone Container Frame */
+        .phone-container {
+            width: 100%;
+            max-width: 410px;
+            height: 100vh;
+            max-height: 840px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 40px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
 
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 10;
+        }
+        .logo { font-size: 24px; font-weight: bold; font-style: italic; letter-spacing: 0.5px; background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .top-icons { display: flex; gap: 20px; }
+        .top-icons span { font-size: 20px; cursor: pointer; transition: 0.2s; }
+        .top-icons span:hover { transform: scale(1.1); }
 
-body{
-height:100vh;
-overflow:hidden;
-background:#090018;
-position:relative;
-color:white;
-}
+        /* Views Content Area */
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .app-content::-webkit-scrollbar { display: none; }
+        .view { display: none; height: 100%; }
+        .view.active { display: flex; flex-direction: column; }
 
-body::before{
-content:'';
-position:absolute;
-inset:0;
-background:
-radial-gradient(circle at 20% 20%,#7b61ff55,transparent 30%),
-radial-gradient(circle at 80% 20%,#00d4ff55,transparent 30%),
-radial-gradient(circle at 50% 80%,#ff4fd855,transparent 35%);
-animation:move 12s infinite alternate;
-}
+        /* Home View: Stories & Feed */
+        .stories-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 12px 16px;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            flex-shrink: 0;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .story-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5px;
+        }
+        .story-ring.seen { background: rgba(255, 255, 255, 0.2); }
+        .story-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #1a1a2e;
+            background-size: cover;
+            background-position: center;
+        }
 
-@keyframes move{
-100%{
-transform:scale(1.2) rotate(8deg);
-}
-}
+        /* Post Card */
+        .post {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 15px;
+        }
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .post-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 1.5px solid #dd2a7b;
+        }
+        .post-username { font-size: 13px; font-weight: 600; }
+        .post-image {
+            width: 100%;
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .heart-pop {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 90px;
+            color: #ff3040;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+        .heart-pop.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px 8px 16px;
+        }
+        .left-actions { display: flex; gap: 18px; font-size: 22px; cursor: pointer; }
+        .like-btn.liked { color: #ff3040; transform: scale(1.15); transition: 0.2s; }
+        .bookmark-btn.saved { color: #f58529; }
+        .post-details { padding: 0 16px 14px 16px; font-size: 12.5px; line-height: 1.4; }
+        .likes-count { font-weight: bold; margin-bottom: 4px; }
+        .caption span { font-weight: 600; margin-right: 6px; }
 
-.container{
-position:relative;
-z-index:2;
-height:100%;
-display:flex;
-flex-direction:column;
-padding:20px;
-}
+        /* Search View */
+        .search-header { padding: 12px 16px; }
+        .search-bar {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+        .search-bar::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            padding: 2px;
+        }
+        .grid-item {
+            aspect-ratio: 1;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .grid-item:hover { opacity: 0.8; }
 
-.header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:20px;
-}
+        /* Reels View */
+        .reels-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+        .reel-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .reel-info h4 { font-size: 14px; margin-bottom: 6px; }
+        .reel-info p { font-size: 12px; opacity: 0.8; }
+        .reel-actions { display: flex; flex-direction: column; gap: 15px; font-size: 24px; align-items: center; }
+        .reel-actions span { cursor: pointer; }
 
-.logo{
-font-size:34px;
-font-weight:700;
-}
+        /* Profile View */
+        .profile-header {
+            padding: 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #dd2a7b;
+        }
+        .profile-stats {
+            display: flex;
+            flex: 1;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .stat-num { font-weight: bold; font-size: 16px; }
+        .stat-label { font-size: 11px; opacity: 0.7; }
+        .profile-bio { padding: 12px 16px; font-size: 13px; line-height: 1.4; }
+        .profile-bio h3 { font-size: 14px; margin-bottom: 3px; }
 
-.logo span{
-background:linear-gradient(45deg,#00d4ff,#ff4fd8);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-}
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 14px 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+        .nav-icon { font-size: 22px; cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .nav-icon.active { opacity: 1; transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(221,42,123,0.8)); }
 
-.glass{
-margin-top:40px;
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(20px);
-border:1px solid rgba(255,255,255,.15);
-border-radius:35px;
-padding:30px;
-box-shadow:
-0 0 30px rgba(123,97,255,.4),
-0 0 50px rgba(0,212,255,.2);
-}
+        /* Modals (Story & Comments) */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(25px);
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            z-index: 100;
+        }
+        .modal.active { display: flex; }
+        .story-viewer-img { width: 100%; height: 75vh; background-size: cover; background-position: center; border-radius: 20px; position: relative; }
+        .close-modal { align-self: flex-end; font-size: 24px; cursor: pointer; color: #fff; }
 
-.avatar{
-width:120px;
-height:120px;
-margin:auto;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:60px;
-background:linear-gradient(135deg,#00d4ff,#7b61ff,#ff4fd8);
-box-shadow:0 0 30px #7b61ff;
-}
-
-.title{
-text-align:center;
-margin-top:20px;
-font-size:42px;
-font-weight:700;
-}
-
-.subtitle{
-text-align:center;
-opacity:.8;
-margin-top:10px;
-}
-
-.google-btn{
-margin-top:30px;
-width:100%;
-padding:18px;
-border:none;
-border-radius:18px;
-font-size:18px;
-font-weight:700;
-cursor:pointer;
-color:white;
-background:linear-gradient(
-135deg,
-#00d4ff,
-#7b61ff,
-#ff4fd8
-);
-box-shadow:0 0 30px rgba(123,97,255,.6);
-transition:.3s;
-}
-
-.google-btn:hover{
-transform:translateY(-4px);
-}
-
-.features{
-display:flex;
-justify-content:space-around;
-margin-top:35px;
-text-align:center;
-}
-
-.feature{
-font-size:14px;
-}
-
-.bottom-nav{
-position:absolute;
-bottom:20px;
-left:20px;
-right:20px;
-height:80px;
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(20px);
-border-radius:30px;
-display:flex;
-justify-content:space-around;
-align-items:center;
-border:1px solid rgba(255,255,255,.15);
-}
-
-.nav-item{
-text-align:center;
-font-size:14px;
-}
-
-.plus{
-width:70px;
-height:70px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:40px;
-background:linear-gradient(135deg,#00d4ff,#7b61ff,#ff4fd8);
-box-shadow:0 0 30px #7b61ff;
-margin-top:-40px;
-}
-
-.glow{
-position:absolute;
-width:150px;
-height:150px;
-border-radius:50%;
-background:#7b61ff;
-filter:blur(90px);
-opacity:.4;
-}
-
-.g1{
-top:50px;
-left:-50px;
-}
-
-.g2{
-right:-50px;
-top:200px;
-background:#00d4ff;
-}
-
-.g3{
-bottom:150px;
-left:40%;
-background:#ff4fd8;
-}
-</style>
+        /* Comments box */
+        .comments-modal {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 60%;
+            background: rgba(20, 20, 35, 0.95);
+            backdrop-filter: blur(30px);
+            border-top-left-radius: 25px;
+            border-top-right-radius: 25px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 150;
+            padding: 15px;
+        }
+        .comments-modal.active { display: flex; }
+        .comments-list { flex: 1; overflow-y: auto; margin-top: 10px; font-size: 13px; display: flex; flex-direction: column; gap: 10px; }
+        .comment-input-box { display: flex; gap: 10px; margin-top: 10px; }
+        .comment-input-box input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; outline: none; }
+        .comment-input-box button { padding: 0 15px; border-radius: 20px; border: none; background: #dd2a7b; color: #fff; font-weight: bold; cursor: pointer; }
+    </style>
 </head>
-
 <body>
 
-<div class="glow g1"></div>
-<div class="glow g2"></div>
-<div class="glow g3"></div>
+    <div class="phone-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="logo">Instagram</div>
+            <div class="top-icons">
+                <span id="notificationBtn" title="Notifications">❤️</span>
+                <span id="dmBtn" title="Direct Messages">✈️</span>
+            </div>
+        </div>
 
-<div class="container">
+        <!-- Main Content Area with Views -->
+        <div class="app-content">
+            
+            <!-- 1. HOME VIEW -->
+            <div id="homeView" class="view active">
+                <div class="stories-container" id="storiesContainer">
+                    <!-- Stories generated dynamically via JS -->
+                </div>
+                <div class="feed" id="feedContainer">
+                    <!-- Posts generated dynamically via JS -->
+                </div>
+            </div>
 
-<div class="header">
-<div class="logo">2702 <span>Star</span></div>
-<div>🚀</div>
-</div>
+            <!-- 2. SEARCH VIEW -->
+            <div id="searchView" class="view">
+                <div class="search-header">
+                    <input type="text" class="search-bar" placeholder="🔍 Search explorer...">
+                </div>
+                <div class="search-grid" id="searchGrid">
+                    <!-- Grid items -->
+                </div>
+            </div>
 
-<div class="glass">
+            <!-- 3. REELS VIEW -->
+            <div id="reelsView" class="view">
+                <div class="reels-container" id="reelsContainer" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600')">
+                    <div class="reel-overlay">
+                        <div class="reel-info">
+                            <h4>@shailendra_jatav ✨</h4>
+                            <p>Amazing transparent night vibe in train journey...</p>
+                        </div>
+                        <div class="reel-actions">
+                            <span onclick="alert('Reel Liked! ❤️')">❤️</span>
+                            <span onclick="alert('Opened Comments 💬')">💬</span>
+                            <span onclick="alert('Reel Shared! ✈️')">✈️</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<div class="avatar">👤</div>
+            <!-- 4. PROFILE VIEW -->
+            <div id="profileView" class="view">
+                <div class="profile-header">
+                    <div class="profile-avatar" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150')"></div>
+                    <div class="profile-stats">
+                        <div><div class="stat-num">9</div><div class="stat-label">Posts</div></div>
+                        <div><div class="stat-num">14.2K</div><div class="stat-label">Followers</div></div>
+                        <div><div class="stat-num">380</div><div class="stat-label">Following</div></div>
+                    </div>
+                </div>
+                <div class="profile-bio">
+                    <h3>Shailendra Jatav</h3>
+                    <p>Developer & Designer 🚀<br>Exploring Glassmorphism & UI/UX Magic 💡<br>📍 Madhya Pradesh, India</p>
+                </div>
+                <div class="search-grid" id="profileGrid">
+                    <!-- Profile posts grid -->
+                </div>
+            </div>
 
-<div class="title">Account</div>
+        </div>
 
-<div class="subtitle">
-Apne Google account se login karein
-</div>
+        <!-- Bottom Navigation Bar -->
+        <div class="bottom-nav">
+            <span class="nav-icon active" onclick="switchTab('home', this)">🏠</span>
+            <span class="nav-icon" onclick="switchTab('search', this)">🔍</span>
+            <span class="nav-icon" onclick="alert('Create Post Option Opened ➕')">➕</span>
+            <span class="nav-icon" onclick="switchTab('reels', this)">🎬</span>
+            <span class="nav-icon" onclick="switchTab('profile', this)">👤</span>
+        </div>
 
-<button class="google-btn" onclick="googleLogin()">
-Sign in with Google
-</button>
+        <!-- Story Viewer Modal -->
+        <div class="modal" id="storyModal">
+            <span class="close-modal" onclick="closeStory()">✕</span>
+            <div class="story-viewer-img" id="storyViewerImg"></div>
+            <p style="text-align: center; font-size: 14px; font-weight: bold;" id="storyUsername">Username</p>
+        </div>
 
-<div class="features">
+        <!-- Comments Modal -->
+        <div class="comments-modal" id="commentsModal">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                <strong>Comments</strong>
+                <span style="cursor: pointer;" onclick="closeComments()">✕</span>
+            </div>
+            <div class="comments-list" id="commentsList">
+                <div><b>rahul_verma:</b> Amazing click bhai! 🔥</div>
+                <div><b>priya_sharma:</b> So stunning design ✨</div>
+            </div>
+            <div class="comment-input-box">
+                <input type="text" id="commentInput" placeholder="Add a comment...">
+                <button onclick="postComment()">Post</button>
+            </div>
+        </div>
 
-<div class="feature">
-🛡️ <br> Secure
-</div>
+    </div>
 
-<div class="feature">
-⚡ <br> Fast
-</div>
+    <script>
+        // Data Arrays
+        const storiesData = [
+            { name: 'Your story', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
+            { name: 'Rahul', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
+            { name: 'Priya', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
+            { name: 'Amit', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150' },
+            { name: 'Neha', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150' }
+        ];
 
-<div class="feature">
-🔒 <br> Trusted
-</div>
+        const feedData = [
+            { id: 1, user: 'shailendra_jatav', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', postImg: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500', likes: 1245, caption: 'Enjoying full transparent vibes with modern UI design! ✨' },
+            { id: 2, user: 'explorer_vibes', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', postImg: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500', likes: 3890, caption: 'Nature beauty captured at its finest 🌲⛰️' }
+        ];
 
-</div>
+        const gridImages = [
+            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300',
+            'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=300',
+            'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=300',
+            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300',
+            'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=300',
+            'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300',
+            'https://images.unsplash.com/photo-1426604966848-d7adacbd02bff?w=300',
+            'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=300',
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300'
+        ];
 
-</div>
+        // Render Stories
+        const storiesContainer = document.getElementById('storiesContainer');
+        storiesData.forEach((s, idx) => {
+            const div = document.createElement('div');
+            div.className = 'story';
+            div.innerHTML = `
+                <div class="story-ring ${idx > 2 ? 'seen' : ''}">
+                    <div class="story-img" style="background-image: url('${s.img}')"></div>
+                </div>
+                <span>${s.name}</span>
+            `;
+            div.onclick = () => openStory(s.name, s.img);
+            storiesContainer.appendChild(div);
+        });
 
-<div class="bottom-nav">
+        // Render Feed Posts
+        const feedContainer = document.getElementById('feedContainer');
+        feedData.forEach(post => {
+            const div = document.createElement('div');
+            div.className = 'post';
+            div.innerHTML = `
+                <div class="post-header">
+                    <div class="user-info">
+                        <div class="post-avatar" style="background-image: url('${post.avatar}')"></div>
+                        <div class="post-username">${post.user}</div>
+                    </div>
+                    <span>⋮</span>
+                </div>
+                <div class="post-image" style="background-image: url('${post.postImg}')" ondblclick="doubleTapLike(this, ${post.id})">
+                    <div class="heart-pop" id="heart-${post.id}">❤️</div>
+                </div>
+                <div class="post-actions">
+                    <div class="left-actions">
+                        <span class="like-btn" id="likeBtn-${post.id}" onclick="toggleLike(${post.id})">❤️</span>
+                        <span onclick="openComments()">💬</span>
+                        <span onclick="alert('Post link copied! ✈️')">✈️</span>
+                    </div>
+                    <span class="bookmark-btn" onclick="toggleBookmark(this)">🔖</span>
+                </div>
+                <div class="post-details">
+                    <div class="likes-count" id="likesCount-${post.id}">${post.likes.toLocaleString()} likes</div>
+                    <div class="caption"><span>${post.user}</span> ${post.caption}</div>
+                </div>
+            `;
+            feedContainer.appendChild(div);
+        });
 
-<div class="nav-item">
-🏠<br>Home
-</div>
-
-<div class="nav-item">
-📰<br>Feed
-</div>
-
-<div class="plus">+</div>
-
-<div class="nav-item">
-🧭<br>Explore
-</div>
-
-<div class="nav-item">
-👤<br>Profile
-</div>
-
-</div>
-
-</div>
-
-<script>
-function googleLogin(){
-alert("Firebase Google Login Connect Here");
-}
-</script>
-
-</body>
-</html>
+        // Render Search & Profile Grids
+        const searchGrid = document.getElementById('searchGrid');
+        const profileGr
