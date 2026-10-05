@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INTUBE</title>
-<link rel="stylesheet" href="assets/css/style.css">
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -80,6 +80,7 @@ width:45px;
 height:45px;
 border-radius:15px;
 background:linear-gradient(45deg,#ff4fd8,#7f5cff);
+cursor:pointer;
 }
 
 .hero{
@@ -114,6 +115,7 @@ border-radius:18px;
 background:linear-gradient(45deg,#ff4fd8,#7f5cff);
 color:white;
 font-weight:600;
+cursor:pointer;
 }
 
 .categories{
@@ -149,6 +151,7 @@ overflow:auto;
 min-width:260px;
 border-radius:25px;
 overflow:hidden;
+cursor:pointer;
 }
 
 .card img{
@@ -159,15 +162,6 @@ object-fit:cover;
 
 .card-content{
 padding:12px;
-}
-
-.card-content h3{
-font-size:16px;
-}
-
-.card-content p{
-opacity:.7;
-font-size:13px;
 }
 
 .bottom-nav{
@@ -185,6 +179,7 @@ align-items:center;
 .item{
 text-align:center;
 font-size:12px;
+cursor:pointer;
 }
 
 .item span{
@@ -203,6 +198,7 @@ align-items:center;
 justify-content:center;
 font-size:34px;
 box-shadow:0 0 35px rgba(255,79,216,.5);
+cursor:pointer;
 }
 </style>
 </head>
@@ -216,9 +212,15 @@ box-shadow:0 0 35px rgba(255,79,216,.5);
 
 <div class="hero glass">
 <img src="https://picsum.photos/900/500?random=1">
+
 <h1>Discover Amazing Videos</h1>
+
 <p>Premium Glass Video Platform Experience</p>
-<button class="watch-btn">Start Watching</button>
+
+<button class="watch-btn" onclick="location.href='feed.html'">
+Start Watching
+</button>
+
 </div>
 
 <div class="categories">
@@ -231,38 +233,46 @@ box-shadow:0 0 35px rgba(255,79,216,.5);
 </div>
 
 <div class="section">
+
 <h2>🔥 Trending</h2>
 
 <div class="cards">
 
-<div class="card glass">
+<div class="card glass" onclick="location.href='feed.html'">
 <img src="https://picsum.photos/400/250?1">
+
 <div class="card-content">
 <h3>Luxury Travel Vlog</h3>
 <p>1.2M Views</p>
 </div>
+
 </div>
 
-<div class="card glass">
+<div class="card glass" onclick="location.href='feed.html'">
 <img src="https://picsum.photos/400/250?2">
+
 <div class="card-content">
 <h3>Gaming Highlights</h3>
 <p>850K Views</p>
 </div>
+
 </div>
 
-<div class="card glass">
+<div class="card glass" onclick="location.href='feed.html'">
 <img src="https://picsum.photos/400/250?3">
+
 <div class="card-content">
 <h3>Tech Review</h3>
 <p>620K Views</p>
 </div>
+
 </div>
 
 </div>
 </div>
 
 <div class="section">
+
 <h2>⚡ Shorts</h2>
 
 <div class="cards">
@@ -294,7 +304,9 @@ Home
 Shorts
 </div>
 
-<div class="create">+</div>
+<div class="create">
++
+</div>
 
 <div class="item">
 <span>📺</span>
@@ -307,6 +319,18 @@ Profile
 </div>
 
 </div>
-<script src="assets/js/app.js"></script>
+
+<script>
+
+document.querySelector(".create").onclick=function(){
+location.href='feed.html';
+};
+
+document.querySelector(".profile").onclick=function(){
+alert("Profile Page Coming Soon");
+};
+
+</script>
+
 </body>
 </html>
