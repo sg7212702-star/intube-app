@@ -1,35 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video</title>
+<title>INTUBE Reels</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
 body{
-background:#0a0712;
+background:#06152f;
+overflow:hidden;
 color:white;
-font-family:Poppins,sans-serif;
-padding:15px;
 }
 
 video{
 width:100%;
-border-radius:15px;
+height:100vh;
+object-fit:cover;
+position:fixed;
+top:0;
+left:0;
 }
-</style>
 
+.overlay{
+position:fixed;
+inset:0;
+background:linear-gradient(
+to top,
+rgba(0,0,0,.85),
+rgba(0,0,0,.15),
+rgba(0,0,0,.05)
+);
+}
+
+.topbar{
+position:fixed;
+top:20px;
+left:20px;
+right:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+z-index:5;
+}
+
+.logo{
+font-size:28px;
+font-weight:700;
+}
+
+.actions-right{
+position:fixed;
+right:15px;
+bottom:130px;
+display:flex;
+flex-direction:column;
+gap:18px;
+z-index:5;
+}
+
+.icon{
+width:60px;
+height:60px;
+border-radius:20px;
+
+background:rgba(255,255,255,.12);
+
+backdrop-filter:blur(25px);
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+font-size:28px;
+}
+
+.info{
+position:fixed;
+bottom:30px;
+left:20px;
+right:90px;
+z-index:5;
+}
+
+.user{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:10px;
+}
+
+.avatar{
+width:55px;
+height:55px;
+border-radius:50%;
+background:linear-gradient(45deg,#00bfff,#7f5cff);
+}
+
+.follow{
+padding:8px 18px;
+border:none;
+border-radius:15px;
+background:linear-gradient(45deg,#00bfff,#7f5cff);
+color:white;
+font-weight:600;
+}
+
+.username{
+font-weight:700;
+}
+
+.caption{
+opacity:.9;
+margin-top:8px;
+}
+
+</style>
 </head>
+
 <body>
 
-<h1>🎬 Watch Video</h1>
-
-<video controls>
+<video autoplay muted loop controls>
 <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
 </video>
 
-<h2>My First Video</h2>
-<p>Uploaded on INTUBE</p>
+<div class="overlay"></div>
+
+<div class="topbar">
+<div class="logo">INTUBE</div>
+<div>🎬 Reels</div>
+</div>
+
+<div class="actions-right">
+
+<div class="icon">❤️</div>
+
+<div class="icon">💬</div>
+
+<div class="icon">📤</div>
+
+<div class="icon">🔖</div>
+
+</div>
+
+<div class="info">
+
+<div class="user">
+
+<div class="avatar"></div>
+
+<div>
+<div class="username">@intube_creator</div>
+</div>
+
+<button class="follow">
+Follow
+</button>
+
+</div>
+
+<div class="caption">
+🔥 Welcome to INTUBE Premium Reels Experience
+</div>
+
+</div>
 
 </body>
 </html>
