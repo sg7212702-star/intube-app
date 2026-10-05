@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,100 +12,26 @@ padding:0;
 box-sizing:border-box;
 font-family:Poppins,sans-serif;
 }
-<script type="module">
 
-import { auth } from "./firebase-config.js";
-
-import {
-GoogleAuthProvider,
-signInWithPopup,
-RecaptchaVerifier,
-signInWithPhoneNumber
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
-const googleBtn = document.querySelector(".google");
-const phoneBtn = document.querySelector(".phone");
-const status = document.getElementById("status");
-
-googleBtn.onclick = async () => {
-
-try {
-
-const provider = new GoogleAuthProvider();
-
-const result = await signInWithPopup(auth, provider);
-
-status.innerHTML =
-"✅ Logged In: " + result.user.displayName;
-
-window.location.href = "index.html";
-
-} catch(err) {
-
-status.innerHTML = err.message;
-
-}
-
-};
-
-window.recaptchaVerifier =
-new RecaptchaVerifier(
-auth,
-"recaptcha-container",
-{
-size:"normal"
-}
-);
-
-phoneBtn.onclick = async () => {
-
-const phone =
-document.getElementById("phone").value;
-
-try {
-
-const confirmation =
-await signInWithPhoneNumber(
-auth,
-phone,
-window.recaptchaVerifier
-);
-
-const otp = prompt("Enter OTP");
-
-await confirmation.confirm(otp);
-
-status.innerHTML =
-"✅ Phone Login Success";
-
-window.location.href = "index.html";
-
-} catch(err) {
-
-status.innerHTML = err.message;
-
-}
-
-};
-
-</script>
 body{
 background:#0a0712;
+color:white;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
-color:white;
+padding:20px;
 }
 
 .box{
-width:90%;
-max-width:380px;
+width:100%;
+max-width:400px;
 background:rgba(255,255,255,.08);
 backdrop-filter:blur(20px);
 padding:25px;
 border-radius:25px;
 text-align:center;
+border:1px solid rgba(255,255,255,.15);
 }
 
 h1{
@@ -142,33 +68,34 @@ border-radius:15px;
 outline:none;
 }
 
-#recaptcha-container{
-margin-top:15px;
-}
-
 #status{
 margin-top:15px;
 font-size:14px;
+word-break:break-word;
+}
+
+#recaptcha-container{
+margin-top:15px;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="box">
 
 <h1>INTUBE Login</h1>
 
-<button class="google">
+<button id="googleBtn" class="google">
 Continue with Google
 </button>
 
 <input
 type="text"
-placeholder="+91XXXXXXXXXX"
-id="phone">
+id="phone"
+placeholder="+91XXXXXXXXXX">
 
-<button class="phone">
+<button id="phoneBtn" class="phone">
 Send OTP
 </button>
 
@@ -177,6 +104,111 @@ Send OTP
 <p id="status"></p>
 
 </div>
+
+<script type="module">
+
+import { auth } from "./firebase-config.js";
+
+import {
+GoogleAuthProvider,
+signInWithPopup,
+RecaptchaVerifier,
+signInWithPhoneNumber
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+const googleBtn =
+document.getElementById("googleBtn");
+
+const phoneBtn =
+document.getElementById("phoneBtn");
+
+const status =
+document.getElementById("status");
+
+/* Google Login */
+
+googleBtn.addEventListener("click", async () => {
+
+try{
+
+const provider =
+new GoogleAuthProvider();
+
+const result =
+await signInWithPopup(auth, provider);
+
+status.innerHTML =
+"✅ Welcome " +
+(result.user.displayName || "User");
+
+setTimeout(()=>{
+window.location.href="index.html";
+},1000);
+
+}catch(err){
+
+status.innerHTML =
+"❌ " + err.message;
+
+}
+
+});
+
+/* Phone Login */
+
+window.recaptchaVerifier =
+new RecaptchaVerifier(
+auth,
+"recaptcha-container",
+{
+size:"normal"
+}
+);
+
+phoneBtn.addEventListener("click", async () => {
+
+const phone =
+document.getElementById("phone").value;
+
+if(!phone){
+status.innerHTML =
+"❌ Enter phone number";
+return;
+}
+
+try{
+
+const confirmation =
+await signInWithPhoneNumber(
+auth,
+phone,
+window.recaptchaVerifier
+);
+
+const otp =
+prompt("Enter OTP");
+
+if(!otp) return;
+
+await confirmation.confirm(otp);
+
+status.innerHTML =
+"✅ Phone Login Success";
+
+setTimeout(()=>{
+window.location.href="index.html";
+},1000);
+
+}catch(err){
+
+status.innerHTML =
+"❌ " + err.message;
+
+}
+
+});
+
+</script>
 
 </body>
 </html>
