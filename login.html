@@ -12,7 +12,83 @@ padding:0;
 box-sizing:border-box;
 font-family:Poppins,sans-serif;
 }
+<script type="module">
 
+import { auth } from "./firebase-config.js";
+
+import {
+GoogleAuthProvider,
+signInWithPopup,
+RecaptchaVerifier,
+signInWithPhoneNumber
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+const googleBtn = document.querySelector(".google");
+const phoneBtn = document.querySelector(".phone");
+const status = document.getElementById("status");
+
+googleBtn.onclick = async () => {
+
+try {
+
+const provider = new GoogleAuthProvider();
+
+const result = await signInWithPopup(auth, provider);
+
+status.innerHTML =
+"✅ Logged In: " + result.user.displayName;
+
+window.location.href = "index.html";
+
+} catch(err) {
+
+status.innerHTML = err.message;
+
+}
+
+};
+
+window.recaptchaVerifier =
+new RecaptchaVerifier(
+auth,
+"recaptcha-container",
+{
+size:"normal"
+}
+);
+
+phoneBtn.onclick = async () => {
+
+const phone =
+document.getElementById("phone").value;
+
+try {
+
+const confirmation =
+await signInWithPhoneNumber(
+auth,
+phone,
+window.recaptchaVerifier
+);
+
+const otp = prompt("Enter OTP");
+
+await confirmation.confirm(otp);
+
+status.innerHTML =
+"✅ Phone Login Success";
+
+window.location.href = "index.html";
+
+} catch(err) {
+
+status.innerHTML = err.message;
+
+}
+
+};
+
+</script>
 body{
 background:#0a0712;
 display:flex;
