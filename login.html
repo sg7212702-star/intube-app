@@ -71,7 +71,6 @@ outline:none;
 #status{
 margin-top:15px;
 font-size:14px;
-word-break:break-word;
 }
 
 #recaptcha-container{
@@ -91,12 +90,12 @@ Continue with Google
 </button>
 
 <input
-type="text"
+type="tel"
 id="phone"
-placeholder="+91XXXXXXXXXX">
+placeholder="Enter Mobile Number">
 
 <button id="phoneBtn" class="phone">
-Send OTP
+Get OTP
 </button>
 
 <div id="recaptcha-container"></div>
@@ -127,7 +126,7 @@ document.getElementById("status");
 
 /* Google Login */
 
-googleBtn.addEventListener("click", async () => {
+googleBtn.onclick = async () => {
 
 try{
 
@@ -152,9 +151,9 @@ status.innerHTML =
 
 }
 
-});
+};
 
-/* Phone Login */
+/* Recaptcha */
 
 window.recaptchaVerifier =
 new RecaptchaVerifier(
@@ -165,16 +164,23 @@ size:"normal"
 }
 );
 
-phoneBtn.addEventListener("click", async () => {
+/* Phone Login */
 
-const phone =
-document.getElementById("phone").value;
+phoneBtn.onclick = async () => {
 
-if(!phone){
+const userNumber =
+document.getElementById("phone").value.trim();
+
+if(userNumber.length !== 10){
+
 status.innerHTML =
-"❌ Enter phone number";
+"❌ Enter 10 digit mobile number";
+
 return;
+
 }
+
+const phone = "+91" + userNumber;
 
 try{
 
@@ -206,7 +212,7 @@ status.innerHTML =
 
 }
 
-});
+};
 
 </script>
 
