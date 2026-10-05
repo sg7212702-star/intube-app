@@ -1,50 +1,93 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTUBE - Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+body{background:#120b20;color:#fff;font-family:'Poppins',sans-serif;margin:0;padding:0 0 90px}
+.header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#120b20;z-index:10;border-bottom:1px solid rgba(255,255,255,0.08)}
+.logo{font-weight:700;font-size:20px;letter-spacing:-0.5px}
+.logo span{background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#videos{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:600px;margin:0 auto}
+@media(min-width:700px){#videos{grid-template-columns:1fr 1fr}}
+.card{background:#1e1430;border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;transition:0.2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(192,132,252,0.3)}
+.card img, .card video{width:100%;height:190px;object-fit:cover;background:#000;display:block}
+.card-body{padding:12px}
+.card h3{margin:0;font-size:14px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card p{margin:4px 0 0;color:#9c92b5;font-size:12px}
+.watch-btn{display:inline-block;margin-top:10px;background:#2a1f45;color:#fff;text-decoration:none;padding:6px 14px;border-radius:999px;font-size:12px}
+.loading{text-align:center;color:#9c92b5;margin-top:80px}
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(30, 20, 48, 0.95); backdrop-filter:blur(10px); display: flex; justify-content: space-around; align-items: center; height: 70px; border-top: 1px solid rgba(255,255,255,0.1); z-index:99; }
+.nav-item { text-align: center; color: #9c92b5; text-decoration: none; font-size: 11px; display:flex; flex-direction:column; }
+.nav-item.active { color: #fff; }
+.fab-btn { width: 52px; height: 52px; background: linear-gradient(135deg, #c084fc, #818cf8); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; margin-top: -18px; text-decoration: none; }
+</style>
+</head>
+<body>
 
-import {
-db,
-collection,
-getDocs
-}
-from "./firebase-config.js";
+<div class="header"><div class="logo">IN<span>TUBE</span></div><div style="font-size:13px;color:#9c92b5">Lite • Fast</div></div>
+
+<div id="videos"><div class="loading">Loading videos... ⏳</div></div>
+
+<nav class="bottom-nav">
+<a href="index.html" class="nav-item active">🏠 Home</a>
+<a href="feed.html" class="nav-item">🎞️ Feed</a>
+<a href="upload.html" class="fab-btn">+</a>
+<a href="explore.html" class="nav-item">📺 Explore</a>
+<a href="login.html" class="nav-item">👤 Profile</a>
+</nav>
+
+<script type="module">
+import { db } from "./firebase-config.js";
+import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 async function loadVideos(){
+ const container = document.getElementById("videos");
+ try{
+   // videos collection se lao (tere upload wala)
+   const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
+   const snap = await getDocs(q);
+   
+   if(snap.empty){
+     // agar videos khali hai to posts se try karo
+     const q2 = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+     const snap2 = await getDocs(q2);
+     if(snap2.empty){
+       container.innerHTML = `<div class="loading">No videos yet.<br>Upload se pehla video daal 🔥</div>`;
+       return;
+     }
+     render(snap2, container);
+     return;
+   }
+   render(snap, container);
+ }catch(e){
+   console.error(e);
+   container.innerHTML = `<div class="loading">Error: ${e.message}<br><br>Firebase me Firestore Rules ko Test Mode pe karo</div>`;
+ }
+}
 
-const container =
-document.getElementById("videos");
-
-const snap =
-await getDocs(
-collection(db,"videos")
-);
-
-container.innerHTML="";
-
-snap.forEach(doc=>{
-
-const v=doc.data();
-
-container.innerHTML+=`
-
-<div class="card">
-
-<h3>${v.title}</h3>
-
-<p>${v.author}</p>
-
-<a href="watch.html?id=${doc.id}">
-Watch Video
-</a>
-
-</div>
-
-`;
-
-});
-
+function render(snap, container){
+ container.innerHTML = "";
+ snap.forEach(docSnap=>{
+   const v = docSnap.data();
+   const media = v.mediaUrl || v.videoUrl || 'https://picsum.photos/600/400';
+   const isVideo = media.includes('.mp4') || media.includes('video');
+   container.innerHTML += `
+   <div class="card">
+     ${isVideo ? `<video src="${media}" muted></video>` : `<img src="${media}" loading="lazy">`}
+     <div class="card-body">
+       <h3>${v.title || v.caption || 'Untitled'}</h3>
+       <p>by ${v.author || v.userName || 'Guest'} • ${v.views || 0} views</p>
+       <a class="watch-btn" href="watch.html?id=${docSnap.id}">▶ Watch Video</a>
+     </div>
+   </div>`;
+ });
 }
 
 loadVideos();
-
 </script>
 
-<div id="videos"></div>
+</body>
+</html>
