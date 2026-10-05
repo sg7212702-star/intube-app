@@ -1,155 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INTUBE Profile</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
-
-body{
-background:#06152f;
-color:white;
-padding:20px;
-}
-
-body::before{
-content:"";
-position:fixed;
-width:400px;
-height:400px;
-background:#00bfff;
-filter:blur(200px);
-top:-120px;
-left:-120px;
-opacity:.25;
-z-index:-1;
-}
-
-.glass{
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(35px);
-border:1px solid rgba(255,255,255,.12);
-border-radius:30px;
-}
-
-.profile-card{
-padding:25px;
-text-align:center;
-}
-
-.avatar{
-width:120px;
-height:120px;
-border-radius:50%;
-margin:auto;
-background:linear-gradient(45deg,#00bfff,#7f5cff);
-}
-
-.username{
-font-size:24px;
-font-weight:700;
-margin-top:15px;
-}
-
-.bio{
-opacity:.8;
-margin-top:10px;
-}
-
-.stats{
-display:flex;
-justify-content:space-around;
-margin-top:25px;
-}
-
-.stat h2{
-font-size:22px;
-}
-
-.edit-btn{
-margin-top:25px;
-padding:14px;
-border:none;
-width:100%;
-border-radius:18px;
-color:white;
-font-weight:600;
-background:linear-gradient(45deg,#00bfff,#7f5cff);
-}
-
-.posts{
-margin-top:25px;
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:10px;
-}
-
-.post{
-height:120px;
-border-radius:18px;
-background:rgba(255,255,255,.08);
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Metadata</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { background: #120b20; color: #fff; font-family: 'Poppins', sans-serif; padding: 25px; }
+        .form-container { max-width: 500px; margin: auto; background: #251b37; padding: 25px; border-radius: 20px; }
+        .form-group { margin-bottom: 18px; }
+        label { font-size: 13px; color: #b0a8c2; }
+        input, textarea { width: 100%; padding: 12px; background: #120b20; border: 1px solid #3f305c; border-radius: 10px; color: #fff; margin-top: 6px; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: linear-gradient(135deg, #c084fc, #818cf8); border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer; font-size: 15px; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #c084fc; text-decoration: none; font-size: 13px; }
+    </style>
 </head>
-
 <body>
 
-<div class="profile-card glass">
+    <div class="form-container">
+        <h2>Publish Video Details</h2>
+        <p style="color:#b0a8c2; font-size:12px; margin-bottom:20px;">Storage cost bachane ke liye direct database entry karein.</p>
+        
+        <div class="form-group">
+            <label>Video Title</label>
+            <input type="text" id="videoTitle" placeholder="Jaise: My Travel Vlog">
+        </div>
+        <div class="form-group">
+            <label>Video Link / URL (YouTube/External Link)</label>
+            <input type="text" id="videoUrl" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="videoDesc" rows="3" placeholder="Video ke baare me likhein..."></textarea>
+        </div>
+        
+        <button id="publishBtn">Publish to Database</button>
+        <a href="index.html" class="back-link">← Cancel</a>
+    </div>
 
-<div class="avatar"></div>
+    <script type="module">
+        import { auth, db, addDoc, collection } from "./firebase-config.js";
 
-<div class="username">INTUBE User</div>
+        const publishBtn = document.getElementById('publishBtn');
 
-<div class="bio">
-Creator • Video Lover • Premium Member
-</div>
+        publishBtn.onclick = async () => {
+            const title = document.getElementById('videoTitle').value.trim();
+            const url = document.getElementById('videoUrl').value.trim();
+            const desc = document.getElementById('videoDesc').value.trim();
+            const user = auth.currentUser;
 
-<div class="stats">
+            if (!title || !url) {
+                alert("Kripya Title aur Video URL bharein!");
+                return;
+            }
 
-<div class="stat">
-<h2>25</h2>
-<p>Posts</p>
-</div>
+            try {
+                publishBtn.innerText = "Publishing...";
+                publishBtn.disabled = true;
 
-<div class="stat">
-<h2>1.2K</h2>
-<p>Followers</p>
-</div>
+                await addDoc(collection(db, "videos"), {
+                    title: title,
+                    videoUrl: url,
+                    description: desc,
+                    author: user ? user.displayName : "Guest Creator",
+                    authorEmail: user ? user.email : "anonymous",
+                    views: 0,
+                    createdAt: new Date()
+                });
 
-<div class="stat">
-<h2>530</h2>
-<p>Following</p>
-</div>
-
-</div>
-
-<button class="edit-btn">
-Edit Profile
-</button>
-
-</div>
-
-<div class="posts">
-
-<div class="post glass"></div>
-<div class="post glass"></div>
-<div class="post glass"></div>
-<div class="post glass"></div>
-<div class="post glass"></div>
-<div class="post glass"></div>
-
-</div>
-
+                alert("Video successfully published!");
+                window.location.href = "index.html";
+            } catch (error) {
+                alert("Error: " + error.message);
+                publishBtn.innerText = "Publish to Database";
+                publishBtn.disabled = false;
+            }
+        };
+    </script>
 </body>
 </html>
