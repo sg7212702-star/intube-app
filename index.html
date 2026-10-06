@@ -1,147 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>INTUBE</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTUBE - Transparent</title>
+<script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"}}</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui;background:#06060a;color:#fff;min-height:100vh;overflow-x:hidden}
-#bg{position:fixed;inset:0;z-index:-2;background:radial-gradient(800px at 10% 10%, rgba(255,77,166,.35), transparent), radial-gradient(600px at 90% 90%, rgba(120,80,255,.25), transparent), #06060a}
-.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:10px}
-.logo{font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#ff4da6,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#search{flex:1;max-width:220px;padding:9px 14px;border-radius:20px;outline:none;color:#fff}
-.feed{max-width:480px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:16px;padding-bottom:90px}
-.reel{position:relative;border-radius:20px;min-height:580px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
-.reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
-.reelData{position:relative;z-index:2;padding:14px;background:linear-gradient(transparent, rgba(0,0,0,.85));width:100%}
-.actions{position:absolute;right:8px;bottom:90px;z-index:3;display:flex;flex-direction:column;gap:10px}
-.actionBtn{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer}
-.bottomBar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:10px;padding:10px 16px;border-radius:30px}
-.bBtn{padding:10px 18px;border-radius:20px;border:none;font-weight:700;cursor:pointer;color:#fff}
-#uploadModal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(10px)}
-.modalBox{width:100%;max-width:400px;padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px}
-.inp{padding:12px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;outline:none}
-.feed, .reel, .top, .modalBox, .actionBtn, .bottomBar, #search, .bBtn.glass{
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#06060a;color:#fff;min-height:100vh}
+#bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(900px at 15% 10%, rgba(255,77,166,.35), transparent), radial-gradient(700px at 85% 90%, rgba(130,80,255,.30), transparent), #06060a}
+.top{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px;padding:12px 16px}
+.top b{font-weight:900;background:linear-gradient(90deg,#ff4da6,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#search{flex:1;padding:10px 16px;border-radius:25px;color:#fff;outline:none}
+#feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;padding:16px;padding-bottom:90px}
+.card{border-radius:22px;overflow:hidden;transition:.25s}
+.card:hover{transform:translateY(-3px)}
+.card video,.card img{width:100%;height:230px;object-fit:cover;background:#000}
+.info{padding:12px;display:flex;gap:10px}
+.info img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,182,193,.5)}
+#loginScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:200;background:rgba(0,0,0,.55);backdrop-filter:blur(12px)}
+.loginCard{padding:35px;border-radius:28px;text-align:center;width:90%;max-width:380px}
+.loginCard button{border:none;padding:14px;width:100%;border-radius:30px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;margin-top:20px;color:#000;background:#fff}
+#uploadModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(15px);z-index:150;align-items:center;justify-content:center;padding:16px}
+.uploadBox{padding:24px;border-radius:24px;width:100%;max-width:420px}
+.uploadBox input[type="text"]{width:100%;margin:12px 0;padding:12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;outline:none}
+#progressWrap{display:none;margin-top:12px;background:rgba(255,255,255,.15);height:8px;border-radius:10px;overflow:hidden}
+#progressBar{height:100%;width:0%;background:linear-gradient(90deg,#ff4da6,#ff8ac6);transition:.2s}
+.upload-btn{position:fixed;bottom:20px;right:20px;background:linear-gradient(90deg,#ff4da6,#ff8ac6);color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;z-index:50;box-shadow:0 8px 30px rgba(255,77,166,.5);border:1px solid rgba(255,182,193,.5)}
+#preview{width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-top:10px;display:none;background:#000}
+
+/* === TRANSPARENT PINK GLASS - FINAL === */
+.top,.card,.loginCard,.uploadBox, #search,.upload-btn{
 background:linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,105,180,.16), rgba(255,255,255,.06))!important;
 backdrop-filter:blur(28px) saturate(200%)!important;
 -webkit-backdrop-filter:blur(28px) saturate(200%)!important;
 border:1px solid rgba(255,182,193,.42)!important;
 box-shadow:0 8px 32px rgba(0,0,0,.35), 0 0 18px rgba(255,105,180,.35), inset 0 1px 0 rgba(255,255,255,.2)!important;
 }
-.bBtn.primary{background:linear-gradient(90deg,#ff4da6,#ff8ac6)!important;border:none!important}
 </style>
 </head>
 <body>
 <div id="bg"></div>
-<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:20px">
-<h1 style="font-size:42px;font-weight:900">INTUBE 💎</h1>
-<p style="opacity:.7">Transparent Reels</p>
-<button id="loginBtn" class="bBtn primary" style="padding:14px 28px;border-radius:30px;font-size:16px">Login with Google</button>
-<p id="errMsg" style="color:#ff6b9d;font-size:12px;max-width:300px"></p>
+
+<div id="loginScreen"><div class="loginCard"><h1 style="font-size:36px">INTUBE 💎</h1><p style="color:#ffb3d6;margin-top:8px">Transparent Reels</p><button id="googleBtn"><img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Login with Google</button><p id="loginMsg" style="color:#ff8ac6;margin-top:14px;font-size:13px;line-height:1.4"></p></div></div>
+
+<div class="top"><b>INTUBE</b><input id="search" placeholder="Search video..."><div id="profilePic" style="width:38px;height:38px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;border:1px solid rgba(255,182,193,.4)" onclick="logout()">👤</div></div>
+
+<div id="feed">Loading videos...</div>
+<div class="upload-btn" onclick="openUpload()">+</div>
+
+<div id="uploadModal">
+<div class="uploadBox">
+<h3>Upload Video / Photo</h3>
+<input id="vTitle" type="text" placeholder="Video ka Title likho...">
+<input type="file" id="vFile" accept="video/*,image/*">
+<img id="preview">
+<div id="progressWrap"><div id="progressBar"></div></div>
+<button id="upBtn" style="width:100%;margin-top:14px;background:linear-gradient(90deg,#ff4da6,#ff8ac6);border:none;padding:12px;border-radius:20px;color:#fff;font-weight:bold;cursor:pointer">Upload Now</button>
+<button onclick="closeUpload()" style="width:100%;margin-top:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:10px;border-radius:20px;color:#fff;cursor:pointer">Cancel</button>
+<p id="upStatus" style="text-align:center;margin-top:12px;color:#ffb3d6;font-size:13px"></p>
 </div>
-<div class="top" id="mainTop" style="display:none"><div class="logo">INTUBE</div><input id="search" placeholder="Search reels..."><button id="logoutBtn" class="actionBtn" style="width:36px;height:36px">🚪</button></div>
-<div id="feed" class="feed" style="display:none"></div>
-<div class="bottomBar" id="bottomBar" style="display:none"><button class="bBtn glass">🏠 Home</button><button id="openUpload" class="bBtn primary">+ Upload</button></div>
-<div id="uploadModal"><div class="modalBox"><h3>Upload New Reel</h3><input type="file" id="fileIn" accept="video/*,image/*" class="inp"><input type="text" id="capIn" placeholder="Caption likho..." class="inp"><button id="postBtn" class="bBtn primary" style="width:100%">Post Now</button><button id="closeUpload" class="bBtn glass" style="width:100%">Cancel</button><div id="upProgress" style="font-size:12px;opacity:.7;text-align:center"></div></div></div>
+</div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "<<<< YAHAN REAL APIKEY DALO >>>>",
-  authDomain: "intube-free.firebaseapp.com",
-  projectId: "intube-free",
-  storageBucket: "intube-free.appspot.com",
-  messagingSenderId: "<<<< YAHAN REAL SENDER ID DALO >>>>",
-  appId: "<<<< YAHAN REAL APP ID DALO >>>>"
+  apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
+  authDomain: "intube-61cca.firebaseapp.com",
+  projectId: "intube-61cca",
+  storageBucket: "intube-61cca.firebasestorage.app",
+  messagingSenderId: "627409965607",
+  appId: "1:627409965607:web:a1d71800d812fe668b7402"
 };
-const CLOUD_NAME="buyq0obz";
-const UPLOAD_PRESET="intube_free";
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
 
-getRedirectResult(auth).then(r=>{ if(r) console.log("Login success",r.user); }).catch(e=>{ document.getElementById('errMsg').innerText=e.message; });
+const CLOUD_NAME = "kujnbe0a";
+const UPLOAD_PRESET = "intube_free";
 
-let currentUser=null;
-let allReels=[];
-const loginScreen=document.getElementById('loginScreen');
-const mainTop=document.getElementById('mainTop');
-const feed=document.getElementById('feed');
-const bottomBar=document.getElementById('bottomBar');
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+let currentUser = null;
+let allVideos = [];
 
-document.getElementById('loginBtn').onclick=()=>{
-  const provider=new GoogleAuthProvider();
-  signInWithRedirect(auth, provider);
-};
-document.getElementById('logoutBtn').onclick=()=>signOut(auth);
+setPersistence(auth, browserLocalPersistence);
+getRedirectResult(auth).catch(e=>{ document.getElementById('loginMsg').innerText = e.message; });
 
-onAuthStateChanged(auth,(u)=>{
-  currentUser=u;
-  if(u){
-    loginScreen.style.display='none';
-    mainTop.style.display='flex';
-    feed.style.display='flex';
-    bottomBar.style.display='flex';
-    startFeed();
-  }else{
-    loginScreen.style.display='flex';
-    mainTop.style.display='none';
-    feed.style.display='none';
-    bottomBar.style.display='none';
+document.getElementById('googleBtn').onclick = async ()=>{
+  const msg = document.getElementById('loginMsg');
+  msg.innerText = "Google khul raha hai...";
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(err){
+    if(err.code === 'auth/unauthorized-domain'){
+      msg.innerHTML = "❌ Domain allow nahi hai!<br>Firebase > Auth > Settings > Authorized domains me<br><b>2702-star.github.io</b> add karo";
+    }else if(err.code.includes('popup')){
+      msg.innerText = "Popup block hai, redirect kar rahe hai...";
+      await signInWithRedirect(auth, provider);
+    }else{
+      msg.innerText = err.message;
+    }
   }
+};
+
+onAuthStateChanged(auth, (user)=>{
+if(user){
+  currentUser=user;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('profilePic').innerHTML=`<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
+  loadVideos();
+}else{
+  document.getElementById('loginScreen').style.display='flex';
+  loadVideos();
+}
 });
 
-function startFeed(){
-  const q=query(collection(db,"reels"),orderBy("time","desc"));
-  onSnapshot(q,(snap)=>{
-    allReels=snap.docs.map(d=>({id:d.id,...d.data()}));
-    render();
-  });
+window.logout=()=>signOut(auth).then(()=>location.reload());
+window.openUpload=()=>{ if(!currentUser) return alert("Pehle Login karo"); document.getElementById('uploadModal').style.display='flex'; }
+window.closeUpload=()=>{ document.getElementById('uploadModal').style.display='none'; document.getElementById('upStatus').innerText=""; document.getElementById('progressWrap').style.display='none'; document.getElementById('progressBar').style.width='0%'; }
+
+document.getElementById('vFile').onchange = (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 100*1024*1024) return alert("100MB se badi file allowed nahi hai");
+  const prev = document.getElementById('preview');
+  prev.style.display='block';
+  if(file.type.startsWith('video')){ prev.outerHTML = `<video id="preview" controls style="width:100%;max-height:200px;border-radius:12px;margin-top:10px;display:block"></video>`; document.getElementById('preview').src = URL.createObjectURL(file); }
+  else{ prev.src = URL.createObjectURL(file); }
+};
+
+async function loadVideos(){
+try{
+  const snap = await getDocs(query(collection(db,"videos"), orderBy("time","desc")));
+  allVideos = []; snap.forEach(d=> allVideos.push(d.data()));
+  renderVideos(allVideos);
+}catch(e){ document.getElementById('feed').innerHTML = "Error: "+e.message+"<br><br>Firestore Rules check karo"; }
 }
-function render(){
-  const s=document.getElementById('search').value.toLowerCase();
-  let list=allReels;
-  if(s) list=list.filter(r=>(r.caption||"").toLowerCase().includes(s) || (r.userName||"").toLowerCase().includes(s));
-  feed.innerHTML="";
-  if(list.length==0){ feed.innerHTML="<p style='text-align:center;opacity:.5;padding:40px'>Koi reel nahi hai, pehla upload karo!</p>"; return; }
-  list.forEach(r=>{
-    const isVideo=r.type==="video" || (r.url && (r.url.includes(".mp4") || r.url.includes("video")));
-    feed.innerHTML+=`
-      <div class="reel">
-        ${isVideo?`<video src="${r.url}" loop muted playsinline autoplay onclick="this.paused?this.play():this.pause()"></video>`:`<img src="${r.url}">`}
-        <div class="actions"><div class="actionBtn">❤️</div><div class="actionBtn">💬</div><div class="actionBtn">↗️</div></div>
-        <div class="reelData"><b>@${r.userName||'user'}</b><p style="opacity:.9;margin-top:4px">${r.caption||''}</p></div>
-      </div>`;
+
+function renderVideos(list){
+  if(!list.length){ document.getElementById('feed').innerHTML = "<p style='padding:20px;color:#ffb3d6;text-align:center'>Koi video nahi hai, pehle upload karo 💎</p>"; return; }
+  let html=""; list.forEach(v=>{
+    html+=`<div class="card">${v.url.includes('video')||v.url.includes('.mp4')?`<video src="${v.url}" controls preload="metadata"></video>`:`<img src="${v.url}" loading="lazy">`}<div class="info"><img src="${v.userPhoto||''}" onerror="this.style.display='none'"><div><b>${v.title}</b><p style="color:#ffb3d6;font-size:13px;margin-top:2px">${v.userName} • ${v.time?.toDate? v.time.toDate().toLocaleDateString() : 'Just now'}</p></div></div></div>`;
   });
+  document.getElementById('feed').innerHTML = html;
 }
-document.getElementById('search').oninput=render;
-document.getElementById('openUpload').onclick=()=>document.getElementById('uploadModal').style.display='flex';
-document.getElementById('closeUpload').onclick=()=>document.getElementById('uploadModal').style.display='none';
-document.getElementById('postBtn').onclick=async()=>{
-  const file=document.getElementById('fileIn').files[0];
-  const caption=document.getElementById('capIn').value;
-  const progress=document.getElementById('upProgress');
-  if(!file) return alert("Pehle video/photo select karo");
-  if(!currentUser) return alert("Pehle login karo");
-  try{
-    document.getElementById('postBtn').innerText="Uploading...";
-    progress.innerText="Upload ho raha hai...";
-    const fd=new FormData();
-    fd.append("file",file);
-    fd.append("upload_preset",UPLOAD_PRESET);
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:"POST",body:fd});
-    const data=await res.json();
-    if(!data.secure_url) throw new Error(JSON.stringify(data));
-    progress.innerText="Save ho raha hai...";
-    await addDoc(collection(db,"reels"),{url:data.secure_url,caption:caption,type:file.type.startsWith("video")?"video":"image",userName:currentUser.displayName,userId:currentUser.uid,likes:0,time:serverTimestamp()});
-    alert("Upload ho gaya! ✅");
-    document.getElementById('uploadModal').style.display='none';
-    document.getElementById('fileIn').value=""; document.getElementById('capIn').value=""; progress.innerText="";
-  }catch(e){ console.error(e); alert("Fail: "+e.message); progress.innerText="Fail: "+e.message; }
-  document.getElementById('postBtn').innerText="Post Now";
+
+document.getElementById('search').oninput = (e)=>{
+  const q = e.target.value.toLowerCase();
+  const filtered = allVideos.filter(v=> v.title.toLowerCase().includes(q) || v.userName.toLowerCase().includes(q));
+  renderVideos(filtered);
+};
+
+document.getElementById('upBtn').onclick= ()=>{
+let file=document.getElementById('vFile').files[0];
+let title=document.getElementById('vTitle').value.trim();
+if(!file||!title) return alert("Title + file dono chahiye");
+if(!currentUser) return alert("Login karo");
+const upBtn = document.getElementById('upBtn');
+const status = document.getElementById('upStatus');
+const wrap = document.getElementById('progressWrap');
+const bar = document.getElementById('progressBar');
+upBtn.disabled=true; upBtn.innerText="Uploading..."; status.innerText="0%"; wrap.style.display='block'; bar.style.width='0%';
+let fd=new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET);
+const xhr = new XMLHttpRequest();
+xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`);
+xhr.upload.onprogress = (e)=>{
+   if(e.lengthComputable){ const p = Math.round((e.loaded/e.total)*100); bar.style.width=p+'%'; status.innerText=`Uploading ${p}%`; }
+};
+xhr.onload = async ()=>{
+   try{
+     const data = JSON.parse(xhr.responseText);
+     if(!data.secure_url) throw new Error(data.error?.message||'Cloudinary preset error');
+     status.innerText="Saving to database...";
+     await addDoc(collection(db,"videos"),{ title, url:data.secure_url, userName:currentUser.displayName, userEmail:currentUser.email, userPhoto:currentUser.photoURL, time:new Date() });
+     status.innerText="Done 💎";
+     setTimeout(()=>{ closeUpload(); document.getElementById('vTitle').value=""; document.getElementById('vFile').value=""; document.getElementById('preview').style.display='none'; upBtn.disabled=false; upBtn.innerText="Upload Now"; loadVideos(); },800);
+   }catch(err){ status.innerText="Failed: "+err.message; upBtn.disabled=false; upBtn.innerText="Upload Now"; }
+};
+xhr.onerror = ()=>{ status.innerText="Network error, fir se try karo"; upBtn.disabled=false; upBtn.innerText="Upload Now"; };
+xhr.send(fd);
 };
 </script>
 </body>
