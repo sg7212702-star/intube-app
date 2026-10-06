@@ -1,54 +1,208 @@
 <!DOCTYPE html>
-<html lang="hi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>INTUBE - LIQUID GLASS FINAL</title><script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script><script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"}}</script><style>*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#000;color:#fff;overflow:hidden;height:100vh}.glass{background:rgba(255,255,255,.12);backdrop-filter:blur(25px) saturate(180%);-webkit-backdrop-filter:blur(25px) saturate(180%);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.3)}.top{position:fixed;top:10px;left:10px;right:10px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:18px}.top b{font-size:18px}#search{flex:1;margin:0 12px;background:rgba(255,255,255,.1);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);padding:9px 14px;border-radius:25px;color:#fff;outline:none;font-size:13px}#feed{height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory}.reel{position:relative;height:100vh;width:100vw;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center}.reel video,.reel img{width:100%;height:100%;object-fit:cover}.overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,transparent 30%,transparent 60%,rgba(0,0,0,.8) 100%);pointer-events:none;z-index:1}.reelTop{position:absolute;top:78px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;z-index:10}.userLeft{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 10px;border-radius:30px}.userLeft img{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}.followBtn{background:rgba(255,255,255,.92);color:#000;border:none;padding:7px 18px;border-radius:30px;font-weight:800;font-size:13px;cursor:pointer}.followBtn.following{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}.reelRight{position:absolute;right:10px;bottom:130px;display:flex;flex-direction:column;gap:16px;z-index:10;align-items:center}.actionBtn{background:rgba(255,255,255,.14);backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.22);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;width:56px;height:56px;border-radius:50%}.actionBtn .icon{font-size:24px}.actionBtn.liked{background:rgba(255,0,79,.25);border-color:rgba(255,0,79,.4)}.actionBtn.liked .icon{color:#ff2a6d}.reelBottom{position:absolute;left:12px;right:86px;bottom:88px;z-index:10;padding:12px 14px;border-radius:18px}.bottomNav{position:fixed;bottom:12px;left:12px;right:12px;background:rgba(20,20,20,.55);backdrop-filter:blur(30px) saturate(180%);border:1px solid rgba(255,255,255,.18);display:flex;justify-content:space-around;align-items:center;padding:12px 0;border-radius:22px;z-index:100}#loginScreen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:300;padding:20px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(20px);z-index:200;display:none;align-items:flex-end;justify-content:center}.modal.center{align-items:center;padding:16px}.modalBox{background:rgba(18,18,18,.85);backdrop-filter:blur(40px) saturate(180%);padding:20px;border-radius:28px;width:100%;max-width:500px;border:1px solid rgba(255,255,255,.18);max-height:88vh;overflow:auto}#progressWrap{display:none;margin-top:12px;background:rgba(255,255,255,.1);height:6px;border-radius:10px;overflow:hidden}#progressBar{height:100%;width:0%;background:linear-gradient(90deg,#ff004f,#ff7a00)}.uploadFloat{position:fixed;bottom:80px;right:16px;background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.25);color:#fff;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;z-index:60}</style></head><body>
-<div id="loginScreen"><div class="glass" style="padding:32px;border-radius:28px;text-align:center;width:100%;max-width:360px;background:rgba(20,20,20,.7)"><h1>INTUBE 🔥</h1><p style="color:#aaa;margin-top:6px">Liquid Glass • Real-Time</p><button id="googleBtn" style="margin-top:22px;background:#fff;color:#000;border:none;padding:14px;width:100%;border-radius:30px;font-weight:800;cursor:pointer">Login with Google</button></div></div><div class="top glass"><b>INTUBE</b><input id="search" placeholder="Search..."><div style="display:flex;gap:12px;align-items:center"><div onclick="openNotif()" style="position:relative;cursor:pointer;font-size:22px">🔔<span id="notifCount" style="position:absolute;top:-7px;right:-9px;background:#ff004f;font-size:10px;padding:2px 6px;border-radius:12px;display:none">0</span></div><div id="profilePic" onclick="openMyProfile()" style="width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer">👤</div></div></div>
-<div id="feed"><p style="padding-top:50vh;text-align:center;color:#555">Loading Liquid Glass...</p></div>
-<div class="bottomNav"><span>🏠</span><span>🔍</span><span style="background:#fff;color:#000;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800" onclick="document.getElementById('uploadModal').style.display='flex'">+</span><span onclick="openNotif()">❤️</span><span id="navProfile" onclick="openMyProfile()">👤</span></div><div class="uploadFloat" onclick="document.getElementById('uploadModal').style.display='flex'">+</div>
-<div id="uploadModal" class="modal center"><div class="modalBox"><h3>Liquid Upload</h3><input id="vTitle" placeholder="Caption..." style="width:100%;margin:14px 0;padding:14px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff"><input type="file" id="vFile" accept="video/*,image/*"><div id="progressWrap"><div id="progressBar"></div></div><button id="upBtn" style="width:100%;margin-top:14px;background:#fff;color:#000;border:none;padding:14px;border-radius:20px;font-weight:800;cursor:pointer">Upload</button><button onclick="document.getElementById('uploadModal').style.display='none'" style="width:100%;margin-top:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:10px;border-radius:20px;color:#fff">Cancel</button><p id="upStatus" style="text-align:center;margin-top:10px;color:#888;font-size:12px"></p></div></div>
-<div id="profileModal" class="modal center"><div class="modalBox"><div style="text-align:center"><img id="pPhoto" style="width:88px;height:88px;border-radius:50%;border:3px solid rgba(255,255,255,.5)"><h2 id="pName" style="margin-top:10px"></h2><p id="pEmail" style="color:#888;font-size:12px"></p><div style="display:flex;justify-content:space-around;margin:18px 0"><div><b id="pPosts">0</b><br><small>Posts</small></div><div><b id="pFollowers">0</b><br><small>Followers</small></div><div><b id="pFollowing">0</b><br><small>Following</small></div></div><button id="pFollowBtn" class="followBtn" style="width:100%;padding:12px">Follow</button><button onclick="logout()" style="width:100%;margin-top:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:10px;border-radius:20px;color:#ff5050">Logout</button></div><div id="pVideos" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:16px"></div><button onclick="document.getElementById('profileModal').style.display='none'" style="width:100%;margin-top:14px;background:rgba(255,255,255,.08);padding:12px;border-radius:20px;color:#fff;border:1px solid rgba(255,255,255,.1)">Close</button></div></div>
-<div id="commentModal" class="modal"><div class="modalBox" style="border-radius:28px 28px 0 0"><h3>Comments</h3><div id="commentList" style="margin-top:12px"></div><div style="display:flex;gap:8px;margin-top:14px"><input id="commentInput" placeholder="Add comment..." style="flex:1;padding:12px 16px;border-radius:25px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff"><button onclick="postComment()" style="background:#fff;color:#000;border:none;padding:12px 18px;border-radius:25px;font-weight:700">Send</button></div><button onclick="document.getElementById('commentModal').style.display='none'" style="width:100%;margin-top:12px;background:rgba(255,255,255,.08);padding:10px;border-radius:20px;color:#fff;border:1px solid rgba(255,255,255,.1)">Close</button></div></div>
-<div id="notifModal" class="modal center"><div class="modalBox"><h3>Notifications 🔔</h3><div id="notifList" style="margin-top:12px"></div><button onclick="document.getElementById('notifModal').style.display='none'" style="width:100%;margin-top:12px;background:rgba(255,255,255,.08);padding:10px;border-radius:20px;color:#fff;border:1px solid rgba(255,255,255,.1)">Close</button></div></div>
-<script type="module">
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getFirestore, collection, addDoc, doc, updateDoc, query, orderBy, where, arrayUnion, arrayRemove, increment, onSnapshot, serverTimestamp, getDocs, deleteDoc } from "firebase/firestore";
-const firebaseConfig = { apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU", authDomain: "intube-61cca.firebaseapp.com", projectId: "intube-61cca", storageBucket: "intube-61cca.firebasestorage.app", messagingSenderId: "627409965607", appId: "1:627409965607:web:a1d71800d812fe668b7402" };
-const CLOUD_NAME="kujnbe0a"; const UPLOAD_PRESET="intube_free";
-const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getFirestore(app); const provider=new GoogleAuthProvider(); setPersistence(auth,browserLocalPersistence); getRedirectResult(auth).catch(()=>{});let currentUser=null, allVideos=[], currentCommentId=null, following=[], searchText="";
-document.getElementById('googleBtn').onclick=async()=>{ try{await signInWithPopup(auth,provider)}catch{await signInWithRedirect(auth,provider)} };
-onAuthStateChanged(auth,(u)=>{ if(u){ currentUser=u; document.getElementById('loginScreen').style.display='none'; document.getElementById('profilePic').innerHTML=`<img src="${u.photoURL}" style="width:100%;height:100%">`; document.getElementById('navProfile').innerHTML=`<img src="${u.photoURL}" style="width:28px;height:28px;border-radius:50%">`; startRealtime(); }else{ document.getElementById('loginScreen').style.display='flex'; startRealtime(); } });
-window.logout=()=>signOut(auth).then(()=>location.reload());
-document.getElementById('search').addEventListener('input',e=>{ searchText=e.target.value.toLowerCase().trim(); render(); });
-function startRealtime(){
-onSnapshot(query(collection(db,"videos"), orderBy("time","desc")),snap=>{ allVideos=snap.docs.map(d=>({id:d.id,...d.data()})); render(); });
-if(currentUser){
-onSnapshot(query(collection(db,"follows"), where("followerEmail","==",currentUser.email)),s=>{ following=s.docs.map(d=>d.data().followingEmail); render(); });
-onSnapshot(query(collection(db,"notifications"), where("toEmail","==",currentUser.email), orderBy("time","desc")),s=>{ const el=document.getElementById('notifCount'); if(s.size>0){el.style.display='block'; el.innerText=s.size;}else el.style.display='none'; window._notifs=s.docs.map(d=>d.data()); });
-}}
-function render(){
-let list=searchText? allVideos.filter(v=>(v.title+v.userName).toLowerCase().includes(searchText)): allVideos;
-let html="";
-list.forEach(v=>{
-const liked=currentUser && v.likes?.includes(currentUser.email); const isFollowing=following.includes(v.userEmail);
-html+=`<div class="reel">${v.url.includes('video')||v.url.includes('.mp4')?`<video src="${v.url}" loop playsinline preload="metadata" onclick="this.paused?this.play():this.pause(); addView('${v.id}')"></video>`:`<img src="${v.url}">`}<div class="overlay"></div>
-<div class="reelTop"><div class="userLeft glass"><img src="${v.userPhoto}"><div><b>${v.userName}</b><br><small style="color:#ddd;font-size:11px">World</small></div></div><div>${currentUser && v.userEmail!==currentUser.email?`<button class="followBtn ${isFollowing?'following':''}" onclick="toggleFollow('${v.userEmail}')">${isFollowing?'Following':'Follow'}</button>`:''}</div></div>
-<div class="reelRight">
-<button class="actionBtn ${liked?'liked':''}" onclick="toggleLike('${v.id}','${v.userEmail}')"><span class="icon">${liked?'❤️':'🤍'}</span></button><span style="font-size:11px;margin-top:-10px;margin-bottom:6px;text-shadow:0 1px 4px #000">${v.likes?.length||0}</span>
-<button class="actionBtn" onclick="openComment('${v.id}')"><span class="icon">💬</span></button><span style="font-size:11px;margin-top:-10px;margin-bottom:6px;text-shadow:0 1px 4px #000">${v.commentCount||0}</span>
-<button class="actionBtn"><span class="icon">🔁</span></button><span style="font-size:11px;margin-top:-10px;margin-bottom:6px;text-shadow:0 1px 4px #000">${v.views||0}</span>
-<button class="actionBtn" onclick="navigator.clipboard.writeText('${v.url}');alert('Copied')"><span class="icon">✈️</span></button>
-</div>
-<div class="reelBottom glass"><b>${v.userName}</b> ${v.title}</div>
-</div>`;
-});
-document.getElementById('feed').innerHTML=html||`<p style="padding-top:50vh;text-align:center;color:#666">No videos found</p>`;
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>INTUBE - Transparent</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui;background:#000;color:#fff;min-height:100vh;overflow-x:hidden}
+#bg{position:fixed;inset:0;z-index:-2;background:radial-gradient(800px at 10% 10%, rgba(255,77,166,.30), transparent), radial-gradient(600px at 90% 90%, rgba(120,80,255,.25), transparent), #06060a}
+.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:10px}
+.logo{font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#ff4da6,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#search{flex:1;max-width:220px;padding:9px 14px;border-radius:20px;outline:none;color:#fff}
+.feed{max-width:480px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:16px;padding-bottom:90px}
+.reel{position:relative;border-radius:20px;min-height:580px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.reelData{position:relative;z-index:2;padding:14px;background:linear-gradient(transparent, rgba(0,0,0,.85));width:100%}
+.actions{position:absolute;right:8px;bottom:90px;z-index:3;display:flex;flex-direction:column;gap:10px}
+.actionBtn{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer}
+.bottomBar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:10px;padding:10px 16px;border-radius:30px}
+.bBtn{padding:10px 18px;border-radius:20px;border:none;font-weight:700;cursor:pointer;color:#fff}
+#uploadModal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(10px)}
+.modalBox{width:100%;max-width:400px;padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px}
+.inp{padding:12px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;outline:none}
+
+/* === PURA UI TRANSPARENT PINK GLASS - FINAL === */
+body, #bg,.feed, #feed,.reel,.top,.modal, #uploadModal{
+background:transparent!important
 }
-window.toggleLike=async(id,ownerEmail)=>{ if(!currentUser) return alert('Login first'); const ref=doc(db,"videos",id); const v=allVideos.find(x=>x.id===id); const liked=v.likes?.includes(currentUser.email); await updateDoc(ref,{likes:liked?arrayRemove(currentUser.email):arrayUnion(currentUser.email)}); if(!liked && ownerEmail!==currentUser.email) await addDoc(collection(db,"notifications"),{toEmail:ownerEmail,fromName:currentUser.displayName,type:"like",time:serverTimestamp()}); };
-window.toggleFollow=async(email)=>{ if(!currentUser) return; const qy=query(collection(db,"follows"), where("followerEmail","==",currentUser.email), where("followingEmail","==",email)); const snap=await getDocs(qy); if(snap.empty){ await addDoc(collection(db,"follows"),{followerEmail:currentUser.email,followingEmail:email,time:serverTimestamp()}); await addDoc(collection(db,"notifications"),{toEmail:email,fromName:currentUser.displayName,type:"follow",time:serverTimestamp()}); }else{ await deleteDoc(doc(db,"follows",snap.docs[0].id)); } };
-window.addView=async(id)=>{ try{ await updateDoc(doc(db,"videos",id),{views:increment(1)});}catch{} };
-window.openComment=(id)=>{ currentCommentId=id; document.getElementById('commentModal').style.display='flex'; onSnapshot(query(collection(db,"videos",id,"comments"),orderBy("time","desc")),s=>{ document.getElementById('commentList').innerHTML=s.docs.map(d=>`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)"><b>${d.data().user}</b> ${d.data().text}</div>`).join(''); }); };
-window.postComment=async()=>{ const txt=document.getElementById('commentInput').value.trim(); if(!txt||!currentCommentId) return; await addDoc(collection(db,"videos",currentCommentId,"comments"),{text:txt,user:currentUser.displayName,time:serverTimestamp()}); await updateDoc(doc(db,"videos",currentCommentId),{commentCount:increment(1)}); document.getElementById('commentInput').value=''; };
-window.openNotif=()=>{ document.getElementById('notifModal').style.display='flex'; const list=document.getElementById('notifList'); list.innerHTML=(window._notifs||[]).map(n=>`<div style="padding:10px;border-bottom:1px solid rgba(255,255,255,.1)"><b>${n.fromName}</b> ${n.type==='like'?'liked your video':'started following you'}</div>`).join('')||'No notifications'; };
-window.openMyProfile=()=>{ if(!currentUser) return; openProfile(currentUser.email); };
-window.openProfile=async(email)=>{ const v=allVideos.filter(x=>x.userEmail===email); const user=v[0]; document.getElementById('pPhoto').src=user?.userPhoto||currentUser?.photoURL; document.getElementById('pName').innerText=user?.userName||currentUser?.displayName; document.getElementById('pEmail').innerText=email; document.getElementById('pPosts').innerText=v.length; document.getElementById('pVideos').innerHTML=v.map(x=>`<img src="${x.url}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px">`).join(''); document.getElementById('profileModal').style.display='flex'; const fq=query(collection(db,"follows"), where("followingEmail","==",email)); const fq2=query(collection(db,"follows"), where("followerEmail","==",email)); onSnapshot(fq,s=>document.getElementById('pFollowers').innerText=s.size); onSnapshot(fq2,s=>document.getElementById('pFollowing').innerText=s.size); };
-document.getElementById('upBtn').onclick=async()=>{ const file=document.getElementById('vFile').files[0]; const title=document.getElementById('vTitle').value.trim(); if(!file||!title) return alert('File + Caption required'); if(!currentUser) return alert('Login first'); const fd=new FormData(); fd.append('file',file); fd.append('upload_preset',UPLOAD_PRESET); document.getElementById('progressWrap').style.display='block'; document.getElementById('upStatus').innerText='Uploading...'; try{ const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:'POST',body:fd}); const data=await res.json(); if(!data.secure_url) throw data; await addDoc(collection(db,"videos"),{url:data.secure_url,title,userEmail:currentUser.email,userName:currentUser.displayName,userPhoto:currentUser.photoURL,likes:[],views:0,commentCount:0,time:serverTimestamp()}); document.getElementById('upStatus').innerText='Done!'; document.getElementById('uploadModal').style.display='none'; document.getElementById('vTitle').value=''; document.getElementById('vFile').value=''; }catch(e){ document.getElementById('upStatus').innerText='Upload failed: '+(e.error?.message||'check preset'); } document.getElementById('progressWrap').style.display='none'; };
-</script></body></html>
+.glass,.reel,.top,.modalBox,.actionBtn,.bottomBar, #search,.bBtn{
+background:linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,105,180,.16), rgba(255,255,255,.06))!important;
+backdrop-filter:blur(28px) saturate(200%)!important;
+-webkit-backdrop-filter:blur(28px) saturate(200%)!important;
+border:1px solid rgba(255,182,193,.42)!important;
+box-shadow:0 8px 32px rgba(0,0,0,.35), 0 0 18px rgba(255,105,180,.35), inset 0 1px 0 rgba(255,255,255,.2)!important;
+}
+.bBtn.primary{background:linear-gradient(90deg,#ff4da6,#ff8ac6)!important;border:none!important}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+
+<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:20px">
+<h1 style="font-size:42px;font-weight:900">INTUBE 💎</h1>
+<p style="opacity:.7">Transparent Reels</p>
+<button id="loginBtn" class="bBtn primary" style="padding:14px 28px;border-radius:30px;font-size:16px">Login with Google</button>
+</div>
+
+<div class="top glass" id="mainTop" style="display:none">
+<div class="logo">INTUBE</div>
+<input id="search" class="glass" placeholder="Search reels...">
+<button id="logoutBtn" class="actionBtn glass" style="width:36px;height:36px">🚪</button>
+</div>
+
+<div id="feed" class="feed" style="display:none"></div>
+
+<div class="bottomBar glass" id="bottomBar" style="display:none">
+<button class="bBtn glass">🏠 Home</button>
+<button id="openUpload" class="bBtn primary">+ Upload</button>
+</div>
+
+<div id="uploadModal">
+<div class="modalBox glass">
+<h3>Upload New Reel</h3>
+<input type="file" id="fileIn" accept="video/*,image/*" class="inp">
+<input type="text" id="capIn" placeholder="Caption likho..." class="inp">
+<button id="postBtn" class="bBtn primary" style="width:100%">Post Now</button>
+<button id="closeUpload" class="bBtn glass" style="width:100%">Cancel</button>
+<div id="upProgress" style="font-size:12px;opacity:.7;text-align:center"></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// === APNA REAL CONFIG YAHA DALO ===
+const firebaseConfig = {
+  apiKey: "AIzaSyBpL6o6O1O1O1O1O1O1O1O1O", // <-- Yaha apna apiKey
+  authDomain: "intube-free.firebaseapp.com",
+  projectId: "intube-free",
+  storageBucket: "intube-free.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};
+// Firebase Console > Project Settings se copy karke yaha paste karo
+
+const CLOUD_NAME="buyq0obz";
+const UPLOAD_PRESET="intube_free";
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+let currentUser=null;
+let allReels=[];
+
+const loginScreen=document.getElementById('loginScreen');
+const mainTop=document.getElementById('mainTop');
+const feed=document.getElementById('feed');
+const bottomBar=document.getElementById('bottomBar');
+
+document.getElementById('loginBtn').onclick=async()=>{
+  const provider=new GoogleAuthProvider();
+  try{ await signInWithPopup(auth,provider); }catch(e){ alert(e.message); }
+};
+document.getElementById('logoutBtn').onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,(u)=>{
+  currentUser=u;
+  if(u){
+    loginScreen.style.display='none';
+    mainTop.style.display='flex';
+    feed.style.display='flex';
+    bottomBar.style.display='flex';
+    startFeed();
+  }else{
+    loginScreen.style.display='flex';
+    mainTop.style.display='none';
+    feed.style.display='none';
+    bottomBar.style.display='none';
+  }
+});
+
+function startFeed(){
+  const q=query(collection(db,"reels"),orderBy("time","desc"));
+  onSnapshot(q,(snap)=>{
+    allReels=snap.docs.map(d=>({id:d.id,...d.data()}));
+    render();
+  });
+}
+
+function render(){
+  const s=document.getElementById('search').value.toLowerCase();
+  let list=allReels;
+  if(s) list=list.filter(r=>(r.caption||"").toLowerCase().includes(s) || (r.userName||"").toLowerCase().includes(s));
+  feed.innerHTML="";
+  if(list.length==0){ feed.innerHTML="<p style='text-align:center;opacity:.5;padding:40px'>Koi reel nahi hai, pehla upload karo!</p>"; return; }
+  list.forEach(r=>{
+    const isVideo=r.type==="video" || r.url.includes(".mp4") || r.url.includes("video");
+    feed.innerHTML+=`
+      <div class="reel glass">
+        ${isVideo?`<video src="${r.url}" loop muted playsinline autoplay onclick="this.paused?this.play():this.pause()" style="cursor:pointer"></video>`:`<img src="${r.url}">`}
+        <div class="actions">
+          <div class="actionBtn glass">❤️<br><span style="font-size:10px">${r.likes||0}</span></div>
+          <div class="actionBtn glass">💬</div>
+          <div class="actionBtn glass">↗️</div>
+        </div>
+        <div class="reelData">
+          <b>@${r.userName||'user'}</b>
+          <p style="opacity:.9;margin-top:4px">${r.caption||''}</p>
+        </div>
+      </div>
+    `;
+  });
+}
+document.getElementById('search').oninput=render;
+
+// Upload Logic - Cloudinary
+document.getElementById('openUpload').onclick=()=>document.getElementById('uploadModal').style.display='flex';
+document.getElementById('closeUpload').onclick=()=>document.getElementById('uploadModal').style.display='none';
+
+document.getElementById('postBtn').onclick=async()=>{
+  const file=document.getElementById('fileIn').files[0];
+  const caption=document.getElementById('capIn').value;
+  const progress=document.getElementById('upProgress');
+  if(!file) return alert("Pehle video/photo select karo");
+  if(!currentUser) return alert("Pehle login karo");
+
+  try{
+    document.getElementById('postBtn').innerText="Uploading...";
+    progress.innerText="Cloudinary pe upload ho raha hai...";
+
+    const fd=new FormData();
+    fd.append("file",file);
+    fd.append("upload_preset",UPLOAD_PRESET);
+
+    const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,{method:"POST",body:fd});
+    const data=await res.json();
+    if(!data.secure_url) throw new Error(JSON.stringify(data));
+
+    progress.innerText="Database me save ho raha hai...";
+    await addDoc(collection(db,"reels"),{
+      url:data.secure_url,
+      caption:caption,
+      type:file.type.startsWith("video")?"video":"image",
+      userName:currentUser.displayName,
+      userId:currentUser.uid,
+      likes:0,
+      time:serverTimestamp()
+    });
+
+    alert("Upload ho gaya! ✅");
+    document.getElementById('uploadModal').style.display='none';
+    document.getElementById('fileIn').value="";
+    document.getElementById('capIn').value="";
+    progress.innerText="";
+  }catch(e){
+    console.error(e);
+    alert("Upload fail: "+e.message);
+    progress.innerText="Fail: "+e.message;
+  }
+  document.getElementById('postBtn').innerText="Post Now";
+};
+</script>
+</body>
+</html>
