@@ -35,7 +35,7 @@ const PRESET = "intube_free";
 /* Upload Modal */
 
 addStory?.addEventListener("click", () => {
-  alert("Story Button Working");
+  storyFile.click();
 });
 
 storyModal?.addEventListener("click", e => {
