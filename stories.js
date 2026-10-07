@@ -220,7 +220,6 @@ storyViewer?.addEventListener("click",(e)=>{
   }
 
 });
-
 /* Close */
 
 window.addEventListener("keydown",(e)=>{
@@ -232,5 +231,27 @@ window.addEventListener("keydown",(e)=>{
   }
 
 });
+
+/* Close on swipe down */
+
+let startY = 0;
+
+storyViewer?.addEventListener("touchstart",(e)=>{
+  startY = e.touches[0].clientY;
+});
+
+storyViewer?.addEventListener("touchend",(e)=>{
+
+  const endY = e.changedTouches[0].clientY;
+
+  if(endY - startY > 120){
+
+    storyViewer.hidden = true;
+
+    clearTimeout(timer);
+
+    storyProgress.style.width = "0%";
+
+  }
 
 });
