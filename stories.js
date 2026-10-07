@@ -1,189 +1,252 @@
+// stories.js - insta clone - easy edit version
 import { db, auth } from "./firebase-config.js";
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, deleteDoc, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  collection, query, orderBy, onSnapshot,
+  doc, deleteDoc, updateDoc,
+  arrayUnion, addDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// --- config ---
 const CLOUD = "kujnbe0a";
-const PRESET_STORY = "intube_stories";
+const PRESET = "intube_stories";
 
-// REQUIRED HTML IDS (index.html me hone chahiye)
-// <div id="storyTray"></div>
-// <div id="storyViewer" hidden>
-// <div id="storyProgress"></div>
-// <img id="storyImg"/><video id="storyVideo"></video>
-// <button id="closeViewer">X</button><button id="prevStory"></button><button id="nextStory"></button>
-// <span id="viewerUser"></span><span id="viewerTime"></span>
-// </div>
-
+// --- html ---
 const tray = document.getElementById("storyTray");
 const viewer = document.getElementById("storyViewer");
-const progressBox = document.getElementById("storyProgress");
-const storyImg = document.getElementById("storyImg");
-const storyVideo = document.getElementById("storyVideo");
-const closeBtn = document.getElementById("closeViewer");
-const nextBtn = document.getElementById("nextStory");
-const prevBtn = document.getElementById("prevStory");
+const pBox = document.getElementById("storyProgress");
+const sImg = document.getElementById("storyImg");
+const sVideo = document.getElementById("storyVideo");
+const fileInput = document.getElementById("storyFile");
 
-let groupedStories = []; // [{uid, userName, userPhoto, stories: []}]
-let currentUserIndex = 0;
-let currentStoryIndex = 0;
-let progressInterval = null;
-let progress = 0;
-let isPaused = false;
+// --- vars ---
+let groups = [];
+let curU = 0;
+let curS = 0;
+let timer = null;
+let prog = 0;
+let paused = false;
 
-// 1. REAL-TIME LOAD STORIES
-const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
-onSnapshot(q, (snap) => {
-  const all = [];
-  snap.forEach(d => {
-    const data = { id: d.id,...d.data() };
-    if (data.expiresAt && data.expiresAt < Date.now()) {
-      deleteDoc(doc(db, "stories", d.id)); // auto delete expired
+// --- feature 1 : open file picker ---
+document.getElementById("addStory")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  fileInput?.click();
+});
+
+// --- feature 2 : upload story ---
+fileInput?.addEventListener("change", async ()=>{
+  const file = fileInput.files[0];
+  if(!file) return;
+  if(!auth.currentUser) return alert("login karo");
+
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", PRESET);
+
+  const type = file.type.startsWith("video")? "video" : "image";
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`,
+    { method:"POST", body:fd }
+  );
+
+  const data = await res.json();
+
+  await addDoc(collection(db,"stories"),{
+    uid: auth.currentUser.uid,
+    userName: auth.currentUser.displayName,
+    userPhoto: auth.currentUser.photoURL,
+    storyUrl: data.secure_url,
+    type: type,
+    views: [],
+    createdAt: serverTimestamp(),
+    expiresAt: Date.now()+86400000
+  });
+
+  fileInput.value = "";
+});
+
+// --- feature 3 : load stories real time ---
+const q = query(
+  collection(db,"stories"),
+  orderBy("createdAt","desc")
+);
+
+onSnapshot(q, (snap)=>{
+  let all = [];
+
+  snap.forEach(d=>{
+    const s = { id:d.id,...d.data() };
+    if(s.expiresAt < Date.now()){
+      deleteDoc(doc(db,"stories",d.id));
       return;
     }
-    all.push(data);
+    all.push(s);
   });
 
-  // Group by uid like Instagram
   const map = {};
-  all.forEach(s => {
-    if (!map[s.uid]) map[s.uid] = { uid: s.uid, userName: s.userName, userPhoto: s.userPhoto, stories: [] };
+  all.forEach(s=>{
+    if(!map[s.uid]){
+      map[s.uid] = {
+        uid: s.uid,
+        userName: s.userName,
+        userPhoto: s.userPhoto,
+        stories: []
+      };
+    }
     map[s.uid].stories.push(s);
   });
-  // Sort stories inside user by time ASC
-  Object.values(map).forEach(g => g.stories.sort((a,b) => (a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)));
 
-  groupedStories = Object.values(map).sort((a,b) => {
-    // unseen first
-    const aSeen = a.stories.every(s => s.views?.includes(auth.currentUser?.uid));
-    const bSeen = b.stories.every(s => s.views?.includes(auth.currentUser?.uid));
-    return aSeen - bSeen;
+  Object.values(map).forEach(g=>{
+    g.stories.sort((a,b)=>
+      (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0)
+    );
   });
 
+  groups = Object.values(map);
   renderTray();
 });
 
-function renderTray() {
-  if (!tray) return;
+// --- feature 4 : render tray ---
+function renderTray(){
+  if(!tray) return;
   tray.innerHTML = "";
 
-  // Your Add button
-  const addDiv = document.createElement("div");
-  addDiv.className = "story-item add-story";
-  addDiv.innerHTML = `<div class="story-ring my-ring"><img src="${auth.currentUser?.photoURL || 'https://i.imgur.com/6VBx3io.png'}"><span class="plus">+</span></div><p>Your Story</p>`;
-  addDiv.onclick = (e) => { e.preventDefault(); document.getElementById("storyFile")?.click(); };
-  tray.appendChild(addDiv);
+  const add = document.createElement("div");
+  add.className = "story-item";
+  add.innerHTML = `
+    <div class="story-ring my-ring">
+      <img src="${auth.currentUser?.photoURL}">
+      <span class="plus">+</span>
+    </div>
+    <p>Your Story</p>
+  `;
+  add.onclick = ()=> fileInput?.click();
+  tray.appendChild(add);
 
-  groupedStories.forEach((group, idx) => {
-    const isSeen = group.stories.every(s => s.views?.includes(auth.currentUser?.uid));
+  groups.forEach((g,i)=>{
+    const seen = g.stories.every(s=>
+      s.views?.includes(auth.currentUser?.uid)
+    );
+
     const div = document.createElement("div");
-    div.className = `story-item ${isSeen? 'seen' : 'unseen'}`;
-    div.innerHTML = `<div class="story-ring ${isSeen? '' : 'unseen-ring'}"><img src="${group.userPhoto || 'https://i.imgur.com/6VBx3io.png'}"></div><p>${group.uid===auth.currentUser?.uid?'You':group.userName?.split(' ')[0]}</p>`;
-    div.onclick = () => openViewer(idx, 0);
+    div.className = `story-item ${seen?'seen':''}`;
+    div.innerHTML = `
+      <div class="story-ring ${seen?'':'unseen-ring'}">
+        <img src="${g.userPhoto}">
+      </div>
+      <p>${g.userName?.split(' ')[0]}</p>
+    `;
+    div.onclick = ()=> openViewer(i,0);
     tray.appendChild(div);
   });
 }
 
-function openViewer(userIdx, storyIdx) {
-  currentUserIndex = userIdx;
-  currentStoryIndex = storyIdx;
+// --- feature 5 : open viewer ---
+window.openViewer = (u,s)=>{
+  curU = u;
+  curS = s;
   viewer.hidden = false;
   document.body.style.overflow = "hidden";
-  showStory();
-}
+  show();
+};
 
-function showStory() {
-  const group = groupedStories[currentUserIndex];
-  const story = group.stories[currentStoryIndex];
-  if (!story) { closeViewer(); return; }
+// --- feature 6 : show story ---
+function show(){
+  const g = groups[curU];
+  const st = g.stories[curS];
 
-  // Mark as viewed
-  if (auth.currentUser &&!story.views?.includes(auth.currentUser.uid)) {
-    updateDoc(doc(db, "stories", story.id), { views: arrayUnion(auth.currentUser.uid) });
-  }
+  updateDoc(doc(db,"stories",st.id),{
+    views: arrayUnion(auth.currentUser.uid)
+  });
 
-  // UI
-  document.getElementById("viewerUser").innerText = group.userName;
-  document.getElementById("viewerTime").innerText = timeAgo(story.createdAt);
-  renderProgress();
+  document.getElementById("viewerUser").innerText = g.userName;
 
-  if (story.type === "video") {
-    storyImg.hidden = true;
-    storyVideo.hidden = false;
-    storyVideo.src = story.storyUrl;
-    storyVideo.play();
-    storyVideo.onended = () => nextStory();
-    startProgress(storyVideo.duration || 10);
-  } else {
-    storyVideo.hidden = true;
-    storyVideo.pause();
-    storyImg.hidden = false;
-    storyImg.src = story.storyUrl;
-    startProgress(5); // 5 sec for image
-  }
-}
-
-function renderProgress() {
-  progressBox.innerHTML = "";
-  const group = groupedStories[currentUserIndex];
-  group.stories.forEach((_, i) => {
+  pBox.innerHTML = "";
+  g.stories.forEach((_,i)=>{
     const bar = document.createElement("div");
     bar.className = "prog-bar";
     const fill = document.createElement("div");
     fill.className = "prog-fill";
-    if (i < currentStoryIndex) fill.style.width = "100%";
-    if (i === currentStoryIndex) fill.id = "activeFill";
+    if(i < curS) fill.style.width = "100%";
+    if(i == curS) fill.id = "activeFill";
     bar.appendChild(fill);
-    progressBox.appendChild(bar);
+    pBox.appendChild(bar);
   });
+
+  if(st.type == "video"){
+    sImg.hidden = true;
+    sVideo.hidden = false;
+    sVideo.src = st.storyUrl;
+    sVideo.play();
+    sVideo.onended = nextStory;
+    startProgress(10);
+  }else{
+    sVideo.hidden = true;
+    sVideo.pause();
+    sImg.hidden = false;
+    sImg.src = st.storyUrl;
+    startProgress(5);
+  }
 }
 
-function startProgress(duration) {
-  clearInterval(progressInterval);
-  progress = 0;
+// --- feature 7 : progress bar ---
+function startProgress(sec){
+  clearInterval(timer);
+  prog = 0;
   const fill = document.getElementById("activeFill");
-  const step = 50;
-  const increment = (step / (duration * 1000)) * 100;
-  progressInterval = setInterval(() => {
-    if (isPaused) return;
-    progress += increment;
-    if (fill) fill.style.width = progress + "%";
-    if (progress >= 100) nextStory();
-  }, step);
+  timer = setInterval(()=>{
+    if(paused) return;
+    prog += 0.5;
+    if(fill) fill.style.width = prog+"%";
+    if(prog >= 100) nextStory();
+  }, sec*10);
 }
 
-function nextStory() {
-  const group = groupedStories[currentUserIndex];
-  if (currentStoryIndex < group.stories.length - 1) {
-    currentStoryIndex++; showStory();
-  } else if (currentUserIndex < groupedStories.length - 1) {
-    currentUserIndex++; currentStoryIndex = 0; showStory();
-  } else {
+// --- feature 8 : next ---
+function nextStory(){
+  const g = groups[curU];
+  if(curS < g.stories.length-1){
+    curS++;
+    show();
+  }else if(curU < groups.length-1){
+    curU++;
+    curS = 0;
+    show();
+  }else{
     closeViewer();
   }
 }
-function prevStory() {
-  if (currentStoryIndex > 0) { currentStoryIndex--; showStory(); }
-  else if (currentUserIndex > 0) { currentUserIndex--; currentStoryIndex = groupedStories[currentUserIndex].stories.length-1; showStory(); }
+
+// --- feature 9 : prev ---
+function prevStory(){
+  if(curS > 0){
+    curS--;
+    show();
+  }else if(curU > 0){
+    curU--;
+    curS = groups[curU].stories.length-1;
+    show();
+  }
 }
 
-function closeViewer() {
+// --- feature 10 : close ---
+function closeViewer(){
   viewer.hidden = true;
   document.body.style.overflow = "";
-  clearInterval(progressInterval);
-  storyVideo.pause();
+  clearInterval(timer);
+  sVideo.pause();
 }
-function timeAgo(ts){ if(!ts) return "now"; const d = ts.seconds? new Date(ts.seconds*1000) : new Date(); const diff = (Date.now()-d)/1000; if(diff<60) return "now"; if(diff<3600) return Math.floor(diff/60)+"m"; if(diff<86400) return Math.floor(diff/3600)+"h"; return Math.floor(diff/86400)+"d"; }
 
-// Events
-nextBtn?.addEventListener("click", nextStory);
-prevBtn?.addEventListener("click", prevStory);
-closeBtn?.addEventListener("click", closeViewer);
-// Tap left/right
-viewer?.addEventListener("click", (e) => {
-  const w = window.innerWidth; if(e.clientX > w*0.7) nextStory(); else if(e.clientX < w*0.3) prevStory();
-});
-// Pause on hold
-viewer?.addEventListener("touchstart", () => isPaused = true);
-viewer?.addEventListener("touchend", () => isPaused = false);
-viewer?.addEventListener("mousedown", () => isPaused = true);
-viewer?.addEventListener("mouseup", () => isPaused = false);
-document.addEventListener("keydown", (e)=>{ if(viewer.hidden) return; if(e.key==="Escape") closeViewer(); if(e.key==="ArrowRight") nextStory(); if(e.key==="ArrowLeft") prevStory(); });
+// --- feature 11 : controls ---
+document.getElementById("closeViewer").onclick = closeViewer;
+document.getElementById("nextStory").onclick = nextStory;
+document.getElementById("prevStory").onclick = prevStory;
+
+viewer.onclick = (e)=>{
+  const w = window.innerWidth;
+  if(e.clientX > w*0.7) nextStory();
+  if(e.clientX < w*0.3) prevStory();
+};
+
+viewer.ontouchstart = ()=> paused = true;
+viewer.ontouchend = ()=> paused = false;
