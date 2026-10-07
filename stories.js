@@ -21,7 +21,8 @@ const uploadStoryBtn = document.getElementById("uploadStoryBtn");
 const storyFile = document.getElementById("storyFile");
 
 storyFile?.addEventListener("change", () => {
-  uploadStoryBtn.click();
+    alert("Photo Selected");
+    uploadStoryBtn.click();
 });
 const storyViewer = document.getElementById("storyViewer");
 const storyImage = document.getElementById("storyImage");
