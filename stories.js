@@ -8,7 +8,7 @@ import {
 
 // --- config ---
 const CLOUD = "kujnbe0a";
-const PRESET = "intube_stories";
+const PRESET = "be_free";
 
 // --- html ---
 const tray = document.getElementById("storyTray");
