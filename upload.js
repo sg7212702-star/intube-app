@@ -76,4 +76,14 @@ uploadBtn.innerText="Upload";
 
 };
 
-  }
+  }const uploadFab = document.getElementById("uploadFab");
+const postBtn = document.getElementById("postBtn");
+const uploadModal = document.getElementById("uploadModal");
+
+uploadFab?.addEventListener("click",()=>{
+  uploadModal.hidden = false;
+});
+
+postBtn?.addEventListener("click",()=>{
+  uploadModal.hidden = false;
+});
