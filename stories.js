@@ -198,25 +198,35 @@ onSnapshot(q,(snapshot)=>{
 
   });
 
-  storiesData.forEach((story,index)=>{
+  const uniqueUsers = {};
 
-    const div=document.createElement("div");
+storiesData.forEach(story => {
+  if(!uniqueUsers[story.userId]){
+    uniqueUsers[story.userId] = story;
+  }
+});
 
-    div.className="story";
+Object.values(uniqueUsers).forEach((story,index)=>{
 
-    div.innerHTML=`
-      <div class="storyRing">
-        <img src="${
-          story.userPhoto ||
-          'https://ui-avatars.com/api/?name=User'
-        }">
-      </div>
-      <span>${story.userName || "User"}</span>
-    `;
+  const div=document.createElement("div");
 
-    div.onclick=()=>openStory(index);
+  div.className="story";
 
-    storiesList.appendChild(div);
+  div.innerHTML=`
+    <div class="storyRing">
+      <img src="${
+        story.userPhoto ||
+        'https://ui-avatars.com/api/?name=User'
+      }">
+    </div>
+    <span>${story.userName || "User"}</span>
+  `;
+
+  div.onclick=()=>openStory(index);
+
+  storiesList.appendChild(div);
+
+});
 
   });
 
