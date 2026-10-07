@@ -1,97 +1,115 @@
-import { db, auth } from "./firebase-config.js";
-import {
-  collection,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db, storage } from "./firebase-config.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-const CLOUD = "kujnbe0a";
-const PRESET_POST = "intube_free"; // post ke liye
-const PRESET_STORY = "intube_stories"; // story ke liye (unsigned)
-
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("mediaFile");
-const captionInput = document.getElementById("caption");
-
-// 1. POST UPLOAD (tumhara purana wala same)
-if (uploadBtn) {
-  uploadBtn.onclick = async () => {
-    const file = fileInput.files[0];
-    if (!file) { alert("Select file"); return; }
-    try {
-      uploadBtn.innerText = "Uploading...";
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", PRESET_POST);
-      const resourceType = file.type.startsWith("video")? "video" : "image";
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/${resourceType}/upload`, { method: "POST", body: formData });
-      const data = await res.json();
-      if(!data.secure_url) throw new Error("Cloudinary fail");
-      await addDoc(collection(db, "posts"), {
-        url: data.secure_url,
-        type: resourceType,
-        caption: captionInput.value || "",
-        userId: auth.currentUser?.uid || "",
-        userName: auth.currentUser?.displayName || "INTUBE User",
-        userPhoto: auth.currentUser?.photoURL || "",
-        createdAt: serverTimestamp()
-      });
-      captionInput.value = "";
-      fileInput.value = "";
-      alert("Post Uploaded ✅");
-      document.getElementById("uploadModal").hidden = true;
-    } catch (err) { alert(err.message); }
-    uploadBtn.innerText = "Upload";
-  };
-}
-
-// 2. STORY UPLOAD - YE NAYA HAI (Home wala redirect fix)
-const storyFile = document.getElementById("storyFile");
-const addStoryBtn = document.getElementById("addStory");
-
-if (addStoryBtn && storyFile) {
-  addStoryBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    storyFile.click(); // file khulega, home pe nahi jayega
-  });
-
-  storyFile.addEventListener("change", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!auth.currentUser) { alert("Pehle login karo!"); return; }
-    try {
-      alert("Uploading Story... ⏳");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", PRESET_STORY);
-      const resourceType = file.type.startsWith("video")? "video" : "image";
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/${resourceType}/upload`, { method: "POST", body: formData });
-      const data = await res.json();
-      if(!data.secure_url) throw new Error(JSON.stringify(data));
-
-      await addDoc(collection(db, "stories"), {
-        uid: auth.currentUser.uid,
-        userName: auth.currentUser.displayName || "INTUBE User",
-        userPhoto: auth.currentUser.photoURL || "",
-        storyUrl: data.secure_url,
-        type: resourceType,
-        createdAt: serverTimestamp(),
-        expiresAt: Date.now() + 86400000
-      });
-      alert("Story Uploaded! ✅");
-      location.reload();
-    } catch (err) {
-      alert("Story Fail: " + err.message);
-    }
-  });
-}
-
-// Modal open/close
-const uploadFab = document.getElementById("uploadFab");
+// ELEMENTS
 const postBtn = document.getElementById("postBtn");
 const uploadModal = document.getElementById("uploadModal");
-uploadFab?.addEventListener("click", () => { uploadModal.hidden = false; });
-postBtn?.addEventListener("click", () => { uploadModal.hidden = false; });
+const mediaFile = document.getElementById("mediaFile");
+const caption = document.getElementById("caption");
+const uploadBtn = document.getElementById("uploadBtn");
+
+const addStory = document.getElementById("addStory");
+const storyFile = document.getElementById("storyFile");
+const storyModal = document.getElementById("storyModal");
+const storyFileName = document.getElementById("storyFileName");
+const uploadStoryBtn = document.getElementById("uploadStoryBtn");
+
+// OPEN POST MODAL
+postBtn?.addEventListener("click", () => {
+  uploadModal.hidden = false;
+});
+
+// OPEN STORY FILE PICKER
+addStory?.addEventListener("click", () => {
+  storyFile.click();
+});
+
+// WHEN STORY FILE SELECTED
+storyFile?.addEventListener("change", () => {
+  if (storyFile.files[0]) {
+    storyFileName.textContent = storyFile.files[0].name;
+    storyModal.hidden = false;
+  }
+});
+
+// UPLOAD POST - PREMIUM LOGIC
+uploadBtn?.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return alert("Login first!");
+  if (!mediaFile.files[0]) return alert("Select image/video!");
+
+  uploadBtn.textContent = "Uploading...";
+  uploadBtn.disabled = true;
+
+  try {
+    const file = mediaFile.files[0];
+    const fileRef = ref(storage, `posts/${user.uid}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+
+    const isVideo = file.type.startsWith("video");
+
+    await addDoc(collection(db, "posts"), {
+      uid: user.uid,
+      username: user.displayName,
+      userPhoto: user.photoURL,
+      caption: caption.value,
+      mediaUrl: url,
+      mediaType: isVideo? "video" : "image",
+      createdAt: serverTimestamp(),
+      likes: [],
+      likesCount: 0
+    });
+
+    uploadModal.hidden = true;
+    caption.value = "";
+    mediaFile.value = "";
+    alert("Post Uploaded 💎");
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+
+  uploadBtn.textContent = "Upload";
+  uploadBtn.disabled = false;
+});
+
+// UPLOAD STORY - PREMIUM LOGIC
+uploadStoryBtn?.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return alert("Login first!");
+  if (!storyFile.files[0]) return alert("Select story!");
+
+  uploadStoryBtn.textContent = "Uploading...";
+  uploadStoryBtn.disabled = true;
+
+  try {
+    const file = storyFile.files[0];
+    const fileRef = ref(storage, `stories/${user.uid}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+
+    const isVideo = file.type.startsWith("video");
+
+    await addDoc(collection(db, "stories"), {
+      uid: user.uid,
+      username: user.displayName,
+      userPhoto: user.photoURL,
+      storyUrl: url,
+      storyType: isVideo? "video" : "image",
+      createdAt: serverTimestamp(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24hr story
+      seenBy: []
+    });
+
+    storyModal.hidden = true;
+    storyFile.value = "";
+    storyFileName.textContent = "No file selected";
+    alert("Story Added 🔥");
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+
+  uploadStoryBtn.textContent = "Upload Story";
+  uploadStoryBtn.disabled = false;
+});
