@@ -114,7 +114,15 @@ function openStory(index){
   storyUserName.innerText=
     story.userName || "INTUBE User";
 
-  clearTimeout(timer);
+  cstoryUserPhoto.onclick = () => {
+  alert("Profile: " + (story.userName || "INTUBE User"));
+};
+
+storyUserName.onclick = () => {
+  alert("Profile: " + (story.userName || "INTUBE User"));
+};
+
+clearTimeout(timer);
 
   storyProgress.style.transition="none";
   storyProgress.style.width="0%";
@@ -125,9 +133,20 @@ function openStory(index){
   },50);
 
   timer=setTimeout(()=>{
-    nextStory();
-  },5000);
 
+  if(currentStory < storiesData.length - 1){
+
+    nextStory();
+
+  }else{
+
+    storyViewer.hidden = true;
+
+    storyProgress.style.width = "0%";
+
+  }
+
+},5000);
 }
 
 /* Next Story */
