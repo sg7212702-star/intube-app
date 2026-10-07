@@ -252,9 +252,9 @@ storyViewer?.addEventListener("touchend",(e)=>{
 
     storyProgress.style.width = "0%";
 
-  }
+    }
 
 });
-});
 
 });
+  
