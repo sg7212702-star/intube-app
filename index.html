@@ -180,19 +180,11 @@
 <script type="module" src="explore.js"></script>
 
 <script>
-function comingSoon(e){ 
-  if(e) e.preventDefault(); 
-  alert('Coming Soon 🚀 Stay Tuned!'); 
+function comingSoon(e){
+  if(e) e.preventDefault();
+  alert('Coming Soon - Stay Tuned!');
 }
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('a, button, div, span').forEach(el => {
-    const txt = el.innerText ? el.innerText.trim() : '';
-    if(txt === 'Home' || txt === 'Explore'){
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', comingSoon);
-    }
-  });
-});
 </script>
+
 </body>
 </html>
