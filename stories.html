@@ -1,9 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INTUBE Stories</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:
+linear-gradient(135deg,#89c4ff,#ff9dd6,#caa6ff);
+min-height:100vh;
+padding:20px;
+}
+
+.topbar{
+text-align:center;
+font-size:28px;
+font-weight:bold;
+color:#ff4da6;
+margin-bottom:20px;
+text-shadow:0 0 20px rgba(255,77,166,.6);
+}
+
+.story-container{
+display:flex;
+gap:15px;
+overflow-x:auto;
+padding:15px;
+
+background:rgba(255,255,255,.15);
+backdrop-filter:blur(20px);
+border-radius:25px;
+
+border:1px solid rgba(255,255,255,.25);
+
+box-shadow:
+0 8px 32px rgba(0,0,0,.2);
+}
+
+.story{
+flex:none;
+text-align:center;
+}
+
+.ring{
+width:82px;
+height:82px;
+
+border-radius:50%;
+
+padding:3px;
+
+background:
+linear-gradient(
+45deg,
+#ff4da6,
+#ff9f43,
+#ffd93d,
+#ff4da6
+);
+
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.ring img{
+width:74px;
+height:74px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid white;
+}
+
+.story-name{
+margin-top:8px;
+font-size:12px;
+font-weight:600;
+color:#fff;
+}
+
+.add-btn{
+font-size:40px;
+color:white;
+}
+
+.preview{
+margin-top:30px;
+
+height:500px;
+
+border-radius:30px;
+
+background:rgba(255,255,255,.12);
+backdrop-filter:blur(20px);
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+color:white;
+font-size:22px;
+
+border:1px solid rgba(255,255,255,.2);
+}
+
+</style>
 </head>
 <body>
-INTUBE Stories Page
+
+<div class="topbar">
+INTUBE STORIES
+</div>
+
+<div class="story-container">
+
+<div class="story">
+
+<div class="ring">
+<div class="add-btn">+</div>
+</div>
+
+<div class="story-name">
+Your Story
+</div>
+
+</div>
+
+<div class="story">
+<div class="ring">
+<img src="https://picsum.photos/200?1">
+</div>
+<div class="story-name">Alex</div>
+</div>
+
+<div class="story">
+<div class="ring">
+<img src="https://picsum.photos/200?2">
+</div>
+<div class="story-name">Riya</div>
+</div>
+
+<div class="story">
+<div class="ring">
+<img src="https://picsum.photos/200?3">
+</div>
+<div class="story-name">Rahul</div>
+</div>
+
+<div class="story">
+<div class="ring">
+<img src="https://picsum.photos/200?4">
+</div>
+<div class="story-name">INTUBE</div>
+</div>
+
+</div>
+
+<div class="preview">
+Story Viewer Area
+</div>
+
 </body>
 </html>
