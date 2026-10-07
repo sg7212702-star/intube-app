@@ -15,8 +15,7 @@ font-family:Arial,sans-serif;
 }
 
 body{
-background:
-linear-gradient(135deg,#89c4ff,#ff9dd6,#caa6ff);
+background:linear-gradient(135deg,#89c4ff,#ff9dd6,#caa6ff);
 min-height:100vh;
 padding:20px;
 }
@@ -35,39 +34,31 @@ display:flex;
 gap:15px;
 overflow-x:auto;
 padding:15px;
-
 background:rgba(255,255,255,.15);
 backdrop-filter:blur(20px);
 border-radius:25px;
-
 border:1px solid rgba(255,255,255,.25);
-
-box-shadow:
-0 8px 32px rgba(0,0,0,.2);
+box-shadow:0 8px 32px rgba(0,0,0,.2);
 }
 
 .story{
 flex:none;
 text-align:center;
+cursor:pointer;
 }
 
 .ring{
 width:82px;
 height:82px;
-
 border-radius:50%;
-
 padding:3px;
-
-background:
-linear-gradient(
+background:linear-gradient(
 45deg,
 #ff4da6,
 #ff9f43,
 #ffd93d,
 #ff4da6
 );
-
 display:flex;
 align-items:center;
 justify-content:center;
@@ -85,7 +76,7 @@ border:3px solid white;
 margin-top:8px;
 font-size:12px;
 font-weight:600;
-color:#fff;
+color:white;
 }
 
 .add-btn{
@@ -95,22 +86,27 @@ color:white;
 
 .preview{
 margin-top:30px;
-
 height:500px;
-
 border-radius:30px;
-
 background:rgba(255,255,255,.12);
 backdrop-filter:blur(20px);
-
 display:flex;
 align-items:center;
 justify-content:center;
-
 color:white;
 font-size:22px;
-
 border:1px solid rgba(255,255,255,.2);
+overflow:hidden;
+text-align:center;
+padding:10px;
+}
+
+.preview img,
+.preview video{
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:30px;
 }
 
 </style>
@@ -123,16 +119,13 @@ INTUBE STORIES
 
 <div class="story-container">
 
-<div class="story" onclick="location.href='story-upload.html'">
-
+<div class="story" onclick="document.getElementById('storyFile').click()">
 <div class="ring">
 <div class="add-btn">+</div>
 </div>
-
 <div class="story-name">
 Your Story
 </div>
-
 </div>
 
 <div class="story">
@@ -165,9 +158,46 @@ Your Story
 
 </div>
 
-<div class="preview">
-Story Viewer Area
+<input
+type="file"
+id="storyFile"
+accept="image/*,video/*"
+hidden>
+
+<div class="preview" id="preview">
+Tap + To Add Story
 </div>
+
+<script>
+
+const storyFile = document.getElementById("storyFile");
+const preview = document.getElementById("preview");
+
+storyFile.addEventListener("change", function(){
+
+const file = this.files[0];
+
+if(!file) return;
+
+const url = URL.createObjectURL(file);
+
+if(file.type.startsWith("image")){
+
+preview.innerHTML =
+`<img src="${url}">`;
+
+}
+
+else if(file.type.startsWith("video")){
+
+preview.innerHTML =
+`<video src="${url}" controls autoplay></video>`;
+
+}
+
+});
+
+</script>
 
 </body>
 </html>
