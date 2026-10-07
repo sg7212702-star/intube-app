@@ -3,12 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>INTUBE</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <!-- LOGIN -->
@@ -16,33 +13,19 @@
   <div class="glass loginCard">
     <h1>INTUBE 💎</h1>
     <p>Realtime Social Platform</p>
-
-    <button id="googleLoginBtn">
-      Continue With Google
-    </button>
+    <button id="googleLoginBtn">Continue With Google</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
-
-  <!-- TOP BAR -->
   <header class="topBar glass">
-
-    <div class="logo">
-      INTUBE
-    </div>
-
+    <div class="logo">INTUBE</div>
     <div class="topBtns">
-
       <button id="searchBtn">🔍</button>
-
       <button id="chatBtn">💌</button>
-
       <button id="notificationBtn">♥️</button>
-
     </div>
-
   </header>
 
   <!-- STORIES -->
@@ -53,82 +36,43 @@
     </div>
     <div id="storiesList"></div>
   </section>
-  <input type="file" id="storyFile" hidden accept="image/*,video/*">
+  <input type="file" id="storyFile" hidden accept="image/jpeg,image/png,image/jpg,image/webp,video/mp4,video/quicktime,video/webm">
 
   <!-- FEED -->
-  <main id="feed">
-
-  </main>
-
-
+  <main id="feed"></main>
 
   <!-- BOTTOM NAV -->
   <nav class="bottomNav glass">
-
-    <button class="active" id="homeBtn">
-      💝
-      <span>Home</span>
-    </button>
-
-    <button id="exploreBtn">
-      🔍
-      <span>Explore</span>
-    </button>
-
-    <button id="postBtn">
-      ➕
-      <span>Post</span>
-    </button>
-
-    <button id="reelsBtn">
-      🎬
-      <span>Reels</span>
-    </button>
-
-    <button id="profileBtn">
-      👤
-      <span>Profile</span>
-    </button>
-
+    <button class="active" id="homeBtn">💝<span>Home</span></button>
+    <button id="exploreBtn">🔍<span>Explore</span></button>
+    <button id="postBtn">➕<span>Post</span></button>
+    <button id="reelsBtn">🎬<span>Reels</span></button>
+    <button id="profileBtn">👤<span>Profile</span></button>
   </nav>
-
 </div>
 
 <!-- POST UPLOAD MODAL -->
 <div id="uploadModal" hidden>
-
   <div class="glass uploadCard">
-
     <h3>Create Post</h3>
-
-    <input
-      type="text"
-      id="caption"
-      placeholder="Write caption..."
-    >
-
-    <input
-      type="file"
-      id="mediaFile"
-    >
-
-    <button id="uploadBtn">
-      Upload
-    </button>
-
+    <input type="text" id="caption" placeholder="Write caption...">
+    <input type="file" id="mediaFile" accept="image/jpeg,image/png,image/jpg,image/webp,video/mp4,video/quicktime,video/webm">
+    <button id="uploadBtn">Upload</button>
+    <button id="closeUploadModal">Cancel</button>
   </div>
-
 </div>
 
-  <input type="file" id="storyFile" accept="image/jpeg,image/png,image/jpg,image/webp,video/mp4,video/quicktime,video/webm">
-  <button id="uploadStoryBtn">
-    Upload Story
-  </button>
-
+<!-- STORY UPLOAD MODAL -->
+<div id="storyModal" hidden>
+  <div class="glass uploadCard">
+    <h3>Add Story</h3>
+    <p id="storyFileName">No file selected</p>
+    <button id="uploadStoryBtn">Upload Story</button>
+    <button id="closeStoryModal">Cancel</button>
   </div>
-
 </div>
 
+<!-- STORY VIEWER -->
 <div id="storyViewer" hidden>
   <div id="storyProgress"></div>
   <div id="storyHeader">
@@ -140,21 +84,21 @@
     <button id="closeViewer">X</button>
   </div>
   <img id="storyImg" hidden>
-  <video id="storyVideo" hidden controls></video>
+  <video id="storyVideo" hidden controls playsinline></video>
   <button id="prevStory">Prev</button>
   <button id="nextStory">Next</button>
 </div>
+
 <script type="module" src="firebase-config.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module" src="feed.js"></script>
-<script type="module" src="stories.js?v=5"></script>
-  <script type="module" src="story-seen.js"></script>
+<script type="module" src="stories.js"></script>
+<script type="module" src="story-seen.js"></script>
 <script type="module" src="upload.js"></script>
 <script type="module" src="profile.js"></script>
 <script type="module" src="notifications.js"></script>
 <script type="module" src="chat.js"></script>
 <script type="module" src="reels.js"></script>
-
 <script type="module" src="explore.js"></script>
 
 <script>
@@ -162,6 +106,8 @@ function comingSoon(e){
   if(e) e.preventDefault();
   alert('Coming Soon - Stay Tuned!');
 }
+document.getElementById('closeUploadModal')?.addEventListener('click',()=> document.getElementById('uploadModal').hidden=true);
+document.getElementById('closeStoryModal')?.addEventListener('click',()=> document.getElementById('storyModal').hidden=true);
 </script>
 
 </body>
