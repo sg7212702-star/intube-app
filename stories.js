@@ -54,15 +54,17 @@ fileInput?.addEventListener("change", async (e)=>{
   `https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`,
   { method:"POST", body:fd }
   );
-    userName: auth.currentUser.displayName,
-    userPhoto: auth.currentUser.photoURL,
-    storyUrl: data.secure_url,
-    type: type,
-    views: [],
-    createdAt: serverTimestamp(),
-    expiresAt: Date.now()+86400000
-  });
-
+    const data = await res.json();
+await addDoc(collection(db,"stories"),{
+uid: auth.currentUser.uid,
+userName: auth.currentUser.displayName,
+userPhoto: auth.currentUser.photoURL,
+storyUrl: data.secure_url,
+type: type,
+views: [],
+createdAt: serverTimestamp(),
+expiresAt: Date.now()+86400000
+});
   fileInput.value = "";
 });
 
