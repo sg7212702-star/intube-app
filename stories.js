@@ -29,12 +29,18 @@ let paused = false;
 // --- feature 1 : open file picker ---
 document.getElementById("addStory")?.addEventListener("click", (e)=>{
   e.preventDefault();
-  fileInput?.click();
+  e.stopPropagation();
+  document.getElementById("storyFile")?.click();
 });
 
+// --- upload ---
+const fileInput = document.getElementById("storyFile");
+
 // --- feature 2 : upload story ---
-fileInput?.addEventListener("change", async ()=>{
-  const file = fileInput.files[0];
+fileInput?.addEventListener("change", async (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  const file = e.target.files[0];
   if(!file) return;
   if(!auth.currentUser) return alert("login karo");
 
@@ -45,14 +51,9 @@ fileInput?.addEventListener("change", async ()=>{
   const type = file.type.startsWith("video")? "video" : "image";
 
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`,
-    { method:"POST", body:fd }
+  `https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`,
+  { method:"POST", body:fd }
   );
-
-  const data = await res.json();
-
-  await addDoc(collection(db,"stories"),{
-    uid: auth.currentUser.uid,
     userName: auth.currentUser.displayName,
     userPhoto: auth.currentUser.photoURL,
     storyUrl: data.secure_url,
