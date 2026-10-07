@@ -114,7 +114,7 @@ function openStory(index){
   storyUserName.innerText=
     story.userName || "INTUBE User";
 
-  cstoryUserPhoto.onclick = () => {
+  storyUserPhoto.onclick = () => {
   alert("Profile: " + (story.userName || "INTUBE User"));
 };
 
