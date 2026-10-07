@@ -9,7 +9,6 @@ import {
 // --- config ---
 const CLOUD = "kujnbe0a";
 const PRESET = "intube_free";
-
 // --- html ---
 const tray = document.getElementById("storyTray");
 const viewer = document.getElementById("storyViewer");
