@@ -22,7 +22,6 @@ const storyFile = document.getElementById("storyFile");
 
 storyFile?.addEventListener("change", () => {
     alert("Photo Selected");
-    uploadStoryBtn.click();
 });
 const storyViewer = document.getElementById("storyViewer");
 const storyImage = document.getElementById("storyImage");
