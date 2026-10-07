@@ -20,8 +20,9 @@ const storyModal = document.getElementById("storyModal");
 const uploadStoryBtn = document.getElementById("uploadStoryBtn");
 const storyFile = document.getElementById("storyFile");
 
-const storiesList = document.getElementById("storiesList");
-
+storyFile?.addEventListener("change", () => {
+  uploadStoryBtn.click();
+});
 const storyViewer = document.getElementById("storyViewer");
 const storyImage = document.getElementById("storyImage");
 const storyUserPhoto = document.getElementById("storyUserPhoto");
@@ -34,7 +35,7 @@ const PRESET = "intube_free";
 /* Upload Modal */
 
 addStory?.addEventListener("click", () => {
-  storyModal.hidden = false;
+  storyFile.click();
 });
 
 storyModal?.addEventListener("click", e => {
