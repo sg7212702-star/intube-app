@@ -34,7 +34,7 @@ document.getElementById("addStory")?.addEventListener("click", (e)=>{
 });
 
 // --- upload ---
-const fileInput = document.getElementById("storyFile");
+
 
 // --- feature 2 : upload story ---
 fileInput?.addEventListener("change", async (e)=>{
