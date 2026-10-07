@@ -1,3 +1,11 @@
+import { db, auth } from "./firebase-config.js";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", () => {
 
   const addStory = document.querySelector(".addStory");
@@ -5,11 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadStoryBtn = document.getElementById("uploadStoryBtn");
   const storyFile = document.getElementById("storyFile");
 
-  if (addStory && storyModal) {
-    addStory.addEventListener("click", () => {
-      storyModal.hidden = false;
-    });
-  }
+  const CLOUD = "kujnbe0a";
+  const PRESET = "intube_free";
+
+  addStory?.addEventListener("click", () => {
+    storyModal.hidden = false;
+  });
 
   storyModal?.addEventListener("click", (e) => {
     if (e.target === storyModal) {
@@ -17,14 +26,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  uploadStoryBtn?.addEventListener("click", () => {
+  uploadStoryBtn?.addEventListener("click", async () => {
 
-    if (!storyFile.files.length) {
-      alert("Please select a story image");
+    const file = storyFile.files[0];
+
+    if (!file) {
+      alert("Select Story");
       return;
     }
 
-    alert("Story upload system connected successfully!");
+    try {
+
+      uploadStoryBtn.innerText = "Uploading...";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", PRESET);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+
+      await addDoc(
+        collection(db, "stories"),
+        {
+          imageUrl: data.secure_url,
+          userId: auth.currentUser.uid,
+          userName: auth.currentUser.displayName || "INTUBE User",
+          userPhoto: auth.currentUser.photoURL || "",
+          createdAt: serverTimestamp()
+        }
+      );
+
+      alert("Story Uploaded");
+
+      storyFile.value = "";
+      storyModal.hidden = true;
+
+    } catch (err) {
+
+      alert(err.message);
+
+    }
+
+    uploadStoryBtn.innerText = "Upload Story";
+
   });
 
 });
