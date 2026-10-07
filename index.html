@@ -140,26 +140,21 @@
 
 </div>
 
-<!-- STORY VIEWER -->
 <div id="storyViewer" hidden>
-
   <div id="storyProgress"></div>
-
   <div id="storyHeader">
-
-    <img id="storyUserPhoto">
-
+    <img id="viewerUserPhoto" style="width:40px;height:40px;border-radius:50%">
     <div>
-      <b id="storyUserName"></b>
+      <b id="viewerUser"></b>
       <small id="storyTime"></small>
     </div>
-
+    <button id="closeViewer">X</button>
   </div>
-
-  <img id="storyImage">
-
+  <img id="storyImg" hidden>
+  <video id="storyVideo" hidden controls></video>
+  <button id="prevStory">Prev</button>
+  <button id="nextStory">Next</button>
 </div>
-
 <script type="module" src="firebase-config.js"></script>
 <script type="module" src="auth.js"></script>
 <script type="module" src="feed.js"></script>
