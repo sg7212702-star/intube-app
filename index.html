@@ -1,42 +1,25 @@
-<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INTUBE</title><style>
-*{m:0;p:0;box-sizing:border-box;font-family:system-ui}
-body{background:#08080a;color:#fff;max-width:480px;margin:0 auto;padding-bottom:90px;background:radial-gradient(600px at 0% 0%,rgba(225,48,108,.18),transparent 60%),#08080a}
-.top{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:99;background:rgba(12,12,14,.75);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.08)}
-.logo{font-family:cursive;font-size:27px;color:#E1306C;font-weight:700;font-style:italic}
-.btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#E1306C;font-size:20px;display:flex;align-items:center;justify-content:center}
-.stories{display:flex;gap:14px;padding:14px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06)}
-.story{flex:0 0 68px;text-align:center;position:relative}
-.ring{width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);position:relative}
-.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #000;background:#222;object-fit:cover}
-.plus{position:absolute;bottom:0;right:0;width:22px;height:22px;background:#0095F6;color:#fff;border-radius:50%;border:2.5px solid #000;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
-.story span{font-size:11px;margin-top:6px;display:block}
-.banner{background:#fff0f3;color:#ff6b30;text-align:center;padding:10px;font-size:14px;font-weight:600}
-.feed{min-height:50vh}
-.empty{margin:20px 16px;padding:40px 20px;text-align:center;border-radius:20px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.15);backdrop-filter:blur(20px);color:#888;line-height:1.6}
-.empty b{color:#fff;display:block;font-size:15px;margin-bottom:6px}
-.bottom{position:fixed;bottom:12px;left:12px;right:12px;max-width:456px;margin:0 auto;height:62px;display:flex;justify-content:space-around;align-items:center;background:rgba(18,18,22,.80);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.13);border-radius:24px;z-index:200}
-.bottom button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px}
-.bottom button.active{color:#fff;background:rgba(255,255,255,.10)}
-.bottom img{width:26px;height:26px;border-radius:50%}
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INTUBE - Locked</title><style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#08080a;color:#fff;max-width:480px;margin:0 auto;padding-bottom:100px;background:radial-gradient(600px at 0% 0%,rgba(225,48,108,.22),transparent 70%),#08080a}
+.top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:rgba(12,12,14,.8);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:99}
+.logo{font-family:cursive;font-size:28px;color:#E1306C;font-style:italic;font-weight:700}
+.btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#E1306C;font-size:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}
+.storyWrap{padding:16px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06)}
+.story{width:72px;text-align:center;position:relative}
+.ring{width:72px;height:72px;border-radius:50%;padding:3px;background:conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);position:relative}
+.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #0a0a0c;background:#2a2a3a;object-fit:cover}
+.plus{position:absolute;bottom:2px;right:2px;width:24px;height:24px;background:#0095F6;color:#fff;border-radius:50%;border:2.5px solid #0a0a0c;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.story span{font-size:13px;margin-top:8px;display:block;color:#fff}
+.feed{padding:16px}
+.empty{padding:50px 20px;text-align:center;border-radius:24px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14);backdrop-filter:blur(20px);color:#888;line-height:1.6}
+.empty b{color:#fff;font-size:18px;display:block;margin-bottom:10px}
+.empty small{line-height:2.2;font-size:15px}
+.bottom{position:fixed;bottom:16px;left:16px;right:16px;max-width:448px;margin:0 auto;height:68px;display:flex;justify-content:space-around;align-items:center;background:rgba(20,20,24,.85);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.13);border-radius:28px;z-index:200}
+.bottom button{width:52px;height:52px;border-radius:16px;border:none;background:transparent;color:#8e8e8e;font-size:28px;display:flex;align-items:center;justify-content:center}
+.bottom button.active{background:rgba(255,255,255,.10);color:#fff}
+.bottom img{width:30px;height:30px;border-radius:50%}
 </style></head><body>
-<!-- TOP BAR -->
-<div class="top"><button class="btn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="btn" id="heartBtn">♡</button></div>
-<!-- STORY - ONLY YOUR STORY -->
-<div class="stories"><div class="story" id="yourStory"><div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
-<!-- BANNER -->
-<div class="banner">Download Official InstaPro v15.70</div>
-<!-- FEED EMPTY -->
-<div class="feed" id="feed"><div class="empty"><b>Feed Empty 💎</b>No posts yet.<br>Upload होते ही Real-Time दिखेगा.<br><br>✓ All Buttons Glass<br>✓ Insta Exact Size<br>✓ Only Add Story Button</div></div>
-<!-- BOTTOM NAV -->
-<div class="bottom"><button class="active" id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn" style="background:rgba(255,255,255,.10);color:#fff">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
-<!-- JS - SMALL -->
-<script>
-const $=id=>document.getElementById(id);
-$('yourStory').onclick=()=>alert('Add Story - Next Firebase');
-$('addBtn').onclick=$('createBtn').onclick=()=>alert('Create Post/Reel/Story - Next');
-$('heartBtn').onclick=()=>alert('Notifications - Next');
-function renderPost(d){let p=document.createElement('div');p.innerHTML='POST:'+d.url;document.querySelector('.empty')?.remove();$('feed').prepend(p);}
-</script>
-</body></html>
+<div class="top"><button class="btn">+</button><div class="logo">InstaPro 👑</div><button class="btn">♡</button></div>
+<div class="storyWrap"><div class="story" id="yourStory"><div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
+<div class="feed" id="feed"><div class="empty"><b>Feed Empty 💎</b>No posts yet.
