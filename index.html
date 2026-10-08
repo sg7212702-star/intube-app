@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="style.css?v=100"></head><body>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="style.css?v=100"><style>html,body{width:100%;overflow-x:hidden} img,video{max-width:100%} #postsGrid,#reelsGrid{width:100%;box-sizing:border-box}</style></head><body>
 <div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro</div><button class="glassBtn" id="heartBtn">♡</button></div>
 <div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img src="https://i.pravatar.cc/150?img=12"></div><div style="font-size:11px">You</div></div></div><div id="feed"></div></div>
 <div id="reelsView" class="view"><div id="reelsFeed"></div></div>
@@ -82,61 +82,4 @@ function renderFeed(){
 };
 function renderReels(){
  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- all=all.filter(p=>p.type=='reel');
- let rf=document.getElementById('reelsFeed');
- if(all.length==0){rf.innerHTML='<div class="empty">No Reels</div>';return;}
- rf.innerHTML='';
- all.slice().reverse().forEach(p=>{
-  let src=p.url||p.ur1||'';if(!src)return;
-  rf.innerHTML+='<div class="reelCard"><video src="'+src+'" controls loop playsinline style="width:100%;height:100%"></video></div>';
- });
-}
-function renderProfile(){
- let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- let posts=all.filter(p=>p.type!='story');
- document.getElementById('postsCount').innerText=posts.length;
- let g=document.getElementById('postsGrid');
- g.innerHTML='';
- g.style.display='grid'; g.style.gridTemplateColumns='1fr 1fr 1fr'; g.style.gap='2px';
- posts.slice().reverse().forEach(p=>{
-  let src=p.url||p.ur1||'';if(!src)return;
-  let d=document.createElement('div');
-  d.style.cssText='aspect-ratio:1/1;overflow:hidden;background:#111;border-radius:4px';
-  let tag=p.type=='reel'?'<video src="'+src+'" style="width:100%;height:100%;object-fit:cover"></video>':'<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
-  d.innerHTML=tag;g.appendChild(d);
- });
- let rg=document.getElementById('reelsGrid');
- if(rg){ rg.style.display='grid'; rg.style.gridTemplateColumns='1fr 1fr 1fr'; rg.style.gap='2px'; }
-}
- });
-}
-function addNotif(t,time){
- let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
- n.unshift({t,time});
- localStorage.setItem('insta_notif',JSON.stringify(n));
-}
-function renderNotif(){
- let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
- let l=document.getElementById('notifList');
- if(!l)return;
- l.innerHTML='';
- n.forEach(x=>{
-  l.innerHTML+='<div style="padding:12px;border-bottom:1px solid #222">'+x.t+'</div>';
- });
-}
-async function renderSearch(q){
- let res=document.getElementById('searchResults');
- res.innerHTML='<div class="empty">Searching "'+q+'..."</div>';
-}
-document.getElementById('searchGo').onclick=()=>{
- let q=document.getElementById('searchInput').value||'trending';
- renderSearch(q);
-};
-function like(el){
- el.innerText=el.innerText=='🤍'?'❤️':'🤍';
-}
-let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML='<div class="ring"><img src="'+url+'"></div><div style="font-size:11px">You</div>'; d.onclick=()=>openStoryView(url); document.getElementById('storiesBar').appendChild(d); });
-let savedName=localStorage.getItem('insta_name'); if(savedName){ $('nameText').innerText=savedName; }
-renderFeed(); renderProfile(); show('homeView');
-setInterval(()=>{ renderFeed(); }, 3000);
-</script></body></html>
+ all=all.filter(p
