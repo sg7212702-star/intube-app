@@ -3,13 +3,12 @@ import { collection, onSnapshot, query, where, deleteDoc, doc, updateDoc, arrayU
 
 const tray = document.getElementById("storiesList");
 const viewer = document.getElementById("storyViewer");
-const viewerImg = document.getElementById("viewerImg");
-const viewerVideo = document.getElementById("viewerVideo");
+const viewerImg = document.getElementById("viewerImg") || document.getElementById("storyImg");
+const viewerVideo = document.getElementById("viewerVideo") || document.getElementById("storyVideo");
 const viewerProgress = document.getElementById("storyProgress");
 const closeViewerBtn = document.getElementById("closeViewer");
 const viewerUserPhoto = document.getElementById("viewerUserPhoto");
-const viewerUserName = document.getElementById("viewerUserName");
-
+const viewerUserName = document.getElementById("viewerUserName") || document.getElementById("viewerUser");
 let groups = []; let myOwnStories = []; let curGroup=0, curIndex=0, timer=null;
 window.groups = groups;
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
