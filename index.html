@@ -48,7 +48,7 @@ function openStoryView(url){
  setTimeout(()=>{ $('storyViewer').style.display='none'; },5100);
 }
 $('fileInput').onchange=async e=>{
- let f=e.target.files[0];if(!f)return;
+let f=e.target.files[0];if(!f)return;
  $('overlay').style.display='block';
  let url1=await up(f);
  if(cur=='story'){
