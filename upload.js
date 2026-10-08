@@ -1,5 +1,7 @@
 import { auth, db } from "./firebase-config.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const CLOUD_NAME = "kujnbe0a"; // <-- YAHI MISSING THA
 const UPLOAD_PRESET = "intube_free";
 
 const postBtn = document.getElementById("postBtn");
@@ -31,9 +33,6 @@ postBtn?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = 
 closeModal?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = true; });
 closeStoryModal?.addEventListener("click", () => { if(storyModal) storyModal.hidden = true; });
 
-// LEFT wala button - Instagram jaisa logic
-// Duplicate click removed - handled in stories.js
-
 storyFile?.addEventListener("change", () => {
     if (storyFile.files[0] && storyModal) {
         if (storyFileName) storyFileName.textContent = storyFile.files[0].name;
@@ -61,7 +60,8 @@ uploadBtn?.addEventListener("click", async () => {
         if (uploadModal) uploadModal.hidden = true;
         if (caption) caption.value = "";
         if (mediaFile) mediaFile.value = "";
-        alert("Post Uploaded");
+        alert("Post Uploaded ✅");
+        location.reload();
     } catch (e) { alert("Error: " + e.message); }
     uploadBtn.textContent = "Upload"; uploadBtn.disabled = false;
 });
@@ -87,7 +87,8 @@ uploadStoryBtn?.addEventListener("click", async () => {
         });
         if (storyModal) storyModal.hidden = true;
         if (storyFile) storyFile.value = "";
-        alert("Story Uploaded! Ab left wala button colourful ho jayega");
+        alert("Story Uploaded! ✅");
+        location.reload();
     } catch (e) { alert("Error: " + e.message); }
     uploadStoryBtn.textContent = "Upload"; uploadStoryBtn.disabled = false;
 });
