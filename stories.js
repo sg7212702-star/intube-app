@@ -198,7 +198,7 @@ function startProgress(sec){
   const fill = document.getElementById("activeFill");
   timer = setInterval(()=>{
     if(paused) return;
-    prog += 0.5;
+    prog+=0.15;
     if(fill) fill.style.width = prog+"%";
     if(prog >= 100) nextStory();
   }, sec*10);
