@@ -1,34 +1,46 @@
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:linear-gradient(180deg,#0a0a12 0%,#100515 100%);color:#fff;font-family:system-ui,sans-serif;overflow-x:hidden}
-.top{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.03);backdrop-filter:blur(25px);border-bottom:1px solid rgba(255,100,180,0.15);box-shadow:0 0 25px rgba(255,0,128,0.12)}
+body{background:linear-gradient(180deg,#0a0a12 0%,#100515 100%);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto;overflow-x:hidden;min-height:100vh}
+
+/* Top - Transparent Glass */
+.top{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-bottom:1px solid rgba(255,100,180,0.18);box-shadow:0 0 25px rgba(255,0,128,0.15)}
 .logo{font-weight:900;font-size:24px;background:linear-gradient(90deg,#ff4d9a,#ff9a5c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.glassBtn{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(255,0,128,0.2)}
+.glassBtn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);backdrop-filter:blur(12px);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 15px rgba(255,0,128,0.2)}
 
-.view{display:none!important;min-height:100vh;padding-bottom:90px}
+/* Views */
+.view{display:none!important;min-height:100vh;padding-bottom:110px}
 .view.active{display:block!important}
-
-#storiesBar{display:flex;gap:12px;padding:12px;overflow-x:auto}
-.story{flex:0 0 70px;text-align:center}
+.stories{display:flex;gap:12px;padding:12px;overflow-x:auto;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{flex:0 0 68px;text-align:center;position:relative}
 .ring{width:64px;height:64px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#ff4d9a,#ff9a5c,#d62976,#962fbf);box-shadow:0 0 18px rgba(255,0,128,0.5)}
 .ring img{width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover}
+.addBadge{position:absolute;bottom:18px;right:4px;width:18px;height:18px;background:#0095f6;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #000}
 
-.postCard{margin:14px;background:rgba(255,255,255,0.04);backdrop-filter:blur(22px);border:1px solid rgba(255,100,180,0.18);border-radius:20px;overflow:hidden;box-shadow:0 0 30px rgba(255,0,128,0.18)}
-.postHead{display:flex;align-items:center;gap:10px;padding:12px;font-weight:700}
-.empty{padding:40px;text-align:center;opacity:0.6}
+/* Post - FULL TRANSPARENT GLOW - NO BLACK */
+.postCard{margin:14px;background:rgba(255,255,255,0.05);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(255,100,180,0.20);border-radius:20px;overflow:hidden;box-shadow:0 0 30px rgba(255,0,128,0.20), inset 0 0 20px rgba(255,255,255,0.04)}
+.postHead{padding:12px;display:flex;align-items:center;gap:10px;font-weight:700}
+.postCard img,.postCard video{width:100%;display:block;max-height:80vh;object-fit:cover}
+.empty{padding:60px 20px;text-align:center;opacity:0.5}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.grid3 img,.grid3 video{width:100%;aspect-ratio:1;object-fit:cover}
 
-#bottom{position:fixed!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;z-index:60;display:flex!important;justify-content:space-around!important;align-items:center!important;padding:12px 10px 28px 10px!important;background:rgba(255,255,255,0.05)!important;backdrop-filter:blur(30px)!important;border-top:1px solid rgba(255,100,180,0.18)!important;box-shadow:0 -5px 40px rgba(255,0,128,0.2)!important;border-radius:0!important;margin:0!important}
-#bottom button{width:48px!important;height:48px!important;min-width:48px!important;border-radius:14px!important;border:none!important;background:transparent!important;color:#999!important;font-size:22px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important}
-#bottom button.active{background:rgba(255,255,255,0.08)!important;color:#fff!important;box-shadow:0 0 15px rgba(255,0,128,0.3)!important;border:1px solid rgba(255,100,180,0.25)!important}
-#bottom button img,#bottom button svg{width:24px!important;height:24px!important}
+/* Search */
+.searchBar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.06);backdrop-filter:blur(15px);margin:12px;border-radius:14px;border:1px solid rgba(255,100,180,0.18);box-shadow:0 0 20px rgba(255,0,128,0.15)}
+#searchInput{background:transparent;border:none;outline:none;color:#fff;width:100%;font-size:15px}
 
-/* UPLOAD BUTTON - TRANSPARENT GLOW - NO BLACK */
-#addBtn,#createBtn{background:rgba(255,255,255,0.06)!important;backdrop-filter:blur(20px)!important;border:1px solid rgba(255,100,180,0.35)!important;color:#fff!important;box-shadow:0 0 25px rgba(255,0,128,0.45), inset 0 0 15px rgba(255,255,255,0.08)!important}
+/* Bottom - ISKO FIX KIYA HAI - class="bottom" hai */
+.bottom{position:fixed;bottom:0;left:0;right:0;width:100%;z-index:70;display:flex;justify-content:space-around;align-items:center;padding:12px 8px 26px 8px;background:rgba(255,255,255,0.05);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,100,180,0.18);box-shadow:0 -8px 40px rgba(255,0,128,0.20)}
+.bottom button{width:50px;height:50px;border-radius:16px;border:none;background:transparent;color:#8a8a90;font-size:24px;display:flex;align-items:center;justify-content:center;transition:0.2s}
+.bottom button.active{background:rgba(255,255,255,0.09);color:#fff;box-shadow:0 0 18px rgba(255,0,128,0.35);border:1px solid rgba(255,100,180,0.25)}
+.bottom button img{width:30px;height:30px;border-radius:50%;object-fit:cover}
 
-/* YE SABSE ZARURI HAI - SARE JAGAH DIKHNA BAND */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.2);backdrop-filter:blur(8px);display:none!important;z-index:99}
-#createSheet{position:fixed;left:12px;right:12px;bottom:90px;background:rgba(255,255,255,0.06);backdrop-filter:blur(35px);border-radius:22px;border:1px solid rgba(255,100,180,0.25);padding:14px 16px 16px;display:none!important;z-index:100;box-shadow:0 0 50px rgba(255,0,128,0.35)}
-.sheetItem{padding:18px 14px;border-radius:14px;margin:8px 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:16px;font-weight:600;display:flex;align-items:center;gap:12px;box-shadow:0 0 15px rgba(255,0,128,0.15)}
+/* Upload Button - Transparent Glow - No Black */
+#addBtn,#createBtn{background:rgba(255,255,255,0.07)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border:1px solid rgba(255,100,180,0.40)!important;color:#fff!important;box-shadow:0 0 25px rgba(255,0,128,0.50), inset 0 0 12px rgba(255,255,255,0.08)!important}
 
-#searchBar{display:flex;align-items:center;gap:8px;padding:12px;background:rgba(255,255,255,0.05);backdrop-filter:blur(15px);margin:12px;border-radius:14px;border:1px solid rgba(255,100,180,0.15);box-shadow:0 0 20px rgba(255,0,128,0.15)}
-#searchInput{background:transparent;border:none;outline:none;color:#fff;width:100%}
+/* Plus Sheet - TRANSPARENT GLOW + HIDDEN BY DEFAULT */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);display:none;z-index:99}
+#createSheet{position:fixed;left:12px;right:12px;bottom:90px;background:rgba(255,255,255,0.08);backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);border-radius:22px;border:1px solid rgba(255,100,180,0.28);padding:14px 16px 16px;display:none;z-index:100;box-shadow:0 0 50px rgba(255,0,128,0.35), inset 0 0 20px rgba(255,255,255,0.06)}
+.sheetItem{padding:18px 14px;border-radius:14px;margin:8px 0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 15px rgba(255,0,128,0.15)}
+.sheetItem:active{transform:scale(0.97);background:rgba(255,255,255,0.12)}
+
 #fileInput{display:none}
