@@ -97,11 +97,17 @@ function renderProfile(){
  document.getElementById('postsCount').innerText=posts.length;
  let g=document.getElementById('postsGrid');
  g.innerHTML='';
+ g.style.display='grid'; g.style.gridTemplateColumns='1fr 1fr 1fr'; g.style.gap='2px';
  posts.slice().reverse().forEach(p=>{
   let src=p.url||p.ur1||'';if(!src)return;
   let d=document.createElement('div');
-  let tag=p.type=='reel'?'<video src="'+src+'"></video>':'<img src="'+src+'">';
+  d.style.cssText='aspect-ratio:1/1;overflow:hidden;background:#111;border-radius:4px';
+  let tag=p.type=='reel'?'<video src="'+src+'" style="width:100%;height:100%;object-fit:cover"></video>':'<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
   d.innerHTML=tag;g.appendChild(d);
+ });
+ let rg=document.getElementById('reelsGrid');
+ if(rg){ rg.style.display='grid'; rg.style.gridTemplateColumns='1fr 1fr 1fr'; rg.style.gap='2px'; }
+}
  });
 }
 function addNotif(t,time){
