@@ -95,23 +95,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-grad
 </section>
 <input type="file" id="storyFile" accept="image/*,video/*" hidden>
 
-  <!-- FEED - ONLY DESIGN, NO LIKES COUNT -->
-  <main id="feed">
-    <div class="post">
-      <div class="postHead">
-        <img>
-        <div><div class="name">Username</div><div class="loc">Location</div></div>
-        <button class="more"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19.5" cy="12" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/></svg></button>
-      </div>
-      <div class="postMedia"></div>
-      <div class="postActs">
-        <button><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <button><svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H12L8 21v-3.5A8.5 8.5 0 0 1 21 11.5z"/></svg></button>
-        <button><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
-        <button class="right"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
-      </div>
-    </div>
-  </main>
+   <!-- FEED - EMPTY, REAL POSTS WILL COME FROM FIREBASE -->
+  <main id="feed"></main>
 
   <!-- ALL INSTAGRAM SCREENS - UI ONLY -->
   <div id="exploreScreen" class="screen"><div class="sHead"><h2>Search & Explore</h2></div></div>
