@@ -94,34 +94,44 @@ async function up(file){
 }
 
 $('fileInput').onchange=async e=>{
- let f=e.target.files[0]; if(!f) return; $('overlay').style.display='block';
- let url=await up(f);
- if(cur=='story'){ let d=document.createElement('div'); d.className='story'; d.innerHTML=`<div class="ring"><img src="${url}"></div><div style="font-size:11px;margin-top:6px">story</div>`; $('storiesBar').appendChild(d); let s=JSON.parse(localStorage.getItem('insta_stories')||'[]'); s.push(url); localStorage.setItem('insta_stories',JSON.stringify(s)); addNotif('Your story uploaded 💍','just now'); }
- else{ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); all.push({url,type:cur,time:Date.now(),user:$('nameText').innerText}); localStorage.setItem('intube_cloud',JSON.stringify(all)); renderFeed(); renderProfile(); if(cur=='reel') renderReels(); addNotif((cur=='reel'?'Reel':'Post')+' uploaded ✓ Real-Time','now'); show(cur=='reel'?'reelsView':'homeView'); }
- $('overlay').style.display='none'; e.target.value='';
+ let f=e.target.files[0];if(!f)return;
+ $('overlay').style.display='block';
+ let url1=await up(f);
+ if(cur=='story'){
+  let d=document.createElement('div');
+  d.className='story';
+  d.innerHTML='<div class="ring"><img src="'+url1+'"></div><div style="font-size:11px">You</div>';
+  document.getElementById('storiesBar').appendChild(d);
+ }else{
+  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
+  all.push({url:url1,url1:url1,type:cur,time:Date.now(),user:$('nameText').innerText});
+  localStorage.setItem('intube_cloud',JSON.stringify(all));
+  renderFeed();renderProfile();
+ }
+ $('overlay').style.display='none';e.target.value='';
 };
-
 function renderFeed(){
  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
  let feed=document.getElementById('feed');
- if(all.length==0){
-  feed.innerHTML='<div class="empty">Feed Empty</div>';return;
- }
+ if(all.length==0){feed.innerHTML='<div class="empty">Feed Empty</div>';return;}
  feed.innerHTML='';
- all.reverse().forEach(p=>{
+ all.slice().reverse().forEach(p=>{
   if(p.type=='story')return;
-  let m=p.type=='reel'?'<video src="'+p.url+'" controls></video>':'<img src="'+p.url+'">';
-  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div>'+m+'<div style="padding:10px">❤️</div></div>';
+  let src=p.url||p.url1||'';
+  if(!src)return;
+  let m=p.type=='reel'?'<video src="'+src+'" controls style="width:100%"></video>':'<img src="'+src+'" style="width:100%;display:block;background:#111">';
+  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div>'+m+'<div style="padding:10px">❤️ 💬</div></div>';
  });
 }
 function renderReels(){
  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- let rf=document.getElementById('reelsFeed');
  all=all.filter(p=>p.type=='reel');
+ let rf=document.getElementById('reelsFeed');
  if(all.length==0){rf.innerHTML='<div class="empty">No Reels</div>';return;}
  rf.innerHTML='';
- all.reverse().forEach(p=>{
-  rf.innerHTML+='<div class="reelCard"><video src="'+p.url+'" controls loop></video></div>';
+ all.slice().reverse().forEach(p=>{
+  let src=p.url||p.url1||'';if(!src)return;
+  rf.innerHTML+='<div class="reelCard"><video src="'+src+'" controls loop playsinline style="width:100%;height:100%"></video></div>';
  });
 }
 function renderProfile(){
@@ -130,9 +140,10 @@ function renderProfile(){
  document.getElementById('postCount').innerText=posts.length;
  let g=document.getElementById('postsGrid');
  g.innerHTML='';
- posts.reverse().forEach(p=>{
+ posts.slice().reverse().forEach(p=>{
+  let src=p.url||p.url1||'';if(!src)return;
   let d=document.createElement('div');
-  let tag=p.type=='reel'?'<video src="'+p.url+'"></video>':'<img src="'+p.url+'">';
+  let tag=p.type=='reel'?'<video src="'+src+'"></video>':'<img src="'+src+'">';
   d.innerHTML=tag;g.appendChild(d);
  });
 }
