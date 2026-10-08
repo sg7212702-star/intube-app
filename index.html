@@ -101,15 +101,66 @@ $('fileInput').onchange=async e=>{
  $('overlay').style.display='none'; e.target.value='';
 };
 
-function renderFeed(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]').filter(p=>p.type!='story'); let feed=$('feed'); if(!all.length){feed.innerHTML=`<div class="empty"><b>Feed Empty 💎</b><br><small>No posts yet.<br>Upload होते ही Real-Time दिखेगा.</small></div>`; return;} feed.innerHTML=''; all.slice().reverse().forEach(p=>{feed.innerHTML+=`<div class="postCard"><div class="postHead"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#feda75,#d62976)"></div><b>${p.user||'sanjay kumar'}</b><span style="margin-left:auto">•••</span></div>${p.type=='reel'?`<video src="${p.url}" controls playsinline style="width:100%;max-height:70vh"></video>`:`<img src="${p.url}" style="width:100%">`}<div class="postAct"><span onclick="like(this)">❤️</span><span>💬</span><span>↗️</span><span style="margin-left:auto">🔖</span></div></div>`;});}
-function renderReels(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]').filter(p=>p.type=='reel'); let rf=$('reelsFeed'); if(!all.length){rf.innerHTML=`<div class="empty"><b>No Reels Yet 🎬</b><br><small>Reel upload karo to yahan Instagram Lite jaisa full screen chalega</small></div>`; return;} rf.innerHTML=''; all.slice().reverse().forEach(p=>{rf.innerHTML+=`<div class="reelCard"><video src="${p.url}" autoplay muted loop controls playsinline></video><div style="position:absolute;left:12px;bottom:18px;right:70px"><b>@${(p.user||'sanjay').replace(/\s/g,'')}</b><div style="font-size:12px;opacity:.85;margin-top:4px">Original audio • InstaPro 👑</div></div><div style="position:absolute;right:10px;bottom:40px;display:flex;flex-direction:column;gap:18px;font-size:26px;text-align:center"><div>❤️<br><small style="font-size:11px">1.2k</small></div><div>💬<br><small style="font-size:11px">89</small></div><div>↗️</div></div></div>`;});}
-function renderProfile(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); $('postCount').innerText=all.filter(p=>p.type!='story').length; let posts=all.filter(p=>p.type=='post'); let reels=all.filter(p=>p.type=='reel'); $('postsGrid').innerHTML=''; posts.slice().reverse().forEach(p=>{let d=document.createElement('div'); d.innerHTML=`<img src="${p.url}">`; $('postsGrid').appendChild(d);}); $('reelsGrid').innerHTML=''; reels.slice().reverse().forEach(p=>{let d=document.createElement('div'); d.innerHTML=`<video src="${p.url}"></video>`; $('reelsGrid').appendChild(d);});}
-function addNotif(t,time){ let n=JSON.parse(localStorage.getItem('insta_notif')||'[]'); n.unshift({t,time}); localStorage.setItem('insta_notif',JSON.stringify(n.slice(0,20))); }
-function renderNotif(){ let n=JSON.parse(localStorage.getItem('insta_notif')||'[{t:"Welcome to InstaPro 👑 - Real-Time Sync Active",time:"now"}]'); let l=$('notifList'); l.innerHTML=''; n.forEach(x=>{l.innerHTML+=`<div class="notifItem"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#feda75,#d62976)"></div><div><b>${x.t}</b><br><small style="color:#888">${x.time}</small></div><div style="margin-left:auto">•</div></div>`;}); }
-async function renderSearch(q){ let res=$('searchResults'); res.innerHTML=`<div class="empty">Searching "${q}"... Real server se 🔍</div>`; try{ let r=await fetch('https://dummyjson.com/users?limit=8'); let j=await r.json(); res.innerHTML=''; j.users.forEach(u=>{ res.innerHTML+=`<div class="notifItem"><img src="${u.image}" style="width:36px;height:36px;border-radius:50%"><div><b>${u.firstName} ${u.lastName}</b><br><small style="color:#888">@${u.username} • ${u.company.title}</small></div><button style="margin-left:auto;padding:6px 14px;border-radius:10px;background:#0095F6;border:none;color:#fff;font-weight:700">Follow</button></div>`;}); }catch{ res.innerHTML=`<div class="empty">Offline search - ${JSON.parse(localStorage.getItem('intube_cloud')||'[]').length} posts found</div>`; } }
-$('searchGo').onclick=()=>{let q=$('searchInput').value||'trending'; renderSearch(q);};
-function like(el){ el.innerText= el.innerText=='❤️'?'💖':'❤️'; if(el.innerText=='💖') addNotif('You liked a post ❤️','just now'); }
-
+function renderFeed(){
+ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
+ let feed=document.getElementById('feed');
+ if(all.length==0){
+  feed.innerHTML='<div class="empty">Feed Empty</div>';return;
+ }
+ feed.innerHTML='';
+ all.reverse().forEach(p=>{
+  if(p.type=='story')return;
+  let m=p.type=='reel'?'<video src="'+p.url+'" controls></video>':'<img src="'+p.url+'">';
+  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div>'+m+'<div style="padding:10px">❤️</div></div>';
+ });
+}
+function renderReels(){
+ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
+ let rf=document.getElementById('reelsFeed');
+ all=all.filter(p=>p.type=='reel');
+ if(all.length==0){rf.innerHTML='<div class="empty">No Reels</div>';return;}
+ rf.innerHTML='';
+ all.reverse().forEach(p=>{
+  rf.innerHTML+='<div class="reelCard"><video src="'+p.url+'" controls loop></video></div>';
+ });
+}
+function renderProfile(){
+ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
+ let posts=all.filter(p=>p.type!='story');
+ document.getElementById('postCount').innerText=posts.length;
+ let g=document.getElementById('postsGrid');
+ g.innerHTML='';
+ posts.reverse().forEach(p=>{
+  let d=document.createElement('div');
+  let tag=p.type=='reel'?'<video src="'+p.url+'"></video>':'<img src="'+p.url+'">';
+  d.innerHTML=tag;g.appendChild(d);
+ });
+}
+function addNotif(t,time){
+ let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
+ n.unshift({t,time});
+ localStorage.setItem('insta_notif',JSON.stringify(n));
+}
+function renderNotif(){
+ let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
+ let l=document.getElementById('notifList');
+ if(!l)return;
+ l.innerHTML='';
+ n.forEach(x=>{
+  l.innerHTML+='<div style="padding:12px;border-bottom:1px solid #222">'+x.t+'</div>';
+ });
+}
+async function renderSearch(q){
+ let res=document.getElementById('searchResults');
+ res.innerHTML='<div class="empty">Searching '+q+'...</div>';
+}
+document.getElementById('searchGo').onclick=()=>{
+ let q=document.getElementById('searchInput').value||'trending';
+ renderSearch(q);
+};
+function like(el){
+ el.innerText=el.innerText=='❤️'?'💖':'❤️';
+}
 let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML=`<div class="ring"><img src="${url}"></div><div style="font-size:11px;margin-top:6px">story</div>`; $('storiesBar').appendChild(d);});
 let savedName=localStorage.getItem('insta_name'); if(savedName) $('nameText').innerText=savedName;
 renderFeed(); renderProfile(); show('homeView');
