@@ -1,54 +1,52 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel="stylesheet" href="style.css?v=100"></head><body>
-<div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="glassBtn" id="heartBtn">♡</button></div>
-
-<div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img id="storyAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div class="addBadge">+</div><div style="font-size:11px;margin-top:8px;opacity:.9">Your story</div></div></div><div id="feed"></div></div>
-
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="style.css?v=100"></head><body>
+<div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro</div><button class="glassBtn" id="heartBtn">♡</button></div>
+<div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img src="https://i.pravatar.cc/150?img=12"></div><div style="font-size:11px">You</div></div></div><div id="feed"></div></div>
 <div id="reelsView" class="view"><div id="reelsFeed"></div></div>
-
-<div id="searchView" class="view"><div class="searchBar"><span>🔍</span><input id="searchInput" placeholder="Search users, hashtags - Real server se"><button id="searchGo" style="background:none;border:none;color:#E1306C;font-weight:700">Go</button></div><div id="searchResults"></div></div>
-
+<div id="searchView" class="view"><div class="searchBar"><span>🔍</span><input id="searchInput" placeholder="Search users"><button id="searchGo">Go</button></div><div id="searchResults"></div></div>
 <div id="notifView" class="view"><div style="padding:16px;font-weight:800;font-size:18px">Notifications 🔔</div><div id="notifList"></div></div>
-
-<div id="profileView" class="view"><div style="padding:18px 16px"><div style="display:flex;gap:16px;align-items:center"><div class="ring" style="width:88px;height:88px"><img id="avatarImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div style="flex:1;display:flex;justify-content:space-around;text-align:center"><div><b id="postCount" style="font-size:18px">0</b><br><small style="color:#8a8a90">Posts</small></div><div><b id="fCount">1.2K</b><br><small style="color:#8a8a90">Followers</small></div><div><b>180</b><br><small style="color:#8a8a90">Following</small></div></div></div><div style="margin-top:14px"><b id="nameText" style="font-size:16px">sanjay kumar</b><br><small id="bioText" style="color:#aaa">💖 InstaPro Lite • Glass UI • Real-Time Sync • 👑 Premium</small></div><div style="display:flex;gap:8px;margin-top:14px"><button id="editBtn" style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);color:#fff;font-weight:700">Edit profile</button><button style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);color:#fff">Share</button></div></div><div style="display:flex;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)"><button id="tabPosts" style="flex:1;padding:14px;background:transparent;border:none;color:#fff;border-top:1.5px solid #fff">⊞ POSTS</button><button id="tabReels" style="flex:1;padding:14px;background:transparent;border:none;color:#777">▶ REELS</button><button id="tabTag" style="flex:1;padding:14px;background:transparent;border:none;color:#777">◫ TAGGED</button></div><div id="postsGrid" class="grid3"></div><div id="reelsGrid" class="grid3" style="display:none"></div><div style="height:90px"></div></div>
-
-<div id="overlay"></div><div id="createSheet"><div class="sheetItem" id="optReel"><span>🎬 Reel - Full screen</span><b>▶</b></div><div class="sheetItem" id="optPost"><span>⊞ Post - Feed me</span><b>+</b></div><div class="sheetItem" id="optStory"><span>⊕ Story - Ring me</span><b>○</b></div></div>
-
-<div class="bottom"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img id="bottomAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:30px;height:30px;border-radius:50%"></button></div>
+<div id="profileView" class="view"><div style="padding:18px 16px"><div style="display:flex;gap:16px;align-items:center"><img src="https://i.pravatar.cc/150?img=12" style="width:70px;height:70px;border-radius:50%"><div><div id="nameText" style="font-weight:800">sanjay kumar</div><div><span id="postsCount">0</span> posts</div><button id="editBtn">Edit</button></div></div><div style="display:flex;gap:10px;margin-top:12px"><button id="tabPosts">Posts</button><button id="tabReels">Reels</button></div><div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-top:10px"></div><div id="reelsGrid" style="display:none"></div></div></div>
+<div id="overlay"></div><div id="storyViewer" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;align-items:center;justify-content:center"><div style="position:fixed;top:16px;right:16px;font-size:32px;color:#fff;z-index:10" onclick="document.getElementById('storyViewer').style.display='none'">✕</div><div style="position:fixed;top:6px;left:6px;right:6px;height:3px;background:rgba(255,255,255,0.3);border-radius:10px;overflow:hidden"><div id="storyBar" style="height:100%;background:#fff;width:0%"></div></div><div id="storyViewBox" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div></div><div id="createSheet"><div class="sheetItem" id="optReel"><span>🎞️ Reel - Full screen</span><b>+</b></div><div class="sheetItem" id="optPost"><span>🖼️ Post - Feed</span><b>+</b></div><div class="sheetItem" id="optStory"><span>⭕ Story - 24h</span><b>+</b></div></div>
+<div class="bottom"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◉</button></div>
 <input type="file" id="fileInput" hidden>
-
 <script>
-const CLOUD_NAME="kujnbe0a"; const PRESET="intube_free"; let cur='post';
+const CLOUD_NAME='kujnbe8a'; const PRESET='intube_free'; let cur='post';
 const $=id=>document.getElementById(id);
-function show(v){ document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='none'}); $(v).classList.add('active'); $(v).style.display='block'; document.querySelectorAll('.bottom button').forEach(b=>b.classList.remove('active')); if(v=='homeView')$('homeBtn').classList.add('active'); if(v=='reelsView')$('reelsBtn').classList.add('active'); if(v=='searchView')$('searchBtn').classList.add('active'); if(v=='notifView')$('heartBtn').classList.add('active'); if(v=='profileView')$('profileBtn').classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
-$('homeBtn').onclick=()=>show('homeView');
-$('reelsBtn').onclick=()=>{show('reelsView'); renderReels();};
+function show(v){document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='none'}); if($(v)){$(v).classList.add('active');$(v).style.display='block';} $('overlay').style.display='none'; $('createSheet').style.display='none';}
+$('homeBtn').onclick=()=>{show('homeView');}
+$('reelsBtn').onclick=()=>{show('reelsView'); renderReels();}
 $('searchBtn').onclick=()=>{show('searchView'); renderSearch('trending');};
-$('profileBtn').onclick=()=>show('profileView');
-$('heartBtn').onclick=()=>{show('notifView'); renderNotif();};
-$('addBtn').onclick=$('createBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';};
+$('profileBtn').onclick=()=>{show('profileView');}
+$('heartBtn').onclick=()=>{show('notifView'); renderNotif();}
+$('addBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';}
 $('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';};
 $('optPost').onclick=()=>{cur='post';$('overlay').click();$('fileInput').accept='image/*';$('fileInput').click();};
 $('optReel').onclick=()=>{cur='reel';$('overlay').click();$('fileInput').accept='video/*';$('fileInput').click();};
 $('optStory').onclick=()=>{cur='story';$('overlay').click();$('fileInput').accept='image/*,video/*';$('fileInput').click();};
 $('yourStoryBtn').onclick=()=>{cur='story';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
-$('tabPosts').onclick=()=>{$('postsGrid').style.display='grid';$('reelsGrid').style.display='none';$('tabPosts').style.color='#fff';$('tabReels').style.color='#777'};
-$('tabReels').onclick=()=>{$('postsGrid').style.display='none';$('reelsGrid').style.display='grid';$('tabReels').style.color='#fff';$('tabPosts').style.color='#777';renderProfile();};
-$('editBtn').onclick=()=>{let n=prompt('Naam likho:', $('nameText').innerText); if(n){$('nameText').innerText=n; localStorage.setItem('insta_name',n);} let b=prompt('Bio:', $('bioText').innerText); if(b) $('bioText').innerText=b; };
-
+$('tabPosts').onclick=()=>{ $('postsGrid').style.display='grid';$('reelsGrid').style.display='none'; };
+$('tabReels').onclick=()=>{ $('postsGrid').style.display='none';$('reelsGrid').style.display='grid'; };
+$('editBtn').onclick=()=>{ let n=prompt('Naam likho:', $('nameText').innerText); if(n){$('nameText').innerText=n; localStorage.setItem('insta_name',n);} }
 async function up(file){
- let base64 = await new Promise(r=>{
-   let rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(file);
+ let base64= await new Promise(r=>{
+  let rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(file);
  });
  let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET);
  try{
-   let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
-   let j=await res.json();
-   if(j.secure_url) return j.secure_url;
+  let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
+  let j=await res.json();
+  if(j.secure_url) return j.secure_url;
  }catch(e){}
  return base64;
 }
-
+function openStoryView(url){
+ $('storyViewer').style.display='flex';
+ let b=$('storyViewBox'); let bar=$('storyBar');
+ bar.style.transition='none'; bar.style.width='0%';
+ if(url.includes('video')||url.includes('.mp4')||url.includes('/video/')) b.innerHTML='<video src="'+url+'" autoplay playsinline style="width:100%;height:100%;object-fit:contain"></video>';
+ else b.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:contain">';
+ setTimeout(()=>{ bar.style.transition='width 5s linear'; bar.style.width='100%'; },100);
+ setTimeout(()=>{ $('storyViewer').style.display='none'; },5100);
+}
 $('fileInput').onchange=async e=>{
  let f=e.target.files[0];if(!f)return;
  $('overlay').style.display='block';
@@ -57,10 +55,13 @@ $('fileInput').onchange=async e=>{
   let d=document.createElement('div');
   d.className='story';
   d.innerHTML='<div class="ring"><img src="'+url1+'"></div><div style="font-size:11px">You</div>';
+  d.onclick=()=>openStoryView(url1);
   document.getElementById('storiesBar').appendChild(d);
+  let all=JSON.parse(localStorage.getItem('insta_stories')||'[]');all.push(url1);localStorage.setItem('insta_stories',JSON.stringify(all));
+  openStoryView(url1);
  }else{
   let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
-  all.push({url:url1,url1:url1,type:cur,time:Date.now(),user:$('nameText').innerText});
+  all.push({url:url1,ur1:url1,type:cur,time:Date.now(),user:$('nameText').innerText});
   localStorage.setItem('intube_cloud',JSON.stringify(all));
   renderFeed();renderProfile();
  }
@@ -73,12 +74,12 @@ function renderFeed(){
  feed.innerHTML='';
  all.slice().reverse().forEach(p=>{
   if(p.type=='story')return;
-  let src=p.url||p.url1||'';
+  let src=p.url||p.ur1||'';
   if(!src)return;
-  let m=p.type=='reel'?'<video src="'+src+'" controls style="width:100%"></video>':'<img src="'+src+'" style="width:100%;display:block;background:#111">';
-  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div>'+m+'<div style="padding:10px">❤️ 💬</div></div>';
+  let m=p.type=='reel'?'<video src="'+src+'" controls style="width:100%"></video>':'<img src="'+src+'" style="width:100%">';
+  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div><div style="padding:0">'+m+'</div></div>';
  });
-}
+};
 function renderReels(){
  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
  all=all.filter(p=>p.type=='reel');
@@ -86,18 +87,18 @@ function renderReels(){
  if(all.length==0){rf.innerHTML='<div class="empty">No Reels</div>';return;}
  rf.innerHTML='';
  all.slice().reverse().forEach(p=>{
-  let src=p.url||p.url1||'';if(!src)return;
+  let src=p.url||p.ur1||'';if(!src)return;
   rf.innerHTML+='<div class="reelCard"><video src="'+src+'" controls loop playsinline style="width:100%;height:100%"></video></div>';
  });
 }
 function renderProfile(){
  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
  let posts=all.filter(p=>p.type!='story');
- document.getElementById('postCount').innerText=posts.length;
+ document.getElementById('postsCount').innerText=posts.length;
  let g=document.getElementById('postsGrid');
  g.innerHTML='';
  posts.slice().reverse().forEach(p=>{
-  let src=p.url||p.url1||'';if(!src)return;
+  let src=p.url||p.ur1||'';if(!src)return;
   let d=document.createElement('div');
   let tag=p.type=='reel'?'<video src="'+src+'"></video>':'<img src="'+src+'">';
   d.innerHTML=tag;g.appendChild(d);
@@ -119,17 +120,17 @@ function renderNotif(){
 }
 async function renderSearch(q){
  let res=document.getElementById('searchResults');
- res.innerHTML='<div class="empty">Searching '+q+'...</div>';
+ res.innerHTML='<div class="empty">Searching "'+q+'..."</div>';
 }
 document.getElementById('searchGo').onclick=()=>{
  let q=document.getElementById('searchInput').value||'trending';
  renderSearch(q);
 };
 function like(el){
- el.innerText=el.innerText=='❤️'?'💖':'❤️';
+ el.innerText=el.innerText=='🤍'?'❤️':'🤍';
 }
-let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML=`<div class="ring"><img src="${url}"></div><div style="font-size:11px;margin-top:6px">story</div>`; $('storiesBar').appendChild(d);});
-let savedName=localStorage.getItem('insta_name'); if(savedName) $('nameText').innerText=savedName;
+let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML='<div class="ring"><img src="'+url+'"></div><div style="font-size:11px">You</div>'; d.onclick=()=>openStoryView(url); document.getElementById('storiesBar').appendChild(d); });
+let savedName=localStorage.getItem('insta_name'); if(savedName){ $('nameText').innerText=savedName; }
 renderFeed(); renderProfile(); show('homeView');
-setInterval(()=>{ renderFeed(); }, 3000); // Real-Time poll
+setInterval(()=>{ renderFeed(); }, 3000);
 </script></body></html>
