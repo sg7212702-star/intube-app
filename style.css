@@ -4,7 +4,7 @@ padding:0;
 box-sizing:border-box;
 }
 body{
-background:#000;
+background:#07070d;
 color:#fff;
 font-family:Inter,Arial,sans-serif;
 overflow-x:hidden;
@@ -13,13 +13,23 @@ overflow-x:hidden;
 #app{
 min-height:100vh;
 padding-bottom:90px;
-background:radial-gradient(900px at 10% 0%,rgba(255,77,166,.18),transparent),radial-gradient(700px at 90% 90%,rgba(100,80,255,.15),transparent),#000;
+background:
+radial-gradient(700px at 15% 0%,rgba(255,45,120,.18),transparent 60%),
+radial-gradient(600px at 90% 8%,rgba(255,108,168,.15),transparent 60%),
+radial-gradient(500px at 50% 100%,rgba(255,45,120,.10),transparent 70%),
+#07070d;
 }
+
+/* GLASS - Transparent + Pink Glow */
 .glass{
-background:rgba(255,255,255,.08);
-backdrop-filter:blur(22px) saturate(180%);
-border:1px solid rgba(255,255,255,.12);
+background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));
+backdrop-filter:blur(24px) saturate(180%);
+-webkit-backdrop-filter:blur(24px) saturate(180%);
+border:1px solid rgba(255,255,255,.10);
+box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,45,120,.08);
 }
+
+/* TOP BAR - Glass Transparent Pink Glow */
 .topBar{
 position:sticky;
 top:0;
@@ -28,212 +38,151 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 padding:14px 16px;
-background:rgba(15,15,15,.85);
-backdrop-filter:blur(20px);
-border-bottom:1px solid rgba(255,255,255,.08);
+background:linear-gradient(180deg,rgba(20,20,30,.72),rgba(14,14,22,.58));
+backdrop-filter:blur(26px) saturate(180%);
+-webkit-backdrop-filter:blur(26px) saturate(180%);
+border-bottom:1px solid rgba(255,255,255,.09);
+box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 22px rgba(255,45,120,.18);
 }
 .logo{
 font-size:28px;
 font-weight:900;
-background:linear-gradient(90deg,#ff4da6,#fff);
+background:linear-gradient(90deg,#FFD6E8,#FF2D78,#FF6CA8);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 letter-spacing:.5px;
+filter:drop-shadow(0 0 12px rgba(255,45,120,.45));
 }
-.topBtns{display:flex;gap:16px}
+.topBtns{display:flex;gap:14px}
 .topBtns button{
-background:none;border:none;font-size:24px;
-color:#fff;cursor:pointer;transition:.2s
+background:radial-gradient(120% at 30% 20%,rgba(255,255,255,.14),rgba(255,255,255,.04));
+border:1px solid rgba(255,45,120,.22);
+width:38px;height:38px;border-radius:50%;
+font-size:20px;
+color:#fff;cursor:pointer;transition:.2s;
+backdrop-filter:blur(14px);
+box-shadow:0 0 16px rgba(255,45,120,.35), inset 0 1px 0 rgba(255,255,255,.12);
 }
-.topBtns button:active{transform:scale(.85)}
+.topBtns button:active{transform:scale(.88)}
 
-/* FEED - INSTA REELS JAISA */
+/* FEED - Glass Card + Pink Glow */
 #feed{padding:0 0 90px}
 .post{
 position:relative;
-border-bottom:1px solid rgba(255,255,255,.08);
-background:#000;
+margin:14px;
+border-radius:24px;
+overflow:hidden;
+background:linear-gradient(180deg,rgba(26,26,36,.70),rgba(18,18,26,.54));
+backdrop-filter:blur(22px) saturate(170%);
+-webkit-backdrop-filter:blur(22px) saturate(170%);
+border:1px solid rgba(255,255,255,.10);
+box-shadow:0 14px 44px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,45,120,.07);
+transition:.22s;
 }
+.post:hover{border-color:rgba(255,45,120,.26);box-shadow:0 18px 56px rgba(0,0,0,.6), 0 0 28px rgba(255,45,120,.22)}
 .postHeader{
 display:flex;align-items:center;gap:10px;
-padding:10px 12px;
+padding:12px 14px;
 }
-.postHeader img{width:32px;height:32px;border-radius:50%;object-fit:cover}
-.postHeader b{font-size:13px}
+.postHeader img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,45,120,.28);box-shadow:0 0 10px rgba(255,45,120,.32)}
+.postHeader b{font-size:13px;text-shadow:0 0 10px rgba(255,45,120,.3)}
 .post img,.post video{
 width:100%;max-height:78vh;
-object-fit:cover;display:block;background:#111
+object-fit:cover;display:block;background:#000
 }
 .postActions{
-display:flex;gap:16px;padding:10px 12px;
-font-size:22px
+display:flex;gap:18px;padding:12px 14px;
+font-size:22px;
+background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
 }
-.postCaption{padding:0 12px 12px;font-size:13px;line-height:1.4}
-.postCaption b{margin-right:6px}
+.postActions span{filter:drop-shadow(0 0 8px rgba(255,45,120,.32))}
+.postCaption{padding:0 14px 14px;font-size:13px;line-height:1.45;color:#d0d0de}
+.postCaption b{margin-right:6px;color:#fff}
 
-/* BOTTOM NAV - INSTA JAISA */
+/* BOTTOM NAV - Glass Transparent + Pink Glow */
 .bottomNav{
-position:fixed;bottom:0;left:0;width:100%;height:72px;
+position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:94%;max-width:440px;height:74px;
 display:flex;justify-content:space-around;align-items:center;
-background:rgba(12,12,12,.92);
-backdrop-filter:blur(24px);
-border-top:1px solid rgba(255,255,255,.08);
+background:linear-gradient(180deg,rgba(24,24,34,.80),rgba(16,16,24,.68));
+backdrop-filter:blur(30px) saturate(180%);
+-webkit-backdrop-filter:blur(30px) saturate(180%);
+border:1px solid rgba(255,255,255,.13);
+border-bottom-color:rgba(255,45,120,.22);
+border-radius:32px;
 z-index:999;
+box-shadow:0 20px 50px rgba(0,0,0,.6), 0 0 28px rgba(255,45,120,.22), inset 0 1px 0 rgba(255,255,255,.10);
 }
 .bottomNav button{
-background:none;border:none;color:#fff;
+background:transparent;border:none;color:#8e8ea8;
 display:flex;flex-direction:column;align-items:center;
-gap:3px;font-size:11px;opacity:.6;transition:.2s
+gap:3px;font-size:11px;opacity:.7;transition:.22s;
+width:56px;height:56px;justify-content:center;border-radius:18px;
 }
-.bottomNav button.active{opacity:1;transform:translateY(-2px)}
-.bottomNav button:active{transform:scale(.9)}
+.bottomNav button.active{
+opacity:1;transform:translateY(-1px);color:#fff;
+background:radial-gradient(120% at 30% 20%,rgba(255,255,255,.14),rgba(255,255,255,.05));
+border:1px solid rgba(255,45,120,.24);
+box-shadow:0 0 18px rgba(255,45,120,.40), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.bottomNav button:active{transform:scale(.92)}
 
-/* UPLOAD BUTTON */
+/* UPLOAD BUTTON - Pink Glow */
 #uploadFab{
-position:fixed;right:18px;bottom:88px;
-width:62px;height:62px;border:none;border-radius:50%;
-background:linear-gradient(135deg,#ff4da6,#b84dff);
+position:fixed;right:18px;bottom:96px;
+width:64px;height:64px;border:none;border-radius:50%;
+background:radial-gradient(120% at 20% 20%,#FF8CB8,#FF2D78);
 color:#fff;font-size:32px;
-box-shadow:0 8px 25px rgba(255,77,166,.45);
+box-shadow:0 10px 28px rgba(255,45,120,.55), 0 0 0 1px rgba(255,255,255,.18) inset, 0 0 22px rgba(255,45,120,.45);
 z-index:998;cursor:pointer;
 }
 #uploadFab:active{transform:scale(.92)}
 
-/* MODALS */
+/* MODALS - Glass */
 #uploadModal,#storyModal{
 position:fixed;inset:0;
-background:rgba(0,0,0,.85);
-backdrop-filter:blur(12px);
+background:rgba(0,0,0,.62);
+backdrop-filter:blur(10px);
 display:flex;justify-content:center;align-items:center;
 z-index:99999;
 }
 #uploadModal[hidden],#storyModal[hidden]{display:none}
 .uploadCard{
 width:92%;max-width:400px;padding:22px;
-border-radius:24px;
-background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));
-backdrop-filter:blur(25px);
-border:1px solid rgba(255,255,255,.15);
+border-radius:26px;
+background:linear-gradient(180deg,rgba(32,32,44,.92),rgba(20,20,30,.88));
+backdrop-filter:blur(28px) saturate(180%);
+border:1px solid rgba(255,255,255,.12);
+box-shadow:0 20px 60px rgba(0,0,0,.6), 0 0 28px rgba(255,45,120,.18);
 animation:pop.3s ease;
 }
-@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 .uploadCard input{
 width:100%;margin:10px 0;padding:13px 14px;
-border:none;border-radius:12px;
-background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.12);
+border-radius:14px;
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(10px);
 color:#fff;outline:none;
 }
+.uploadCard input:focus{border-color:rgba(255,45,120,.35);box-shadow:0 0 16px rgba(255,45,120,.22)}
 .uploadCard button{
 width:100%;padding:14px;border:none;border-radius:14px;
-background:linear-gradient(90deg,#ff4da6,#ff8ac6);
-color:#fff;font-size:15px;font-weight:700;
+background:linear-gradient(90deg,#FF2D78,#FF6CA8);
+color:#fff;font-size:15px;font-weight:800;
 margin-top:6px;cursor:pointer;
+box-shadow:0 8px 22px rgba(255,45,120,.45);
 }
 .uploadCard button:active{transform:scale(.98)}
 
-/* STORIES - MAIN UPGRADE */
+/* STORIES - Glass + Pink Glow */
 #stories{
 display:flex;align-items:flex-start;gap:14px;
-overflow-x:auto;padding:14px 12px;
+overflow-x:auto;padding:16px 12px;
 scrollbar-width:none;scroll-behavior:smooth;
-background:rgba(0,0,0,.3);
+background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
 border-bottom:1px solid rgba(255,255,255,.06);
 }
 #stories::-webkit-scrollbar{display:none}
 #storiesList{display:flex;gap:14px}
 .story{
-display:flex;flex-direction:column;align-items:center;
-min-width:72px;cursor:pointer;
-transition:transform.2s ease;
-}
-.story:active{transform:scale(.92)}
-.story span{
-margin-top:6px;font-size:11px;font-weight:500;
-color:#fff;max-width:72px;overflow:hidden;
-text-overflow:ellipsis;white-space:nowrap;text-align:center;
-opacity:.9;
-}
-.storyRing{
-width:66px;height:66px;padding:2.5px;border-radius:50%;
-background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
-display:flex;align-items:center;justify-content:center;
-box-shadow:0 0 12px rgba(255,77,166,.35);
-}
-.storyRing.seen{
-background:rgba(255,255,255,.2);box-shadow:none;
-}
-.storyRing img{
-width:100%;height:100%;border-radius:50%;
-object-fit:cover;border:2.5px solid #000;
-}
-.addStory{
-width:100%;height:100%;border-radius:50%;
-background:#1a1a1a;border:2.5px solid #000;
-display:flex;align-items:center;justify-content:center;
-font-size:28px;color:#fff;font-weight:300;
-}
-
-/* STORY VIEWER - FULL INSTA CLONE + UNLIMITED TIME */
-#storyViewer{
-position:fixed;inset:0;background:#000;
-z-index:999999;overflow:hidden;
-display:flex;align-items:center;justify-content:center;
-}
-#storyViewer[hidden]{display:none}
-#storyImage, #storyImg, #storyVideo{
-width:100%;max-width:420px;height:100dvh;
-object-fit:contain;background:#000;
-}
-#storyHeader{
-position:absolute;top:10px;left:10px;right:10px;
-display:flex;align-items:center;gap:10px;
-padding:8px 12px;border-radius:20px;
-background:rgba(0,0,0,.35);
-backdrop-filter:blur(10px);
-z-index:100;
-}
-#storyUserPhoto, #viewerUserPhoto{
-width:36px;height:36px;border-radius:50%;
-object-fit:cover;border:1px solid rgba(255,255,255,.3);
-}
-#storyUserName, #viewerUser{
-font-size:13px;font-weight:700;color:#fff;
-}
-#storyTime{
-font-size:11px;color:rgba(255,255,255,.7);margin-left:6px;
-}
-#storyProgress{
-position:absolute;top:0;left:0;width:100%;height:3px;
-background:rgba(255,255,255,.25);z-index:200;
-}
-#storyProgress::before{
-content:'';position:absolute;left:0;top:0;height:100%;
-width:var(--progress,0%);
-background:#fff;box-shadow:0 0 6px #fff;
-transition:width.1s linear;
-}
-
-/* Progress ke liye bottom controls */
-#storyFooter{
-position:absolute;bottom:0;left:0;right:0;
-display:flex;align-items:center;gap:10px;
-padding:14px 12px 20px;
-background:linear-gradient(transparent,rgba(0,0,0,.8));
-z-index:100;
-}
-#storyFooter input{
-flex:1;padding:10px 14px;border-radius:20px;
-border:1px solid rgba(255,255,255,.3);
-background:rgba(0,0,0,.4);color:#fff;outline:none;
-font-size:13px;
-}
-#closeViewer, #closeStoryModal, #closeUploadModal{
-background:rgba(255,255,255,.15);border:none;
-color:#fff;width:30px;height:30px;border-radius:50%;
-font-size:14px;cursor:pointer;
-}
-#prevStory,#nextStory{
-position:absolute;top:0;width:50%;height:100%;
-background:transparent;border:none;z-index:50;
-}
-#prevStory{left:0} #nextStory{right:0}
+display:flex;flex-direction:
