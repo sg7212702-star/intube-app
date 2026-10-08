@@ -3,12 +3,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAxxxxxxxxxxxx",
-  authDomain: "intube-xxxxx.firebaseapp.com",
-  projectId: "intube-xxxxx",
-  storageBucket: "intube-xxxxx.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:xxxxxxxx"
+  apiKey: "AIzaSyA1234567890-REAL-KEY-YAHAN-DALO",
+  authDomain: "intube-app.firebaseapp.com",
+  projectId: "intube-app",
+  storageBucket: "intube-app.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:0000000000"
 };
 
 const app = initializeApp(firebaseConfig);
