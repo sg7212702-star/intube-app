@@ -85,14 +85,23 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 const $=id=>document.getElementById(id);
 let currentType='post';
 // SHEET OPEN CLOSE
-function openSheet(){ $('createSheet').style.display='block'; $('overlay').style.display='block'; }
-function closeSheet(){ $('createSheet').style.display='none'; $('overlay').style.display='none'; }
-$('createBtn').onclick=$('addBtn').onclick=openSheet;
-$('overlay').onclick=closeSheet;
-$('optPost').onclick=()=>{ currentType='post'; closeSheet(); $('fileInput').click(); };
-$('optReel').onclick=()=>{ currentType='reel'; closeSheet(); $('fileInput').accept='video/*'; $('fileInput').click(); };
-$('optStory').onclick=()=>{ currentType='story'; closeSheet(); $('fileInput').accept='image/*,video/*'; $('fileInput').click(); };
-$('yourStory').onclick=()=>{ currentType='story'; $('fileInput').click(); };
+function openSheet(){
+  $('createSheet').style.display='block';
+  $('overlay').style.display='block';
+  $('createBtn').classList.add('active');
+}
+function closeSheet(){
+  $('createSheet').style.display='none';
+  $('overlay').style.display='none';
+  $('createBtn').classList.remove('active');
+}
+$('createBtn').onclick = (e)=>{ e.preventDefault(); openSheet(); };
+$('addBtn').onclick = (e)=>{ e.preventDefault(); openSheet(); };
+$('overlay').onclick = closeSheet;
+
+$('optPost').onclick=()=>{ currentType='post'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*'; $('fileInput').click(); }, 250); };
+$('optReel').onclick=()=>{ currentType='reel'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='video/*'; $('fileInput').click(); }, 250); };
+$('optStory').onclick=()=>{ currentType='story'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*,video/*'; $('fileInput').click(); }, 250); };
 
 // HOME / PROFILE NAV
 $('homeBtn').onclick=()=>{
