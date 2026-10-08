@@ -146,16 +146,6 @@ $('fileInput').onchange=(e)=>{
     $('postsGrid').appendChild(div); $('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length; showTab('posts'); $('profileBtn').click();
   }
   $('emptyPosts').style.display='none'; e.target.value='';
-};
-let sn=localStorage.getItem('insta_name'); let sb=localStorage.getItem('insta_bio');
-if(sn) $('nameText').innerText=sn; if(sb) $('bioText').innerText=sb;
-$('feed').style.display='none'; $('storiesBar').style.display='none'; showTab('posts');
-</script>
-</body></html>
- $('emptyPosts').style.display='none';
- e.target.value=''; $('fileInput').accept='image/*,video/*';
-};
-// LOAD
 let sn=localStorage.getItem('insta_name'); let sb=localStorage.getItem('insta_bio');
 if(sn) $('nameText').innerText=sn; if(sb) $('bioText').innerText=sb;
 $('feed').style.display='none'; $('storiesBar').style.display='none'; showTab('posts');
