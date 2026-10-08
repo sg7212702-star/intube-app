@@ -3,161 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>INTUBE</title>
+<title>INTUBE - Insta Exact Transparent</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
-body{
-background:#000;color:#fff;min-height:100dvh;padding-bottom:80px;
-background:radial-gradient(700px at 20% 0%, rgba(225,48,108,0.18), transparent 60%),
-radial-gradient(700px at 80% 100%, rgba(88,81,219,0.15), transparent 60%), #050507;
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#000;color:#fff;min-height:100dvh;padding-bottom:90px;background:radial-gradient(600px at 0% 0%,rgba(225,48,108,0.16),transparent 60%),#08080a;max-width:480px;margin:0 auto;}
+
+/* GLASS FORMULA FOR ALL BUTTONS */
+.glassBtn{
+background:rgba(255,255,255,0.07);
+backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px);
+border:1px solid rgba(255,255,255,0.13);
+box-shadow:inset 0 1px 0 rgba(255,255,255,0.15),0 4px 20px rgba(0,0,0,0.25);
+color:#E1306C;cursor:pointer;transition:0.18s;
 }
-.glass{
-background:rgba(255,255,255,0.06);
-backdrop-filter:blur(24px) saturate(1.6);
--webkit-backdrop-filter:blur(24px) saturate(1.6);
-border:1px solid rgba(255,255,255,0.10);
-}
-.topBar{
-height:56px;display:flex;align-items:center;justify-content:space-between;
-padding:0 14px;position:sticky;top:0;z-index:50;
-background:rgba(10,10,12,0.55);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-border-bottom:1px solid rgba(255,255,255,0.08);
-}
-.logo{font-size:24px;font-weight:900;letter-spacing:1px;color:#fff}
-.logo span{background:linear-gradient(90deg,#feda75,#d62976,#4f5bd5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.topIcons{display:flex;gap:16px}
-.topIcons button{
-width:36px;height:36px;border-radius:50%;
-background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
-color:#fff;font-size:18px;backdrop-filter:blur(12px);
-}
-.stories{
-display:flex;gap:12px;padding:12px;overflow-x:auto;
-border-bottom:1px solid rgba(255,255,255,0.06);
-background:rgba(255,255,255,0.02);
-}
+.glassBtn:active{transform:scale(0.92);background:rgba(255,59,127,0.15)}
+
+/* TOP BAR - INSTA SIZE 60px */
+.topBar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100;background:rgba(12,12,14,0.65);backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,0.08);}
+.topBar .leftBtn,.topBar .rightBtn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.logo{font-family:cursive;font-size:28px;font-weight:700;color:#E1306C;letter-spacing:0.5px;font-style:italic;cursor:pointer}
+
+/* STORIES ROW - INSTA SIZE 66px CIRCLE */
+.stories{display:flex;gap:14px;padding:12px 16px;overflow-x:auto;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);}
 .stories::-webkit-scrollbar{display:none}
-.story{flex:0 0 62px;text-align:center}
-.ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
-.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #000;object-fit:cover;background:#111;display:block}
-.story span{font-size:10px;color:#b5b5c0;margin-top:4px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.story{flex:0 0 68px;text-align:center;position:relative;cursor:pointer}
+.ring{width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75);position:relative;}
+.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #000;object-fit:cover;background:#222;display:block}
+.plusBadge{position:absolute;bottom:-1px;right:-1px;width:22px;height:22px;border-radius:50%;background:#0095F6;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid #000;z-index:2;}
+.story span{font-size:12px;color:#fff;margin-top:6px;display:block;letter-spacing:0.2px}
 
-.feed{padding:0}
-.emptyFeed{
-margin:20px 14px;padding:40px 20px;text-align:center;
-border-radius:20px;
-background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);
-border:1px solid rgba(255,255,255,0.08);
-color:#888;font-size:13px;line-height:1.5;
-}
-.emptyFeed b{color:#fff;display:block;font-size:15px;margin-bottom:6px}
+/* BANNER - INSTA PRO STYLE */
+.banner{background:#FFF0F3;color:#FF6B30;text-align:center;font-size:14px;font-weight:600;padding:10px;}
 
-/* POST TEMPLATE - HIDDEN FOR NOW, WILL SHOW AFTER UPLOAD */
-.post{
-margin:8px 0;
-background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);
-border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);
-}
-.pHead{padding:10px 12px;display:flex;align-items:center;gap:10px}
-.pHead img{width:36px;height:36px;border-radius:50%;background:#222;object-fit:cover}
-.pHead b{font-size:13px;color:#ff6b9d;font-weight:600;font-style:italic}
-.pHead small{font-size:11px;color:#8a8a9a;display:block;font-style:italic}
-.pHead.follow{margin-left:auto;padding:6px 16px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);border-radius:100px;color:#fff;font-size:12px;backdrop-filter:blur(10px)}
-.pImg{width:100%;aspect-ratio:1/1;background:rgba(255,255,255,0.03);object-fit:cover;display:block}
-.pActions{display:flex;gap:12px;padding:10px 12px;align-items:center;color:#ff6b9d;font-size:20px}
-.pActions small{font-size:12px;margin-left:2px;font-style:italic}
-.pTime{padding:0 12px 12px;font-size:11px;color:#ff6b9d;opacity:0.7;font-style:italic}
+/* FEED EMPTY - TRANSPARENT */
+#feed{min-height:50vh}
+.emptyBox{margin:20px 16px;padding:40px 20px;text-align:center;border-radius:20px;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.14);backdrop-filter:blur(20px);color:#777;font-size:13px;line-height:1.6}
+.emptyBox b{color:#fff;font-size:15px;display:block;margin-bottom:8px}
 
-.bottomNav{
-position:fixed;bottom:10px;left:10px;right:10px;height:60px;
-display:flex;justify-content:space-around;align-items:center;
-background:rgba(15,15,18,0.65);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px);
-border:1px solid rgba(255,255,255,0.12);border-radius:22px;
-box-shadow:0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
-z-index:100;
-}
-.bottomNav button{
-background:none;border:none;color:#7a7a86;font-size:24px;
-width:44px;height:44px;border-radius:12px;
-display:flex;align-items:center;justify-content:center;
-transition:0.2s;
-}
-.bottomNav button.active{
-color:#ff3b7f;background:rgba(255,59,127,0.12);
-box-shadow:inset 0 1px 0 rgba(255,255,255,0.15);
-}
-.bottomNav img{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,59,127,0.4);object-fit:cover}
-.screen{display:none;min-height:60vh;padding:12px}
-.screen.active{display:block}
-</style>
-</head>
-<body>
+/* POST TEMPLATE (HIDDEN, FOR FUTURE) - INSTA SIZES */
+.post{margin-bottom:8px;background:rgba(255,255,255,0.03);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);}
+.pHead{height:56px;padding:0 12px;display:flex;align-items:center;gap:10px}
+.pHead img{width:32px;height:32px;border-radius:50%;background:#222}
+.pHead .name{font-size:14px;font-weight:600;color:#fff}
+.pHead .music{font-size:11px;color:#a0a0a0;display:block}
+.pHead .follow{margin-left:auto;padding:6px 16px;border-radius:8px;font-size:14px;font-weight:600;background:rgba(255,255,255,0.12);color:#fff;border:none;backdrop-filter:blur(10px)}
+.pHead .dots{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.pImg{width:100%;aspect-ratio:1/1;background:#111;position:relative}
+.badge{position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.75);color:#fff;font-size:12px;padding:5px 10px;border-radius:12px}
+.pActions{height:48px;display:flex;align-items:center;gap:16px;padding:0 12px;font-size:24px;color:#fff}
+.pActions .right{margin-left:auto;display:flex;gap:16px}
 
-<div class="topBar">
-<div class="logo"><span>INTUBE</span></div>
-<div class="topIcons">
-<button id="addBtn">＋</button>
-<button id="heartBtn">♡</button>
-<button id="sendBtn">✈</button>
-</div>
-</div>
-
-<div class="stories" id="storiesRow">
-<div class="story"><div class="ring"><img id="myStoryImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><span>Your Story</span></div>
-</div>
-
-<!-- FEED - EMPTY FOR NOW -->
-<div id="homeScreen" class="screen active" style="padding:0">
-<div class="feed" id="feed">
-<div class="emptyFeed">
-<b>No posts yet 💎</b>
-अभी कोई पोस्ट नहीं है।<br>
-जब तुम पहली Photo/Video अपलोड करोगे,<br>तभी यहाँ Real-Time Feed में दिखेगा।<br><br>
-<span style="color:#555">Firebase Next Step में जोडेंगे</span>
-</div>
-</div>
-</div>
-
-<div id="searchScreen" class="screen"><div class="glass" style="padding:12px;border-radius:12px;color:#888">🔍 Search - Coming Next</div></div>
-<div id="reelsScreen" class="screen"><div class="glass" style="padding:60px 20px;text-align:center;border-radius:20px;color:#888">▶ Reels - Transparent</div></div>
-<div id="activityScreen" class="screen"><div class="glass" style="padding:16px;border-radius:12px;color:#888">♡ Activity - Likes & Follows</div></div>
-<div id="profileScreen" class="screen"><div class="glass" style="padding:20px;border-radius:20px;text-align:center"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:80px;height:80px;border-radius:50%;background:#222"><h3 style="margin-top:12px">INTUBE User</h3><p style="color:#888;font-size:12px;margin-top:6px">Profile Transparent - Edit Next Step</p></div></div>
-
-<div class="bottomNav">
-<button id="homeBtn" class="active">⌂</button>
-<button id="reelsBtn">▶</button>
-<button id="createBtn">⩓</button>
-<button id="searchBtn">⌕</button>
-<button id="profileBtn"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button>
-</div>
-
-<script>
-const $=id=>document.getElementById(id);
-const screens={homeBtn:'homeScreen',searchBtn:'searchScreen',reelsBtn:'reelsScreen',heartBtn:'activityScreen',profileBtn:'profileScreen',sendBtn:'activityScreen'};
-function showScreen(id){
-document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-$(id)?.classList.add('active');
-document.querySelectorAll('.bottomNav button').forEach(b=>b.classList.remove('active'));
-if(id==='homeScreen') $('homeBtn').classList.add('active');
-if(id==='searchScreen') $('searchBtn').classList.add('active');
-if(id==='reelsScreen') $('reelsBtn').classList.add('active');
-if(id==='activityScreen') $('heartBtn').classList.add('active');
-if(id==='profileScreen') $('profileBtn').classList.add('active');
-}
-Object.keys(screens).forEach(btn=>{
-$(btn)?.addEventListener('click',()=> showScreen(screens[btn]));
-});
-$('addBtn').onclick=()=> alert('Create Post - Firebase में Next Step में जोड़ेंगे 💎');
-$('createBtn').onclick=()=> alert('Create Post - Next Step');
-$('storiesRow').onclick=()=> alert('Story - Next Step');
-
-// Stories dummy (transparent)
-for(let i=1;i<=6;i++){
-const d=document.createElement('div'); d.className='story';
-d.innerHTML=`<div class="ring"><img src="https://picsum.photos/seed/${i+20}/100/100"></div><span>user_${i}</span>`;
-d.onclick=()=> alert('Story '+i);
-document.getElementById('storiesRow').appendChild(d);
-}
-</script>
-</body>
-</html>
+/* BOTTOM NAV - INSTA SIZE 50px + GLASS */
+.bottomNav{position:fixed;bottom:10px;left:10px;right:10px;max-width:460px;margin:0 auto;height:62px;display:flex;justify-content:space-around;align-items:center;background:rgba(18,18,22,0.72);backdrop-filter:blur(32px) saturate(1.8);border:1px solid rgba(255,255,255,0.13);border-radius:24px;box-shadow:0 16px 40px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12);z-index:200;}
+.bottomNav button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px;display:flex;align-items:center;justify-content:center}
+.bottomNav button.active{color:#fff;background:rgba(255,255,255,0.10)}
+.bottomNav img{width:26px;height:26px;border-radius:50%;border:1.5px solid #fff}
+.dot{position:absolute;top:6px;right:8px;width:8px;height:8px;background:#FF3040;border-radius:50%;border:1.5px solid #000}
+.createSheet{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(18px);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.createSheet.show{display:flex}
+.sheet{width:100%;max-width:480px;background:rgba(22,22,26,0.96);border:1px solid rgba(255,255,255,0.12);border-top-left-radius:26px;border-top-right-radius:26px;padding:18px 16px 30px}
+.sheet button{width:100%;padding:14px;margin-top:10px;border-radius:14px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.06);color:#fff;text
