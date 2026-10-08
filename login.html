@@ -1,94 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign in - Google Accounts</title>
-<script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
-<script type="importmap">
-{
- "imports": {
-  "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-  "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
- }
-}
-</script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Google Sans,Roboto,Arial}
-body{background:#f0f4f9;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.g-card{background:#fff;width:92%;max-width:900px;border-radius:28px;display:flex;overflow:hidden;min-height:380px}
-.left{flex:1;padding:40px}
-.right{flex:1;padding:40px;display:flex;flex-direction:column;justify-content:center}
-.logo{width:48px;margin-bottom:20px}
-h1{font-size:36px;font-weight:400;color:#1f1f1f}
-p{color:#444;margin-top:12px;font-size:14px}
-.g-btn{border:1px solid #747775;padding:12px 24px;border-radius:30px;background:#fff;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;font-weight:500;margin-top:40px;width:fit-content}
-.g-btn:hover{background:#f8f9ff}
-#msg{color:#d93025;font-size:13px;margin-top:15px}
-@media(max-width:700px){.g-card{flex-direction:column;border-radius:0;width:100%;min-height:100vh}}
-</style>
-</head>
-<body>
-<div class="g-card">
-<div class="left">
-<img class="logo" src="https://www.google.com/images/branding/product/ico/googleg_lodp.ico">
-<h1>Sign in</h1>
-<p>Use your Google Account to continue to INTUBE</p>
-</div>
-<div class="right">
-<p style="font-size:14px;color:#1f1f1f">Continue to INTUBE 🔥</p>
-<button id="googleBtn" class="g-btn">
-<img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20"> Continue with Google
-</button>
-<p id="msg"></p>
-<p style="margin-top:40px;font-size:12px;color:#666">Secure login by Google • Firebase Auth</p>
-</div>
-</div>
+// login.js - FINAL FIREBASE LOGIN SYSTEM - InstaPro
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+ getAuth,
+ signInWithEmailAndPassword,
+ createUserWithEmailAndPassword,
+ sendPasswordResetEmail,
+ onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+ getFirestore,
+ doc,
+ setDoc,
+ getDoc,
+ serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script type="module">
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth";
-
+// 1. FIREBASE CONFIG - अपना Config यहाँ डाल
 const firebaseConfig = {
-  apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
-  authDomain: "intube-61cca.firebaseapp.com",
-  projectId: "intube-61cca",
-  storageBucket: "intube-61cca.firebasestorage.app",
-  messagingSenderId: "627409965607",
-  appId: "1:627409965607:web:a1d71800d812fe668b7402"
+  apiKey: "AIzaSyD-ApIh0yT_tGC9K5M0gY33F8a1w5y",
+  authDomain: "instapro-xxxxx.firebaseapp.com",
+  projectId: "instapro-xxxxx",
+  storageBucket: "instapro-xxxxx.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef123456"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({prompt: 'select_account'});
+const db = getFirestore(app);
 
-// FIX 1: Persistence
-setPersistence(auth, browserLocalPersistence);
-
-// FIX 2: Redirect Result Check
-getRedirectResult(auth).then((res)=>{
-  if(res?.user) location.href = "index.html";
-}).catch(e=>{ document.getElementById('msg').innerText = e.message; });
-
-// FIX 3: Hybrid Login
-document.getElementById('googleBtn').onclick = async ()=>{
-  document.getElementById('msg').innerText = "Opening Google...";
-  try{
-    await signInWithPopup(auth, provider);
-  }catch(err){
-    console.log("Popup failed, redirecting...", err.code);
-    await signInWithRedirect(auth, provider);
-  }
+// 2. SAFE GET ELEMENT - तेरी login.html में जो भी ID हो पकड़ लेगा
+const getEl = (...ids) => {
+ for(let id of ids){
+  let el = document.getElementById(id);
+  if(el) return el;
+ }
+ return null;
 };
 
-onAuthStateChanged(auth, (user)=>{
-  if(user){
-    localStorage.setItem('userName', user.displayName);
-    localStorage.setItem('userPhoto', user.photoURL);
-    location.href = "index.html";
-  }
+const emailInput = getEl('email','emailInput','loginEmail','userEmail');
+const passInput = getEl('password','pass','passwordInput','loginPassword','userPass');
+const loginBtn = getEl('loginBtn','loginButton','btnLogin','signinBtn');
+const signupBtn = getEl('signupBtn','signupButton','btnSignup','registerBtn','createBtn');
+const forgotBtn = getEl('forgotBtn','forgot','forgotPass');
+const msgBox = getEl('msg','message','errorMsg','statusMsg');
+
+function toast(m, err=false){
+ if(msgBox){
+  msgBox.innerText = m;
+  msgBox.style.color = err? '#ff4d6d' : '#22c55e';
+  msgBox.style.display = 'block';
+ } else {
+  console.log(m);
+  if(err) alert(m);
+ }
+}
+
+// 3. ALREADY LOGIN CHECK - Direct index.html
+onAuthStateChanged(auth, async (user)=>{
+ if(user){
+  toast("Already Login ✓ Redirect...");
+  try{
+   const ref = doc(db,"users",user.uid);
+   const snap = await getDoc(ref);
+   if(!snap.exists()){
+    await setDoc(ref,{
+     uid: user.uid,
+     email: user.email,
+     name: user.email.split('@')[0],
+     bio: "Bio - Edit से बदलेगा",
+     avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+     createdAt: serverTimestamp()
+    });
+   }
+  }catch(e){}
+  setTimeout(()=> location.href="index.html", 700);
+ }
 });
-</script>
-</body>
-</html>
+
+// 4. LOGIN LOGIC
+if(loginBtn){
+ loginBtn.onclick = async ()=>{
+  const email = emailInput?.value.trim();
+  const pass = passInput?.value.trim();
+  if(!email ||!pass) return toast("Email Password डालो", true);
+  loginBtn.disabled = true;
+  loginBtn.innerText = "Logging...";
+  try{
+   await signInWithEmailAndPassword(auth, email, pass);
+   toast("Login Success ✓");
+   location.href="index.html";
+  }catch(e){
+   toast(e.message, true);
+   loginBtn.disabled = false;
+   loginBtn.innerText = "Log In";
+  }
+ };
+}
+
+// 5. SIGNUP LOGIC
+if(signupBtn){
+ signupBtn.onclick = async ()=>{
+  const email = emailInput?.value.trim();
+  const pass = passInput?.value.trim();
+  if(!email ||!pass) return toast("Email Password डालो", true);
+  if(pass.length < 6) return toast("Password कम से कम 6 Character", true);
+  signupBtn.disabled = true;
+  signupBtn.innerText = "Creating...";
+  try{
+   const cred = await createUserWithEmailAndPassword(auth, email, pass);
+   const uid = cred.user.uid;
+   // Create Firestore User
+   await setDoc(doc(db,"users",uid),{
+    uid: uid,
+    email: email,
+    name: email.split('@')[0],
+    bio: "Bio - Edit से बदलेगा",
+    avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+    followers: 0,
+    following: 0,
+    posts: 0,
+    createdAt: serverTimestamp()
+   });
+   toast("Account Created ✓");
+   location.href="index.html";
+  }catch(e){
+   toast(e.message, true);
+   signupBtn.disabled = false;
+   signupBtn.innerText = "Create Account";
+  }
+ };
+}
+
+// 6. FORGOT PASSWORD
+if(forgotBtn){
+ forgotBtn.onclick = async ()=>{
+  const email = emailInput?.value.trim();
+  if(!email) return toast("Email डालो फिर Forgot दबाओ", true);
+  try{
+   await sendPasswordResetEmail(auth, email);
+   toast("Reset Link भेज दिया ✓ Email Check करो");
+  }catch(e){
+   toast(e.message, true);
+  }
+ };
+}
+
+console.log("login.js Loaded - Final ✓");
