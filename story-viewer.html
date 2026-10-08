@@ -1,134 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INTUBE Story Viewer</title>
-
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:system-ui;
-}
-
-body{
-background:#000;
-height:100vh;
-overflow:hidden;
-}
-
-.story{
-width:100%;
-height:100vh;
-position:relative;
-}
-
-.story img,
-.story video{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.top{
-position:absolute;
-top:0;
-left:0;
-right:0;
-padding:15px;
-z-index:10;
-}
-
-.progress{
-height:4px;
-background:rgba(255,255,255,.25);
-border-radius:20px;
-overflow:hidden;
-}
-
-.bar{
-height:100%;
-width:0%;
-background:#fff;
-animation:load 8s linear forwards;
-}
-
-@keyframes load{
-from{width:0%}
-to{width:100%}
-}
-
-.close{
-position:absolute;
-top:25px;
-right:20px;
-font-size:30px;
-color:#fff;
-cursor:pointer;
-z-index:20;
-}
-
-.user{
-position:absolute;
-top:35px;
-left:20px;
-display:flex;
-align-items:center;
-gap:10px;
-color:#fff;
-z-index:20;
-}
-
-.user img{
-width:40px;
-height:40px;
-border-radius:50%;
-border:2px solid #ff4da6;
-}
-
-.nav{
-position:absolute;
-top:0;
-bottom:0;
-width:50%;
-z-index:15;
-}
-
-.left{
-left:0;
-}
-
-.right{
-right:0;
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;height:100vh;width:100vw;display:flex;align-items:center;justify-content:center}
+#close{position:fixed;top:16px;right:16px;font-size:30px;color:#fff;z-index:10}
+.progress{position:fixed;top:4px;left:4px;right:4px;height:3px;background:rgba(255,255,255,0.3);border-radius:10px;overflow:hidden}
+.progress div{height:100%;background:#fff;width:0%;transition:width 5s linear}
 </style>
 </head>
 <body>
-
-<div class="story">
-
-<div class="top">
-<div class="progress">
-<div class="bar"></div>
-</div>
-</div>
-
-<div class="close" onclick="history.back()">✕</div>
-
-<div class="user">
-<img src="https://picsum.photos/100">
-<span>INTUBE User</span>
-</div>
-
-<img src="https://picsum.photos/1080/1920">
-
-<div class="nav left"></div>
-<div class="nav right"></div>
-
-</div>
-
+<div id="close" onclick="history.back()">✕</div>
+<div class="progress"><div id="bar"></div></div>
+<div id="content" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div>
+<script>
+const story = JSON.parse(localStorage.getItem('openStory') || localStorage.getItem('myStories') && JSON.parse(localStorage.getItem('myStories')).slice(-1)[0] && JSON.stringify(JSON.parse(localStorage.getItem('myStories')).slice(-1)[0]) || 'null');
+const content = document.getElementById('content');
+const bar = document.getElementById('bar');
+if(!story){ content.innerHTML='<p style=color:#fff>No Story</p>'; }
+else {
+  if(story.type==='video'){
+    content.innerHTML=`<video src="${story.url}" autoplay playsinline style="width:100%;height:100%;object-fit:contain"></video>`;
+  } else {
+    content.innerHTML=`<img src="${story.url}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  setTimeout(()=>bar.style.width='100%',50);
+  setTimeout(()=>history.back(),5200);
+}
+</script>
 </body>
 </html>
