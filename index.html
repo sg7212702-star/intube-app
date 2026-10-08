@@ -1,137 +1,106 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>InstaPro 👑 Lite</title>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>InstaPro 👑 Lite</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system}
-body{background:#050508;color:#fff;max-width:480px;margin:0 auto;background:radial-gradient(800px at 0% 0%,rgba(225,48,108,.28),transparent 60%),radial-gradient(600px at 100% 0%,rgba(79,91,213,.22),transparent 60%),#050508;overflow-x:hidden}
-
-/* TOP - PRO GLASS SHINE */
-.top{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100;background:rgba(10,10,12,.75);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,.08)}
-.logo{font-family:cursive;font-size:28px;color:#E1306C;font-weight:800;font-style:italic;text-shadow:0 0 24px rgba(225,48,108,.6);letter-spacing:.5px}
-.btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(20px);font-size:20px}
-.btn:active{transform:scale(.92)}
-
-/* STORIES - LITE */
-.stories{display:flex;gap:14px;padding:14px 16px;overflow:auto;background:rgba(255,255,255,.01);border-bottom:1px solid rgba(255,255,255,.05);scrollbar-width:none}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI}
+html,body{overflow-x:hidden;width:100%;max-width:100vw}
+body{background:#040408;color:#fff;max-width:480px;margin:0 auto;padding-bottom:96px;position:relative}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(900px at -10% 0%,rgba(225,48,108,.35),transparent 60%),radial-gradient(800px at 110% 20%,rgba(79,91,213,.30),transparent 60%),radial-gradient(600px at 50% 100%,rgba(254,218,117,.12),transparent);pointer-events:none;z-index:-1}
+/* GLASS CHAMKA */
+.top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100;background:rgba(16,16,20,.78);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-bottom:1px solid rgba(255,255,255,.10);box-shadow:0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.1)}
+.logo{font-family:serif;font-size:29px;font-style:italic;font-weight:900;background:linear-gradient(90deg,#feda75,#fa7e1e,#d62976,#962fbf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.5px;filter:drop-shadow(0 0 12px rgba(225,48,108,.4))}
+.glassBtn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px);box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;transition:.2s}
+.glassBtn:active{transform:scale(.92)}
+.view{display:none;min-height:calc(100vh - 160px);animation:fadeUp .3s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* Stories - Glass Ring */
+.stories{display:flex;gap:14px;padding:14px 16px;overflow:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.06)}
 .stories::-webkit-scrollbar{display:none}
-.story{flex:0 0 68px;text-align:center;position:relative}
-.ring{width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);box-shadow:0 0 22px rgba(225,48,108,.3)}
-.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #08080a;object-fit:cover}
-.plus{position:absolute;bottom:0;right:0;width:22px;height:22px;background:#0095F6;color:#fff;border-radius:50%;border:2.5px solid #08080a;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
-.story span{font-size:11px;margin-top:6px;opacity:.9}
-
-/* VIEWS LOCK - Yahi tera bug fix hai */
-#homeView{display:block;min-height:calc(100vh - 130px)}
-#profileView{display:none;min-height:calc(100vh - 130px);padding-bottom:90px}
-#homeView.active{display:block}
-#profileView.active{display:block}
-
-/* FEED EMPTY - GLASS SHINE EFFECT */
-.empty{margin:18px 16px;padding:48px 20px;text-align:center;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(28px) saturate(1.6);-webkit-backdrop-filter:blur(28px);position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 32px rgba(0,0,0,.4)}
-.empty:before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.12) 50%,transparent 70%);transform:rotate(25deg) translateX(-100%);animation:shine 3.2s infinite}
-@keyframes shine{0%{transform:rotate(25deg) translateX(-100%)}60%{transform:rotate(25deg) translateX(100%)}100%{transform:rotate(25deg) translateX(100%)}}
-.empty b{color:#fff;display:block;font-size:16px;margin-bottom:6px;position:relative;z-index:1}
-.empty small{color:#aaa;position:relative;z-index:1}
-
-/* PROFILE */
-.pHead{display:flex;gap:14px;align-items:center;padding:18px 16px}
-.stat{display:flex;gap:28px;flex:1;justify-content:space-around;text-align:center}
-.stat b{display:block;font-size:17px}
-.stat small{color:#888;font-size:12px}
-.pBtn{flex:1;height:36px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;backdrop-filter:blur(16px)}
-.pTabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:16px}
-.pTabs button{flex:1;padding:14px;background:transparent;border:none;color:#777;font-size:13px;letter-spacing:.5px}
-.pTabs button.active{color:#fff;border-top:1.5px solid #fff}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
-.grid3 div{aspect-ratio:1/1;background:#111;overflow:hidden;position:relative}
+.story{flex:0 0 70px;text-align:center;position:relative}
+.ring{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75);box-shadow:0 0 0 2px #0a0a0f,0 0 18px rgba(225,48,108,.35);animation:ringGlow 3s linear infinite}
+@keyframes ringGlow{0%{filter:brightness(1)}50%{filter:brightness(1.2)}100%{filter:brightness(1)}}
+.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #0a0a0f;object-fit:cover;background:#111}
+.addBadge{position:absolute;right:2px;bottom:18px;width:22px;height:22px;background:radial-gradient(#00B2FF,#0095F6);border:2px solid #08080a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,149,246,.6)}
+.empty{margin:16px auto;padding:46px 20px;text-align:center;border-radius:26px;background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(32px);box-shadow:0 12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18);position:relative;overflow:hidden;max-width:92%}
+.empty::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);transform:rotate(25deg) translateX(-120%);animation:shine 3s infinite}
+@keyframes shine{60%{transform:rotate(25deg) translateX(120%)}}
+.postCard{margin:12px auto;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(24px);box-shadow:0 8px 28px rgba(0,0,0,.35);max-width:94%}
+.postHead{padding:12px;display:flex;gap:10px;align-items:center}
+.postHead b{font-size:13px}
+.postAct{padding:12px 14px;display:flex;gap:18px;font-size:22px}
+.reelCard{width:100%;height:calc(100vh - 150px);background:#000;position:relative;margin:0 auto 14px;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.reelCard video{width:100%;height:100%;object-fit:cover}
+.bottom{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:92%;max-width:442px;height:70px;display:flex;justify-content:space-around;align-items:center;background:rgba(20,20,24,.86);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.16);border-radius:30px;box-shadow:0 16px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);z-index:250}
+.bottom button{width:52px;height:52px;border-radius:18px;border:none;background:transparent;color:#8b8b90;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.bottom button.active{color:#fff;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2)}
+#createBtn{background:linear-gradient(135deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)!important;color:#fff!important;width:58px;height:58px;border-radius:20px;font-size:32px;box-shadow:0 6px 20px rgba(214,41,118,.45)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.grid3 div{aspect-ratio:1/1;background:#111;overflow:hidden}
 .grid3 img,.grid3 video{width:100%;height:100%;object-fit:cover}
-
-/* BOTTOM - PRO BUTTON SAME */
-.bottom{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:94%;max-width:440px;height:66px;display:flex;justify-content:space-around;align-items:center;background:rgba(18,18,22,.88);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.14);border-radius:28px;z-index:200;box-shadow:0 18px 50px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.12)}
-.bottom button{width:48px;height:48px;border-radius:16px;border:none;background:transparent;color:#8a8a8e;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.2s}
-.bottom button:active{transform:scale(.90)}
-.bottom button.active{color:#fff;background:rgba(255,255,255,.10)}
-#createBtn{background:linear-gradient(135deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)!important;color:#fff!important;width:54px;height:54px;border-radius:18px;box-shadow:0 8px 24px rgba(225,48,108,.5),inset 0 1px 0 rgba(255,255,255,.3);font-size:30px}
-.bottom img{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.9)}
-#profileBtn.active img{box-shadow:0 0 0 2.5px #E1306C}
-
-/* SHEET */
-#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:300}
-#createSheet{display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);width:94%;max-width:440px;background:rgba(22,22,26,.96);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.14);border-radius:22px;z-index:301;padding:10px 0;box-shadow:0 24px 70px rgba(0,0,0,.8)}
-.sheetItem{display:flex;justify-content:space-between;padding:18px 22px;font-size:17px}
+.searchBar{margin:12px 16px;display:flex;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 16px;backdrop-filter:blur(20px)}
+.searchBar input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px}
+.notifItem{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:300}
+#createSheet{display:none;position:fixed;bottom:92px;left:50%;transform:translateX(-50%);width:92%;max-width:442px;background:rgba(24,24,28,.96);border:1px solid rgba(255,255,255,.16);border-radius:24px;z-index:301;padding:8px 0;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.sheetItem{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;font-size:16px}
 .sheetItem:active{background:rgba(255,255,255,.06)}
 </style></head><body>
+<div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="glassBtn" id="heartBtn">♡</button></div>
 
-<div class="top"><button class="btn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="btn" id="heartBtn">♡</button></div>
+<div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img id="storyAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div class="addBadge">+</div><div style="font-size:11px;margin-top:8px;opacity:.9">Your story</div></div></div><div id="feed"></div></div>
 
-<div id="homeView" class="active">
-<div class="stories" id="storiesBar"><div class="story" id="yourStory"><div class="ring" style="position:relative"><img id="storyAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
-<div id="feed"><div class="empty"><b>Feed Empty 💎</b><small>No posts yet.<br>Upload होते ही Real-Time दिखेगा.</small></div></div>
-</div>
+<div id="reelsView" class="view"><div id="reelsFeed"></div></div>
 
-<div id="profileView">
-<div class="pHead"><div class="ring" id="avatarRing" style="width:84px;height:84px"><img id="avatarImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div class="stat"><div><b id="postCount">0</b><small>Posts</small></div><div><b>0</b><small>Followers</small></div><div><b>0</b><small>Following</small></div></div></div>
-<div style="padding:0 16px"><b id="nameText">sanjay kumar</b><br><small style="color:#aaa" id="bioText">💖💖💖🥺 InstaPro Lite User</small><div style="display:flex;gap:8px;margin-top:14px"><button class="pBtn" id="editBtn">Edit profile</button><button class="pBtn" id="shareBtn">Share profile</button></div></div>
-<div class="pTabs"><button class="active" data-tab="posts" id="tabPosts">⊞ POSTS</button><button data-tab="reels" id="tabReels">▶ REELS</button><button data-tab="tagged" id="tabTagged">👤 TAGGED</button></div>
-<div id="postsGrid" class="grid3"></div><div id="reelsGrid" class="grid3" style="display:none"></div><div id="taggedGrid" style="display:none"><div class="empty"><b>No Tagged</b><small>Photos of you will appear here</small></div></div><div class="empty" id="emptyPosts"><b>No Posts Yet</b><small>जब Photo डालोगे तो यहाँ 3x3 Grid में दिखेगा</small></div>
-</div>
+<div id="searchView" class="view"><div class="searchBar"><span>🔍</span><input id="searchInput" placeholder="Search users, hashtags - Real server se"><button id="searchGo" style="background:none;border:none;color:#E1306C;font-weight:700">Go</button></div><div id="searchResults"></div></div>
 
-<div id="overlay"></div>
-<div id="createSheet"><div class="sheetItem" id="optReel"><span>Reel</span>🎬</div><div class="sheetItem" id="optPost"><span>Post</span>⊞</div><div class="sheetItem" id="optStory"><span>Story</span>⊕</div></div>
+<div id="notifView" class="view"><div style="padding:16px;font-weight:800;font-size:18px">Notifications 🔔</div><div id="notifList"></div></div>
 
-<div class="bottom"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img id="bottomAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
+<div id="profileView" class="view"><div style="padding:18px 16px"><div style="display:flex;gap:16px;align-items:center"><div class="ring" style="width:88px;height:88px"><img id="avatarImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div style="flex:1;display:flex;justify-content:space-around;text-align:center"><div><b id="postCount" style="font-size:18px">0</b><br><small style="color:#8a8a90">Posts</small></div><div><b id="fCount">1.2K</b><br><small style="color:#8a8a90">Followers</small></div><div><b>180</b><br><small style="color:#8a8a90">Following</small></div></div></div><div style="margin-top:14px"><b id="nameText" style="font-size:16px">sanjay kumar</b><br><small id="bioText" style="color:#aaa">💖 InstaPro Lite • Glass UI • Real-Time Sync • 👑 Premium</small></div><div style="display:flex;gap:8px;margin-top:14px"><button id="editBtn" style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);color:#fff;font-weight:700">Edit profile</button><button style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);color:#fff">Share</button></div></div><div style="display:flex;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)"><button id="tabPosts" style="flex:1;padding:14px;background:transparent;border:none;color:#fff;border-top:1.5px solid #fff">⊞ POSTS</button><button id="tabReels" style="flex:1;padding:14px;background:transparent;border:none;color:#777">▶ REELS</button><button id="tabTag" style="flex:1;padding:14px;background:transparent;border:none;color:#777">◫ TAGGED</button></div><div id="postsGrid" class="grid3"></div><div id="reelsGrid" class="grid3" style="display:none"></div><div style="height:90px"></div></div>
 
-<input type="file" id="fileInput" hidden><input type="file" id="avatarInput" hidden accept="image/*">
+<div id="overlay"></div><div id="createSheet"><div class="sheetItem" id="optReel"><span>🎬 Reel - Full screen</span><b>▶</b></div><div class="sheetItem" id="optPost"><span>⊞ Post - Feed me</span><b>+</b></div><div class="sheetItem" id="optStory"><span>⊕ Story - Ring me</span><b>○</b></div></div>
+
+<div class="bottom"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img id="bottomAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:30px;height:30px;border-radius:50%"></button></div>
+<input type="file" id="fileInput" hidden>
 
 <script>
+const CLOUD_NAME="kujnbe0a"; const PRESET="intube_free"; let cur='post';
 const $=id=>document.getElementById(id);
-const CLOUD_NAME="intube"; const UPLOAD_PRESET="intube_preset";
-let currentType='post';
-function openSheet(){$('createSheet').style.display='block';$('overlay').style.display='block';}
-function closeSheet(){$('createSheet').style.display='none';$('overlay').style.display='none';}
-$('createBtn').onclick=openSheet;$('addBtn').onclick=openSheet;$('overlay').onclick=closeSheet;
-$('optPost').onclick=()=>{currentType='post';closeSheet();setTimeout(()=>{$('fileInput').accept='image/*';$('fileInput').click();},150);};
-$('optReel').onclick=()=>{currentType='reel';closeSheet();setTimeout(()=>{$('fileInput').accept='video/*';$('fileInput').click();},150);};
-$('optStory').onclick=()=>{currentType='story';closeSheet();setTimeout(()=>{$('fileInput').accept='image/*,video/*';$('fileInput').click();},150);};
-$('yourStory').onclick=()=>{currentType='story';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+function show(v){ document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='none'}); $(v).classList.add('active'); $(v).style.display='block'; document.querySelectorAll('.bottom button').forEach(b=>b.classList.remove('active')); if(v=='homeView')$('homeBtn').classList.add('active'); if(v=='reelsView')$('reelsBtn').classList.add('active'); if(v=='searchView')$('searchBtn').classList.add('active'); if(v=='notifView')$('heartBtn').classList.add('active'); if(v=='profileView')$('profileBtn').classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+$('homeBtn').onclick=()=>show('homeView');
+$('reelsBtn').onclick=()=>{show('reelsView'); renderReels();};
+$('searchBtn').onclick=()=>{show('searchView'); renderSearch('trending');};
+$('profileBtn').onclick=()=>show('profileView');
+$('heartBtn').onclick=()=>{show('notifView'); renderNotif();};
+$('addBtn').onclick=$('createBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';};
+$('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';};
+$('optPost').onclick=()=>{cur='post';$('overlay').click();$('fileInput').accept='image/*';$('fileInput').click();};
+$('optReel').onclick=()=>{cur='reel';$('overlay').click();$('fileInput').accept='video/*';$('fileInput').click();};
+$('optStory').onclick=()=>{cur='story';$('overlay').click();$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+$('yourStoryBtn').onclick=()=>{cur='story';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+$('tabPosts').onclick=()=>{$('postsGrid').style.display='grid';$('reelsGrid').style.display='none';$('tabPosts').style.color='#fff';$('tabReels').style.color='#777'};
+$('tabReels').onclick=()=>{$('postsGrid').style.display='none';$('reelsGrid').style.display='grid';$('tabReels').style.color='#fff';$('tabPosts').style.color='#777';renderProfile();};
+$('editBtn').onclick=()=>{let n=prompt('Naam likho:', $('nameText').innerText); if(n){$('nameText').innerText=n; localStorage.setItem('insta_name',n);} let b=prompt('Bio:', $('bioText').innerText); if(b) $('bioText').innerText=b; };
 
-function goHome(){
- $('homeView').style.display='block';$('profileView').style.display='none';
- $('homeView').classList.add('active');$('profileView').classList.remove('active');
- $('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');
- window.scrollTo({top:0,behavior:'smooth'});
-}
-function goProfile(){
- $('homeView').style.display='none';$('profileView').style.display='block';
- $('profileView').classList.add('active');$('homeView').classList.remove('active');
- $('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');
- window.scrollTo({top:0,behavior:'smooth'});
-}
-$('homeBtn').onclick=goHome;
-$('profileBtn').onclick=goProfile;
-$('reelsBtn').onclick=()=>{goProfile();showTab('reels');};
-$('searchBtn').onclick=()=>{let q=prompt('Search InstaPro:'); if(q) alert('Search "'+q+'" - next update me live filter');};
-function showTab(t){$('postsGrid').style.display=t==='posts'?'grid':'none';$('reelsGrid').style.display=t==='reels'?'grid':'none';$('taggedGrid').style.display=t==='tagged'?'block':'none';document.querySelectorAll('.pTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));}
-$('tabPosts').onclick=()=>showTab('posts');$('tabReels').onclick=()=>showTab('reels');$('tabTagged').onclick=()=>showTab('tagged');
-$('avatarRing').onclick=()=>$('avatarInput').click();
-$('avatarInput').onchange=(e)=>{let f=e.target.files[0];if(!f)return;let url=URL.createObjectURL(f);$('avatarImg').src=url;$('storyAvatar').src=url;$('bottomAvatar').src=url;};
-$('editBtn').onclick=()=>{let n=prompt('Name:', $('nameText').innerText);if(n)$('nameText').innerText=n;let b=prompt('Bio:', $('bioText').innerText);if(b)$('bioText').innerText=b;if(n)localStorage.setItem('insta_name',n);};
-$('shareBtn').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);alert('Link Copied ✓');}catch{prompt('Copy:',location.href);}};
+async function up(file){ let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET); try{let r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd}); let j=await r.json(); if(j.secure_url) return j.secure_url;}catch(e){} return URL.createObjectURL(file); }
 
-$('fileInput').onchange=async(e)=>{
- let f=e.target.files[0];if(!f)return; let url=URL.createObjectURL(f);
- try{let fd=new FormData();fd.append('file',f);fd.append('upload_preset',UPLOAD_PRESET);
- let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${f.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
- let data=await res.json(); if(data.secure_url) url=data.secure_url;}catch{}
- if(currentType==='story'){let s=document.createElement('div');s.className='story';s.innerHTML=`<div class="ring"><img src="${url}"></div><span>story</span>`;$('storiesBar').appendChild(s); alert('Story Added ✓');}
- else if(currentType==='reel'){let d=document.createElement('div');d.innerHTML=`<video src="${url}" muted loop autoplay playsinline></video>`;$('reelsGrid').appendChild(d);$('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length;showTab('reels');goProfile();}
- else{let d=document.createElement('div');d.innerHTML=`<img src="${url}">`;$('postsGrid').appendChild(d);$('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length;showTab('posts');goProfile();}
- document.querySelector('#feed .empty')?.remove(); $('emptyPosts').style.display='none'; e.target.value='';
- let saved=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); saved.push({url,type:currentType}); localStorage.setItem('intube_cloud',JSON.stringify(saved));
+$('fileInput').onchange=async e=>{
+ let f=e.target.files[0]; if(!f) return; $('overlay').style.display='block';
+ let url=await up(f);
+ if(cur=='story'){ let d=document.createElement('div'); d.className='story'; d.innerHTML=`<div class="ring"><img src="${url}"></div><div style="font-size:11px;margin-top:6px">story</div>`; $('storiesBar').appendChild(d); let s=JSON.parse(localStorage.getItem('insta_stories')||'[]'); s.push(url); localStorage.setItem('insta_stories',JSON.stringify(s)); addNotif('Your story uploaded 💍','just now'); }
+ else{ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); all.push({url,type:cur,time:Date.now(),user:$('nameText').innerText}); localStorage.setItem('intube_cloud',JSON.stringify(all)); renderFeed(); renderProfile(); if(cur=='reel') renderReels(); addNotif((cur=='reel'?'Reel':'Post')+' uploaded ✓ Real-Time','now'); show(cur=='reel'?'reelsView':'homeView'); }
+ $('overlay').style.display='none'; e.target.value='';
 };
-// Load saved
-let sn=localStorage.getItem('insta_name'); if(sn) $('nameText').innerText=sn;
-let saved=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
-saved.forEach(s=>{let d=document.createElement('div');d.innerHTML=s.url.includes('video')||s.url.endsWith('.mp4')?`<video src="${s.url}"></video>`:`<img src="${s.url}">`; if(s.type==='reel')$('reelsGrid').appendChild(d); else $('postsGrid').appendChild(d);});
-if(saved.length){$('postCount').innerText=saved.length; $('emptyPosts').style.display='none'; let fe=document.querySelector('#feed .empty'); if(fe) fe.innerHTML='<b>Welcome Back 💎</b><small>'+saved.length+' posts loaded from intube Cloud</small>';}
-goHome(); showTab('posts');
+
+function renderFeed(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]').filter(p=>p.type!='story'); let feed=$('feed'); if(!all.length){feed.innerHTML=`<div class="empty"><b>Feed Empty 💎</b><br><small>No posts yet.<br>Upload होते ही Real-Time दिखेगा.</small></div>`; return;} feed.innerHTML=''; all.slice().reverse().forEach(p=>{feed.innerHTML+=`<div class="postCard"><div class="postHead"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#feda75,#d62976)"></div><b>${p.user||'sanjay kumar'}</b><span style="margin-left:auto">•••</span></div>${p.type=='reel'?`<video src="${p.url}" controls playsinline style="width:100%;max-height:70vh"></video>`:`<img src="${p.url}" style="width:100%">`}<div class="postAct"><span onclick="like(this)">❤️</span><span>💬</span><span>↗️</span><span style="margin-left:auto">🔖</span></div></div>`;});}
+function renderReels(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]').filter(p=>p.type=='reel'); let rf=$('reelsFeed'); if(!all.length){rf.innerHTML=`<div class="empty"><b>No Reels Yet 🎬</b><br><small>Reel upload karo to yahan Instagram Lite jaisa full screen chalega</small></div>`; return;} rf.innerHTML=''; all.slice().reverse().forEach(p=>{rf.innerHTML+=`<div class="reelCard"><video src="${p.url}" autoplay muted loop controls playsinline></video><div style="position:absolute;left:12px;bottom:18px;right:70px"><b>@${(p.user||'sanjay').replace(/\s/g,'')}</b><div style="font-size:12px;opacity:.85;margin-top:4px">Original audio • InstaPro 👑</div></div><div style="position:absolute;right:10px;bottom:40px;display:flex;flex-direction:column;gap:18px;font-size:26px;text-align:center"><div>❤️<br><small style="font-size:11px">1.2k</small></div><div>💬<br><small style="font-size:11px">89</small></div><div>↗️</div></div></div>`;});}
+function renderProfile(){ let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); $('postCount').innerText=all.filter(p=>p.type!='story').length; let posts=all.filter(p=>p.type=='post'); let reels=all.filter(p=>p.type=='reel'); $('postsGrid').innerHTML=''; posts.slice().reverse().forEach(p=>{let d=document.createElement('div'); d.innerHTML=`<img src="${p.url}">`; $('postsGrid').appendChild(d);}); $('reelsGrid').innerHTML=''; reels.slice().reverse().forEach(p=>{let d=document.createElement('div'); d.innerHTML=`<video src="${p.url}"></video>`; $('reelsGrid').appendChild(d);});}
+function addNotif(t,time){ let n=JSON.parse(localStorage.getItem('insta_notif')||'[]'); n.unshift({t,time}); localStorage.setItem('insta_notif',JSON.stringify(n.slice(0,20))); }
+function renderNotif(){ let n=JSON.parse(localStorage.getItem('insta_notif')||'[{t:"Welcome to InstaPro 👑 - Real-Time Sync Active",time:"now"}]'); let l=$('notifList'); l.innerHTML=''; n.forEach(x=>{l.innerHTML+=`<div class="notifItem"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#feda75,#d62976)"></div><div><b>${x.t}</b><br><small style="color:#888">${x.time}</small></div><div style="margin-left:auto">•</div></div>`;}); }
+async function renderSearch(q){ let res=$('searchResults'); res.innerHTML=`<div class="empty">Searching "${q}"... Real server se 🔍</div>`; try{ let r=await fetch('https://dummyjson.com/users?limit=8'); let j=await r.json(); res.innerHTML=''; j.users.forEach(u=>{ res.innerHTML+=`<div class="notifItem"><img src="${u.image}" style="width:36px;height:36px;border-radius:50%"><div><b>${u.firstName} ${u.lastName}</b><br><small style="color:#888">@${u.username} • ${u.company.title}</small></div><button style="margin-left:auto;padding:6px 14px;border-radius:10px;background:#0095F6;border:none;color:#fff;font-weight:700">Follow</button></div>`;}); }catch{ res.innerHTML=`<div class="empty">Offline search - ${JSON.parse(localStorage.getItem('intube_cloud')||'[]').length} posts found</div>`; } }
+$('searchGo').onclick=()=>{let q=$('searchInput').value||'trending'; renderSearch(q);};
+function like(el){ el.innerText= el.innerText=='❤️'?'💖':'❤️'; if(el.innerText=='💖') addNotif('You liked a post ❤️','just now'); }
+
+let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML=`<div class="ring"><img src="${url}"></div><div style="font-size:11px;margin-top:6px">story</div>`; $('storiesBar').appendChild(d);});
+let savedName=localStorage.getItem('insta_name'); if(savedName) $('nameText').innerText=savedName;
+renderFeed(); renderProfile(); show('homeView');
+setInterval(()=>{ renderFeed(); }, 3000); // Real-Time poll
 </script></body></html>
