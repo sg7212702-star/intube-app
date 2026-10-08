@@ -93,23 +93,23 @@
 <script type="module" src="auth.js"></script>
 <script type="module" src="feed.js"></script>
 <script type="module" src="stories.js"></script>
-<script type="module" src="story-seen.js"></script>
+<script type="module" src="story_seen.js"></script>
 <script type="module" src="upload.js"></script>
 <script type="module" src="profile.js"></script>
 <script type="module" src="notifications.js"></script>
 <script type="module" src="chat.js"></script>
 <script type="module" src="reels.js"></script>
 <script type="module" src="explore.js"></script>
-
-<script><script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
-function comingSoon(e){
-  if(e) e.preventDefault();
-  alert('Coming Soon - Stay Tuned!');
-}
-document.getElementById('closeUploadModal')?.addEventListener('click',()=> document.getElementById('uploadModal').hidden=true);
-document.getElementById('closeStoryModal')?.addEventListener('click',()=> document.getElementById('storyModal').hidden=true);
-</script>
 
+<script>
+function comingSoon(e){
+if(e) e.preventDefault();
+alert('Coming Soon - Stay Tuned!');
+}
+document.getElementById('closeUploadModal')?.addEventListener('click', ()=> document.getElementById('uploadModal').hidden=true);
+document.getElementById('closeStoryModal')?.addEventListener('click', ()=> document.getElementById('storyModal').hidden=true);
+</script>
 </body>
 </html>
