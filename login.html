@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INTUBE - FINAL LOCK</title><style>
+<title>InstaPro 👑</title><style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
 body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:90px;background:radial-gradient(700px at 0% 0%,rgba(225,48,108,.24),transparent 60%),radial-gradient(600px at 100% 0%,rgba(79,91,213,.18),transparent 60%),#050508}
 .top{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:99;background:rgba(10,10,12,.45);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,.07)}
@@ -31,7 +31,6 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
 .grid3 div{aspect-ratio:1/1;background:#111;overflow:hidden}
 .grid3 img,.grid3 video{width:100%;height:100%;object-fit:cover}
-/* CREATE SHEET - NEW ONLY */
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:300}
 #createSheet{display:none;position:fixed;bottom:90px;left:14px;right:14px;max-width:452px;margin:0 auto;background:rgba(22,22,26,.92);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.12);border-radius:20px;z-index:301;padding:12px 0;box-shadow:0 20px 60px rgba(0,0,0,.7)}
 .sheetItem{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer}
@@ -82,40 +81,23 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 <input type="file" id="avatarInput" accept="image/*" style="display:none">
 
 <script>
-<script>
 const $=id=>document.getElementById(id);
+const CLOUD_NAME="intube";
+const UPLOAD_PRESET="intube_preset";
+
 let currentType='post';
-function openSheet(){
-  $('createSheet').style.display='block';
-  $('overlay').style.display='block';
-  $('createBtn').classList.add('active');
-}
-function closeSheet(){
-  $('createSheet').style.display='none';
-  $('overlay').style.display='none';
-  $('createBtn').classList.remove('active');
-}
-$('createBtn').onclick=(e)=>{ e.preventDefault(); openSheet(); };
-$('addBtn').onclick=(e)=>{ e.preventDefault(); openSheet(); };
+function openSheet(){$('createSheet').style.display='block';$('overlay').style.display='block';$('createBtn').classList.add('active');}
+function closeSheet(){$('createSheet').style.display='none';$('overlay').style.display='none';$('createBtn').classList.remove('active');}
+$('createBtn').onclick=(e)=>{e.preventDefault();openSheet();};
+$('addBtn').onclick=(e)=>{e.preventDefault();openSheet();};
 $('overlay').onclick=closeSheet;
-$('optPost').onclick=()=>{ currentType='post'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*'; $('fileInput').click(); }, 250); };
-$('optReel').onclick=()=>{ currentType='reel'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='video/*'; $('fileInput').click(); }, 250); };
-$('optStory').onclick=()=>{ currentType='story'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*,video/*'; $('fileInput').click(); }, 250); };
-$('yourStory').onclick=()=>{ currentType='story'; $('fileInput').accept='image/*,video/*'; $('fileInput').click(); };
-$('homeBtn').onclick=()=>{
-  $('profileFeed').style.display='none';$('feed').style.display='block';$('storiesBar').style.display='flex';
-  $('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');
-};
-$('profileBtn').onclick=()=>{
-  $('feed').style.display='none';$('storiesBar').style.display='none';$('profileFeed').style.display='block';
-  $('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');
-};
-$('editBtn').onclick=()=>{
-  let n=prompt('Name:', $('nameText').innerText); if(n===null) return;
-  let b=prompt('Bio:', $('bioText').innerText); if(b===null) return;
-  if(n) $('nameText').innerText=n; if(b) $('bioText').innerText=b;
-  localStorage.setItem('insta_name',n); localStorage.setItem('insta_bio',b);
-};
+$('optPost').onclick=()=>{currentType='post';closeSheet();setTimeout(()=>{$('fileInput').accept='image/*';$('fileInput').click();},250);};
+$('optReel').onclick=()=>{currentType='reel';closeSheet();setTimeout(()=>{$('fileInput').accept='video/*';$('fileInput').click();},250);};
+$('optStory').onclick=()=>{currentType='story';closeSheet();setTimeout(()=>{$('fileInput').accept='image/*,video/*';$('fileInput').click();},250);};
+$('yourStory').onclick=()=>{currentType='story';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+$('homeBtn').onclick=()=>{$('profileFeed').style.display='none';$('feed').style.display='block';$('storiesBar').style.display='flex';$('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');};
+$('profileBtn').onclick=()=>{$('feed').style.display='none';$('storiesBar').style.display='none';$('profileFeed').style.display='block';$('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');};
+$('editBtn').onclick=()=>{let n=prompt('Name:', $('nameText').innerText); if(n===null) return; let b=prompt('Bio:', $('bioText').innerText); if(b===null) return; if(n) $('nameText').innerText=n; if(b) $('bioText').innerText=b; localStorage.setItem('insta_name',n); localStorage.setItem('insta_bio',b);};
 $('shareBtn').onclick=async()=>{ try{await navigator.clipboard.writeText(location.href); alert('Link Copied ✓');}catch(e){prompt('Copy:',location.href);} };
 function showTab(t){
   $('postsGrid').style.display=t==='posts'?'grid':'none';
@@ -132,12 +114,26 @@ $('avatarInput').onchange=(e)=>{
   let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f);
   $('avatarImg').src=url;$('storyAvatar').src=url;$('bottomAvatar').src=url;
 };
-$('fileInput').onchange=(e)=>{
-  let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f); let isVideo=f.type.includes('video');
+$('fileInput').onchange=async(e)=>{
+  let f=e.target.files[0]; if(!f) return;
+  alert('Cloudinary (intube) pe upload ho raha hai... ☁️');
+  let fd=new FormData(); fd.append('file',f); fd.append('upload_preset',UPLOAD_PRESET);
+  let cloudUrl='';
+  try{
+    let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${f.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
+    let data=await res.json();
+    if(data.secure_url){cloudUrl=data.secure_url; console.log('Cloudinary URL:',cloudUrl);}
+    else throw data.error?.message||'preset galat';
+  }catch(err){
+    alert('Cloudinary preset nahi mila, local preview dikha raha hu.\nError: '+err+'\n\nCloudinary > Settings > Upload > Add preset > Name: intube_preset > Unsigned > Save kar de');
+  }
+  let url=cloudUrl||URL.createObjectURL(f);
+  let isVideo=f.type.includes('video');
   if(currentType==='story'){
     let sDiv=document.createElement('div'); sDiv.className='story';
     sDiv.innerHTML=`<div class="ring"><img src="${url}"></div><span>story</span>`;
-    $('storiesBar').appendChild(sDiv); alert('Story Added ✓');
+    $('storiesBar').appendChild(sDiv);
+    alert('Story Added ✓ '+(cloudUrl?'Permanent link ban gaya':'Local only'));
   }else if(currentType==='reel'){
     let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}" muted loop autoplay></video>`:`<img src="${url}">`;
     $('reelsGrid').appendChild(div); $('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length; showTab('reels'); $('profileBtn').click();
@@ -146,8 +142,4 @@ $('fileInput').onchange=(e)=>{
     $('postsGrid').appendChild(div); $('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length; showTab('posts'); $('profileBtn').click();
   }
   $('emptyPosts').style.display='none'; e.target.value='';
-let sn=localStorage.getItem('insta_name'); let sb=localStorage.getItem('insta_bio');
-if(sn) $('nameText').innerText=sn; if(sb) $('bioText').innerText=sb;
-$('feed').style.display='none'; $('storiesBar').style.display='none'; showTab('posts');
-</script>
-</body></html>
+  if(cloudUrl){let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]'); all.push({url:cloudUrl,type:
