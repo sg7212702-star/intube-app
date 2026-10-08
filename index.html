@@ -19,6 +19,7 @@ $('profileBtn').onclick=()=>{show('profileView');}
 $('heartBtn').onclick=()=>{show('notifView'); renderNotif();}
 $('addBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';}
 $('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';};
+ $('createBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';};
 $('optPost').onclick=()=>{cur='post';$('overlay').click();$('fileInput').accept='image/*';$('fileInput').click();};
 $('optReel').onclick=()=>{cur='reel';$('overlay').click();$('fileInput').accept='video/*';$('fileInput').click();};
 $('optStory').onclick=()=>{cur='story';$('overlay').click();$('fileInput').accept='image/*,video/*';$('fileInput').click();};
