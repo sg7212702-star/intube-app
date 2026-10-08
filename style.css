@@ -3,25 +3,23 @@ margin:0;
 padding:0;
 box-sizing:border-box;
 }
-
 body{
 background:#000;
 color:#fff;
-font-family:Arial,sans-serif;
+font-family:Inter,Arial,sans-serif;
 overflow-x:hidden;
+-webkit-tap-highlight-color:transparent;
 }
-
 #app{
 min-height:100vh;
 padding-bottom:90px;
+background:radial-gradient(900px at 10% 0%,rgba(255,77,166,.18),transparent),radial-gradient(700px at 90% 90%,rgba(100,80,255,.15),transparent),#000;
 }
-
 .glass{
 background:rgba(255,255,255,.08);
-backdrop-filter:blur(18px);
-border:1px solid rgba(255,255,255,.1);
+backdrop-filter:blur(22px) saturate(180%);
+border:1px solid rgba(255,255,255,.12);
 }
-
 .topBar{
 position:sticky;
 top:0;
@@ -29,249 +27,213 @@ z-index:1000;
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:16px;
-background:#111;
-}
-
-.logo{
-font-size:32px;
-font-weight:800;
-color:#ff4da6;
-}
-
-.topBtns{
-display:flex;
-gap:14px;
-}
-
-.topBtns button{
-background:none;
-border:none;
-font-size:28px;
-color:#fff;
-cursor:pointer;
-}
-
-#feed{
-padding:15px;
-}
-
-#feed img,
-#feed video{
-width:100%;
-border-radius:20px;
-}
-
-.bottomNav{
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:72px;
-display:flex;
-justify-content:space-around;
-align-items:center;
-background:rgba(15,15,15,.9);
+padding:14px 16px;
+background:rgba(15,15,15,.85);
 backdrop-filter:blur(20px);
+border-bottom:1px solid rgba(255,255,255,.08);
+}
+.logo{
+font-size:28px;
+font-weight:900;
+background:linear-gradient(90deg,#ff4da6,#fff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+letter-spacing:.5px;
+}
+.topBtns{display:flex;gap:16px}
+.topBtns button{
+background:none;border:none;font-size:24px;
+color:#fff;cursor:pointer;transition:.2s
+}
+.topBtns button:active{transform:scale(.85)}
+
+/* FEED - INSTA REELS JAISA */
+#feed{padding:0 0 90px}
+.post{
+position:relative;
+border-bottom:1px solid rgba(255,255,255,.08);
+background:#000;
+}
+.postHeader{
+display:flex;align-items:center;gap:10px;
+padding:10px 12px;
+}
+.postHeader img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.postHeader b{font-size:13px}
+.post img,.post video{
+width:100%;max-height:78vh;
+object-fit:cover;display:block;background:#111
+}
+.postActions{
+display:flex;gap:16px;padding:10px 12px;
+font-size:22px
+}
+.postCaption{padding:0 12px 12px;font-size:13px;line-height:1.4}
+.postCaption b{margin-right:6px}
+
+/* BOTTOM NAV - INSTA JAISA */
+.bottomNav{
+position:fixed;bottom:0;left:0;width:100%;height:72px;
+display:flex;justify-content:space-around;align-items:center;
+background:rgba(12,12,12,.92);
+backdrop-filter:blur(24px);
+border-top:1px solid rgba(255,255,255,.08);
 z-index:999;
 }
-
 .bottomNav button{
-background:none;
-border:none;
-color:#fff;
-display:flex;
-flex-direction:column;
-align-items:center;
-gap:4px;
-font-size:13px;
+background:none;border:none;color:#fff;
+display:flex;flex-direction:column;align-items:center;
+gap:3px;font-size:11px;opacity:.6;transition:.2s
 }
+.bottomNav button.active{opacity:1;transform:translateY(-2px)}
+.bottomNav button:active{transform:scale(.9)}
 
+/* UPLOAD BUTTON */
 #uploadFab{
-position:fixed;
-right:20px;
-bottom:90px;
-width:70px;
-height:70px;
-border:none;
-border-radius:50%;
-background:#ff4da6;
-color:#fff;
-font-size:34px;
-box-shadow:0 0 25px rgba(255,77,166,.5);
-z-index:999;
+position:fixed;right:18px;bottom:88px;
+width:62px;height:62px;border:none;border-radius:50%;
+background:linear-gradient(135deg,#ff4da6,#b84dff);
+color:#fff;font-size:32px;
+box-shadow:0 8px 25px rgba(255,77,166,.45);
+z-index:998;cursor:pointer;
 }
+#uploadFab:active{transform:scale(.92)}
 
-#uploadModal,
-#storyModal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.8);
-display:flex;
-justify-content:center;
-align-items:center;
+/* MODALS */
+#uploadModal,#storyModal{
+position:fixed;inset:0;
+background:rgba(0,0,0,.85);
+backdrop-filter:blur(12px);
+display:flex;justify-content:center;align-items:center;
 z-index:99999;
 }
-
-#uploadModal[hidden],
-#storyModal[hidden]{
-display:none;
-}
-
+#uploadModal[hidden],#storyModal[hidden]{display:none}
 .uploadCard{
-width:90%;
-max-width:420px;
-padding:22px;
-border-radius:25px;
-background:#151515;
+width:92%;max-width:400px;padding:22px;
+border-radius:24px;
+background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));
+backdrop-filter:blur(25px);
+border:1px solid rgba(255,255,255,.15);
+animation:pop.3s ease;
 }
-
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
 .uploadCard input{
-width:100%;
-margin-top:12px;
-margin-bottom:12px;
-padding:12px;
-border:none;
-border-radius:12px;
-}
-
-.uploadCard button{
-width:100%;
-padding:14px;
-border:none;
-border-radius:14px;
-background:#ff4da6;
-color:#fff;
-font-size:16px;
-font-weight:700;
-}#stories{
-display:flex;
-align-items:flex-start;
-gap:16px;
-overflow-x:auto;
-padding:14px 16px;
-scrollbar-width:none;
-scroll-behavior:smooth;
-}
-
-#stories::-webkit-scrollbar{
-display:none;
-}
-
-#storiesList{
-display:flex;
-gap:16px;
-}
-
-.story{
-display:flex;
-flex-direction:column;
-align-items:center;
-min-width:84px;
-cursor:pointer;
-transition:transform .25s ease;
-}
-
-.story:active{
-transform:scale(.95);
-}
-
-.story span{
-margin-top:7px;
-font-size:12px;
-font-weight:600;
-color:#fff;
-max-width:80px;
-overflow:hidden;
-text-overflow:ellipsis;
-white-space:nowrap;
-text-align:center;
-}
-
-.storyRing{
-width:78px;
-height:78px;
-padding:3px;
-border-radius:50%;
-background:linear-gradient(135deg,#ff4da6,#b84dff,#6a5cff,#00d4ff);
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 0 15px rgba(255,77,166,.4);
-}
-
-.storyRing img{
-width:100%;
-height:100%;
-border-radius:50%;
-object-fit:cover;
-border:3px solid #111;
-}
-
-.addStory{
-font-size:34px;
-color:#fff;
-font-weight:700;
-}
-
-#storyViewer{
-position:fixed;
-inset:0;
-background:#000;
-z-index:999999;
-overflow:hidden;
-}
-
-#storyViewer[hidden]{
-display:none;
-}
-
-#storyImage{
-width:100%;
-height:100%;
-object-fit:contain;
-background:#000;
-}
-
-#storyHeader{
-position:absolute;
-top:14px;
-left:14px;
-right:14px;
-display:flex;
-align-items:center;
-gap:10px;
-padding:8px 10px;
-border-radius:16px;
+width:100%;margin:10px 0;padding:13px 14px;
+border:none;border-radius:12px;
 background:rgba(255,255,255,.08);
-backdrop-filter:blur(15px);
+color:#fff;outline:none;
+}
+.uploadCard button{
+width:100%;padding:14px;border:none;border-radius:14px;
+background:linear-gradient(90deg,#ff4da6,#ff8ac6);
+color:#fff;font-size:15px;font-weight:700;
+margin-top:6px;cursor:pointer;
+}
+.uploadCard button:active{transform:scale(.98)}
+
+/* STORIES - MAIN UPGRADE */
+#stories{
+display:flex;align-items:flex-start;gap:14px;
+overflow-x:auto;padding:14px 12px;
+scrollbar-width:none;scroll-behavior:smooth;
+background:rgba(0,0,0,.3);
+border-bottom:1px solid rgba(255,255,255,.06);
+}
+#stories::-webkit-scrollbar{display:none}
+#storiesList{display:flex;gap:14px}
+.story{
+display:flex;flex-direction:column;align-items:center;
+min-width:72px;cursor:pointer;
+transition:transform.2s ease;
+}
+.story:active{transform:scale(.92)}
+.story span{
+margin-top:6px;font-size:11px;font-weight:500;
+color:#fff;max-width:72px;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap;text-align:center;
+opacity:.9;
+}
+.storyRing{
+width:66px;height:66px;padding:2.5px;border-radius:50%;
+background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
+display:flex;align-items:center;justify-content:center;
+box-shadow:0 0 12px rgba(255,77,166,.35);
+}
+.storyRing.seen{
+background:rgba(255,255,255,.2);box-shadow:none;
+}
+.storyRing img{
+width:100%;height:100%;border-radius:50%;
+object-fit:cover;border:2.5px solid #000;
+}
+.addStory{
+width:100%;height:100%;border-radius:50%;
+background:#1a1a1a;border:2.5px solid #000;
+display:flex;align-items:center;justify-content:center;
+font-size:28px;color:#fff;font-weight:300;
+}
+
+/* STORY VIEWER - FULL INSTA CLONE + UNLIMITED TIME */
+#storyViewer{
+position:fixed;inset:0;background:#000;
+z-index:999999;overflow:hidden;
+display:flex;align-items:center;justify-content:center;
+}
+#storyViewer[hidden]{display:none}
+#storyImage, #storyImg, #storyVideo{
+width:100%;max-width:420px;height:100dvh;
+object-fit:contain;background:#000;
+}
+#storyHeader{
+position:absolute;top:10px;left:10px;right:10px;
+display:flex;align-items:center;gap:10px;
+padding:8px 12px;border-radius:20px;
+background:rgba(0,0,0,.35);
+backdrop-filter:blur(10px);
 z-index:100;
 }
-
-#storyUserPhoto{
-width:42px;
-height:42px;
-border-radius:50%;
-object-fit:cover;
+#storyUserPhoto, #viewerUserPhoto{
+width:36px;height:36px;border-radius:50%;
+object-fit:cover;border:1px solid rgba(255,255,255,.3);
 }
-
-#storyUserName{
-font-size:14px;
-font-weight:700;
-color:#fff;
+#storyUserName, #viewerUser{
+font-size:13px;font-weight:700;color:#fff;
 }
-
 #storyTime{
-font-size:12px;
-color:#ddd;
+font-size:11px;color:rgba(255,255,255,.7);margin-left:6px;
+}
+#storyProgress{
+position:absolute;top:0;left:0;width:100%;height:3px;
+background:rgba(255,255,255,.25);z-index:200;
+}
+#storyProgress::before{
+content:'';position:absolute;left:0;top:0;height:100%;
+width:var(--progress,0%);
+background:#fff;box-shadow:0 0 6px #fff;
+transition:width.1s linear;
 }
 
-#storyProgress{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:4px;
-background:linear-gradient(90deg,#ff4da6,#b84dff,#00d4ff);
-z-index:200;
+/* Progress ke liye bottom controls */
+#storyFooter{
+position:absolute;bottom:0;left:0;right:0;
+display:flex;align-items:center;gap:10px;
+padding:14px 12px 20px;
+background:linear-gradient(transparent,rgba(0,0,0,.8));
+z-index:100;
 }
+#storyFooter input{
+flex:1;padding:10px 14px;border-radius:20px;
+border:1px solid rgba(255,255,255,.3);
+background:rgba(0,0,0,.4);color:#fff;outline:none;
+font-size:13px;
+}
+#closeViewer, #closeStoryModal, #closeUploadModal{
+background:rgba(255,255,255,.15);border:none;
+color:#fff;width:30px;height:30px;border-radius:50%;
+font-size:14px;cursor:pointer;
+}
+#prevStory,#nextStory{
+position:absolute;top:0;width:50%;height:100%;
+background:transparent;border:none;z-index:50;
+}
+#prevStory{left:0} #nextStory{right:0}
