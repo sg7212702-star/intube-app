@@ -1,138 +1,51 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="style.css?v=100"><style>html,body{width:100%;overflow-x:hidden} img,video{max-width:100%} #postsGrid,#reelsGrid{width:100%;box-sizing:border-box}</style></head><body>
-<div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro</div><button class="glassBtn" id="heartBtn">♡</button></div>
-<div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img src="https://i.pravatar.cc/150?img=12"></div><div style="font-size:11px">You</div></div></div><div id="feed"></div></div>
-<div id="reelsView" class="view"><div id="reelsFeed"></div></div>
-<div id="searchView" class="view"><div class="searchBar"><span>🔍</span><input id="searchInput" placeholder="Search users"><button id="searchGo">Go</button></div><div id="searchResults"></div></div>
-<div id="notifView" class="view"><div style="padding:16px;font-weight:800;font-size:18px">Notifications</div><div id="notifList"></div></div>
-<div id="profileView" class="view"><div style="padding:18px 16px"><div style="display:flex;gap:16px;align-items:center"><img src="https://i.pravatar.cc/150?img=12" style="width:70px;height:70px;border-radius:50%"><div><div id="nameText" style="font-weight:800">sanjay kumar</div><div><span id="postsCount">0</span> posts</div><button id="editBtn">Edit</button></div></div><div style="display:flex;gap:10px;margin-top:12px"><button id="tabPosts">Posts</button><button id="tabReels">Reels</button></div><div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-top:10px"></div><div id="reelsGrid" style="display:none"></div></div></div>
-<div id="overlay"></div><div id="storyViewer" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;align-items:center;justify-content:center"><div style="position:fixed;top:16px;right:16px;font-size:32px;color:#fff;z-index:10" onclick="document.getElementById('storyViewer').style.display='none'">X</div><div style="position:fixed;top:6px;left:6px;right:6px;height:3px;background:rgba(255,255,255,0.3);border-radius:10px;overflow:hidden"><div id="storyBar" style="height:100%;background:#fff;width:0%"></div></div><div id="storyViewBox" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div></div><div id="createSheet"><div class="sheetItem" id="optReel"><span>Reel - Full screen</span><b>+</b></div><div class="sheetItem" id="optPost"><span>Post - Feed</span><b>+</b></div><div class="sheetItem" id="optStory"><span>Story - 24h</span><b>+</b></div></div>
-<div class="bottom"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◉</button></div>
-<input type="file" id="fileInput" hidden>
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>InstaPro</title>
+<style>
+body{background:#0a0a0f;color:#fff;margin:0;font-family:system-ui}
+#topBar{display:flex;justify-content:space-between;padding:12px;background:#0a0a0f;border-bottom:1px solid #222;position:sticky;top:0;z-index:10}
+.logo{font-weight:900;font-size:20px}.btn{width:42px;height:42px;border-radius:50%;border:1px solid #333;background:#15151d;color:#fff}
+.view{display:none;padding:12px;min-height:70vh}.view.active{display:block}
+#postsGrid,#reelsGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}
+.postCard{background:#15151d;border-radius:12px;margin-bottom:12px;overflow:hidden;border:1px solid #222}
+.postCard img,.postCard video{width:100%;display:block}
+#bottomBar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 0;background:#0f0f17;border-top:1px solid #222}
+#bottomBar button{width:56px;height:42px;border-radius:14px;border:none;background:#1a1a27;color:#fff;font-size:20px}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20}
+#createSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1c1c29;border-radius:20px 20px 0 0;padding:18px;z-index:30}
+#createSheet button{width:100%;padding:14px;margin:6px 0;border-radius:12px;border:none;background:#2a2a3d;color:#fff;text-align:left}
+.empty{padding:40px;text-align:center;opacity:.5}
+</style></head><body>
+<div id="topBar"><button id="addBtn" class="btn">+</button><div class="logo">InstaPro</div><button class="btn">♡</button></div>
+<div id="view-home" class="view active"><div id="feed"></div></div>
+<div id="view-reels" class="view"><div id="reelsFeed"></div></div>
+<div id="view-profile" class="view"><div style="display:flex;justify-content:space-between;padding:12px"><b id="nameText">sanjay kumar</b><b id="postsCount">0 posts</b></div><div id="postsGrid"></div><div id="reelsGrid" style="display:none"></div></div>
+<div id="overlay"></div>
+<div id="createSheet"><button id="optPost">📷 New Post</button><button id="optReel">🎬 New Reel</button><button id="closeSheet">Close</button></div>
+<input id="fileInput" type="file" accept="image/*,video/*" style="display:none">
+<div id="bottomBar"><button id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
 <script>
-const CLOUD_NAME='kujnbe8a'; const PRESET='intube_free'; let cur='post';
+const CLOUD_NAME='kujnbe8a';const PRESET='intube_free';let cur='post';
 const $=id=>document.getElementById(id);
-function show(v){document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='none'}); if($(v)){$(v).classList.add('active');$(v).style.display='block';} $('overlay').style.display='none'; $('createSheet').style.display='none';}
-$('homeBtn').onclick=()=>{show('homeView');}
-$('reelsBtn').onclick=()=>{show('reelsView'); renderReels();}
-$('searchBtn').onclick=()=>{show('searchView'); renderSearch('trending');};
-$('profileBtn').onclick=()=>{show('profileView');}
-$('heartBtn').onclick=()=>{show('notifView'); renderNotif();}
-$('addBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';}
-$('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';};
- $('createBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';};
-$('optPost').onclick=()=>{cur='post';$('overlay').click();$('fileInput').accept='image/*';$('fileInput').click();};
-$('optReel').onclick=()=>{cur='reel';$('overlay').click();$('fileInput').accept='video/*';$('fileInput').click();};
-$('optStory').onclick=()=>{cur='story';$('overlay').click();$('fileInput').accept='image/*,video/*';$('fileInput').click();};
-$('yourStoryBtn').onclick=()=>{cur='story';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
-$('tabPosts').onclick=()=>{ $('postsGrid').style.display='grid';$('reelsGrid').style.display='none'; };
-$('tabReels').onclick=()=>{ $('postsGrid').style.display='none';$('reelsGrid').style.display='grid'; };
-$('editBtn').onclick=()=>{ let n=prompt('Naam likho:', $('nameText').innerText); if(n){$('nameText').innerText=n; localStorage.setItem('insta_name',n);} }
+const showView=v=>{document.querySelectorAll('.view').forEach(x=>{x.classList.remove('active');x.style.display='none'});let e=$(v);if(e){e.classList.add('active');e.style.display='block';}};
+$('homeBtn').onclick=()=>{showView('view-home');renderFeed();};
+$('reelsBtn').onclick=()=>{showView('view-reels');renderReels();};
+$('profileBtn').onclick=()=>{showView('view-profile');renderProfile();};
+function openSheet(){$('createSheet').style.display='block';$('overlay').style.display='block';}
+function closeSheet(){$('createSheet').style.display='none';$('overlay').style.display='none';}
+$('addBtn').onclick=openSheet;$('createBtn').onclick=openSheet;
+$('overlay').onclick=closeSheet;$('closeSheet').onclick=closeSheet;
+$('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+$('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
 async function up(file){
- let base64= await new Promise(r=>{
-  let rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(file);
- });
-let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET);
-try{
-let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
-let j=await res.json();
-if(j.secure_url) return j.secure_url;
- return base64;
+let b64=await new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(file);});
+let fd=new FormData();fd.append('file',file);fd.append('upload_preset',PRESET);
+try{let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});let j=await res.json();if(j.secure_url)return j.secure_url;}catch(e){}
+return b64;
 }
-function openStoryView(url){
- $('storyViewer').style.display='flex';
- let b=$('storyViewBox'); let bar=$('storyBar');
- bar.style.transition='none'; bar.style.width='0%';
- if(url.includes('video')||url.includes('.mp4')||url.includes('/video/')) b.innerHTML='<video src="'+url+'" autoplay playsinline style="width:100%;height:100%;object-fit:contain"></video>';
- else b.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:contain">';
- setTimeout(()=>{ bar.style.transition='width 5s linear'; bar.style.width='100%'; },100);
- setTimeout(()=>{ $('storyViewer').style.display='none'; },5100);
-}
-$('fileInput').onchange=async e=>{
-let f=e.target.files[0];if(!f)return;
- $('overlay').style.display='block';
- let url1=await up(f);
- if(cur=='story'){
-  let d=document.createElement('div');
-  d.className='story';
-  d.innerHTML='<div class="ring"><img src="'+url1+'"></div><div style="font-size:11px">You</div>';
-  d.onclick=()=>openStoryView(url1);
-  document.getElementById('storiesBar').appendChild(d);
-  let all=JSON.parse(localStorage.getItem('insta_stories')||'[]');all.push(url1);localStorage.setItem('insta_stories',JSON.stringify(all));
-  openStoryView(url1);
- }else{
-  let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
-  all.push({url:url1,ur1:url1,type:cur,time:Date.now(),user:$('nameText').innerText});
-  localStorage.setItem('intube_cloud',JSON.stringify(all));
-  renderFeed();renderProfile();
- }
- $('overlay').style.display='none';e.target.value='';
-};
-function renderFeed(){
- let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- let feed=document.getElementById('feed');
- if(all.length==0){feed.innerHTML='<div class="empty">Feed Empty</div>';return;}
- feed.innerHTML='';
- all.slice().reverse().forEach(p=>{
-  if(p.type=='story')return;
-  let src=p.url||p.ur1||'';
-  if(!src)return;
-  let m=p.type=='reel'?'<video src="'+src+'" controls style="width:100%"></video>':'<img src="'+src+'" style="width:100%">';
-  feed.innerHTML+='<div class="postCard"><div class="postHead"><b>sanjay kumar</b></div><div style="padding:0">'+m+'</div></div>';
- });
-};
-function renderReels(){
- let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- all=all.filter(p=>p.type=='reel');
- let rf=document.getElementById('reelsFeed');
- if(all.length==0){rf.innerHTML='<div class="empty">No Reels</div>';return;}
- rf.innerHTML='';
- all.slice().reverse().forEach(p=>{
-  let src=p.url||p.ur1||'';if(!src)return;
-  rf.innerHTML+='<div class="reelCard"><video src="'+src+'" controls loop playsinline style="width:100%;height:100%"></video></div>';
- });
-}
-function renderProfile(){
- let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');
- let posts=all.filter(p=>p.type!='story');
- document.getElementById('postsCount').innerText=posts.length;
- let g=document.getElementById('postsGrid');
- g.innerHTML='';
- g.style.display='grid'; g.style.gridTemplateColumns='1fr 1fr 1fr'; g.style.gap='2px';
- posts.slice().reverse().forEach(p=>{
-  let src=p.url||p.ur1||'';if(!src)return;
-  let d=document.createElement('div');
-  d.style.cssText='aspect-ratio:1/1;overflow:hidden;background:#111;border-radius:4px';
-  let tag=p.type=='reel'?'<video src="'+src+'" style="width:100%;height:100%;object-fit:cover"></video>':'<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
-  d.innerHTML=tag;g.appendChild(d);
- });
-}
-function addNotif(t,time){
- let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
- n.unshift({t,time});
- localStorage.setItem('insta_notif',JSON.stringify(n));
-}
-function renderNotif(){
- let n=JSON.parse(localStorage.getItem('insta_notif')||'[]');
- let l=document.getElementById('notifList');
- if(!l)return;
- l.innerHTML='';
- n.forEach(x=>{
-  l.innerHTML+='<div style="padding:12px;border-bottom:1px solid #222">'+x.t+'</div>';
- });
-}
-async function renderSearch(q){
- let res=document.getElementById('searchResults');
- res.innerHTML='<div class="empty">Searching "'+q+'..."</div>';
-}
-document.getElementById('searchGo').onclick=()=>{
- let q=document.getElementById('searchInput').value||'trending';
- renderSearch(q);
-};
-function like(el){
- el.innerText=el.innerText=='🤍'?'❤️':'🤍';
-}
-let saved=JSON.parse(localStorage.getItem('insta_stories')||'[]'); saved.forEach(url=>{let d=document.createElement('div'); d.className='story'; d.innerHTML='<div class="ring"><img src="'+url+'"></div><div style="font-size:11px">You</div>'; d.onclick=()=>openStoryView(url); document.getElementById('storiesBar').appendChild(d); });
-let savedName=localStorage.getItem('insta_name'); if(savedName){ $('nameText').innerText=savedName; }
-renderFeed(); renderProfile(); show('homeView');
-setInterval(()=>{ renderFeed(); }, 3000);
+$('fileInput').onchange=async e=>{let f=e.target.files[0];if(!f)return;closeSheet();let url=await up(f);let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');all.push({url,type:cur,time:Date.now(),user:$('nameText').innerText});localStorage.setItem('intube_cloud',JSON.stringify(all));e.target.value='';renderFeed();renderReels();renderProfile();};
+function renderFeed(){let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');let feed=$('feed');if(all.length==0){feed.innerHTML='<div class=empty>Feed Empty</div>';return;}feed.innerHTML='';all.slice().reverse().forEach(p=>{let m=p.type==='reel'?`<video src="${p.url}" controls style="width:100%"></video>`:`<img src="${p.url}" style="width:100%">`;feed.innerHTML+=`<div class=postCard><div style="padding:10px;font-weight:700">${p.user}</div>${m}</div>`;});}
+function renderReels(){let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]').filter(p=>p.type==='reel');let rf=$('reelsFeed');if(all.length==0){rf.innerHTML='<div class=empty>No Reels</div>';return;}rf.innerHTML='';all.slice().reverse().forEach(p=>{rf.innerHTML+=`<div class=postCard><video src="${p.url}" controls autoplay muted loop style="width:100%;height:70vh;object-fit:contain"></video></div>`;});}
+function renderProfile(){let all=JSON.parse(localStorage.getItem('intube_cloud')||'[]');$('postsCount').innerText=all.length;let g=$('postsGrid');g.innerHTML='';all.slice().reverse().forEach(p=>{let d=document.createElement('div');d.style.cssText='aspect-ratio:1/1;overflow:hidden;background:#111;border-radius:6px';d.innerHTML=p.type==='reel'?`<video src="${p.url}" style="width:100%;height:100%;object-fit:cover"></video>`:`<img src="${p.url}" style="width:100%;height:100%;object-fit:cover">`;g.appendChild(d);});}
+renderFeed();renderReels();renderProfile();
 </script></body></html>
