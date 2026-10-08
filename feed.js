@@ -1,53 +1,20 @@
 import { db } from "./firebase-config.js";
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-collection,
-query,
-orderBy,
-onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const feed = document.getElementById("feed");
-
-function renderPost(post){
-
-const media = post.type==="video"
-? `<video src="${post.url}" controls></video>`
-: `<img src="${post.url}">`;
-
-return `
-<div class="glass post">
-<div style="padding:12px">
-<b>${post.userName || "INTUBE User"}</b>
-</div>
-
-${media}
-
-<div style="padding:12px">
-${post.caption || ""}
-</div>
-</div>
-`;
+async function loadPosts(){
+  const container = document.getElementById("postsContainer") || document.getElementById("videoContainer") || document.getElementById("homeFeed") || document.getElementById("feed");
+  if(!container) return;
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const snap = await getDocs(q);
+  container.innerHTML = "";
+  if(snap.empty){ container.innerHTML = "<p style='color:white; text-align:center;'>No posts yet</p>"; return; }
+  snap.forEach(doc=>{
+    const p = doc.data();
+    container.innerHTML += `
+      <div style="background:#111; margin-bottom:15px; border-radius:12px; overflow:hidden;">
+        ${p.mediaType === "video" ? `<video src="${p.mediaUrl}" controls style="width:100%"></video>` : `<img src="${p.mediaUrl}" style="width:100%">`}
+        <div style="padding:10px; color:white;">${p.caption || ""} - <small>${p.username}</small></div>
+      </div>`;
+  });
 }
-
-const q = query(
-collection(db,"posts"),
-orderBy("createdAt","desc")
-);
-
-onSnapshot(q,(snap)=>{
-
-let html="";
-
-snap.forEach(doc=>{
-
-html += renderPost({
-id:doc.id,
-...doc.data()
-});
-
-});
-
-feed.innerHTML = html;
-
-});
+loadPosts();
