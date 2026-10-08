@@ -5,113 +5,241 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INTUBE</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-body{background:#000;color:#fff;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(600px at 20% 10%, rgba(120,40,200,0.14), transparent 80%), #000}
-#app{min-height:100vh;padding-bottom:90px}
-.topBar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(10,10,12,0.7);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.06)}
-.logo{font-weight:800;font-size:20px;letter-spacing:0.5px}
-.screen{display:none}.screen.active{display:block}
-.stories{display:flex;gap:14px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
-.stories::-webkit-scrollbar{display:none}
-.story{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:60px}
-.story img{width:56px;height:56px;border-radius:50%;border:2px solid #333;object-fit:cover;background:#222}
-.story span{font-size:11px;color:#aaa;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#feed{min-height:60vh}
-.bottomNav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 0 18px;background:rgba(0,0,0,0.88);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,0.08);z-index:100}
-.bottomNav button{background:none;border:none;color:#666;font-size:24px}
-.bottomNav button.active{color:#fff}
-.sHead{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center}
-.pTab.active{border-top-color:#fff !important;color:#fff !important}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif
+}
+body{
+background:#000;
+color:#fff;
+overflow-x:hidden
+}
+body::before{
+content:'';
+position:fixed;
+inset:0;
+z-index:-1;
+background:
+radial-gradient(600px at 20% 10%, rgba(120,40,200,0.14), transparent 80%),
+#000
+}
+#app{
+min-height:100vh;
+padding-bottom:90px
+}
+.topBar{
+position:sticky;
+top:0;
+z-index:50;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:12px 16px;
+background:rgba(10,10,12,0.7);
+backdrop-filter:blur(24px);
+border-bottom:1px solid rgba(255,255,255,0.06)
+}
+.logo{
+font-weight:800;
+font-size:20px;
+letter-spacing:0.5px
+}
+.screen{
+display:none
+}
+.screen.active{
+display:block
+}
+.stories{
+display:flex;
+gap:14px;
+padding:12px 16px;
+overflow-x:auto;
+scrollbar-width:none
+}
+.stories::-webkit-scrollbar{
+display:none
+}
+.story{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:6px;
+min-width:60px
+}
+.story img{
+width:56px;
+height:56px;
+border-radius:50%;
+border:2px solid #333;
+object-fit:cover;
+background:#222
+}
+.story span{
+font-size:11px;
+color:#aaa;
+max-width:60px;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap
+}
+#feed{
+min-height:60vh
+}
+.bottomNav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+justify-content:space-around;
+padding:10px 0 18px;
+background:rgba(0,0,0,0.88);
+backdrop-filter:blur(24px);
+border-top:1px solid rgba(255,255,255,0.08);
+z-index:100
+}
+.bottomNav button{
+background:none;
+border:none;
+color:#666;
+font-size:24px
+}
+.bottomNav button.active{
+color:#fff
+}
+.sHead{
+padding:14px 16px;
+border-bottom:1px solid rgba(255,255,255,0.06);
+display:flex;
+align-items:center
+}
+.pTab.active{
+border-top-color:#fff !important;
+color:#fff !important
+}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="topBar"><div class="logo">INTUBE</div><div style="display:flex;gap:14px"><button style="background:none;border:none;color:#fff;font-size:20px">♡</button><button style="background:none;border:none;color:#fff;font-size:20px">✈</button></div></div>
 
-  <div id="homeScreen" class="screen active">
-    <div class="stories">
-      <div class="story" id="myStoryItem"><img id="myStoryImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><span id="myStoryText">Your Story</span></div>
-      <div id="storiesList" style="display:flex;gap:14px"></div>
-    </div>
-    <main id="feed"></main>
-  </div>
-
-  <div id="searchScreen" class="screen"><div class="sHead"><h2>Search</h2></div><div style="padding:40px;text-align:center;color:#666">Search coming soon</div></div>
-  <div id="reelsScreen" class="screen"><div class="sHead"><h2>Reels</h2></div><div style="padding:40px;text-align:center;color:#666">Reels coming soon</div></div>
-  <div id="shopScreen" class="screen"><div class="sHead"><h2>Activity</h2></div><div style="padding:40px;text-align:center;color:#666">Activity</div></div>
-
-  <!-- PROFILE SCREEN - INSTAGRAM LIKE - UI CHANGE NAHI HUA, SIRF ANDAR KA SYSTEM -->
-  <div id="profileScreen" class="screen">
-    <div class="sHead"><h2 id="profileTopName">Profile</h2><button id="profileMenuBtn" style="margin-left:auto;background:none;border:none;color:#fff;font-size:22px">☰</button></div>
-    <div style="padding:14px 16px">
-      <div id="notLoggedIn" style="text-align:center;padding:70px 20px;display:none">
-        <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.08);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:36px">👤</div>
-        <h3 style="font-size:18px">Login to INTUBE</h3>
-        <p style="color:#777;font-size:13px;margin-top:6px">See your profile like Instagram</p>
-        <button id="googleLoginBtn" style="width:100%;max-width:320px;margin:22px auto 0;padding:14px;background:#fff;color:#000;border:none;border-radius:100px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" style="width:20px"> Continue with Google
-        </button>
-      </div>
-      <div id="loggedIn" style="display:none">
-        <div style="display:flex;align-items:center;gap:18px">
-          <img id="profilePic" style="width:84px;height:84px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.12);object-fit:cover;background:#222">
-          <div style="flex:1;display:flex;justify-content:space-around;text-align:center">
-            <div><b id="postCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Posts</span></div>
-            <div><b id="followersCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Followers</span></div>
-            <div><b id="followingCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Following</span></div>
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <h3 id="profileName" style="font-size:15px;font-weight:700">Username</h3>
-          <p id="profileBio" style="font-size:13px;color:#c8c8d0;margin-top:4px;white-space:pre-wrap;line-height:1.4">Welcome to INTUBE 💎</p>
-          <p id="profileEmail" style="font-size:11px;color:#5e5e72;margin-top:3px"></p>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button id="editProfileBtn" style="flex:1;padding:9px 0;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;font-weight:600;font-size:13px">Edit profile</button>
-          <button id="shareProfileBtn" style="flex:1;padding:9px 0;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;font-weight:600;font-size:13px">Share profile</button>
-          <button id="logoutBtn" style="padding:9px 14px;background:rgba(255,59,92,0.14);border:1px solid rgba(255,59,92,0.25);color:#ff5a77;border-radius:8px;font-weight:600">⎋</button>
-        </div>
-        <div style="display:flex;border-top:1px solid rgba(255,255,255,0.08);margin-top:22px">
-          <button class="pTab active" data-tab="posts" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid #fff;color:#fff;display:flex;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.7"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
-          <button class="pTab" data-tab="reels" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid transparent;color:#6e6e84;display:flex;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.7"><polygon points="23 7 13.5 15 8.5 10 1 17.5 1 7 23 7"/></svg></button>
-          <button class="pTab" data-tab="tagged" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid transparent;color:#6e6e84;display:flex;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.7"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
-        </div>
-        <div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px"></div>
-        <div id="profileReelsGrid" style="display:none;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px"></div>
-        <div id="profileTaggedGrid" style="display:none;padding:50px 20px;text-align:center;color:#6e6e84;font-size:13px">No tagged photos</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="bottomNav">
-    <button id="homeBtn" class="active"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2.1L1 12h3v9h6v-7h4v7h6v-9h3z"/></svg></button>
-    <button id="searchBtn"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35"/></svg></button>
-    <button id="reelsBtn"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="23 7 13.5 15 8.5 10 1 17.5 1 7 23 7"/></svg></button>
-    <button id="shopBtn"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-    <button id="profileBtn"><img id="bottomProfileImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #333"></button>
-  </div>
+<!-- TOP BAR -->
+<div class="topBar">
+<div class="logo">INTUBE</div>
+<div style="display:flex;gap:14px">
+<button style="background:none;border:none;color:#fff;font-size:20px">♡</button>
+<button style="background:none;border:none;color:#fff;font-size:20px">✈</button>
+</div>
 </div>
 
+<!-- HOME -->
+<div id="homeScreen" class="screen active">
+<div class="stories">
+<div class="story" id="myStoryItem">
+<img id="myStoryImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+<span id="myStoryText">Your Story</span>
+</div>
+<div id="storiesList" style="display:flex;gap:14px"></div>
+</div>
+<main id="feed"></main>
+</div>
+
+<!-- SEARCH -->
+<div id="searchScreen" class="screen">
+<div class="sHead"><h2>Search</h2></div>
+<div style="padding:40px;text-align:center;color:#666">Search coming soon</div>
+</div>
+
+<!-- REELS -->
+<div id="reelsScreen" class="screen">
+<div class="sHead"><h2>Reels</h2></div>
+<div style="padding:40px;text-align:center;color:#666">Reels coming soon</div>
+</div>
+
+<!-- ACTIVITY -->
+<div id="shopScreen" class="screen">
+<div class="sHead"><h2>Activity</h2></div>
+<div style="padding:40px;text-align:center;color:#666">Activity</div>
+</div>
+
+<!-- PROFILE -->
+<div id="profileScreen" class="screen">
+<div class="sHead">
+<h2 id="profileTopName">Profile</h2>
+<button id="profileMenuBtn" style="margin-left:auto;background:none;border:none;color:#fff;font-size:22px">☰</button>
+</div>
+
+<div style="padding:14px 16px">
+
+<!-- NOT LOGGED IN -->
+<div id="notLoggedIn" style="text-align:center;padding:70px 20px;display:none">
+<div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.08);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:36px">👤</div>
+<h3 style="font-size:18px">Login to INTUBE</h3>
+<p style="color:#777;font-size:13px;margin-top:6px">See your profile like Instagram</p>
+<button id="googleLoginBtn" style="width:100%;max-width:320px;margin:22px auto 0;padding:14px;background:#fff;color:#000;border:none;border-radius:100px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
+<img src="https://www.svgrepo.com/show/475656/google-color.svg" style="width:20px"> Continue with Google
+</button>
+</div>
+
+<!-- LOGGED IN -->
+<div id="loggedIn" style="display:none">
+<div style="display:flex;align-items:center;gap:18px">
+<img id="profilePic" style="width:84px;height:84px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.12);object-fit:cover;background:#222">
+<div style="flex:1;display:flex;justify-content:space-around;text-align:center">
+<div><b id="postCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Posts</span></div>
+<div><b id="followersCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Followers</span></div>
+<div><b id="followingCount" style="display:block;font-size:17px">0</b><span style="font-size:12px;color:#8a8a9a">Following</span></div>
+</div>
+</div>
+
+<div style="margin-top:14px">
+<h3 id="profileName" style="font-size:15px;font-weight:700">Username</h3>
+<p id="profileBio" style="font-size:13px;color:#c8c8d0;margin-top:4px;white-space:pre-wrap;line-height:1.4">Welcome to INTUBE 💎</p>
+<p id="profileEmail" style="font-size:11px;color:#5e5e72;margin-top:3px"></p>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:16px">
+<button id="editProfileBtn" style="flex:1;padding:9px 0;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;font-weight:600;font-size:13px">Edit profile</button>
+<button id="shareProfileBtn" style="flex:1;padding:9px 0;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;font-weight:600;font-size:13px">Share profile</button>
+<button id="logoutBtn" style="padding:9px 14px;background:rgba(255,59,92,0.14);border:1px solid rgba(255,59,92,0.25);color:#ff5a77;border-radius:8px;font-weight:600">⎋</button>
+</div>
+
+<div style="display:flex;border-top:1px solid rgba(255,255,255,0.08);margin-top:22px">
+<button class="pTab active" data-tab="posts" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid #fff;color:#fff;display:flex;justify-content:center">POSTS</button>
+<button class="pTab" data-tab="reels" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid transparent;color:#6e6e84;display:flex;justify-content:center">REELS</button>
+<button class="pTab" data-tab="tagged" style="flex:1;padding:12px 0;background:none;border:none;border-top:1px solid transparent;color:#6e6e84;display:flex;justify-content:center">TAGGED</button>
+</div>
+
+<div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px"></div>
+<div id="profileReelsGrid" style="display:none;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px"></div>
+<div id="profileTaggedGrid" style="display:none;padding:50px 20px;text-align:center;color:#6e6e84;font-size:13px">No tagged photos</div>
+</div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottomNav">
+<button id="homeBtn" class="active">⌂</button>
+<button id="searchBtn">⌕</button>
+<button id="reelsBtn">▶</button>
+<button id="shopBtn">♡</button>
+<button id="profileBtn">
+<img id="bottomProfileImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #333">
+</button>
+</div>
+</div>
+
+<!-- EDIT MODAL - FIXED BUG -->
 <div id="editModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.68);backdrop-filter:blur(18px);align-items:center;justify-content:center;padding:16px">
-  <div style="width:100%;max-width:380px;background:rgba(24,24,30,0.98);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px">
-    <h3 style="text-align:center;font-size:16px">Edit Profile</h3>
-    <input type="file" id="editPicFile" accept="image/*" hidden>
-    <img id="editPicPreview" style="width:76px;height:76px;border-radius:50%;margin:0 auto;object-fit:cover;cursor:pointer;border:2.5px solid rgba(255,255,255,0.15);background:#222">
-    <p style="text-align:center;color:#7a7a8a;font-size:11px;margin-top:-6px">Tap photo to change</p>
-    <input id="editNameInput" placeholder="Name" style="padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;outline:none">
-    <textarea id="editBioInput" placeholder="Bio" rows="3" style="padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;resize:none;outline:none"></textarea>
-    <div style="display:flex;gap:10px;margin-top:4px">
-      <button id="closeEditModal" style="flex:1;padding:12px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;font-weight:600">Cancel</button>
-      <button id="saveProfileBtn" style="flex:1;padding:12px;border-radius:100px;border:none;background:#fff;color:#000;font-weight:700">Save</button>
-    </div>
-  </div>
-</div>
-
-<input type="file" id="storyFile" accept="image/*,video/*" hidden>
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="auth.js"></script>
-<script type="module" src="profile.js"></script>
-<script type="module" src="app.js"></script>
-</body>
-</html>
+<div style="width:100%;max-width:380px;background:rgba(24,24,30,0.98);border:1px solid rgba(255,255,255,0.13);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px">
+<h3 style="text-align:center;font-size:16px">Edit Profile</h3>
+<input type="file" id="editPicFile" accept="image/*" hidden>
+<img id="editPicPreview" style="width:76px;height:76px;border-radius:50%;margin:0 auto;object-fit:cover;cursor:pointer;border:2.5px solid rgba(255,255,255,0.15);background:#222">
+<p style="text-align:center;color:#7a7a8a;font-size:11px;margin-top:-6px">Tap photo to change</p>
+<input id="editNameInput" placeholder="Name" style="padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;outline:none">
+<textarea id="editBioInput" placeholder="Bio" rows="3" style="padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;resize:none;outline:none"></textarea>
+<div style="display:flex;gap:10px;margin-top:4px">
+<button id="closeEditModal" style="flex:1;padding:12px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;font-weight:600">Cancel</button>
+<button id="saveProfileBtn" style="flex:1;padding:12px;border-radius:
