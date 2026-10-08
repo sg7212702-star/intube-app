@@ -9,17 +9,20 @@ const viewerProgress = document.getElementById("storyProgress");
 const closeViewerBtn = document.getElementById("closeViewer");
 const viewerUserPhoto = document.getElementById("viewerUserPhoto");
 const viewerUserName = document.getElementById("viewerUserName") || document.getElementById("viewerUser");
-let groups = []; let myOwnStories = []; let curGroup=0, curIndex=0, timer=null;
+
+let groups = [];
+let myOwnStories = [];
+let curGroup = 0, curIndex = 0, timer = null;
 window.groups = groups;
+
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-// MY OWN STORY - alag se sunega
 auth.onAuthStateChanged((user)=>{
   if(!user) return;
   const myImg = document.getElementById("myStoryImg");
-  if(myImg){ myImg.src = user.photoURL || DEFAULT_AVATAR; }
+  if(myImg) myImg.src = user.photoURL || DEFAULT_AVATAR;
 
-  // meri story ka listener
+  // My Stories
   const q = query(collection(db, "stories"), where("uid","==", user.uid));
   onSnapshot(q, (snap)=>{
     myOwnStories = [];
@@ -28,16 +31,17 @@ auth.onAuthStateChanged((user)=>{
       if(s.expiresAt && s.expiresAt < Date.now()){ deleteDoc(doc(db,"stories",d.id)); return; }
       myOwnStories.push(s);
     });
-    console.log("MY stories:", myOwnStories.length);
     renderMyRing();
   });
-});
 
-// ALL STORIES
-onSnapshot(collection(db, "stories"), (snap)=>{
-  const all=[]; snap.forEach(d=>{ const s=d.data(); s.id=d.id; if(s.expiresAt && s.expiresAt < Date.now()){ deleteDoc(doc(db,"stories",d.id)); return; } all.push(s); });
-  const map={}; all.forEach(s=>{ if(!map[s.uid]) map[s.uid]={uid:s.uid,userName:s.userName||"User",userPhoto:s.userPhoto||"",stories:[]}; map[s.uid].stories.push(s); });
-  groups=Object.values(map); window.groups=groups; renderTray();
+  // All Stories
+  onSnapshot(collection(db, "stories"), (snap)=>{
+    const all=[];
+    snap.forEach(d=>{ const s=d.data(); s.id=d.id; if(s.expiresAt && s.expiresAt < Date.now()){ deleteDoc(doc(db,"stories",d.id)); return; } all.push(s); });
+    const map={};
+    all.forEach(s=>{ if(!map[s.uid]) map[s.uid]={uid:s.uid, userName:s.userName||s.username||"User", userPhoto:s.userPhoto||DEFAULT_AVATAR, stories:[]}; map[s.uid].stories.push(s); });
+    groups=Object.values(map); window.groups=groups; renderTray();
+  });
 });
 
 function renderMyRing(){
@@ -68,7 +72,7 @@ function renderTray(){
     const seen=g.stories.every(s=>s.views?.includes(myUid));
     const div=document.createElement("div");
     div.className="story other-story";
-    div.innerHTML=`<div class="storyRing ${seen?'seen':'ring-active'}"><img src="${g.userPhoto||DEFAULT_AVATAR}"></div><span>${(g.userName||'User').split(' ')[0]}</span>`;
+    div.innerHTML=`<div class="storyRing ${seen?'seen':'ring-active'}"><img src="${g.userPhoto||DEFAULT_AVATAR}"></div><span>${g.userName.split(' ')[0]}</span>`;
     div.onclick=()=>openViewer(i,0);
     tray.appendChild(div);
   });
@@ -78,33 +82,48 @@ function renderTray(){
 function openMyStory(){
   if(myOwnStories.length===0) return;
   const g={userName:auth.currentUser.displayName||"You", userPhoto:auth.currentUser.photoURL||"", stories:myOwnStories};
-  groups.unshift(g); // temp add
+  groups.unshift(g);
   openViewer(0,0);
 }
 
-function openViewer(gIdx,sIdx){
+window.openViewer = function(gIdx, sIdx){
   curGroup=gIdx; curIndex=sIdx;
   const g=groups[curGroup]; if(!g) return; const s=g.stories[curIndex]; if(!s) return;
   if(viewerUserPhoto) viewerUserPhoto.src=g.userPhoto||DEFAULT_AVATAR;
   if(viewerUserName) viewerUserName.textContent=g.userName||"User";
   if(viewer){ viewer.hidden=false; viewer.style.display="flex"; }
-  const url=s.storyUrl||s.mediaUrl||s.url;
-  const type=s.type||s.mediaType||'image';
-  if(type==='video' || (url && url.includes('.mp4'))){
-    if(viewerImg) viewerImg.hidden=true;
-    if(viewerVideo){ viewerVideo.hidden=false; viewerVideo.src=url; viewerVideo.play().catch(()=>{}); }
+
+  const url = s.storyUrl || s.storyUrl1 || s.mediaUrl;
+  if(s.type==="video" || s.mediaType==="video"){
+    if(viewerImg) viewerImg.style.display="none";
+    if(viewerVideo){ viewerVideo.style.display="block"; viewerVideo.src=url; viewerVideo.play(); }
   }else{
-    if(viewerVideo){ viewerVideo.hidden=true; viewerVideo.pause(); }
-    if(viewerImg){ viewerImg.hidden=false; viewerImg.src=url; }
+    if(viewerVideo) viewerVideo.style.display="none";
+    if(viewerImg){ viewerImg.style.display="block"; viewerImg.src=url; }
   }
-  clearInterval(timer); let p=0;
-  if(viewerProgress) viewerProgress.style.setProperty('--progress','0%');
-  timer=setInterval(()=>{ p+=1; if(viewerProgress) viewerProgress.style.setProperty('--progress',p+'%'); if(p>=100){ clearInterval(timer); nextStory(); } },60);
+  // Progress
+  if(viewerProgress) viewerProgress.style.width="0%";
+  let w=0; clearInterval(timer);
+  timer=setInterval(()=>{ w+=1; if(viewerProgress) viewerProgress.style.width=w+"%"; if(w>=100){ clearInterval(timer); nextStory(); } },50);
+  // mark view
+  if(auth.currentUser) updateDoc(doc(db,"stories",s.id), {views:arrayUnion(auth.currentUser.uid)});
 }
 
-function nextStory(){ const g=groups[curGroup]; if(curIndex+1<g.stories.length) openViewer(curGroup,curIndex+1); else closeViewer(); }
-function closeViewer(){ if(viewer){ viewer.hidden=true; viewer.style.display="none"; } clearInterval(timer); if(viewerVideo){ viewerVideo.pause(); viewerVideo.src=''; } }
-closeViewerBtn?.addEventListener("click",closeViewer);
-document.getElementById("prevStory")?.addEventListener("click",()=>{ if(curIndex>0) openViewer(curGroup,curIndex-1); });
-document.getElementById("nextStory")?.addEventListener("click",()=>{ nextStory(); });
-window.openViewer=openViewer;
+window.nextStory = function(){
+  const g=groups[curGroup]; if(!g) return;
+  if(curIndex < g.stories.length-1){ openViewer(curGroup, curIndex+1); }
+  else if(curGroup < groups.length-1){ openViewer(curGroup+1, 0); }
+  else closeViewer();
+}
+window.prevStory = function(){
+  if(curIndex>0) openViewer(curGroup, curIndex-1);
+  else if(curGroup>0) openViewer(curGroup-1, 0);
+}
+window.closeViewer = function(){
+  clearInterval(timer);
+  if(viewer){ viewer.hidden=true; viewer.style.display="none"; }
+  if(viewerVideo){ viewerVideo.pause(); viewerVideo.src=""; }
+}
+
+closeViewerBtn?.addEventListener("click", closeViewer);
+viewer?.addEventListener("click", (e)=>{ if(e.target===viewer) closeViewer(); });
