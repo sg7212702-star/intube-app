@@ -26,7 +26,7 @@ async function uploadToCloudinary(file) {
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: formData });
     const data = await res.json();
     if (!res.ok ||!data.secure_url) throw new Error(data.error?.message || "Upload failed");
-    return data.secure_url;
+    return data;
 }
 
 postBtn?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = false; });
@@ -60,8 +60,13 @@ document.addEventListener("click", (e) => {
     const ring = document.getElementById("myStoryRing");
     const isActive = ring?.classList.contains("ring-active");
     if (isActive) {
-        const viewer = document.getElementById("storyViewer");
-        if(viewer) viewer.hidden = false;
+        if(window.openViewer){
+            // apni story ka index nikalo
+            const user = auth.currentUser;
+            const idx = window.groups? window.groups.findIndex(g=>g.uid===user.uid) : -1;
+            if(idx>=0) window.openViewer(idx,0);
+            else { const viewer = document.getElementById("storyViewer"); if(viewer) viewer.hidden=false; }
+        }
     } else {
         storyFile?.click();
     }
@@ -79,8 +84,8 @@ uploadBtn?.addEventListener("click", async () => {
     const file = mediaFile?.files[0]; if (!file) return alert("Photo/Video select karo!");
     uploadBtn.textContent = "Uploading..."; uploadBtn.disabled = true;
     try {
-        const url = await uploadToCloudinary(file);
-        await addDoc(collection(db, "posts"), { uid: user.uid, username: user.displayName || user.email, userPhoto: user.photoURL || "", caption: caption?.value || "", mediaUrl: url, mediaType: file.type.startsWith("video/")? "video" : "image", createdAt: serverTimestamp(), likes: [], likesCount: 0 });
+        const data = await uploadToCloudinary(file);
+        await addDoc(collection(db, "posts"), { uid: user.uid, username: user.displayName || user.email, userPhoto: user.photoURL || "", caption: caption?.value || "", mediaUrl: data.secure_url, mediaType: file.type.startsWith("video/")? "video" : "image", createdAt: serverTimestamp(), likes: [], likesCount: 0 });
         if (uploadModal) uploadModal.hidden = true; if (caption) caption.value = ""; if (mediaFile) mediaFile.value = ""; alert("Post Uploaded");
     } catch (e) { alert("Error: " + e.message); }
     uploadBtn.textContent = "Upload"; uploadBtn.disabled = false;
@@ -91,8 +96,21 @@ uploadStoryBtn?.addEventListener("click", async () => {
     const file = storyFile?.files[0]; if (!file) return alert("Story select karo!");
     uploadStoryBtn.textContent = "Uploading..."; uploadStoryBtn.disabled = true;
     try {
-        const url = await uploadToCloudinary(file);
-        await addDoc(collection(db, "stories"), { uid: user.uid, username: user.displayName || user.email, userPhoto: user.photoURL || "", storyUrl: url, mediaType: file.type.startsWith("video/")? "video" : "image", createdAt: serverTimestamp() });
+        const data = await uploadToCloudinary(file);
+        // stories.js ke hisaab se same format me save karo
+        await addDoc(collection(db, "stories"), {
+            uid: user.uid,
+            userName: user.displayName || user.email,
+            username: user.displayName || user.email,
+            userPhoto: user.photoURL || "",
+            storyUrl: data.secure_url,
+            storyUrl1: data.secure_url,
+            type: file.type.startsWith("video/")? "video" : "image",
+            mediaType: file.type.startsWith("video/")? "video" : "image",
+            views: [],
+            createdAt: serverTimestamp(),
+            expiresAt: Date.now()+86400000
+        });
         if (storyModal) storyModal.hidden = true; if (storyFile) storyFile.value = ""; alert("Story Uploaded!"); checkMyStoryRing();
     } catch (e) { alert("Error: " + e.message); }
     uploadStoryBtn.textContent = "Upload"; uploadStoryBtn.disabled = false;
