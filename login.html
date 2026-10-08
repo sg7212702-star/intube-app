@@ -82,9 +82,9 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 <input type="file" id="avatarInput" accept="image/*" style="display:none">
 
 <script>
+<script>
 const $=id=>document.getElementById(id);
 let currentType='post';
-// SHEET OPEN CLOSE
 function openSheet(){
   $('createSheet').style.display='block';
   $('overlay').style.display='block';
@@ -95,69 +95,63 @@ function closeSheet(){
   $('overlay').style.display='none';
   $('createBtn').classList.remove('active');
 }
-$('createBtn').onclick = (e)=>{ e.preventDefault(); openSheet(); };
-$('addBtn').onclick = (e)=>{ e.preventDefault(); openSheet(); };
-$('overlay').onclick = closeSheet;
-
+$('createBtn').onclick=(e)=>{ e.preventDefault(); openSheet(); };
+$('addBtn').onclick=(e)=>{ e.preventDefault(); openSheet(); };
+$('overlay').onclick=closeSheet;
 $('optPost').onclick=()=>{ currentType='post'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*'; $('fileInput').click(); }, 250); };
 $('optReel').onclick=()=>{ currentType='reel'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='video/*'; $('fileInput').click(); }, 250); };
 $('optStory').onclick=()=>{ currentType='story'; closeSheet(); setTimeout(()=>{ $('fileInput').accept='image/*,video/*'; $('fileInput').click(); }, 250); };
-
-// HOME / PROFILE NAV
+$('yourStory').onclick=()=>{ currentType='story'; $('fileInput').accept='image/*,video/*'; $('fileInput').click(); };
 $('homeBtn').onclick=()=>{
-$('profileFeed').style.display='none';$('feed').style.display='block';$('storiesBar').style.display='flex';
-$('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');$('createBtn').classList.remove('active');
+  $('profileFeed').style.display='none';$('feed').style.display='block';$('storiesBar').style.display='flex';
+  $('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');
 };
 $('profileBtn').onclick=()=>{
-$('feed').style.display='none';$('storiesBar').style.display='none';$('profileFeed').style.display='block';
-$('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');$('createBtn').classList.remove('active');
+  $('feed').style.display='none';$('storiesBar').style.display='none';$('profileFeed').style.display='block';
+  $('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');
 };
-
-// EDIT & SHARE
 $('editBtn').onclick=()=>{
-let n=prompt('Name:', $('nameText').innerText); if(n===null) return;
-let b=prompt('Bio:', $('bioText').innerText); if(b===null) return;
-if(n) $('nameText').innerText=n; if(b) $('bioText').innerText=b;
-localStorage.setItem('insta_name',n); localStorage.setItem('insta_bio',b);
+  let n=prompt('Name:', $('nameText').innerText); if(n===null) return;
+  let b=prompt('Bio:', $('bioText').innerText); if(b===null) return;
+  if(n) $('nameText').innerText=n; if(b) $('bioText').innerText=b;
+  localStorage.setItem('insta_name',n); localStorage.setItem('insta_bio',b);
 };
 $('shareBtn').onclick=async()=>{ try{await navigator.clipboard.writeText(location.href); alert('Link Copied ✓');}catch(e){prompt('Copy:',location.href);} };
-
-// TABS
 function showTab(t){
-$('postsGrid').style.display=t==='posts'?'grid':'none';
-$('reelsGrid').style.display=t==='reels'?'grid':'none';
-$('taggedGrid').style.display=t==='tagged'?'block':'none';
-$('emptyPosts').style.display=(t==='posts'&&$('postsGrid').children.length===0)||(t==='reels'&&$('reelsGrid').children.length===0)?'block':'none';
-document.querySelectorAll('.pTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  $('postsGrid').style.display=t==='posts'?'grid':'none';
+  $('reelsGrid').style.display=t==='reels'?'grid':'none';
+  $('taggedGrid').style.display=t==='tagged'?'block':'none';
+  $('emptyPosts').style.display=(t==='posts'&&$('postsGrid').children.length===0)||(t==='reels'&&$('reelsGrid').children.length===0)?'block':'none';
+  document.querySelectorAll('.pTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
 }
 $('tabPosts').onclick=()=>showTab('posts');
 $('tabReels').onclick=()=>showTab('reels');
 $('tabTagged').onclick=()=>showTab('tagged');
-
-// AVATAR
 $('avatarRing').onclick=()=>$('avatarInput').click();
 $('avatarInput').onchange=(e)=>{
-let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f);
-$('avatarImg').src=url;$('storyAvatar').src=url;$('bottomAvatar').src=url;
+  let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f);
+  $('avatarImg').src=url;$('storyAvatar').src=url;$('bottomAvatar').src=url;
 };
-
-// UPLOAD POST/REEL/STORY
 $('fileInput').onchange=(e)=>{
-let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f); let isVideo=f.type.includes('video');
-if(currentType==='story'){
- let sDiv=document.createElement('div'); sDiv.className='story';
- sDiv.innerHTML=`<div class="ring"><img src="${url}"></div><span>${currentType}</span>`;
- $('storiesBar').appendChild(sDiv);
- alert('Story Added ✓');
-}else if(currentType==='reel'){
- let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}" muted loop></video>`:`<img src="${url}">`;
- $('reelsGrid').appendChild(div); $('postCount').innerText= $('postsGrid').children.length+$('reelsGrid').children.length;
- showTab('reels'); $('profileBtn').click();
-}else{
- let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}"></video>`:`<img src="${url}">`;
- $('postsGrid').appendChild(div); $('postCount').innerText= $('postsGrid').children.length+$('reelsGrid').children.length;
- showTab('posts'); $('profileBtn').click();
-}
+  let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f); let isVideo=f.type.includes('video');
+  if(currentType==='story'){
+    let sDiv=document.createElement('div'); sDiv.className='story';
+    sDiv.innerHTML=`<div class="ring"><img src="${url}"></div><span>story</span>`;
+    $('storiesBar').appendChild(sDiv); alert('Story Added ✓');
+  }else if(currentType==='reel'){
+    let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}" muted loop autoplay></video>`:`<img src="${url}">`;
+    $('reelsGrid').appendChild(div); $('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length; showTab('reels'); $('profileBtn').click();
+  }else{
+    let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}"></video>`:`<img src="${url}">`;
+    $('postsGrid').appendChild(div); $('postCount').innerText=$('postsGrid').children.length+$('reelsGrid').children.length; showTab('posts'); $('profileBtn').click();
+  }
+  $('emptyPosts').style.display='none'; e.target.value='';
+};
+let sn=localStorage.getItem('insta_name'); let sb=localStorage.getItem('insta_bio');
+if(sn) $('nameText').innerText=sn; if(sb) $('bioText').innerText=sb;
+$('feed').style.display='none'; $('storiesBar').style.display='none'; showTab('posts');
+</script>
+</body></html>
  $('emptyPosts').style.display='none';
  e.target.value=''; $('fileInput').accept='image/*,video/*';
 };
