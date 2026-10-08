@@ -83,12 +83,17 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-grad
   </header>
 
   <!-- STORIES -->
-  <section id="stories">
-    <div class="story"><div class="storyRing ring-none"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><small>Your Story</small></div>
-    <div class="story"><div class="storyRing ring-active"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><small>user_1</small></div>
-    <div class="story"><div class="storyRing ring-active"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><small>user_2</small></div>
-    <div class="story"><div class="storyRing ring-active"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><small>user_3</small></div>
-  </section>
+<section id="stories">
+  <div id="myStoryItem" class="story">
+    <div id="myStoryRing" class="storyRing ring-none" style="position:relative">
+      <img id="myStoryImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+      <div style="position:absolute;bottom:-1px;right:-1px;width:20px;height:20px;background:#fff;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px solid #0c0c12;font-size:12px">+</div>
+    </div>
+    <small id="myStoryText">Your Story</small>
+  </div>
+  <div id="storiesList" style="display:flex;gap:14px"></div>
+</section>
+<input type="file" id="storyFile" accept="image/*,video/*" hidden>
 
   <!-- FEED - ONLY DESIGN, NO LIKES COUNT -->
   <main id="feed">
