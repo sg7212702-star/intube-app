@@ -16,9 +16,10 @@ body{background:linear-gradient(180deg,#0a0a12 0%,#100515 100%);color:#fff;font-
 .postHead{display:flex;align-items:center;gap:10px;padding:12px;font-weight:700}
 .empty{padding:40px;text-align:center;opacity:0.6}
 
-#bottom{position:fixed;bottom:14px;left:14px;right:14px;z-index:60;display:flex;justify-content:space-around;align-items:center;padding:10px;background:rgba(255,255,255,0.04);backdrop-filter:blur(30px);border:1px solid rgba(255,100,180,0.18);border-radius:30px;box-shadow:0 0 40px rgba(255,0,128,0.25)}
-#bottom button{width:52px;height:52px;border-radius:16px;border:none;background:transparent;color:#999;font-size:22px}
-#bottom button.active{background:rgba(255,255,255,0.08);color:#fff;box-shadow:0 0 15px rgba(255,0,128,0.3);border:1px solid rgba(255,100,180,0.2)}
+#bottom{position:fixed!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;z-index:60;display:flex!important;justify-content:space-around!important;align-items:center!important;padding:12px 10px 28px 10px!important;background:rgba(255,255,255,0.05)!important;backdrop-filter:blur(30px)!important;border-top:1px solid rgba(255,100,180,0.18)!important;box-shadow:0 -5px 40px rgba(255,0,128,0.2)!important;border-radius:0!important;margin:0!important}
+#bottom button{width:48px!important;height:48px!important;min-width:48px!important;border-radius:14px!important;border:none!important;background:transparent!important;color:#999!important;font-size:22px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important}
+#bottom button.active{background:rgba(255,255,255,0.08)!important;color:#fff!important;box-shadow:0 0 15px rgba(255,0,128,0.3)!important;border:1px solid rgba(255,100,180,0.25)!important}
+#bottom button img,#bottom button svg{width:24px!important;height:24px!important}
 
 /* UPLOAD BUTTON - TRANSPARENT GLOW - NO BLACK */
 #addBtn,#createBtn{background:rgba(255,255,255,0.06)!important;backdrop-filter:blur(20px)!important;border:1px solid rgba(255,100,180,0.35)!important;color:#fff!important;box-shadow:0 0 25px rgba(255,0,128,0.45), inset 0 0 15px rgba(255,255,255,0.08)!important}
