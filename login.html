@@ -1,149 +1,160 @@
-// login.js - FINAL FIREBASE LOGIN SYSTEM - InstaPro
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
- getAuth,
- signInWithEmailAndPassword,
- createUserWithEmailAndPassword,
- sendPasswordResetEmail,
- onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
- getFirestore,
- doc,
- setDoc,
- getDoc,
- serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INTUBE - FINAL LOCK</title><style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:90px;background:radial-gradient(700px at 0% 0%,rgba(225,48,108,.24),transparent 60%),radial-gradient(600px at 100% 0%,rgba(79,91,213,.18),transparent 60%),#050508}
+.top{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:99;background:rgba(10,10,12,.45);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,.07)}
+.logo{font-family:cursive;font-size:27px;color:#E1306C;font-weight:700;font-style:italic;text-shadow:0 0 20px rgba(225,48,108,.5)}
+.btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#E1306C;font-size:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(16px)}
+.stories{display:flex;gap:14px;padding:14px 16px;background:rgba(255,255,255,.015);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.05)}
+.story{flex:0 0 68px;text-align:center;position:relative;cursor:pointer}
+.ring{width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);position:relative;box-shadow:0 0 20px rgba(225,48,108,.25)}
+.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #08080a;background:#222;object-fit:cover;display:block}
+.plus{position:absolute;bottom:-1px;right:-1px;width:22px;height:22px;background:#0095F6;color:#fff;border-radius:50%;border:2.5px solid #08080a;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.story span{font-size:11px;margin-top:6px;display:block;color:#fff;opacity:.9}
+.feed{min-height:60vh;padding:0}
+.empty{margin:20px 16px;padding:44px 20px;text-align:center;border-radius:22px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px);color:#888;line-height:1.7;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.empty b{color:#fff;display:block;font-size:15px;margin-bottom:6px}
+.bottom{position:fixed;bottom:14px;left:14px;right:14px;max-width:452px;margin:0 auto;height:62px;display:flex;justify-content:space-around;align-items:center;background:rgba(16,16,20,.55);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.11);border-radius:24px;z-index:200;box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+.bottom button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.18s;cursor:pointer}
+.bottom button.active{color:#fff;background:rgba(255,255,255,.09);backdrop-filter:blur(10px)}
+.bottom img{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6)}
+#profileFeed{display:block}
+.pHead{display:flex;gap:12px;align-items:center;padding:16px}
+.pHead.ring{width:84px;height:84px}
+.stat{display:flex;gap:24px;flex:1;justify-content:space-around;text-align:center}
+.stat b{display:block;font-size:16px}
+.stat small{color:#888;font-size:12px}
+.pBtn{flex:1;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#fff;font-size:14px;backdrop-filter:blur(16px);cursor:pointer}
+.pTabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:16px}
+.pTabs button{flex:1;padding:12px;background:transparent;border:none;color:#888;font-size:13px;cursor:pointer}
+.pTabs button.active{color:#fff;border-top:1px solid #fff}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
+.grid3 div{aspect-ratio:1/1;background:#111;overflow:hidden}
+.grid3 img,.grid3 video{width:100%;height:100%;object-fit:cover}
+/* CREATE SHEET - NEW ONLY */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:300}
+#createSheet{display:none;position:fixed;bottom:90px;left:14px;right:14px;max-width:452px;margin:0 auto;background:rgba(22,22,26,.92);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.12);border-radius:20px;z-index:301;padding:12px 0;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.sheetItem{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer}
+.sheetItem:active{background:rgba(255,255,255,.06)}
+.sheetItem span{font-size:17px;letter-spacing:.3px}
+.sheetItem i{font-size:22px;opacity:.9}
+</style></head><body>
+<div class="top"><button class="btn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="btn" id="heartBtn">♡</button></div>
+<div class="stories" id="storiesBar"><div class="story" id="yourStory"><div class="ring"><img id="storyAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
+<div class="feed" id="feed"><div class="empty"><b>Feed Empty 💎</b>No posts yet.<br>Upload होते ही Real-Time दिखेगा.</div></div>
+<div id="profileFeed">
+<div class="pHead">
+<div class="ring" id="avatarRing"><img id="avatarImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div>
+<div class="stat">
+<div><b id="postCount">0</b><small>Posts</small></div>
+<div><b id="followerCount">0</b><small>Followers</small></div>
+<div><b id="followingCount">0</b><small>Following</small></div>
+</div>
+</div>
+<div style="padding:0 16px">
+<b id="nameText">sanjay kumar</b><br>
+<small style="color:#aaa" id="bioText">💖💖💖🥺</small>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="pBtn" id="editBtn">Edit profile</button>
+<button class="pBtn" id="shareBtn">Share profile</button>
+</div>
+</div>
+<div class="pTabs">
+<button class="active" data-tab="posts" id="tabPosts">⊞ POSTS</button>
+<button data-tab="reels" id="tabReels">▶ REELS</button>
+<button data-tab="tagged" id="tabTagged">👤 TAGGED</button>
+</div>
+<div id="postsGrid" class="grid3"></div>
+<div id="reelsGrid" class="grid3" style="display:none"></div>
+<div id="taggedGrid" style="display:none"><div class="empty"><b>No Tagged</b></div></div>
+<div class="empty" id="emptyPosts"><b>No Posts Yet</b>जब Photo डालोगे तो यहाँ 3x3 Grid में दिखेगा</div>
+</div>
 
-// 1. FIREBASE CONFIG - अपना Config यहाँ डाल
-const firebaseConfig = {
-  apiKey: "AIzaSyD-ApIh0yT_tGC9K5M0gY33F8a1w5y",
-  authDomain: "instapro-xxxxx.firebaseapp.com",
-  projectId: "instapro-xxxxx",
-  storageBucket: "instapro-xxxxx.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+<div id="overlay"></div>
+<div id="createSheet">
+<div class="sheetItem" id="optReel"><span>Reel</span><i>🎬</i></div>
+<div class="sheetItem" id="optPost"><span>Post</span><i>⊞</i></div>
+<div class="sheetItem" id="optStory"><span>Story</span><i>⊕</i></div>
+</div>
+
+<div class="bottom"><button id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn" class="active">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img id="bottomAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
+<input type="file" id="fileInput" accept="image/*,video/*" style="display:none">
+<input type="file" id="avatarInput" accept="image/*" style="display:none">
+
+<script>
+const $=id=>document.getElementById(id);
+let currentType='post';
+// SHEET OPEN CLOSE
+function openSheet(){ $('createSheet').style.display='block'; $('overlay').style.display='block'; }
+function closeSheet(){ $('createSheet').style.display='none'; $('overlay').style.display='none'; }
+$('createBtn').onclick=$('addBtn').onclick=openSheet;
+$('overlay').onclick=closeSheet;
+$('optPost').onclick=()=>{ currentType='post'; closeSheet(); $('fileInput').click(); };
+$('optReel').onclick=()=>{ currentType='reel'; closeSheet(); $('fileInput').accept='video/*'; $('fileInput').click(); };
+$('optStory').onclick=()=>{ currentType='story'; closeSheet(); $('fileInput').accept='image/*,video/*'; $('fileInput').click(); };
+$('yourStory').onclick=()=>{ currentType='story'; $('fileInput').click(); };
+
+// HOME / PROFILE NAV
+$('homeBtn').onclick=()=>{
+$('profileFeed').style.display='none';$('feed').style.display='block';$('storiesBar').style.display='flex';
+$('homeBtn').classList.add('active');$('profileBtn').classList.remove('active');$('createBtn').classList.remove('active');
+};
+$('profileBtn').onclick=()=>{
+$('feed').style.display='none';$('storiesBar').style.display='none';$('profileFeed').style.display='block';
+$('profileBtn').classList.add('active');$('homeBtn').classList.remove('active');$('createBtn').classList.remove('active');
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// EDIT & SHARE
+$('editBtn').onclick=()=>{
+let n=prompt('Name:', $('nameText').innerText); if(n===null) return;
+let b=prompt('Bio:', $('bioText').innerText); if(b===null) return;
+if(n) $('nameText').innerText=n; if(b) $('bioText').innerText=b;
+localStorage.setItem('insta_name',n); localStorage.setItem('insta_bio',b);
+};
+$('shareBtn').onclick=async()=>{ try{await navigator.clipboard.writeText(location.href); alert('Link Copied ✓');}catch(e){prompt('Copy:',location.href);} };
 
-// 2. SAFE GET ELEMENT - तेरी login.html में जो भी ID हो पकड़ लेगा
-const getEl = (...ids) => {
- for(let id of ids){
-  let el = document.getElementById(id);
-  if(el) return el;
- }
- return null;
+// TABS
+function showTab(t){
+$('postsGrid').style.display=t==='posts'?'grid':'none';
+$('reelsGrid').style.display=t==='reels'?'grid':'none';
+$('taggedGrid').style.display=t==='tagged'?'block':'none';
+$('emptyPosts').style.display=(t==='posts'&&$('postsGrid').children.length===0)||(t==='reels'&&$('reelsGrid').children.length===0)?'block':'none';
+document.querySelectorAll('.pTabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+}
+$('tabPosts').onclick=()=>showTab('posts');
+$('tabReels').onclick=()=>showTab('reels');
+$('tabTagged').onclick=()=>showTab('tagged');
+
+// AVATAR
+$('avatarRing').onclick=()=>$('avatarInput').click();
+$('avatarInput').onchange=(e)=>{
+let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f);
+$('avatarImg').src=url;$('storyAvatar').src=url;$('bottomAvatar').src=url;
 };
 
-const emailInput = getEl('email','emailInput','loginEmail','userEmail');
-const passInput = getEl('password','pass','passwordInput','loginPassword','userPass');
-const loginBtn = getEl('loginBtn','loginButton','btnLogin','signinBtn');
-const signupBtn = getEl('signupBtn','signupButton','btnSignup','registerBtn','createBtn');
-const forgotBtn = getEl('forgotBtn','forgot','forgotPass');
-const msgBox = getEl('msg','message','errorMsg','statusMsg');
-
-function toast(m, err=false){
- if(msgBox){
-  msgBox.innerText = m;
-  msgBox.style.color = err? '#ff4d6d' : '#22c55e';
-  msgBox.style.display = 'block';
- } else {
-  console.log(m);
-  if(err) alert(m);
- }
+// UPLOAD POST/REEL/STORY
+$('fileInput').onchange=(e)=>{
+let f=e.target.files[0]; if(!f) return; let url=URL.createObjectURL(f); let isVideo=f.type.includes('video');
+if(currentType==='story'){
+ let sDiv=document.createElement('div'); sDiv.className='story';
+ sDiv.innerHTML=`<div class="ring"><img src="${url}"></div><span>${currentType}</span>`;
+ $('storiesBar').appendChild(sDiv);
+ alert('Story Added ✓');
+}else if(currentType==='reel'){
+ let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}" muted loop></video>`:`<img src="${url}">`;
+ $('reelsGrid').appendChild(div); $('postCount').innerText= $('postsGrid').children.length+$('reelsGrid').children.length;
+ showTab('reels'); $('profileBtn').click();
+}else{
+ let div=document.createElement('div'); div.innerHTML=isVideo?`<video src="${url}"></video>`:`<img src="${url}">`;
+ $('postsGrid').appendChild(div); $('postCount').innerText= $('postsGrid').children.length+$('reelsGrid').children.length;
+ showTab('posts'); $('profileBtn').click();
 }
-
-// 3. ALREADY LOGIN CHECK - Direct index.html
-onAuthStateChanged(auth, async (user)=>{
- if(user){
-  toast("Already Login ✓ Redirect...");
-  try{
-   const ref = doc(db,"users",user.uid);
-   const snap = await getDoc(ref);
-   if(!snap.exists()){
-    await setDoc(ref,{
-     uid: user.uid,
-     email: user.email,
-     name: user.email.split('@')[0],
-     bio: "Bio - Edit से बदलेगा",
-     avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-     createdAt: serverTimestamp()
-    });
-   }
-  }catch(e){}
-  setTimeout(()=> location.href="index.html", 700);
- }
-});
-
-// 4. LOGIN LOGIC
-if(loginBtn){
- loginBtn.onclick = async ()=>{
-  const email = emailInput?.value.trim();
-  const pass = passInput?.value.trim();
-  if(!email ||!pass) return toast("Email Password डालो", true);
-  loginBtn.disabled = true;
-  loginBtn.innerText = "Logging...";
-  try{
-   await signInWithEmailAndPassword(auth, email, pass);
-   toast("Login Success ✓");
-   location.href="index.html";
-  }catch(e){
-   toast(e.message, true);
-   loginBtn.disabled = false;
-   loginBtn.innerText = "Log In";
-  }
- };
-}
-
-// 5. SIGNUP LOGIC
-if(signupBtn){
- signupBtn.onclick = async ()=>{
-  const email = emailInput?.value.trim();
-  const pass = passInput?.value.trim();
-  if(!email ||!pass) return toast("Email Password डालो", true);
-  if(pass.length < 6) return toast("Password कम से कम 6 Character", true);
-  signupBtn.disabled = true;
-  signupBtn.innerText = "Creating...";
-  try{
-   const cred = await createUserWithEmailAndPassword(auth, email, pass);
-   const uid = cred.user.uid;
-   // Create Firestore User
-   await setDoc(doc(db,"users",uid),{
-    uid: uid,
-    email: email,
-    name: email.split('@')[0],
-    bio: "Bio - Edit से बदलेगा",
-    avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-    followers: 0,
-    following: 0,
-    posts: 0,
-    createdAt: serverTimestamp()
-   });
-   toast("Account Created ✓");
-   location.href="index.html";
-  }catch(e){
-   toast(e.message, true);
-   signupBtn.disabled = false;
-   signupBtn.innerText = "Create Account";
-  }
- };
-}
-
-// 6. FORGOT PASSWORD
-if(forgotBtn){
- forgotBtn.onclick = async ()=>{
-  const email = emailInput?.value.trim();
-  if(!email) return toast("Email डालो फिर Forgot दबाओ", true);
-  try{
-   await sendPasswordResetEmail(auth, email);
-   toast("Reset Link भेज दिया ✓ Email Check करो");
-  }catch(e){
-   toast(e.message, true);
-  }
- };
-}
-
-console.log("login.js Loaded - Final ✓");
+ $('emptyPosts').style.display='none';
+ e.target.value=''; $('fileInput').accept='image/*,video/*';
+};
+// LOAD
+let sn=localStorage.getItem('insta_name'); let sb=localStorage.getItem('insta_bio');
+if(sn) $('nameText').innerText=sn; if(sb) $('bioText').innerText=sb;
+$('feed').style.display='none'; $('storiesBar').style.display='none'; showTab('posts');
+</script>
+</body></html>
