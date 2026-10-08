@@ -1,49 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI}
-html,body{overflow-x:hidden;width:100%;max-width:100vw}
-body{background:#07070d;color:#fff;max-width:480px;margin:0 auto;padding-bottom:96px;position:relative}
-body::before{content:'';position:fixed;inset:0;z-index:-2;background:radial-gradient(700px at 15% 0%,rgba(255,45,120,.24),transparent 60%),radial-gradient(600px at 90% 8%,rgba(255,108,168,.18),transparent 60%),radial-gradient(500px at 50% 110%,rgba(255,45,120,.12),transparent 70%),#07070d}
-/* GLASS CHAMKA - PINK GLOW UPGRADE */
-.top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100;background:rgba(16,16,20,.78);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-bottom:1px solid rgba(255,255,255,.10);box-shadow:0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.1)}
-.logo{font-family:serif;font-size:29px;font-style:italic;font-weight:900;background:linear-gradient(90deg,#feda75,#fa7e1e,#d62976,#962fbf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.5px;filter:drop-shadow(0 0 12px rgba(225,48,108,.4))}
-.glassBtn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(20px);box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;transition:.2s}
-.glassBtn:active{transform:scale(.92)}
-.view{display:none;min-height:calc(100vh - 160px);animation:fadeUp .3s ease}
-.view.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-/* Stories - Glass Ring */
-.stories{display:flex;gap:14px;padding:14px 16px;overflow:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.06)}
-.stories::-webkit-scrollbar{display:none}
-.story{flex:0 0 70px;text-align:center;position:relative}
-.ring{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75);box-shadow:0 0 0 2px #0a0a0f,0 0 18px rgba(225,48,108,.35);animation:ringGlow 3s linear infinite}
-@keyframes ringGlow{0%{filter:brightness(1)}50%{filter:brightness(1.2)}100%{filter:brightness(1)}}
-.ring img{width:100%;height:100%;border-radius:50%;border:3px solid #0a0a0f;object-fit:cover;background:#111}
-.addBadge{position:absolute;right:2px;bottom:18px;width:22px;height:22px;background:radial-gradient(#00B2FF,#0095F6);border:2px solid #08080a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,149,246,.6)}
-.empty{margin:16px auto;padding:46px 20px;text-align:center;border-radius:26px;background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(32px);box-shadow:0 12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18);position:relative;overflow:hidden;max-width:92%}
-.empty::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);transform:rotate(25deg) translateX(-120%);animation:shine 3s infinite}
-@keyframes shine{60%{transform:rotate(25deg) translateX(120%)}}
-.postCard{margin:12px auto;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(24px);box-shadow:0 8px 28px rgba(0,0,0,.35);max-width:94%}
-.postHead{padding:12px;display:flex;gap:10px;align-items:center}
-.postHead b{font-size:13px}
-.postAct{padding:12px 14px;display:flex;gap:18px;font-size:22px}
-.reelCard{width:100%;height:calc(100vh - 150px);background:#000;position:relative;margin:0 auto 14px;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 40px rgba(0,0,0,.6)}
-.reelCard video{width:100%;height:100%;object-fit:cover}
-.bottom{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:92%;max-width:442px;height:70px;display:flex;justify-content:space-around;align-items:center;background:rgba(20,20,24,.86);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.16);border-radius:30px;box-shadow:0 16px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);z-index:250}
-.bottom button{width:52px;height:52px;border-radius:18px;border:none;background:transparent;color:#8b8b90;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.2s}
-.bottom button.active{color:#fff;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2)}
-#createBtn{background:linear-gradient(135deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)!important;color:#fff!important;width:58px;height:58px;border-radius:20px;font-size:32px;box-shadow:0 6px 20px rgba(214,41,118,.45)}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.grid3 div{aspect-ratio:1/1;background:#111;overflow:hidden}
-.grid3 img,.grid3 video{width:100%;height:100%;object-fit:cover}
-.searchBar{margin:12px 16px;display:flex;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 16px;backdrop-filter:blur(20px)}
-.searchBar input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px}
-.notifItem{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
-#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:300}
-#createSheet{display:none;position:fixed;bottom:92px;left:50%;transform:translateX(-50%);width:92%;max-width:442px;background:rgba(24,24,28,.96);border:1px solid rgba(255,255,255,.16);border-radius:24px;z-index:301;padding:8px 0;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.sheetItem{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;font-size:16px}
-.sheetItem:active{background:rgba(255,255,255,.06)}
-</style></head><body>
+<link rel="stylesheet" href="style.css?v=100"></head><body>
 <div class="top"><button class="glassBtn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="glassBtn" id="heartBtn">♡</button></div>
 
 <div id="homeView" class="view active"><div class="stories" id="storiesBar"><div class="story" id="yourStoryBtn"><div class="ring"><img id="storyAvatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div><div class="addBadge">+</div><div style="font-size:11px;margin-top:8px;opacity:.9">Your story</div></div></div><div id="feed"></div></div>
