@@ -18,15 +18,73 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 .bottom button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.18s}
 .bottom button.active{color:#fff;background:rgba(255,255,255,.09);backdrop-filter:blur(10px)}
 .bottom img{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6)}
+/* PROFILE - ADDED ONLY - SAME GLASS */
+#profileFeed{display:none}
+.pHead{display:flex;gap:12px;align-items:center;padding:16px}
+.pHead .ring{width:84px;height:84px}
+.stat{display:flex;gap:24px;flex:1;justify-content:space-around;text-align:center}
+.stat b{display:block;font-size:16px}
+.stat small{color:#888;font-size:12px}
+.pBtn{flex:1;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#fff;font-size:14px;backdrop-filter:blur(16px)}
+.pTabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:16px}
+.pTabs button{flex:1;padding:12px;background:transparent;border:none;color:#888;font-size:13px}
+.pTabs button.active{color:#fff;border-top:1px solid #fff}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
+.grid3 div{aspect-ratio:1/1;background:#111}
 </style></head><body>
 <div class="top"><button class="btn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="btn" id="heartBtn">♡</button></div>
 <div class="stories"><div class="story" id="yourStory"><div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
+
 <div class="feed" id="feed"><div class="empty"><b>Feed Empty 💎</b>No posts yet.<br>Upload होते ही Real-Time दिखेगा.<br><br>✓ All Buttons Full Glass<br>✓ Insta Exact Size<br>✓ Only Add Story Button<br>✓ Design Locked</div></div>
+
+<!-- PROFILE ADDED - INSIDE ONLY -->
+<div id="profileFeed">
+<div class="pHead">
+<div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div>
+<div class="stat">
+<div><b>0</b><small>Posts</small></div>
+<div><b>0</b><small>Followers</small></div>
+<div><b>0</b><small>Following</small></div>
+</div>
+</div>
+<div style="padding:0 16px">
+<b>Your Name</b><br>
+<small style="color:#aaa">Bio - Edit से बदलेगा</small>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="pBtn">Edit profile</button>
+<button class="pBtn">Share profile</button>
+</div>
+</div>
+<div class="pTabs">
+<button class="active">⊞ POSTS</button>
+<button>▶ REELS</button>
+<button>👤 TAGGED</button>
+</div>
+<div class="grid3"><div></div><div></div><div></div><div></div></div>
+<div class="empty"><b>No Posts Yet</b>जब Photo डालोगे तो यहाँ 3x3 Grid में दिखेगा</div>
+</div>
+
 <div class="bottom"><button class="active" id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn" style="background:rgba(255,255,255,.09);color:#fff">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
+
 <script>
 const $=id=>document.getElementById(id);
 $('yourStory').onclick=()=>alert('Add Story Clicked');
 $('addBtn').onclick=$('createBtn').onclick=()=>alert('Create Post');
 $('heartBtn').onclick=()=>alert('Notifications');
+// ONLY PROFILE OPEN LOGIC - NO DESIGN CHANGE
+$('profileBtn').onclick=()=>{
+$('feed').style.display='none';
+document.querySelector('.stories').style.display='none';
+$('profileFeed').style.display='block';
+$('homeBtn').classList.remove('active');
+$('profileBtn').classList.add('active');
+};
+$('homeBtn').onclick=()=>{
+$('profileFeed').style.display='none';
+$('feed').style.display='block';
+document.querySelector('.stories').style.display='flex';
+$('profileBtn').classList.remove('active');
+$('homeBtn').classList.add('active');
+};
 </script>
 </body></html>
