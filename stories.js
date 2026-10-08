@@ -102,24 +102,19 @@ onSnapshot(q, (snap)=>{
 });
 
 function renderTray(){
-  if(!tray) return;
-  tray.innerHTML = "";
-  const add = document.createElement("div");
-  add.className = "story";
-  add.innerHTML = `<div class="storyRing"><div class="addStory">+</div></div><span>Your Story</span>`;
-  add.onclick = ()=> fileInput?.click();
-  tray.appendChild(add);
+    if(!tray) return;
+    tray.innerHTML = "";
 
-  groups.forEach((g,i)=>{
-    const seen = g.stories.every(s=> s.views?.includes(auth.currentUser?.uid));
-    const div = document.createElement("div");
-    div.className = "story";
-    div.innerHTML = `<div class="storyRing ${seen?'seen':''}"><img src="${g.userPhoto}"></div><span>${g.userName?.split(' ')[0]}</span>`;
-    div.onclick = ()=> openViewer(i,0);
-    tray.appendChild(div);
-  });
+    groups.forEach((g,i)=>{
+        if(g.uid === auth.currentUser?.uid) return; // apni story ko yaha mat dikhao, left wala hi hai
+        const seen = g.stories.every(s=> s.views?.includes(auth.currentUser?.uid));
+        const div = document.createElement("div");
+        div.className = "story";
+        div.innerHTML = `<div class="storyRing ${seen?'seen':''}"><img src="${g.userPhoto}"></div><span>${g.userName?.split(' ')[0]}</span>`;
+        div.onclick = ()=> openViewer(i,0);
+        tray.appendChild(div);
+    });
 }
-
 window.openViewer = (u,s)=>{
   curU=u; curS=s; viewer.hidden=false;
   document.body.style.overflow="hidden"; show();
