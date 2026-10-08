@@ -1,61 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InstaPro - Login</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - InTube</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{height:100vh;background:radial-gradient(700px at 0% 0%,rgba(225,48,108,.24),transparent 60%),radial-gradient(600px at 100% 0%,rgba(79,91,213,.18),transparent 60%),#050508;display:flex;align-items:center;justify-content:center;color:#fff}
-.card{width:92%;max-width:360px;padding:28px 22px;background:rgba(22,22,26,.85);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.7);text-align:center}
-.logo{font-family:cursive;font-size:32px;color:#E1306C;font-weight:700;font-style:italic;text-shadow:0 0 20px rgba(225,48,108,.5);margin-bottom:8px}
-.sub{color:#888;font-size:13px;margin-bottom:24px}
-.input{width:100%;height:44px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:0 14px;color:#fff;outline:none;margin-bottom:12px}
-.input:focus{border-color:#E1306C}
-.btn{width:100%;height:44px;background:linear-gradient(90deg,#feda75,#fa7e1e,#d62976,#962fbf);border:none;border-radius:12px;color:#fff;font-weight:600;font-size:15px;margin-top:10px;cursor:pointer}
-.divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:#555;font-size:12px}
-.divider div{flex:1;height:1px;background:rgba(255,255,255,.1)}
-.link{color:#E1306C;font-size:13px;text-decoration:none}
-.small{font-size:12px;color:#777;margin-top:16px}
+body{background:#120b20;color:#fff;font-family:Poppins,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.card{background:#1e1430;padding:30px;border-radius:20px;width:90%;max-width:340px;border:1px solid rgba(255,255,255,0.08);text-align:center}
+button{width:100%;padding:12px;background:#fff;border:none;border-radius:12px;color:#000;font-weight:600;margin-top:16px;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px}
+button.google{background:linear-gradient(135deg,#c084fc,#818cf8);color:#fff}
 </style>
 </head>
 <body>
 <div class="card">
-<div class="logo">InstaPro 👑</div>
-<div class="sub">Login to see photos & reels</div>
-
-<input class="input" id="user" placeholder="Username - sanjay kumar">
-<input class="input" id="pass" type="password" placeholder="Password">
-<button class="btn" id="loginBtn">Log in</button>
-
-<div class="divider"><div></div>OR<div></div></div>
-<a class="link" href="#">Forgot password?</a>
-
-<div class="small">Don't have account? <a class="link" href="#" id="signup">Sign up</a></div>
+<h3>Login to InTube</h3>
+<p style="font-size:12px;opacity:.5">Google se login karo</p>
+<button class="google" onclick="googleLogin()"> <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18"> Continue with Google</button>
+<p id="msg" style="font-size:12px;margin-top:16px;opacity:.6"></p>
 </div>
 
-<script>
-const $=id=>document.getElementById(id);
-$('loginBtn').onclick=()=>{
- let u=$('user').value.trim();
- let p=$('pass').value.trim();
- if(!u || !p){alert('Username Password daal bhai');return;}
- localStorage.setItem('insta_name',u);
- localStorage.setItem('insta_pass',p);
- localStorage.setItem('insta_login','true');
- alert('Login Success ✓');
- location.href='index.html';
+<script type="module">
+import { db } from './firebase-config.js';
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+window.googleLogin = async()=>{
+  try{
+    document.getElementById('msg').innerText="Google opening...";
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    saveUser(user);
+  }catch(e){
+    document.getElementById('msg').innerText=e.message;
+    console.log(e);
+  }
 };
-$('signup').onclick=(e)=>{e.preventDefault();
- let u=prompt('New Username:'); if(!u) return;
- let p=prompt('New Password:'); if(!p) return;
- localStorage.setItem('insta_name',u);
- localStorage.setItem('insta_pass',p);
- $('user').value=u;
- alert('Account Created - Ab Login dabao');
-};
-let saved=localStorage.getItem('insta_name');
-if(saved) $('user').value=saved;
+
+function saveUser(user){
+  // IMPORTANT - Ye tumhare notifications.js ke liye
+  localStorage.setItem('my_user_id', user.uid);
+  localStorage.setItem('my_name', user.displayName || user.email.split('@')[0]);
+  localStorage.setItem('username', user.displayName);
+  localStorage.setItem('userPic', user.photoURL || "");
+
+  // Firebase users collection
+  setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
+    userName: user.displayName,
+    email: user.email,
+    userPic: user.photoURL,
+    createdAt: new Date()
+  }, {merge:true});
+
+  document.getElementById('msg').innerText="Logged in as " + user.displayName + " → Redirecting...";
+  setTimeout(()=>window.location.href="feed.html", 800);
+}
+
+// Auto check - agar pehle se login hai
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    saveUser(user);
+  }
+});
 </script>
 </body>
 </html>
