@@ -1,6 +1,4 @@
-import { auth, db } from "./firebase-config.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 const CLOUD_NAME = "kujnbe0a";
 const UPLOAD_PRESET = "intube_free";
 
