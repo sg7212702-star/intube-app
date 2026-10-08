@@ -77,21 +77,21 @@
   </div>
 </div>
 
-<!-- STORY VIEWER -->
+<!-- STORY VIEWER - FIXED IDS -->
 <div id="storyViewer" hidden>
   <div id="storyProgress"></div>
   <div id="storyHeader">
     <img id="viewerUserPhoto" style="width:40px;height:40px;border-radius:50%">
     <div>
-      <b id="viewerUser"></b>
+      <b id="viewerUserName"></b>
       <small id="storyTime"></small>
     </div>
     <button id="closeViewer">X</button>
   </div>
-  <img id="storyImg" hidden>
-  <video id="storyVideo" hidden controls playsinline></video>
-  <button id="prevStory">Prev</button>
-  <button id="nextStory">Next</button>
+  <img id="viewerImg" hidden>
+  <video id="viewerVideo" hidden playsinline></video>
+  <button id="prevStory"></button>
+  <button id="nextStory"></button>
 </div>
 
 <script type="module" src="firebase-config.js"></script>
