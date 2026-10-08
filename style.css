@@ -25,22 +25,22 @@ body{background:linear-gradient(180deg,#0a0a12 0%,#100515 100%);color:#fff;font-
 .grid3 img,.grid3 video{width:100%;aspect-ratio:1;object-fit:cover}
 
 /* Search */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(10px);display:none;z-index:99}
-#createSheet{position:fixed;left:12px;right:12px;bottom:95px;background:rgba(30,20,40,0.85);backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);border-radius:22px;border:1px solid rgba(255,100,180,0.35);padding:14px 16px 16px;display:none;z-index:100;box-shadow:0 0 50px rgba(255,0,128,0.45)}
+.searchBar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.06);backdrop-filter:blur(15px);margin:12px;border-radius:14px;border:1px solid rgba(255,100,180,0.18);box-shadow:0 0 20px rgba(255,0,128,0.15)}
+#searchInput{background:transparent;border:none;outline:none;color:#fff;width:100%;font-size:15px}
 
-/* Bottom - ISKO FIX KIYA HAI - class="bottom" hai */
+/* Overlay + Create Sheet - HIDDEN BY DEFAULT - DARK SO VISIBLE ON BLUR */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:none;z-index:99}
+#createSheet{position:fixed;left:12px;right:12px;bottom:95px;background:rgba(30,20,40,0.88);backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);border-radius:22px;border:1px solid rgba(255,100,180,0.35);padding:14px 16px 16px;display:none;z-index:100;box-shadow:0 0 50px rgba(255,0,128,0.45)}
+.sheetItem{padding:18px 14px;border-radius:14px;margin:8px 0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 15px rgba(255,0,128,0.15)}
+.sheetItem:active{transform:scale(0.97);background:rgba(255,255,255,0.14)}
+
+/* Bottom - FINAL FIX - class="bottom" hai */
 .bottom{position:fixed;bottom:0;left:0;right:0;width:100%;z-index:70;display:flex;justify-content:space-around;align-items:center;padding:12px 8px 26px 8px;background:rgba(255,255,255,0.05);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,100,180,0.18);box-shadow:0 -8px 40px rgba(255,0,128,0.20)}
-.bottom button{width:50px;height:50px;border-radius:16px;border:none;background:transparent;color:#8a8a90;font-size:24px;display:flex;align-items:center;justify-content:center;transition:0.2s}
+.bottom button{width:50px;height:50px;border-radius:16px;border:none;background:transparent;color:#8a8a90;font-size:24px;display:flex;align-items:center;justify-content:center}
 .bottom button.active{background:rgba(255,255,255,0.09);color:#fff;box-shadow:0 0 18px rgba(255,0,128,0.35);border:1px solid rgba(255,100,180,0.25)}
 .bottom button img{width:30px;height:30px;border-radius:50%;object-fit:cover}
 
-/* Upload Button - Transparent Glow - No Black */
+/* Upload Button - Transparent Glow */
 #addBtn,#createBtn{background:rgba(255,255,255,0.07)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border:1px solid rgba(255,100,180,0.40)!important;color:#fff!important;box-shadow:0 0 25px rgba(255,0,128,0.50), inset 0 0 12px rgba(255,255,255,0.08)!important}
-
-/* Plus Sheet - TRANSPARENT GLOW + HIDDEN BY DEFAULT */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);display:none;z-index:99}
-#createSheet{position:fixed;left:12px;right:12px;bottom:90px;background:rgba(255,255,255,0.08);backdrop-filter:blur(35px);-webkit-backdrop-filter:blur(35px);border-radius:22px;border:1px solid rgba(255,100,180,0.28);padding:14px 16px 16px;display:none;z-index:100;box-shadow:0 0 50px rgba(255,0,128,0.35), inset 0 0 20px rgba(255,255,255,0.06)}
-.sheetItem{padding:18px 14px;border-radius:14px;margin:8px 0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 15px rgba(255,0,128,0.15)}
-.sheetItem:active{transform:scale(0.97);background:rgba(255,255,255,0.12)}
 
 #fileInput{display:none}
