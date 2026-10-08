@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase-config.js";
-import { collection, addDoc, serverTimestamp, query, where, getDocs, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const CLOUD_NAME = "kujnbe0a";
 const UPLOAD_PRESET = "intube_free";
@@ -33,41 +33,25 @@ postBtn?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = 
 closeModal?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = true; });
 closeStoryModal?.addEventListener("click", () => { if(storyModal) storyModal.hidden = true; });
 
-async function checkMyStoryRing() {
-    const user = auth.currentUser; if (!user) return;
-    const ring = document.getElementById("myStoryRing");
-    const plusIcon = document.getElementById("plusIcon");
-    const img = document.getElementById("myStoryImg");
-    const text = document.getElementById("myStoryText");
-    if (img) img.src = user.photoURL || "https://i.pravatar.cc/150?u=" + user.uid;
-    const ago24 = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
-    const q = query(collection(db, "stories"), where("uid", "==", user.uid), where("createdAt", ">", ago24));
-    const snap = await getDocs(q);
-    if (snap.empty) {
-        if (ring) ring.className = "ring-none";
-        if (plusIcon) plusIcon.style.display = "flex";
-        if (text) text.textContent = "Add Story";
-    } else {
-        if (ring) ring.className = "ring-active";
-        if (plusIcon) plusIcon.style.display = "none";
-        if (text) text.textContent = "Your Story";
-    }
-}
-
+// LEFT wala button - Instagram jaisa logic
 document.addEventListener("click", (e) => {
     const item = e.target.closest("#myStoryItem");
     if (!item) return;
     const ring = document.getElementById("myStoryRing");
     const isActive = ring?.classList.contains("ring-active");
+
     if (isActive) {
-        if(window.openViewer){
-            // apni story ka index nikalo
-            const user = auth.currentUser;
-            const idx = window.groups? window.groups.findIndex(g=>g.uid===user.uid) : -1;
-            if(idx>=0) window.openViewer(idx,0);
-            else { const viewer = document.getElementById("storyViewer"); if(viewer) viewer.hidden=false; }
+        // Story hai to chalao
+        const myUid = auth.currentUser?.uid;
+        const groups = window.groups || [];
+        const idx = groups.findIndex(g => g.uid === myUid);
+        if (idx >= 0 && window.openViewer) {
+            window.openViewer(idx, 0);
+        } else {
+            alert("Story load ho rahi hai, 1 sec baad fir click karo");
         }
     } else {
+        // Nahi hai to upload kholo
         storyFile?.click();
     }
 });
@@ -85,8 +69,21 @@ uploadBtn?.addEventListener("click", async () => {
     uploadBtn.textContent = "Uploading..."; uploadBtn.disabled = true;
     try {
         const data = await uploadToCloudinary(file);
-        await addDoc(collection(db, "posts"), { uid: user.uid, username: user.displayName || user.email, userPhoto: user.photoURL || "", caption: caption?.value || "", mediaUrl: data.secure_url, mediaType: file.type.startsWith("video/")? "video" : "image", createdAt: serverTimestamp(), likes: [], likesCount: 0 });
-        if (uploadModal) uploadModal.hidden = true; if (caption) caption.value = ""; if (mediaFile) mediaFile.value = ""; alert("Post Uploaded");
+        await addDoc(collection(db, "posts"), {
+            uid: user.uid,
+            username: user.displayName || user.email,
+            userPhoto: user.photoURL || "",
+            caption: caption?.value || "",
+            mediaUrl: data.secure_url,
+            mediaType: file.type.startsWith("video/")? "video" : "image",
+            createdAt: serverTimestamp(),
+            likes: [],
+            likesCount: 0
+        });
+        if (uploadModal) uploadModal.hidden = true;
+        if (caption) caption.value = "";
+        if (mediaFile) mediaFile.value = "";
+        alert("Post Uploaded");
     } catch (e) { alert("Error: " + e.message); }
     uploadBtn.textContent = "Upload"; uploadBtn.disabled = false;
 });
@@ -97,7 +94,6 @@ uploadStoryBtn?.addEventListener("click", async () => {
     uploadStoryBtn.textContent = "Uploading..."; uploadStoryBtn.disabled = true;
     try {
         const data = await uploadToCloudinary(file);
-        // stories.js ke hisaab se same format me save karo
         await addDoc(collection(db, "stories"), {
             uid: user.uid,
             userName: user.displayName || user.email,
@@ -109,12 +105,11 @@ uploadStoryBtn?.addEventListener("click", async () => {
             mediaType: file.type.startsWith("video/")? "video" : "image",
             views: [],
             createdAt: serverTimestamp(),
-            expiresAt: Date.now()+86400000
+            expiresAt: Date.now() + 86400000
         });
-        if (storyModal) storyModal.hidden = true; if (storyFile) storyFile.value = ""; alert("Story Uploaded!"); checkMyStoryRing();
+        if (storyModal) storyModal.hidden = true;
+        if (storyFile) storyFile.value = "";
+        alert("Story Uploaded! Ab left wala button colourful ho jayega");
     } catch (e) { alert("Error: " + e.message); }
     uploadStoryBtn.textContent = "Upload"; uploadStoryBtn.disabled = false;
 });
-
-auth.onAuthStateChanged(() => { checkMyStoryRing(); });
-onSnapshot(collection(db, "stories"), () => { checkMyStoryRing(); });
