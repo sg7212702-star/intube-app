@@ -80,7 +80,18 @@ $('tabPosts').onclick=()=>{$('postsGrid').style.display='grid';$('reelsGrid').st
 $('tabReels').onclick=()=>{$('postsGrid').style.display='none';$('reelsGrid').style.display='grid';$('tabReels').style.color='#fff';$('tabPosts').style.color='#777';renderProfile();};
 $('editBtn').onclick=()=>{let n=prompt('Naam likho:', $('nameText').innerText); if(n){$('nameText').innerText=n; localStorage.setItem('insta_name',n);} let b=prompt('Bio:', $('bioText').innerText); if(b) $('bioText').innerText=b; };
 
-async function up(file){ let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET); try{let r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd}); let j=await r.json(); if(j.secure_url) return j.secure_url;}catch(e){} return URL.createObjectURL(file); }
+async function up(file){
+ let base64 = await new Promise(r=>{
+   let rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(file);
+ });
+ let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET);
+ try{
+   let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd});
+   let j=await res.json();
+   if(j.secure_url) return j.secure_url;
+ }catch(e){}
+ return base64;
+}
 
 $('fileInput').onchange=async e=>{
  let f=e.target.files[0]; if(!f) return; $('overlay').style.display='block';
