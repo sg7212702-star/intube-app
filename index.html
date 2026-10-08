@@ -15,76 +15,150 @@ body{background:#050508;color:#fff;max-width:480px;margin:0 auto;padding-bottom:
 .empty{margin:20px 16px;padding:44px 20px;text-align:center;border-radius:22px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px);color:#888;line-height:1.7;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .empty b{color:#fff;display:block;font-size:15px;margin-bottom:6px}
 .bottom{position:fixed;bottom:14px;left:14px;right:14px;max-width:452px;margin:0 auto;height:62px;display:flex;justify-content:space-around;align-items:center;background:rgba(16,16,20,.55);backdrop-filter:blur(32px) saturate(1.8);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.11);border-radius:24px;z-index:200;box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
-.bottom button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.18s}
+.bottom button{width:44px;height:44px;border-radius:14px;border:none;background:transparent;color:#8e8e8e;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.18s;cursor:pointer}
 .bottom button.active{color:#fff;background:rgba(255,255,255,.09);backdrop-filter:blur(10px)}
 .bottom img{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6)}
-/* PROFILE - ADDED ONLY - SAME GLASS */
-#profileFeed{display:none}
+#profileFeed{display:block}
 .pHead{display:flex;gap:12px;align-items:center;padding:16px}
-.pHead .ring{width:84px;height:84px}
+.pHead.ring{width:84px;height:84px;cursor:pointer}
 .stat{display:flex;gap:24px;flex:1;justify-content:space-around;text-align:center}
 .stat b{display:block;font-size:16px}
 .stat small{color:#888;font-size:12px}
-.pBtn{flex:1;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#fff;font-size:14px;backdrop-filter:blur(16px)}
+.pBtn{flex:1;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#fff;font-size:14px;backdrop-filter:blur(16px);cursor:pointer}
 .pTabs{display:flex;border-top:1px solid rgba(255,255,255,.08);margin-top:16px}
-.pTabs button{flex:1;padding:12px;background:transparent;border:none;color:#888;font-size:13px}
+.pTabs button{flex:1;padding:12px;background:transparent;border:none;color:#888;font-size:13px;cursor:pointer}
 .pTabs button.active{color:#fff;border-top:1px solid #fff}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px}
-.grid3 div{aspect-ratio:1/1;background:#111}
+.grid3 div{aspect-ratio:1/1;background:#111;position:relative;overflow:hidden}
+.grid3 div img{width:100%;height:100%;object-fit:cover}
 </style></head><body>
 <div class="top"><button class="btn" id="addBtn">+</button><div class="logo">InstaPro 👑</div><button class="btn" id="heartBtn">♡</button></div>
-<div class="stories"><div class="story" id="yourStory"><div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
+
+<div class="stories" id="storiesBar"><div class="story" id="yourStory"><div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="plus">+</div></div><span>Your story</span></div></div>
 
 <div class="feed" id="feed"><div class="empty"><b>Feed Empty 💎</b>No posts yet.<br>Upload होते ही Real-Time दिखेगा.<br><br>✓ All Buttons Full Glass<br>✓ Insta Exact Size<br>✓ Only Add Story Button<br>✓ Design Locked</div></div>
 
-<!-- PROFILE ADDED - INSIDE ONLY -->
 <div id="profileFeed">
 <div class="pHead">
-<div class="ring"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div>
+<div class="ring" id="avatarRing"><img id="avatarImg" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></div>
 <div class="stat">
-<div><b>0</b><small>Posts</small></div>
+<div><b id="postCount">0</b><small>Posts</small></div>
 <div><b>0</b><small>Followers</small></div>
 <div><b>0</b><small>Following</small></div>
 </div>
 </div>
 <div style="padding:0 16px">
-<b>Your Name</b><br>
-<small style="color:#aaa">Bio - Edit से बदलेगा</small>
+<b id="nameText">Your Name</b><br>
+<small style="color:#aaa" id="bioText">Bio - Edit से बदलेगा</small>
 <div style="display:flex;gap:8px;margin-top:12px">
-<button class="pBtn">Edit profile</button>
-<button class="pBtn">Share profile</button>
+<button class="pBtn" id="editBtn">Edit profile</button>
+<button class="pBtn" id="shareBtn">Share profile</button>
 </div>
 </div>
 <div class="pTabs">
-<button class="active">⊞ POSTS</button>
-<button>▶ REELS</button>
-<button>👤 TAGGED</button>
+<button class="active" data-tab="posts" id="tabPosts">⊞ POSTS</button>
+<button data-tab="reels" id="tabReels">▶ REELS</button>
+<button data-tab="tagged" id="tabTagged">👤 TAGGED</button>
 </div>
-<div class="grid3"><div></div><div></div><div></div><div></div></div>
-<div class="empty"><b>No Posts Yet</b>जब Photo डालोगे तो यहाँ 3x3 Grid में दिखेगा</div>
+<div id="postsGrid" class="grid3"></div>
+<div id="reelsGrid" class="grid3" style="display:none"></div>
+<div id="taggedGrid" style="display:none"><div class="empty"><b>No Tagged Photos</b>Tag होने पर यहाँ दिखेगा</div></div>
+<div class="empty" id="emptyPosts"><b>No Posts Yet</b>जब Photo डालोगे तो यहाँ 3x3 Grid में दिखेगा</div>
 </div>
 
-<div class="bottom"><button class="active" id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn" style="background:rgba(255,255,255,.09);color:#fff">+</button><button id="searchBtn">⌕</button><button id="profileBtn"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
+<div class="bottom"><button id="homeBtn">⌂</button><button id="reelsBtn">▶</button><button id="createBtn" style="background:rgba(255,255,255,.09);color:#fff">+</button><button id="searchBtn">⌕</button><button id="profileBtn" class="active"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"></button></div>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
 
 <script>
 const $=id=>document.getElementById(id);
-$('yourStory').onclick=()=>alert('Add Story Clicked');
-$('addBtn').onclick=$('createBtn').onclick=()=>alert('Create Post');
-$('heartBtn').onclick=()=>alert('Notifications');
-// ONLY PROFILE OPEN LOGIC - NO DESIGN CHANGE
-$('profileBtn').onclick=()=>{
-$('feed').style.display='none';
-document.querySelector('.stories').style.display='none';
-$('profileFeed').style.display='block';
-$('homeBtn').classList.remove('active');
-$('profileBtn').classList.add('active');
-};
+// NAV - FIXED
 $('homeBtn').onclick=()=>{
 $('profileFeed').style.display='none';
 $('feed').style.display='block';
-document.querySelector('.stories').style.display='flex';
-$('profileBtn').classList.remove('active');
+$('storiesBar').style.display='flex';
 $('homeBtn').classList.add('active');
+$('profileBtn').classList.remove('active');
 };
+$('profileBtn').onclick=()=>{
+$('feed').style.display='none';
+$('storiesBar').style.display='none';
+$('profileFeed').style.display='block';
+$('profileBtn').classList.add('active');
+$('homeBtn').classList.remove('active');
+};
+
+// EDIT PROFILE - AB KAAM KAREGA
+$('editBtn').onclick=()=>{
+let n=prompt('Name लिखो:', $('nameText').innerText);
+if(n===null) return;
+let b=prompt('Bio लिखो:', $('bioText').innerText);
+if(b===null) return;
+if(n) $('nameText').innerText=n;
+if(b) $('bioText').innerText=b;
+localStorage.setItem('insta_name', n);
+localStorage.setItem('insta_bio', b);
+};
+
+// SHARE PROFILE - AB KAAM KAREGA
+$('shareBtn').onclick=async()=>{
+let url=location.href;
+try{await navigator.clipboard.writeText(url); alert('Link Copied ✓\n'+url);}catch(e){prompt('Copy करो:', url);}
+};
+
+// TABS - AB KAAM KARENGE
+function showTab(t){
+$('postsGrid').style.display=t==='posts'?'grid':'none';
+$('reelsGrid').style.display=t==='reels'?'grid':'none';
+$('taggedGrid').style.display=t==='tagged'?'block':'none';
+$('emptyPosts').style.display=t==='posts' && $('postsGrid').children.length===0?'block':'none';
+document.querySelectorAll('.pTabs button').forEach(btn=>{
+btn.classList.toggle('active', btn.dataset.tab===t);
+});
+}
+$('tabPosts').onclick=()=>showTab('posts');
+$('tabReels').onclick=()=>showTab('reels');
+$('tabTagged').onclick=()=>showTab('tagged');
+
+// AVATAR CHANGE
+$('avatarRing').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=(e)=>{
+let f=e.target.files[0]; if(!f) return;
+let url=URL.createObjectURL(f);
+$('avatarImg').src=url;
+document.querySelector('#profileBtn img').src=url;
+};
+
+// CREATE POST - GRID MEIN ADD HOGA
+$('createBtn').onclick=$('addBtn').onclick=()=>$('fileInput').click();
+let postFileType='post';
+$('fileInput').addEventListener('change', (e)=>{
+// agar avatar ke liye khula hai to wapas mat daal
+if(e.target.files[0] && $('avatarImg').src.startsWith('blob:')) return;
+});
+$('createBtn').onclick=()=>{
+let inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+inp.onchange=(ev)=>{
+let f=ev.target.files[0]; if(!f) return;
+let url=URL.createObjectURL(f);
+let div=document.createElement('div'); div.innerHTML=`<img src="${url}">`;
+$('postsGrid').appendChild(div);
+$('emptyPosts').style.display='none';
+$('postCount').innerText=$('postsGrid').children.length;
+showTab('posts');
+$('profileBtn').click();
+};
+inp.click();
+};
+
+// LOAD SAVED
+let savedName=localStorage.getItem('insta_name');
+let savedBio=localStorage.getItem('insta_bio');
+if(savedName) $('nameText').innerText=savedName;
+if(savedBio) $('bioText').innerText=savedBio;
+
+// DEFAULT - PROFILE KHULA RAHEGA JAISA SCREENSHOT MEIN HAI
+$('feed').style.display='none';
+$('storiesBar').style.display='none';
+showTab('posts');
 </script>
 </body></html>
