@@ -34,27 +34,7 @@ closeModal?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden
 closeStoryModal?.addEventListener("click", () => { if(storyModal) storyModal.hidden = true; });
 
 // LEFT wala button - Instagram jaisa logic
-document.addEventListener("click", (e) => {
-    const item = e.target.closest("#myStoryItem");
-    if (!item) return;
-    const ring = document.getElementById("myStoryRing");
-    const isActive = ring?.classList.contains("ring-active");
-
-    if (isActive) {
-        // Story hai to chalao
-        const myUid = auth.currentUser?.uid;
-        const groups = window.groups || [];
-        const idx = groups.findIndex(g => g.uid === myUid);
-        if (idx >= 0 && window.openViewer) {
-            window.openViewer(idx, 0);
-        } else {
-            alert("Story load ho rahi hai, 1 sec baad fir click karo");
-        }
-    } else {
-        // Nahi hai to upload kholo
-        storyFile?.click();
-    }
-});
+// Duplicate click removed - handled in stories.js
 
 storyFile?.addEventListener("change", () => {
     if (storyFile.files[0] && storyModal) {
