@@ -26,22 +26,17 @@ body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
 </style></head><body>
 <div id="topBar"><button id="addBtn" class="btn">+</button><div class="logo">InstaPro 👑</div><button id="notifBtn" class="btn">♡</button></div>
 
-<div id="view-home" class="view active"><div id="feed"><div class="empty">Loading...</div></div></div>
-<div id="view-reels" class="view"><div id="reelsFeed"></div></div>
+<div id="view-home" class="view active"><div id="feed"><div class="empty">Loading feed...</div></div></div>
+<div id="view-reels" class="view"><div id="reelsFeed"><div class="empty">Loading reels...</div></div></div>
 <div id="view-search" class="view"><div style="padding:12px"><input id="searchIn" placeholder="Search..." style="width:100%;padding:14px;border-radius:12px;background:#1a0e1e;border:1px solid #333;color:#fff"></div><div id="searchRes"></div></div>
-<div id="view-notif" class="view"><div style="padding:16px">Notifications - Coming Soon</div></div>
-
-<!-- PROFILE - Instagram Jaisa -->
+<div id="view-notif" class="view"><div style="padding:16px">Notifications</div></div>
 <div id="view-profile" class="view">
-  <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center"><b id="profileTopName">sanjay kumar</b><span style="opacity:.6">☰</span></div>
-  <div class="p-header">
-    <div class="p-avatar"><img id="profilePic" src="https://i.pravatar.cc/150?u=sanjay"></div>
-    <div class="p-stats"><div><b id="postsCount">0</b><span>Posts</span></div><div><b>1.2K</b><span>Followers</span></div><div><b>180</b><span>Following</span></div></div>
-  </div>
-  <div style="padding:0 16px 4px"><b id="nameText">sanjay kumar</b> <span id="categoryText" style="font-size:12px;opacity:.6;background:#2a2a3a;padding:2px 6px;border-radius:10px">Digital creator</span><div id="bioText" style="margin-top:6px;white-space:pre-wrap;line-height:1.3">🌾 Farmer | 📸 Creator</div></div>
+  <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center"><b id="profileTopName">sanjay kumar</b><span>☰</span></div>
+  <div class="p-header"><div class="p-avatar"><img id="profilePic" src="https://i.pravatar.cc/150?u=sanjay"></div><div class="p-stats"><div><b id="postsCount">0</b><span>Posts</span></div><div><b>1.2K</b><span>Followers</span></div><div><b>180</b><span>Following</span></div></div></div>
+  <div style="padding:0 16px 4px"><b id="nameText">sanjay kumar</b> <span id="categoryText" style="font-size:12px;opacity:.6;background:#2a2a3a;padding:2px 6px;border-radius:10px">Digital creator</span><div id="bioText" style="margin-top:6px">🌾 Farmer | Creator</div></div>
   <div class="p-btns"><button id="editBtn">Edit profile</button><button id="shareBtn">Share profile</button></div>
-  <div id="highlightsBox" style="display:flex;gap:14px;padding:12px 16px;overflow:auto;border-top:1px solid #222"></div>
-  <div class="p-tabs"><button id="tabPosts" class="active">⊞ POSTS <span id="postsOnlyCount"></span></button><button id="tabReels">▶ REELS <span id="reelsOnlyCount"></span></button></div>
+  <div id="highlightsBox" style="display:flex;gap:14px;padding:12px 16px;overflow:auto"></div>
+  <div class="p-tabs"><button id="tabPosts" class="active">POSTS</button><button id="tabReels">REELS</button></div>
   <div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
   <div id="reelsGrid" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
 </div>
@@ -51,7 +46,20 @@ body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
 <input id="fileInput" type="file" style="display:none">
 <div id="bottomBar"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
 
+<script>
+// STEP 1 - Buttons ko pehle se zinda rakho, Firebase se pehle
+const $=id=>document.getElementById(id);
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $(v).classList.add('active'); document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active')); if(v==='view-home') $('homeBtn').classList.add('active'); if(v==='view-reels') $('reelsBtn').classList.add('active'); if(v==='view-profile') $('profileBtn').classList.add('active');}
+$('homeBtn').onclick=()=>showView('view-home'); $('reelsBtn').onclick=()=>showView('view-reels'); $('profileBtn').onclick=()=>showView('view-profile'); $('searchBtn').onclick=()=>showView('view-search'); $('notifBtn').onclick=()=>showView('view-notif');
+$('addBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';}; $('createBtn').onclick=$('addBtn').onclick;
+$('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';}; $('closeSheet').onclick=$('overlay').onclick;
+$('tabPosts')?.addEventListener('click',()=>{$('postsGrid').style.display='grid';$('reelsGrid').style.display='none';$('tabPosts').classList.add('active');$('tabReels').classList.remove('active');});
+$('tabReels')?.addEventListener('click',()=>{$('postsGrid').style.display='none';$('reelsGrid').style.display='grid';$('tabReels').classList.add('active');$('tabPosts').classList.remove('active');});
+</script>
+
 <script type="module">
+// STEP 2 - Firebase ab load hoga, fail bhi hua to buttons chalte rahenge
+try{
 import { firebaseConfig } from "./firebase.js";
 import { initProfile } from "./profile.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -61,16 +69,21 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 initProfile(db);
 
-const $=id=>document.getElementById(id);
-const showView=v=>{document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $(v).classList.add('active'); document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active')); if(v==='view-home') $('homeBtn').classList.add('active'); if(v==='view-reels') $('reelsBtn').classList.add('active'); if(v==='view-profile') $('profileBtn').classList.add('active');}
-$('homeBtn').onclick=()=>showView('view-home'); $('reelsBtn').onclick=()=>showView('view-reels'); $('profileBtn').onclick=()=>showView('view-profile'); $('searchBtn').onclick=()=>showView('view-search'); $('notifBtn').onclick=()=>showView('view-notif');
-$('addBtn').onclick=()=>{$('createSheet').style.display='block';$('overlay').style.display='block';}; $('createBtn').onclick=$('addBtn').onclick;
-$('overlay').onclick=()=>{$('createSheet').style.display='none';$('overlay').style.display='none';}; $('closeSheet').onclick=$('overlay').onclick;
 const CLOUD_NAME='kujnbe8a'; const PRESET='intube_free'; let cur='post';
-$('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();}; $('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
-async function up(file){ $('upStatus').style.display='block'; $('upStatus').innerText='Uploading to Cloudinary...'; let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET); let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd}); let j=await res.json(); return j.secure_url; }
-$('fileInput').onchange=async e=>{ let f=e.target.files[0]; if(!f) return; let url=await up(f); if(!url){alert('Upload fail'); return;} $('upStatus').innerText='Saving to Firebase...'; let user=localStorage.getItem('insta_name')||'sanjay kumar'; await addDoc(collection(db,"posts"),{url,type:cur,user,userId:localStorage.getItem('my_user_id')||'sanjay_kumar',time:Date.now()}); e.target.value=''; $('createSheet').style.display='none'; $('overlay').style.display='none'; };
-onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{ let all=[]; snap.forEach(d=>all.push(d.data())); $('feed').innerHTML=all.map(p=>`<div class=postCard><div style="padding:12px;font-weight:700">${p.user}</div>${p.type==='reel'?`<video src="${p.url}" controls></video>`:`<img src="${p.url}">`}</div>`).join('')||'<div class=empty>No posts</div>'; $('reelsFeed').innerHTML=all.filter(p=>p.type==='reel').map(p=>`<div class=postCard><video src="${p.url}" controls autoplay muted loop style="height:80vh"></video></div>`).join('')||'<div class=empty>No reels</div>'; });
-showView('view-profile');
+$('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
+$('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
+async function up(file){ $('upStatus').style.display='block'; $('upStatus').innerText='Uploading...'; let fd=new FormData(); fd.append('file',file); fd.append('upload_preset',PRESET); let res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${file.type.includes('video')?'video':'image'}/upload`,{method:'POST',body:fd}); let j=await res.json(); return j.secure_url; }
+$('fileInput').onchange=async e=>{ let f=e.target.files[0]; if(!f) return; let url=await up(f); if(!url){alert('Upload fail');return;} $('upStatus').innerText='Saving...'; let user=localStorage.getItem('insta_name')||'sanjay kumar'; await addDoc(collection(db,"posts"),{url,type:cur,user,userId:localStorage.getItem('my_user_id')||'sanjay_kumar',time:Date.now()}); e.target.value=''; $('createSheet').style.display='none'; $('overlay').style.display='none'; };
+
+onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{
+  let all=[]; snap.forEach(d=>all.push(d.data()));
+  $('feed').innerHTML=all.map(p=>`<div class=postCard><div style="padding:12px;font-weight:700">${p.user}</div>${p.type==='reel'?`<video src="${p.url}" controls></video>`:`<img src="${p.url}">`}</div>`).join('')||'<div class=empty>No posts yet</div>';
+  $('reelsFeed').innerHTML=all.filter(p=>p.type==='reel').map(p=>`<div class=postCard><video src="${p.url}" controls autoplay muted loop style="height:80vh"></video></div>`).join('')||'<div class=empty>No reels</div>';
+});
+
+}catch(err){
+  console.error(err);
+  document.getElementById('feed').innerHTML='<div class=empty>Firebase error: '+err.message+'<br>Check firebase.js</div>';
+}
 </script>
 </body></html>
