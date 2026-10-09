@@ -132,144 +132,58 @@ video {
   <button type="button" id="profileBtn">◯</button>
 </div>
 
+</div>
+
 <!-- Menu -->
 <script src="./menu.js"></script>
 
-<!-- Create Menu and Upload Buttons -->
 <script>
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $(v).classList.add('active'); document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active')); if(v==='view-home') $('homeBtn').classList.add('active'); if(v==='view-reels') $('reelsBtn').classList.add('active'); if(v==='view-profile') $('profileBtn').classList.add('active');}
+$('homeBtn').onclick=()=>showView('view-home'); 
+$('reelsBtn').onclick=()=>showView('view-reels'); 
+$('profileBtn').onclick=()=>showView('view-profile'); 
+$('searchBtn').onclick=()=>showView('view-search'); 
+$('notifBtn').onclick=()=>showView('view-notif');
 
-document.getElementById('createBtn').onclick = function(e) {
-  e.preventDefault();
-  document.getElementById('createSheet').style.display = 'block';
-  document.getElementById('overlay').style.display = 'block';
+document.getElementById('createBtn').onclick = function(e){
+ e.preventDefault();
+ document.getElementById('createSheet').style.display = 'block';
+ document.getElementById('overlay').style.display = 'block';
 };
+document.getElementById('addBtn').onclick = document.getElementById('createBtn').onclick;
 
-document.getElementById('optPost').onclick = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const input = document.getElementById('fileInput');
-  input.accept = 'image/*,video/*';
-  input.value = '';
-  input.click();
+document.getElementById('optPost').onclick = function(e){
+ e.preventDefault(); e.stopPropagation();
+ const input = document.getElementById('fileInput');
+ input.accept = 'image/*,video/*'; input.value = ''; input.click();
 };
-
-document.getElementById('optReel').onclick = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const input = document.getElementById('fileInput');
-  input.accept = 'video/*';
-  input.value = '';
-  input.click();
+document.getElementById('optReel').onclick = function(e){
+ e.preventDefault(); e.stopPropagation();
+ const input = document.getElementById('fileInput');
+ input.accept = 'video/*'; input.value = ''; input.click();
 };
-
-document.getElementById('overlay').onclick = function() {
-  document.getElementById('createSheet').style.display = 'none';
-  document.getElementById('overlay').style.display = 'none';
+document.getElementById('overlay').onclick = function(){
+ document.getElementById('createSheet').style.display = 'none';
+ document.getElementById('overlay').style.display = 'none';
 };
-
-document.getElementById('closeSheet').onclick = function() {
-  document.getElementById('createSheet').style.display = 'none';
-  document.getElementById('overlay').style.display = 'none';
-};
+document.getElementById('closeSheet').onclick = document.getElementById('overlay').onclick;
 </script>
 
-$('closeSheet').onclick = $('overlay').onclick;
+<!-- Edit Profile Box - Ye missing tha isliye Edit kaam nahi karta tha -->
+<div id="editOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40"></div>
+<div id="editSheet" style="display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1022;padding:20px;border-radius:20px 20px 0 0;z-index:50">
+  <h3>Edit Profile</h3>
+  <input id="eName" placeholder="Name" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;background:#2a1630;border:none;color:#fff">
+  <textarea id="eBio" placeholder="Bio" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;background:#2a1630;border:none;color:#fff"></textarea>
+  <div style="display:flex;gap:10px"><button id="eCancel" style="flex:1;padding:12px;border-radius:8px;background:#333;border:none;color:#fff">Cancel</button><button id="eSave" style="flex:1;padding:12px;background:#ff4d9d;border:none;border-radius:8px;color:#fff">Save</button></div>
+</div>
 
-<script type="module">
-import { firebaseConfig } from "./firebase.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
- getFirestore, collection, addDoc, onSnapshot, query,
- orderBy, doc, getDoc, setDoc, updateDoc,
- arrayUnion, arrayRemove, increment
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// --- CLEAN USER SYSTEM ---
-let myId = localStorage.getItem('my_user_id');
-if(!myId){ myId = 'user_' + Math.random().toString(36).slice(2,8); localStorage.setItem('my_user_id', myId); }
-$('profileTopName').innerText = myId;
-$('nameText').innerText = myId;
-
-// Realtime Profile
-onSnapshot(doc(db, "users", myId), snap=>{
- if(snap.exists()){
-  let d=snap.data();
-  $('nameText').innerText = d.name || myId;
-  $('bioText').innerText = d.bio || 'Welcome to InstaPro ✨';
-  if(d.photo) $('profilePic').src=d.photo;
-  $('profileTopName').innerText = d.username || myId;
- }
-});
-
-// Edit & Share
-const editSheet=document.getElementById('editSheet');const editOverlay=document.getElementById('editOverlay');
-$('editBtn').onclick=()=>{document.getElementById('eName').value=$('nameText').innerText;document.getElementById('eBio').value=$('bioText').innerText;editSheet.style.display='block';editOverlay.style.display='block';}
-$('eCancel').onclick=()=>{editSheet.style.display='none';editOverlay.style.display='none';};editOverlay.onclick=()=>{$('eCancel').onclick();}
-$('eSave').onclick=async()=>{let n=document.getElementById('eName').value.trim();let b=document.getElementById('eBio').value.trim();await setDoc(doc(db,"users",myId),{name:n,bio:b,username:n||myId},{merge:true});$('eCancel').onclick();}
-$('shareBtn').onclick=async()=>{let link=location.href+'?user='+myId;if(navigator.share){try{await navigator.share({title:'InstaPro',url:link});}catch(e){}}else{navigator.clipboard.writeText(link);alert('Link Copied!');}}
-
-let cur='post';
-
-
-// Upload handled by upload.js
-
-<!-- NEW UPLOAD SYSTEM -->
+<!-- Sare System alag file se - Isse order sahi rahega -->
+<script type="module" src="./firebase.js"></script>
+<script type="module" src="./profile.js"></script>
 <script type="module" src="./upload.js"></script>
+<script type="module" src="./feed.js"></script>
 
-// --- PRO REALTIME FEED WITH LIKE & COMMENT ---
-onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{
- let all=[]; snap.forEach(d=>all.push({...d.data(),id:d.id}));
- 
- // Home Feed
- let feedHTML='';
- all.forEach(p=>{
-  let isLiked = p.likes && p.likes.includes(myId);
-  feedHTML+=`
-  <div class="postCard">
-    <div style="padding:12px;font-weight:700;display:flex;justify-content:space-between"><span>${p.userId}</span><span style="font-size:12px;color:gray">${p.type}</span></div>
-    ${p.type==='reel' ? `<video src="${p.url}" controls autoplay muted loop style="width:100%"></video>` : `<img src="${p.url}" style="width:100%" ondblclick="window.likeThis('${p.id}')">`}
-    <div style="padding:10px;display:flex;gap:15px;font-size:22px">
-      <span onclick="window.likeThis('${p.id}')" style="cursor:pointer;color:${isLiked?'red':'black'}">${isLiked?'❤️':'🤍'}</span>
-      <span onclick="document.getElementById('c-${p.id}').focus()" style="cursor:pointer">💬</span>
-    </div>
-    <div style="padding:0 12px;font-weight:600">${p.likesCount||0} likes</div>
-    <div style="padding:5px 12px 12px">
-      ${ (p.comments||[]).map(c=>`<div><b>${c.user}:</b> ${c.text}</div>`).join('') }
-      <div style="display:flex;margin-top:8px"><input id="c-${p.id}" placeholder="Add a comment..." style="flex:1;border:none;border-top:1px solid #eee;padding:8px"><button onclick="window.commentThis('${p.id}')" style="border:none;background:none;color:#0095f6;font-weight:700">Post</button></div>
-    </div>
-  </div>`;
- });
- $('feed').innerHTML=feedHTML;
-
- $('reelsFeed').innerHTML=all.filter(p=>p.type==='reel').map(p=> `<div class="postCard"><video src="${p.url}" controls autoplay muted loop style="width:100%;aspect-ratio:9/16;object-fit:cover"></video></div>`).join('');
- let mine=all.filter(p=>p.userId==myId);
- $('postsGrid').innerHTML=mine.filter(p=>p.type!='reel').map(p=> `<img src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover">`).join('');
- $('reelsGrid').innerHTML=mine.filter(p=>p.type==='reel').map(p=> `<video src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover"></video>`).join('');
- $('postsCount').innerText=mine.length;
-
- // Like Function
- window.likeThis=async(id)=>{
-  let postRef=doc(db,"posts",id);
-  let postSnap=await getDoc(postRef);
-  let data=postSnap.data();
-  if(data.likes && data.likes.includes(myId)){
-    await updateDoc(postRef,{likes:arrayRemove(myId),likesCount:increment(-1)});
-  }else{
-    await updateDoc(postRef,{likes:arrayUnion(myId),likesCount:increment(1)});
-  }
- };
- // Comment Function
- window.commentThis=async(id)=>{
-  let input=document.getElementById('c-'+id);
-  let text=input.value.trim(); if(!text) return;
-  await updateDoc(doc(db,"posts",id),{comments:arrayUnion({user:myId,text:text,time:Date.now()})});
-  input.value='';
- };
-});
-</script>
-</body></html>
+</body>
+</html>
