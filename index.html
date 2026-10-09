@@ -1,17 +1,59 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>InstaPro</title><link rel="stylesheet" href="style.css?v=11"></head><body>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>InstaPro Premium Glass</title><link rel="stylesheet" href="style.css?v=final"></head><body>
 <div class="app">
-<header class="topBar"><b class="logo">InstaPro 👑</b><div class="topBtns"><button id="notifTopBtn">♡</button><button>✈</button></div></header>
-<div class="storyBar"><div class="story"><div class="addStory">+</div><span>Your story</span></div><div id="otherStories"></div></div>
-<div id="feed"></div>
-<nav class="bottomBar">
-  <button class="active" data-view="home">⌂<span>Home</span></button>
-  <button data-view="search">⌕<span>Search</span></button>
-  <button id="addBtn" class="plus">+<span>Create</span></button>
-  <button data-view="reels">▶<span>Reels</span></button>
-  <button data-view="profile">◯<span>Profile</span></button>
-</nav>
+
+<!-- TOP GLASS - Full Instagram Menu -->
+<header class="topGlass">
+  <div class="left">
+    <button class="menuBtn" id="menuBtn">☰</button>
+    <h1 class="logo">InstaPro</h1>
+  </div>
+  <div class="right">
+    <button class="iconGlass" id="notifBtn">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="dot"></span>
+    </button>
+    <button class="iconGlass">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</header>
+
+<!-- STORY GLASS -->
+<div class="storyGlass">
+  <div class="sItem"><div class="sRing add"><span>+</span></div><p>Your story</p></div>
+  <div id="otherStories" style="display:flex;gap:12px"></div>
 </div>
-<div id="overlay"></div><div id="createSheet" class="sheet"><div class="handle"></div><div id="optPost" class="item">📷 New Post</div><div id="optStory" class="item">⭕ New Story</div><div id="optReel" class="item">🎬 New Reel</div><div class="item cancel" onclick="closeAll()">Cancel</div></div>
-<input type="file" id="fileInput" hidden><input type="file" id="storyInput" hidden>
-<script type="module" src="firebase.js"></script><script type="module" src="feed.js"></script><script type="module" src="stories.js"></script><script type="module" src="app.js"></script>
+
+<!-- FEED - Premium Post Glass -->
+<main id="feed"></main>
+
+<!-- BOTTOM GLASS - 5 Premium Buttons -->
+<nav class="bottomGlass">
+  <button class="bBtn active" data-v="home">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.005 16.175H4.987V12.142L12 5.914l7.013 6.228v4.033h-4.018v-4.01h-5.99v4.01z"/></svg>
+  </button>
+  <button class="bBtn" data-v="search">
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+  <button class="bBtn plusGlass" id="addBtn">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="bBtn" data-v="reels">
+    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  </button>
+  <button class="bBtn" data-v="profile"><img id="myAvatar" class="avatarBtn" src="https://i.pravatar.cc/100?img=12"></button>
+</nav>
+
+</div>
+
+<!-- SHEETS - Glass Menu -->
+<div id="overlay" class="overlayGlass"></div>
+<div id="sideMenu" class="sideGlass">
+  <div class="sideHead"><b>Menu</b><button id="closeMenu">✕</button></div>
+  <div class="mItem">⚙️ Settings</div><div class="mItem">🔖 Saved</div><div class="mItem">🌙 Dark Mode</div><div class="mItem">🚪 Logout</div>
+</div>
+<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo/Video</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt" id="optReel">🎬 Reel</div><div class="sOpt cancel" onclick="closeAll()">Cancel</div></div>
+
+<input type="file" id="fileInput" hidden accept="image/*,video/*"><input type="file" id="storyInput" hidden accept="image/*,video/*">
+<script type="module" src="firebase.js"></script><script type="module" src="app.js"></script>
 </body></html>
