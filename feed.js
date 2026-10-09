@@ -1,67 +1,30 @@
-// feed.js - ONLY FEED - FINAL FIXED
 import { db } from "./firebase.js";
-import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { toggleLike, postComment, bindLikeSystem, bindCommentCount } from "./notifications.js";
+import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const feed=document.getElementById('feed');
+const postsGrid=document.getElementById('postsGrid');
+const reelsGrid=document.getElementById('reelsGrid');
+const myId=localStorage.getItem('my_user_id')||'user_'+Math.random().toString(36).substr(2,6);
+localStorage.setItem('my_user_id',myId);
 
-const myId = localStorage.getItem('my_user_id');
-const feedContainer = document.getElementById('feedContainer') || document.getElementById('postFeed');
-
-function loadFeed(){
- const q = query(collection(db, "posts"), orderBy("time","desc"));
-
- onSnapshot(q, snap=>{
-  feedContainer.innerHTML="";
-  snap.forEach((d)=>{
-   const post = d.data();
-   const postId = d.id;
-   const ownerId = post.userId || post.user;
-
-   const imgUrl = post.url || post.imageUrl;
-
-   const html = `
-   <div style="border-bottom:1px solid #222;padding:12px 0">
-    <!-- User -->
-    <div style="display:flex;gap:10px;align-items:center;padding:8px">
-     <div style="width:32px;height:32px;background:#333;border-radius:50%"></div>
-     <b>${post.userName || ownerId.slice(0,8)}</b>
-    </div>
-    <!-- Image -->
-    <img src="${imgUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;background:#111">
-    <!-- Buttons -->
-    <div style="display:flex;gap:16px;padding:10px;font-size:22px">
-     <span id="likeBtn_${postId}" onclick="toggleLike('${postId}', '${ownerId}')" style="cursor:pointer">🤍</span>
-     <span onclick="document.getElementById('cmtInput_${postId}').focus()" style="cursor:pointer">💬</span>
-    </div>
-    <!-- Counts -->
-    <div style="padding:0 10px;font-size:14px;font-weight:600">
-     <span id="likeCount_${postId}">0</span> likes • <span id="commentCount_${postId}">0</span> comments
-    </div>
-    <div style="padding:4px 10px;font-size:14px"><b>${(post.userName||'')}</b> ${post.caption||''}</div>
-    <!-- Comment Input -->
-    <div style="display:flex;gap:8px;padding:10px">
-     <input id="cmtInput_${postId}" placeholder="Add a comment..." style="flex:1;background:#111;border:1px solid #222;border-radius:20px;padding:8px 12px;color:#fff">
-     <button onclick="handleComment('${postId}', '${ownerId}')" style="background:none;border:none;color:#0095f6;font-weight:600">Post</button>
-    </div>
-   </div>`;
-
-   feedContainer.insertAdjacentHTML('beforeend', html);
-
-   // Live counts bind - IMPORTANT
-   bindLikeSystem(postId);
-   bindCommentCount(postId);
+onSnapshot(query(collection(db,"posts"),orderBy("time","desc")), snap=>{
+  if(!feed) return;
+  if(snap.empty){ feed.innerHTML='<div class="empty">No posts yet - Be first to post!</div>'; return; }
+  feed.innerHTML='';
+  let myCount=0;
+  let postsHTML='';
+  let reelsHTML='';
+  snap.forEach(d=>{
+    let p=d.data();
+    if(p.userId===myId) myCount++;
+    let media = p.url.startsWith('data:video') || p.type==='reel'? `<video src="${p.url}" controls playsinline style="width:100%"></video>` : `<img src="${p.url}" style="width:100%">`;
+    feed.innerHTML+=`<div class="postCard"><div style="padding:10px;display:flex;gap:8px;align-items:center"><img src="https://i.pravatar.cc/40?u=${p.userId}" style="width:32px;height:32px;border-radius:50%"><b>${p.userName||'User'}</b></div>${media}<div style="padding:10px"><b>${p.userName||'User'}</b> ${p.caption||''}</div><div style="padding:0 12px 12px;display:flex;gap:12px">♡ ${p.likesCount||0} 💬 ↗️</div></div>`;
+    if(p.type==='reel' || p.url.startsWith('data:video')) reelsHTML+=`<div style="aspect-ratio:9/16;background:#111"><video src="${p.url}" style="width:100%;height:100%;object-fit:cover"></video></div>`;
+    else postsHTML+=`<div style="aspect-ratio:1/1;background:#111"><img src="${p.url}" style="width:100%;height:100%;object-fit:cover"></div>`;
   });
- });
-}
-
-window.handleComment = async(postId, ownerId)=>{
- const input = document.getElementById(`cmtInput_${postId}`);
- const text = input.value.trim();
- if(!text) return;
- input.value="";
- await postComment(postId, ownerId, text);
-};
-
-window.toggleLike = toggleLike; // notifications.js wala
-
-// Start
-loadFeed();
+  document.getElementById('postsCount').innerText=myCount;
+  if(postsGrid) postsGrid.innerHTML=postsHTML;
+  if(reelsGrid) reelsGrid.innerHTML=reelsHTML;
+}, err=>{
+  console.log(err);
+  feed.innerHTML='<div class="empty">Firebase error - Check config</div>';
+});
