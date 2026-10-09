@@ -101,8 +101,7 @@ async function createPost(file) {
   showStatus("पोस्ट Firestore में सेव हो रही है...");
 
   await addDoc(collection(db, "posts"), {
-    url: media.url,
-    mediaUrl: media.url,
+
     publicId: media.publicId,
     resourceType: media.resourceType,
     type: currentType,
