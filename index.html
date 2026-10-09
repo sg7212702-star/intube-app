@@ -135,9 +135,9 @@ video {
 <!-- Menu -->
 <script src="./menu.js"></script>
 
-<!-- Create menu and upload buttons -->
+<!-- Create Menu and Upload Buttons -->
 <script>
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 document.getElementById('createBtn').onclick = function(e) {
   e.preventDefault();
@@ -151,28 +151,30 @@ document.getElementById('optPost').onclick = function(e) {
 
   const input = document.getElementById('fileInput');
   input.accept = 'image/*,video/*';
+  input.value = '';
   input.click();
 };
+
+document.getElementById('optReel').onclick = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const input = document.getElementById('fileInput');
+  input.accept = 'video/*';
+  input.value = '';
+  input.click();
+};
+
+document.getElementById('overlay').onclick = function() {
+  document.getElementById('createSheet').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+};
+
+document.getElementById('closeSheet').onclick = function() {
+  document.getElementById('createSheet').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+};
 </script>
-
-$('optPost').onclick = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  $('fileInput').accept = 'image/*,video/*';
-  $('fileInput').click();
-};
-
-$('optReel').onclick = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  $('fileInput').accept = 'video/*';
-  $('fileInput').click();
-};
-
-$('overlay').onclick = () => {
-  $('createSheet').style.display = 'none';
-  $('overlay').style.display = 'none';
-};
 
 $('closeSheet').onclick = $('overlay').onclick;
 
