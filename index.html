@@ -23,6 +23,72 @@ body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
 .p-tabs{display:flex;border-top:1px solid #222;border-bottom:1px solid #222}
 .p-tabs button{flex:1;padding:12px;background:transparent;border:none;color:#fff;opacity:.5;font-weight:700}.p-tabs button.active{opacity:1;border-bottom:2px solid #fff}
 .empty{padding:60px;text-align:center;opacity:.4}
+/* MOBILE LAYOUT FIX */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+.view {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.postCard {
+  width: calc(100% - 24px);
+  max-width: 600px;
+  margin: 12px auto;
+}
+
+#feed,
+#reelsFeed,
+#postsGrid,
+#reelsGrid {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#bottomBar {
+  width: 100%;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#topBar {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+
+  .postCard img,
+  .postCard video {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+                                                      }  
 </style></head><body>
 <div id="topBar"><button id="addBtn" class="btn">+</button><div class="logo">InstaPro 👑</div><button id="notifBtn" class="btn">♡</button></div>
 
