@@ -1,19 +1,235 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro 👑</title><link rel="stylesheet" href="style.css"></head><body>
-<header class="top"><button class="iBtn" id="addTopBtn">+</button><div class="logo">InstaPro 👑</div><button class="iBtn" id="notifTopBtn">♡<b id="notifDot"></b></button></header>
-<div id="storyBar"></div><div id="otherStories" style="display:none"></div>
-<main>
-<section id="homeView" class="view active"><div id="feed">Loading live feed...</div></section>
-<section id="reelsView" class="view"><div id="reelsFeed" class="grid3"></div></section>
-<section id="searchView" class="view"><div style="padding:12px"><input id="searchInput" placeholder="Search users..." style="width:100%;background:#111;border:1px solid #222;padding:12px;border-radius:10px;color:#fff"></div><div id="searchResult" class="grid3"></div></section>
-<section id="notifView" class="view"><div style="padding:14px;font-weight:700;border-bottom:1px solid #111">Notifications</div><div id="notifList"></div></section>
-<section id="profileView" class="view"><div style="padding:12px 16px;display:flex;justify-content:space-between"><b id="profileTopName">@user</b><span id="menuBtn" style="font-size:24px">☰</span></div><div style="display:flex;gap:16px;padding:0 16px"><img id="profilePic" src="https://i.pravatar.cc/150?img=12" style="width:80px;height:80px;border-radius:50%"><div style="flex:1;display:flex;justify-content:space-around;text-align:center"><div><b id="postCount">0</b><br><span style="font-size:12px;opacity:.5">Posts</span></div><div><b id="followersCount">0</b><br><span style="font-size:12px;opacity:.5">Followers</span></div><div><b id="followingCount">0</b><br><span style="font-size:12px;opacity:.5">Following</span></div></div></div><div style="padding:12px 16px"><b id="nameText">User</b><div id="bioText" style="opacity:.7;font-size:13px"></div></div><div style="display:flex;gap:8px;padding:0 16px"><button id="editBtn" style="flex:1;padding:8px;background:#222;border:none;color:#fff;border-radius:8px">Edit profile</button><button id="shareBtn" style="flex:1;padding:8px;background:#222;border:none;color:#fff;border-radius:8px">Share</button></div><div style="display:flex;border-top:1px solid #111;margin-top:12px"><button class="pTab active" data-tab="posts" style="flex:1;padding:12px;background:none;border:none;color:#fff;border-bottom:1px solid #fff">POSTS</button><button class="pTab" data-tab="reels" style="flex:1;padding:12px;background:none;border:none;color:#777">REELS</button></div><div id="profileGrid" class="grid3"></div></section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>InstaPro 👑</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= TOP HEADER - Instagram jaisa ================= -->
+<header id="topHeader">
+  <div class="left">
+    <button id="addTopBtn"></button>
+  </div>
+  <div class="center">
+    <h1 class="logo">InstaPro 👑</h1>
+  </div>
+  <div class="right">
+    <button id="notifTopBtn"></button>
+    <button id="dmTopBtn"></button>
+  </div>
+</header>
+
+<!-- ================= STORY BAR - Instagram exact ================= -->
+<section id="storySection">
+  <div id="storyBar">
+    <!-- Your Story - Static Structure -->
+    <div class="storyItem" id="yourStoryItem">
+      <div class="storyRing add">
+        <img id="yourStoryPic">
+        <span class="plus">+</span>
+      </div>
+      <p class="storyName">Your story</p>
+    </div>
+    <!-- Others - Firebase se ayega -->
+    <div id="otherStories"></div>
+  </div>
+</section>
+
+<!-- ================= MAIN CONTENT - 5 Views ================= -->
+<main id="mainContainer">
+
+  <!-- 1. HOME FEED - Posts ka structure -->
+  <section id="homeView" class="view active">
+    <div id="feed">
+      <!-- Post ka structure template - feed.js isko clone karega -->
+      <template id="postTemplate">
+        <article class="post">
+          <div class="postHeader">
+            <img class="postUserPic">
+            <div class="postUserInfo">
+              <b class="postUserName"></b>
+              <span class="postLocation"></span>
+            </div>
+            <button class="postMore">⋯</button>
+          </div>
+          <div class="postMediaContainer">
+            <img class="postImage">
+            <video class="postVideo"></video>
+          </div>
+          <div class="postActions">
+            <button class="likeBtn"></button>
+            <button class="commentBtn"></button>
+            <button class="shareBtn"></button>
+            <button class="saveBtn"></button>
+          </div>
+          <div class="postLikes"></div>
+          <div class="postCaption"></div>
+          <div class="postComments"></div>
+          <div class="postTime"></div>
+        </article>
+      </template>
+    </div>
+  </section>
+
+  <!-- 2. EXPLORE / SEARCH - Grid structure -->
+  <section id="searchView" class="view">
+    <div class="searchHeader">
+      <div class="searchBar">
+        <input id="searchInput" type="text" placeholder="Search">
+      </div>
+    </div>
+    <div id="searchResult" class="exploreGrid"></div>
+  </section>
+
+  <!-- 3. REELS - Full screen vertical structure -->
+  <section id="reelsView" class="view">
+    <div id="reelsFeed" class="reelsContainer"></div>
+  </section>
+
+  <!-- 4. NOTIFICATIONS - List structure -->
+  <section id="notifView" class="view">
+    <div class="pageHeader">
+      <h2>Notifications</h2>
+    </div>
+    <div id="notifList" class="notifContainer"></div>
+  </section>
+
+  <!-- 5. PROFILE - Complete Instagram profile structure -->
+  <section id="profileView" class="view">
+    <!-- Profile Top -->
+    <div class="profileTop">
+      <h2 id="profileTopName"></h2>
+      <div class="profileTopActions">
+        <button id="threadBtn"></button>
+        <button id="menuBtn"></button>
+      </div>
+    </div>
+    <!-- Profile Info -->
+    <div class="profileInfo">
+      <img id="profilePic" class="profileAvatar">
+      <div class="profileStats">
+        <div class="stat">
+          <b id="postCount">0</b>
+          <span>posts</span>
+        </div>
+        <div class="stat">
+          <b id="followersCount">0</b>
+          <span>followers</span>
+        </div>
+        <div class="stat">
+          <b id="followingCount">0</b>
+          <span>following</span>
+        </div>
+      </div>
+    </div>
+    <!-- Bio -->
+    <div class="profileBio">
+      <b id="nameText"></b>
+      <p id="bioText"></p>
+      <a id="linkText"></a>
+    </div>
+    <!-- Action Buttons -->
+    <div class="profileActions">
+      <button id="editBtn"></button>
+      <button id="shareBtn"></button>
+      <button id="addFriendBtn"></button>
+    </div>
+    <!-- Highlights - Structure -->
+    <div id="highlightsBar" class="highlights"></div>
+    <!-- Tabs -->
+    <div class="profileTabs">
+      <button class="tab active" data-tab="posts"></button>
+      <button class="tab" data-tab="reels"></button>
+      <button class="tab" data-tab="tagged"></button>
+    </div>
+    <!-- Grids -->
+    <div id="profileGrid" class="profileGrid"></div>
+    <div id="profileReelsGrid" class="profileGrid"></div>
+    <div id="profileTaggedGrid" class="profileGrid"></div>
+  </section>
+
 </main>
-<nav class="bottom"><button data-view="homeView" class="active">⌂</button><button data-view="reelsView">▶</button><button id="addBtn">+</button><button data-view="searchView">⌕</button><button data-view="profileView">◯</button></nav>
-<div id="overlay"></div><div id="createSheet" class="sheet"><div class="sheetItem" id="optPost">📷 New Post</div><div class="sheetItem" id="optReel">🎬 New Reel</div><div class="sheetItem" id="optStory">⭕ New Story</div><div class="sheetItem" onclick="closeAll()">Cancel</div></div>
-<div id="profileMenuSheet" class="sheet"><div class="sheetItem" onclick="showPage('settingsPage')">⚙️ Settings</div><div class="sheetItem" id="logoutBtn">🚪 Log out</div><div class="sheetItem" onclick="closeAll()">Cancel</div></div>
-<div id="commentSheet" class="sheet"><div style="display:flex;gap:8px;padding:10px"><input id="commentInput" placeholder="Add comment..." style="flex:1;background:#111;border:1px solid #222;padding:10px;border-radius:10px;color:#fff"><button id="sendCommentBtn" style="background:#0095f6;color:#fff;border:none;padding:0 14px;border-radius:10px">Post</button></div><div id="commentList" style="padding:10px"></div></div>
-<div id="editProfilePage" class="fullPage"><div style="display:flex;justify-content:space-between;padding:14px;border-bottom:1px solid #111"><span onclick="hidePage('editProfilePage')">✕</span><b>Edit</b><span id="saveProfileBtn" style="color:#0095f6;font-weight:700">Done</span></div><img id="editAvatar" src="https://i.pravatar.cc/150?img=12" style="width:90px;border-radius:50%;margin:20px auto;display:block"><div style="padding:0 16px"><input id="eName" placeholder="Name" style="width:100%;background:#111;border:1px solid #222;padding:12px;border-radius:10px;color:#fff;margin-bottom:10px"><input id="eUsername" placeholder="Username" style="width:100%;background:#111;border:1px solid #222;padding:12px;border-radius:10px;color:#fff;margin-bottom:10px"><textarea id="eBio" placeholder="Bio" style="width:100%;background:#111;border:1px solid #222;padding:12px;border-radius:10px;color:#fff"></textarea></div></div>
-<div id="settingsPage" class="fullPage" style="display:none"><div style="padding:14px;border-bottom:1px solid #111"><button onclick="hidePage('settingsPage')">← Settings</button></div></div>
-<input type="file" id="fileInput" hidden><input type="file" id="storyInput" hidden><input type="file" id="storyFileInput" hidden><input type="file" id="avatarInput" hidden>
-<script type="module" src="auth.js"></script><script type="module" src="stories.js"></script><script type="module" src="feed.js"></script><script type="module" src="reels.js"></script><script type="module" src="upload.js"></script><script type="module" src="profile.js"></script><script type="module" src="notifications.js"></script><script type="module" src="explore.js"></script><script type="module" src="menu.js"></script>
-</body></html>
+
+<!-- ================= BOTTOM NAV - Instagram 5 buttons exact ================= -->
+<nav id="bottomNav">
+  <button data-view="homeView" class="navBtn active" id="homeBtn"></button>
+  <button data-view="searchView" class="navBtn" id="searchBtn"></button>
+  <button class="navBtn plus" id="addBtn"></button>
+  <button data-view="reelsView" class="navBtn" id="reelsBtn"></button>
+  <button data-view="profileView" class="navBtn" id="profileBtn">
+    <img id="navProfilePic">
+  </button>
+</nav>
+
+<!-- ================= OVERLAYS & SHEETS - Structure only ================= -->
+<div id="overlay"></div>
+
+<!-- Create Sheet -->
+<div id="createSheet" class="bottomSheet">
+  <div class="sheetHandle"></div>
+  <button class="sheetOption" id="optPost"></button>
+  <button class="sheetOption" id="optReel"></button>
+  <button class="sheetOption" id="optStory"></button>
+  <button class="sheetOption" id="optLive"></button>
+</div>
+
+<!-- Comment Sheet -->
+<div id="commentSheet" class="bottomSheet">
+  <div class="sheetHandle"></div>
+  <div class="commentInputArea">
+    <img id="commentUserPic">
+    <input id="commentInput" type="text">
+    <button id="sendCommentBtn"></button>
+  </div>
+  <div id="commentList"></div>
+</div>
+
+<!-- Profile Menu Sheet -->
+<div id="profileMenuSheet" class="bottomSheet">
+  <div class="sheetHandle"></div>
+  <button class="sheetOption" data-action="settings"></button>
+  <button class="sheetOption" data-action="archive"></button>
+  <button class="sheetOption danger" id="logoutBtn"></button>
+</div>
+
+<!-- ================= FULL PAGES - Structure ================= -->
+<div id="editProfilePage" class="fullPage">
+  <div class="fullPageHeader">
+    <button class="backBtn" onclick="hidePage('editProfilePage')"></button>
+    <h2>Edit profile</h2>
+    <button id="saveProfileBtn"></button>
+  </div>
+  <div class="editAvatarSection">
+    <img id="editAvatar">
+    <button id="changePhotoBtn"></button>
+  </div>
+  <div class="editForm">
+    <input id="eName">
+    <input id="eUsername">
+    <textarea id="eBio"></textarea>
+    <input id="eLink">
+  </div>
+</div>
+
+<div id="settingsPage" class="fullPage"></div>
+<div id="storyViewer" class="fullPage"></div>
+
+<!-- ================= HIDDEN INPUTS - Structure ================= -->
+<input type="file" id="fileInput" hidden>
+<input type="file" id="storyInput" hidden>
+<input type="file" id="avatarInput" hidden>
+
+<!-- ================= SYSTEM FILES - Alag alag ================= -->
+<script type="module" src="firebase.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module" src="stories.js"></script>
+<script type="module" src="feed.js"></script>
+<script type="module" src="reels.js"></script>
+<script type="module" src="profile.js"></script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
