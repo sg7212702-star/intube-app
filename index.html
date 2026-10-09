@@ -59,7 +59,30 @@ body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
 <div id="profileMenuSheet"><div style="width:40px;height:4px;background:#555;margin:0 auto 15px;border-radius:10px"></div><div id="mSettings" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">⚙️ Settings and privacy</div><div style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">📊 Your activity</div><div id="mLogout" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0;color:#ff5a5b">🚪 Log out</div><div onclick="document.getElementById('profileMenuSheet').style.display='none';document.getElementById('overlay').style.display='none'" style="padding:14px;background:#333;border-radius:12px;text-align:center;margin-top:10px">Cancel</div></div>
 
 <div id="subPage" style="display:none;position:fixed;inset:0;background:#0e0e14;z-index:10001;overflow:auto"><div style="display:flex;gap:12px;padding:14px;border-bottom:1px solid #222;position:sticky;top:0;background:#0e0e14"><button id="subBack" style="background:none;border:none;color:#fff;font-size:22px">←</button><b id="subTitle">Settings</b></div><div id="subContent" style="padding:16px"></div></div>
+  <!-- PROFILE EDIT - INSTA REAL TIME -->
+<div id="editProfileSheet" style="display:none;position:fixed;inset:0;background:#0e0014;z-index:10010;overflow:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #2a1630;position:sticky;top:0;background:#0e0014;z-index:2">
+    <div style="display:flex;gap:16px;align-items:center"><span onclick="closeEditProfile()" style="font-size:24px;cursor:pointer">✕</span><b style="font-size:18px">Edit profile</b></div>
+    <button onclick="saveProfileReal()" style="background:#0095f6;color:#fff;border:none;padding:8px 18px;border-radius:20px;font-weight:800">Done ✓</button>
+  </div>
 
+  <div style="padding:20px 16px;text-align:center;border-bottom:1px solid #222">
+    <div style="position:relative;width:96px;height:96px;margin:0 auto"><img id="editAvatarPreview" src="https://i.pravatar.cc/150" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #2a1630"><div onclick="document.getElementById('avatarInput').click()" style="position:absolute;bottom:0;right:0;background:#0095f6;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #0e0014;cursor:pointer">📷</div></div>
+    <div onclick="document.getElementById('avatarInput').click()" style="color:#0095f6;margin-top:10px;font-weight:700;cursor:pointer">Change profile photo</div>
+    <input id="avatarInput" type="file" accept="image/*" style="display:none">
+  </div>
+
+  <div style="padding:0 16px">
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Name</div><input id="editName" placeholder="Name" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none"><div style="font-size:11px;opacity:.4;margin-top:4px">Help people discover your account by using the name you're known by.</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Username</div><input id="editUsername" placeholder="Username" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none"></div>
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Category</div><select id="editCategory" style="width:100%;background:#1a0e1e;color:#fff;border:1px solid #333;padding:12px;border-radius:10px;outline:none"><option>Creator</option><option>Digital creator</option><option>Artist</option><option>Entrepreneur</option><option>Photographer</option><option>Musician</option><option>Personal blog</option></select></div>
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Bio</div><textarea id="editBio" placeholder="Bio ✨" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none;resize:none;height:70px"></textarea><div style="text-align:right;font-size:12px;opacity:.4"><span id="bioCount">0</span>/150</div></div>
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Links</div><input id="editLink" placeholder="Add link" style="width:100%;background:transparent;border:none;color:#0095f6;font-size:15px;outline:none"></div>
+    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Gender</div><select id="editGender" style="width:100%;background:#1a0e1e;color:#fff;border:1px solid #333;padding:12px;border-radius:10px;outline:none"><option value="">Prefer not to say</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+    <div style="padding:16px 0"><div style="background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center"><span>🔒 Private Account</span><input type="checkbox" id="editPrivate"></div></div>
+    <div style="padding:10px 0 40px"><div style="background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;font-size:11px;opacity:.5;line-height:16px">📡 Real-time Firebase: intube-61cca<br>✅ Public Safe Rules ON<br>⚡ Changes turant sab device pe dikhenge</div></div>
+  </div>
+</div>
 <input id="fileInput" type="file" accept="image/*,video/*"><input id="storyInput" type="file" accept="image/*,video/*">
 
 <div id="bottomBar"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
