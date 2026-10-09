@@ -1,68 +1,86 @@
 import { db } from "./firebase.js";
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Auto User ID banayega, error kabhi nahi dega
-function getMyId(){
-  let id = localStorage.getItem('my_user_id');
-  if(!id){
-    id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-    localStorage.setItem('my_user_id', id);
-    localStorage.setItem('my_user_name', 'User_'+id.slice(-4));
-  }
-  return id;
-}
+const fileInput = document.getElementById('fileInput') || document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
+const captionInput = document.getElementById('captionInput') || document.getElementById('caption');
+const postBtn = document.getElementById('postBtn') || document.getElementById('uploadBtn') || document.querySelector('#newPostModal button') || document.querySelector('button.bg-gradient-to-r');
+const previewImg = document.getElementById('preview') || document.getElementById('previewImg');
 
-async function compress(file){
-  return new Promise((res)=>{
-    if(file.type.includes('video')){
-      const r = new FileReader();
-      r.onload = e => res(e.target.result);
-      r.readAsDataURL(file);
-      return;
-    }
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = e=>{
-      img.src = e.target.result;
-      img.onload = ()=>{
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if(w>800){ h = h*800/w; w = 800; }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        res(canvas.toDataURL('image/jpeg',0.6));
-      };
+let selectedFileBase64 = null;
+let selectedType = 'post';
+
+if(fileInput){
+  fileInput.addEventListener('change', (e)=>{
+    let file = e.target.files[0];
+    if(!file) return;
+    selectedType = file.type.startsWith('video')? 'reel' : 'post';
+    let reader = new FileReader();
+    reader.onload = (ev)=>{
+      selectedFileBase64 = ev.target.result;
+      if(previewImg){
+        if(selectedType==='reel'){
+          previewImg.outerHTML = `<video id="preview" src="${selectedFileBase64}" controls style="width:100%; border-radius:12px; margin-top:10px"></video>`;
+        } else {
+          previewImg.src = selectedFileBase64;
+          previewImg.style.display = 'block';
+        }
+      }
+      if(postBtn) postBtn.textContent = 'Post Now';
     };
     reader.readAsDataURL(file);
   });
 }
 
-const fileInput = document.getElementById('fileInput');
-
-if(fileInput){
- fileInput.addEventListener('change', async e=>{
-  let f = e.target.files[0]; if(!f) return;
-
-  const myId = getMyId(); // Yahi fix hai - ID khud banayega
-  const myName = localStorage.getItem('my_user_name') || 'User';
-
-  let url = await compress(f);
-  try{
-   await addDoc(collection(db,"posts"),{
-     url: url,
-     imageUrl: url,
-     type: f.type.includes('video')? 'reel':'post',
-     userId: myId,
-     user: myId,
-     userName: myName,
-     likes: [], likesCount: 0, comments: [], time: Date.now(), caption: ''
-   });
-   alert('Posted! ✅');
-   document.getElementById('createSheet').style.display='none';
-   document.getElementById('overlay').style.display='none';
-  }catch(err){
-   alert('Upload Error: '+err.message);
+async function doUpload(){
+  if(!selectedFileBase64){
+    alert('Pehle photo/video select karo');
+    return;
   }
-  fileInput.value = '';
- });
+  let myId = localStorage.getItem('my_user_id');
+  let myName = localStorage.getItem('my_user_name') || 'User';
+
+  if(postBtn){
+    postBtn.disabled = true;
+    postBtn.textContent = 'Uploading...';
+  }
+
+  try{
+    await addDoc(collection(db,"posts"), {
+      url: selectedFileBase64,
+      type: selectedType,
+      userId: myId,
+      userName: myName,
+      caption: captionInput? captionInput.value : '',
+      time: Date.now(),
+      likes: [],
+      likesCount: 0,
+      comments: []
+    });
+    alert('Posted! ✅');
+    selectedFileBase64 = null;
+    if(fileInput) fileInput.value = '';
+    if(captionInput) captionInput.value = '';
+    if(previewImg) previewImg.style.display = 'none';
+    // modal band karo agar hai
+    let modal = document.getElementById('newPostModal') || document.getElementById('createModal');
+    if(modal) modal.style.display = 'none';
+    location.reload();
+  }catch(err){
+    alert('Upload fail: '+err.message);
+    console.error(err);
+  }finally{
+    if(postBtn){
+      postBtn.disabled = false;
+      postBtn.textContent = 'Post';
+    }
+  }
 }
+
+if(postBtn){
+  postBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    doUpload();
+  });
+}
+
+window.doUpload = doUpload;
