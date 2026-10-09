@@ -134,37 +134,34 @@ video {
 
 </div>
 <div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-<!-- TOP - Pro Glass -->
-<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(0,0,0,0.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.12);">
-<button onclick="closeEditor()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.14);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);color:white;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</button>
-<div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 8px #00ff88;"></span><span style="color:white;font-weight:700;font-size:16px;letter-spacing:0.3px;">New Post • Pro Editor</span></div>
-<button onclick="goToCaption()" style="background:linear-gradient(135deg,rgba(0,149,246,0.95),rgba(0,120,220,0.95));backdrop-filter:blur(12px);color:white;font-weight:700;font-size:14px;padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);box-shadow:0 4px 20px rgba(0,149,246,0.4),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;">Next →</button>
+<div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;font-family:-apple-system,sans-serif;">
+<!-- TOP PRO GLASS BAR -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(0,0,0,0.75);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.12);">
+<button onclick="closeEditor()" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.22);color:white;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</button>
+<div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 10px #00ff88;"></span><span style="color:white;font-weight:800;font-size:15px;">PRO EDITOR • Glass</span></div>
+<button onclick="goToCaption()" style="background:linear-gradient(135deg,#0095f6,#0077cc);color:white;font-weight:800;padding:9px 22px;border-radius:24px;border:1px solid rgba(255,255,255,0.28);box-shadow:0 6px 24px rgba(0,149,246,0.45),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;font-size:14px;">Next →</button>
 </div>
 
-<!-- CENTER PHOTO -->
-<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,#111,#000);position:relative;overflow:hidden;">
-<img id="editorImage" src="" style="max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.8);border-radius:4px;transition:all 0.25s ease;">
-<div id="textOverlays" style="position:absolute;inset:0;pointer-events:none;"></div>
+<!-- PHOTO AREA -->
+<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,#1a1a1a,#000);position:relative;overflow:hidden;">
+<img id="editorImage" src="" style="max-width:100%;max-height:100%;object-fit:contain;transition:all 0.2s ease;box-shadow:0 20px 80px rgba(0,0,0,0.9);">
+<div id="textOverlays" style="position:absolute;inset:0;pointer-events:none;z-index:5;"></div>
 <canvas id="editorCanvas" style="display:none;"></canvas>
 </div>
 
-<!-- BOTTOM PRO GLASS -->
-<div style="background:rgba(16,16,16,0.82);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-top:1px solid rgba(255,255,255,0.12);box-shadow:0 -10px 40px rgba(0,0,0,0.5);">
-<!-- Tabs Pro -->
-<div style="display:flex;background:rgba(255,255,255,0.04);">
-<button id="tabFilter" onclick="showTab('filter')" style="flex:1;background:rgba(255,255,255,0.08);border:none;color:white;padding:16px 0;font-weight:700;font-size:14px;border-bottom:2px solid white;cursor:pointer;backdrop-filter:blur(8px);">✨ FILTER</button>
-<button id="tab
-<!-- Menu -->
-<script src="./menu.js"></script>
+<!-- BOTTOM PRO GLASS PANEL -->
+<div style="background:rgba(15,15,15,0.88);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-top:1px solid rgba(255,255,255,0.14);box-shadow:0 -12px 50px rgba(0,0,0,0.6);">
+<div style="display:flex;background:rgba(255,255,255,0.05);">
+<button id="tabFilter" onclick="showTab('filter')" style="flex:1;background:rgba(255,255,255,0.10);border:none;color:white;padding:16px 0;font-weight:800;font-size:14px;border-bottom:2.5px solid white;cursor:pointer;">✨ FILTERS</button>
+<button id="tabEdit" onclick="showTab('edit')" style="flex:1;background:transparent;border:none;color:rgba(255,255,255,0.5);padding:16px 0;font-weight:700;font-size:14px;cursor:pointer;">🛠️ EDIT</button>
+</div>
 
-<script>
-const $ = id => document.getElementById(id);
-function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $(v).classList.add('active'); document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active')); if(v==='view-home') $('homeBtn').classList.add('active'); if(v==='view-reels') $('reelsBtn').classList.add('active'); if(v==='view-profile') $('profileBtn').classList.add('active');}
-$('homeBtn').onclick=()=>showView('view-home'); 
-$('reelsBtn').onclick=()=>showView('view-reels'); 
-$('profileBtn').onclick=()=>showView('view-profile'); 
-$('searchBtn').onclick=()=>showView('view-search'); 
-$('notifBtn').onclick=()=>showView('view-notif');
+<!-- FILTERS - 7 Options Pro Glass -->
+<div id="filterRow" style="display:flex;gap:14px;overflow-x:auto;padding:20px 16px;scrollbar-width:none;">
+<div onclick="applyFilter('none',this)" style="min-width:78px;text-align:center;cursor:pointer;"><div class="fbox active" style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(255,255,255,0.06));backdrop-filter:blur(18px);border:2.5px solid white;box-shadow:0 10px 30px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:26px;">🖼️</div><p style="color:white;font-size:11px;font-weight:700;margin-top:9px;">Normal</p></div>
+<div onclick="applyFilter('grayscale(100%)',this)" style="min-width:78px;text-align:center;cursor:pointer;"><div class="fbox" style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,rgba(120,120,120,0.35),rgba(40,40,40,0.25));backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.2);box-shadow:0 8px 26px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:26px;">⚫</div><p style="color:rgba(255,255,255,0.85);font-size:11px;margin-top:9px;">Mono</p></div>
+<div onclick="applyFilter('sepia(0.9)',this)" style="min-width:78px;text-align:center;cursor:pointer;"><div class="fbox" style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,rgba(190,150,110,0.4),rgba(100,70,40,0.3));backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.2);box-shadow:0 8px 26px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:26px;">📜</div><p style="color:rgba(255,255,255,0.85);font-size:11px;margin-top:9px;">Sepia</p></div>
+<div onclick="applyFilter('contrast(140%) saturate(140%)',
 
 document.getElementById('createBtn').onclick = function(e){
  e.preventDefault();
