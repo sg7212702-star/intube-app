@@ -8,23 +8,34 @@ function closeAll(){
   ["overlay","sheetOverlay","sideOverlay"].forEach(i=>$(i)?.classList.remove("show"));
   $("sideMenu")?.classList.remove("show");
 }
-window.closeAll = closeAll; // upload.js ke liye
+window.closeAll=closeAll;
 
 document.addEventListener("DOMContentLoaded",()=>{
   $("addBtn").onclick=openSheet;
-  const addStory = $("addStoryBtn");
-  if(addStory) addStory.onclick=openSheet;
+  $("addStoryBtn")?.addEventListener("click", openSheet);
   $("menuBtn").onclick=()=>{ $("sideMenu").classList.add("show"); $("sideOverlay").classList.add("show"); };
   $("closeMenu").onclick=closeAll;
-  $("overlay").onclick=closeAll;
-  $("sideOverlay").onclick=closeAll;
-  $("sheetOverlay").onclick=closeAll;
-  $("cancelSheet").onclick=closeAll;
+  $("overlay").onclick=closeAll; $("sideOverlay").onclick=closeAll;
+  $("sheetOverlay").onclick=closeAll; $("cancelSheet").onclick=closeAll;
 
-  // *** MAIN FIX - Sirf file kholo, close mat karo yaha ***
-  $("optPost").onclick=()=>{ $("postFile").click(); };
-  $("optStory").onclick=()=>{ $("storyFile").click(); };
-  $("optReel").onclick=()=>{ $("reelFile").click(); };
+  // --- REAL FIX: Naya input har baar ---
+  function pickAndUpload(type){
+    closeAll(); // pehle sheet band
+    setTimeout(()=>{
+      const inp = document.createElement("input");
+      inp.type="file";
+      inp.accept = type==="reel" ? "video/*" : "image/*,video/*";
+      inp.onchange = (e)=>{
+        const file = e.target.files[0];
+        if(file && window.realUpload) window.realUpload(file, type);
+      };
+      inp.click();
+    }, 150);
+  }
+
+  $("optPost").onclick=()=> pickAndUpload("post");
+  $("optStory").onclick=()=> pickAndUpload("story");
+  $("optReel").onclick=()=> pickAndUpload("reel");
 
   document.querySelectorAll(".mItem").forEach(m=>{
     m.onclick=()=>{ alert(m.innerText); closeAll(); };
