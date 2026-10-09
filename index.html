@@ -63,38 +63,39 @@ $('tabReels')?.addEventListener('click',()=>{$('postsGrid').style.display='none'
 <script type="module">
 import { firebaseConfig } from "./firebase.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// FIX 3: Clean User System - No Sanjay Kumar
+// --- CLEAN USER SYSTEM ---
 let myId = localStorage.getItem('my_user_id');
-if(!myId){ myId = 'user_'+Math.random().toString(36).slice(2,8); localStorage.setItem('my_user_id', myId); }
+if(!myId){ myId = 'user_' + Math.random().toString(36).slice(2,8); localStorage.setItem('my_user_id', myId); }
 $('profileTopName').innerText = myId;
 $('nameText').innerText = myId;
 
 // Realtime Profile
 onSnapshot(doc(db, "users", myId), snap=>{
-  if(snap.exists()){
-    let d=snap.data();
-    $('nameText').innerText = d.name || myId;
-    $('bioText').innerText = d.bio || 'Welcome to InstaPro ✨';
-    if(d.photo) $('profilePic').src=d.photo;
-    $('profileTopName').innerText = d.username || myId;
-  }
+ if(snap.exists()){
+  let d=snap.data();
+  $('nameText').innerText = d.name || myId;
+  $('bioText').innerText = d.bio || 'Welcome to InstaPro ✨';
+  if(d.photo) $('profilePic').src=d.photo;
+  $('profileTopName').innerText = d.username || myId;
+ }
 });
 
-// FIXED Edit + Share
+// Edit & Share
 const editSheet=document.getElementById('editSheet');const editOverlay=document.getElementById('editOverlay');
-$('editBtn').onclick=()=>{document.getElementById('eName').value=$('nameText').innerText;document.getElementById('eBio').value=$('bioText').innerText;editSheet.style.display='block';editOverlay.style.display='block';};
-$('eCancel').onclick=()=>{editSheet.style.display='none';editOverlay.style.display='none';};editOverlay.onclick=$('eCancel').onclick;
-$('eSave').onclick=async()=>{let n=document.getElementById('eName').value.trim();let b=document.getElementById('eBio').value.trim();let f=document.getElementById('ePhoto').files[0];let photoUrl=null;if(f){let fd=new FormData();fd.append('file',f);fd.append('upload_preset','intube_free');let r=await fetch(`https://api.cloudinary.com/v1_1/kujnbe8a/image/upload`,{method:'POST',body:fd});let j=await r.json();photoUrl=j.secure_url;}let data={name:n||myId,bio:b||'Welcome ✨',username:myId};if(photoUrl)data.photo=photoUrl;await setDoc(doc(db,"users",myId),data,{merge:true});editSheet.style.display='none';editOverlay.style.display='none';};
-$('shareBtn').onclick=async()=>{let link=location.href+'?user='+myId;if(navigator.share){try{await navigator.share({title:'My InstaPro',url:link});}catch(e){}}else{await navigator.clipboard.writeText(link);alert('Link copied: '+link);}};
+$('editBtn').onclick=()=>{document.getElementById('eName').value=$('nameText').innerText;document.getElementById('eBio').value=$('bioText').innerText;editSheet.style.display='block';editOverlay.style.display='block';}
+$('eCancel').onclick=()=>{editSheet.style.display='none';editOverlay.style.display='none';};editOverlay.onclick=()=>{$('eCancel').onclick();}
+$('eSave').onclick=async()=>{let n=document.getElementById('eName').value.trim();let b=document.getElementById('eBio').value.trim();await setDoc(doc(db,"users",myId),{name:n,bio:b,username:n||myId},{merge:true});$('eCancel').onclick();}
+$('shareBtn').onclick=async()=>{let link=location.href+'?user='+myId;if(navigator.share){try{await navigator.share({title:'InstaPro',url:link});}catch(e){}}else{navigator.clipboard.writeText(link);alert('Link Copied!');}}
 
 let cur='post';
 $('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
 $('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
+
 async function up(file){
   return new Promise((res)=>{
     if(file.type.includes('video')){
@@ -119,15 +120,66 @@ async function up(file){
     reader.readAsDataURL(file);
   });
 }
-}
+
+// --- PRO UPLOAD SYSTEM ---
+$('fileInput').onchange=async e=>{
+ let f=e.target.files[0]; if(!f) return;
+ $('upStatus').innerText='Saving...'; $('upStatus').style.display='block';
+ let url=await up(f);
+ await addDoc(collection(db,"posts"),{url:url, type:cur, userId:myId, likes:[], likesCount:0, comments:[], time:Date.now()});
+ $('upStatus').innerText='Posted!';
+ setTimeout(()=>{ $('upStatus').style.display='none'; $('createSheet').style.display='none'; $('overlay').style.display='none'; },800);
+};
+
+// --- PRO REALTIME FEED WITH LIKE & COMMENT ---
 onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{
-  let all=[]; snap.forEach(d=>all.push({...d.data(), id:d.id}));
-  $('feed').innerHTML=all.map(p=>`<div class=postCard><div style="padding:12px;font-weight:700">${p.user}</div>${p.type==='reel'?`<video src="${p.url}" controls></video>`:`<img src="${p.url}">`}</div>`).join('')||'<div class=empty>No posts yet</div>';
-  $('reelsFeed').innerHTML=all.filter(p=>p.type==='reel').map(p=>`<div class=postCard><video src="${p.url}" controls autoplay muted loop style="height:80vh"></video></div>`).join('')||'<div class=empty>No reels</div>';
-  let mine=all.filter(p=>p.userId===myId);
-  $('postsGrid').innerHTML=mine.filter(p=>p.type!=='reel').map(p=>`<img src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover">`).join('');
-  $('reelsGrid').innerHTML=mine.filter(p=>p.type==='reel').map(p=>`<video src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover"></video>`).join('');
-  $('postsCount').innerText=mine.length;
+ let all=[]; snap.forEach(d=>all.push({...d.data(),id:d.id}));
+ 
+ // Home Feed
+ let feedHTML='';
+ all.forEach(p=>{
+  let isLiked = p.likes && p.likes.includes(myId);
+  feedHTML+=`
+  <div class="postCard">
+    <div style="padding:12px;font-weight:700;display:flex;justify-content:space-between"><span>${p.userId}</span><span style="font-size:12px;color:gray">${p.type}</span></div>
+    ${p.type==='reel' ? `<video src="${p.url}" controls autoplay muted loop style="width:100%"></video>` : `<img src="${p.url}" style="width:100%" ondblclick="window.likeThis('${p.id}')">`}
+    <div style="padding:10px;display:flex;gap:15px;font-size:22px">
+      <span onclick="window.likeThis('${p.id}')" style="cursor:pointer;color:${isLiked?'red':'black'}">${isLiked?'❤️':'🤍'}</span>
+      <span onclick="document.getElementById('c-${p.id}').focus()" style="cursor:pointer">💬</span>
+    </div>
+    <div style="padding:0 12px;font-weight:600">${p.likesCount||0} likes</div>
+    <div style="padding:5px 12px 12px">
+      ${ (p.comments||[]).map(c=>`<div><b>${c.user}:</b> ${c.text}</div>`).join('') }
+      <div style="display:flex;margin-top:8px"><input id="c-${p.id}" placeholder="Add a comment..." style="flex:1;border:none;border-top:1px solid #eee;padding:8px"><button onclick="window.commentThis('${p.id}')" style="border:none;background:none;color:#0095f6;font-weight:700">Post</button></div>
+    </div>
+  </div>`;
+ });
+ $('feed').innerHTML=feedHTML;
+
+ $('reelsFeed').innerHTML=all.filter(p=>p.type==='reel').map(p=> `<div class="postCard"><video src="${p.url}" controls autoplay muted loop style="width:100%;aspect-ratio:9/16;object-fit:cover"></video></div>`).join('');
+ let mine=all.filter(p=>p.userId==myId);
+ $('postsGrid').innerHTML=mine.filter(p=>p.type!='reel').map(p=> `<img src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover">`).join('');
+ $('reelsGrid').innerHTML=mine.filter(p=>p.type==='reel').map(p=> `<video src="${p.url}" style="width:100%;aspect-ratio:1;object-fit:cover"></video>`).join('');
+ $('postsCount').innerText=mine.length;
+
+ // Like Function
+ window.likeThis=async(id)=>{
+  let postRef=doc(db,"posts",id);
+  let postSnap=await getDoc(postRef);
+  let data=postSnap.data();
+  if(data.likes && data.likes.includes(myId)){
+    await updateDoc(postRef,{likes:arrayRemove(myId),likesCount:increment(-1)});
+  }else{
+    await updateDoc(postRef,{likes:arrayUnion(myId),likesCount:increment(1)});
+  }
+ };
+ // Comment Function
+ window.commentThis=async(id)=>{
+  let input=document.getElementById('c-'+id);
+  let text=input.value.trim(); if(!text) return;
+  await updateDoc(doc(db,"posts",id),{comments:arrayUnion({user:myId,text:text,time:Date.now()})});
+  input.value='';
+ };
 });
 </script>
 </body></html>
