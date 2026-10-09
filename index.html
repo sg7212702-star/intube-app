@@ -132,14 +132,28 @@ video {
   <button type="button" id="profileBtn">◯</button>
 </div>
 
-<!-- FIX 2: menu.js ko yahan load karo -->
+<!-- Menu -->
 <script src="./menu.js"></script>
 
-$('createBtn').onclick = (e) => {
+<!-- Create menu and upload buttons -->
+<script>
+const $ = id => document.getElementById(id);
+
+document.getElementById('createBtn').onclick = function(e) {
   e.preventDefault();
-  $('createSheet').style.display = 'block';
-  $('overlay').style.display = 'block';
+  document.getElementById('createSheet').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
 };
+
+document.getElementById('optPost').onclick = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const input = document.getElementById('fileInput');
+  input.accept = 'image/*,video/*';
+  input.click();
+};
+</script>
 
 $('optPost').onclick = (e) => {
   e.preventDefault();
