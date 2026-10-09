@@ -109,9 +109,28 @@ video {
 </div>
 
 <div id="overlay"></div>
-<div id="createSheet"><button id="optPost">📷 New Post</button><button id="optReel">🎬 New Reel</button><button id="closeSheet">Close</button><div id="upStatus" style="display:none;padding:10px;font-size:12px"></div></div>
-<input id="fileInput" type="file" style="display:none">
-<div id="bottomBar"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
+
+<div id="createSheet">
+  <button type="button" id="optPost">📷 New Post</button>
+  <button type="button" id="optReel">🎬 New Reel</button>
+  <button type="button" id="closeSheet">Close</button>
+  <div id="upStatus" style="display:none;padding:10px;font-size:12px"></div>
+</div>
+
+<input
+  id="fileInput"
+  type="file"
+  accept="image/*,video/*"
+  style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0"
+>
+
+<div id="bottomBar">
+  <button type="button" id="homeBtn" class="active">⌂</button>
+  <button type="button" id="reelsBtn">▶</button>
+  <button type="button" id="createBtn">+</button>
+  <button type="button" id="searchBtn">⌕</button>
+  <button type="button" id="profileBtn">◯</button>
+</div>
 
 <!-- FIX 2: menu.js ko yahan load karo -->
 <script src="./menu.js"></script>
