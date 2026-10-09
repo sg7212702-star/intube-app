@@ -1,11 +1,17 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro 👑</title><link rel="stylesheet" href="style.css"></head><body>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>InstaPro</title><link rel="stylesheet" href="style.css?v=11"></head><body>
 <div class="app">
-<header class="topGlass"><div class="logo">InstaPro 👑</div><div class="topIcons"><button class="tBtn" id="notifTopBtn">♡</button><button class="tBtn">✈</button></div></header>
-<div class="storyBar"><div class="sItem"><div class="sRing add">+</div><span>Your story</span></div><div id="otherStories" style="display:flex;gap:12px"></div></div>
-<main id="feed"></main>
-<nav class="bottomGlass"><button class="bBtn active">⌂</button><button class="bBtn">⌕</button><button class="bBtn add">+</button><button class="bBtn">▶</button><button class="bBtn">◯</button></nav>
+<header class="topBar"><b class="logo">InstaPro 👑</b><div class="topBtns"><button id="notifTopBtn">♡</button><button>✈</button></div></header>
+<div class="storyBar"><div class="story"><div class="addStory">+</div><span>Your story</span></div><div id="otherStories"></div></div>
+<div id="feed"></div>
+<nav class="bottomBar">
+  <button class="active" data-view="home">⌂<span>Home</span></button>
+  <button data-view="search">⌕<span>Search</span></button>
+  <button id="addBtn" class="plus">+<span>Create</span></button>
+  <button data-view="reels">▶<span>Reels</span></button>
+  <button data-view="profile">◯<span>Profile</span></button>
+</nav>
 </div>
-<div id="overlay"></div><div id="createSheet" class="sheet"><div class="sheetItem" id="optPost">Post</div><div class="sheetItem" id="optStory">Story</div><div class="sheetItem" id="optReel">Reel</div></div>
+<div id="overlay"></div><div id="createSheet" class="sheet"><div class="handle"></div><div id="optPost" class="item">📷 New Post</div><div id="optStory" class="item">⭕ New Story</div><div id="optReel" class="item">🎬 New Reel</div><div class="item cancel" onclick="closeAll()">Cancel</div></div>
 <input type="file" id="fileInput" hidden><input type="file" id="storyInput" hidden>
-<script type="module" src="firebase.js"></script><script type="module" src="auth.js"></script><script type="module" src="feed.js"></script><script type="module" src="stories.js"></script><script type="module" src="app.js"></script>
+<script type="module" src="firebase.js"></script><script type="module" src="feed.js"></script><script type="module" src="stories.js"></script><script type="module" src="app.js"></script>
 </body></html>
