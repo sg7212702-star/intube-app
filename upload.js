@@ -1,94 +1,177 @@
-import { auth, db } from "./firebase-config.js";
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { firebaseConfig } from "./firebase.js";
 
-const CLOUD_NAME = "kujnbe0a"; // <-- YAHI MISSING THA
+import {
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const app = getApps().length
+  ? getApps()[0]
+  : initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const CLOUD_NAME = "kujnbe0a";
 const UPLOAD_PRESET = "intube_free";
 
-const postBtn = document.getElementById("postBtn");
-const uploadModal = document.getElementById("uploadModal");
-const closeModal = document.getElementById("closeModal");
-const mediaFile = document.getElementById("mediaFile");
-const caption = document.getElementById("caption");
-const uploadBtn = document.getElementById("uploadBtn");
-const storyFile = document.getElementById("storyFile");
-const storyModal = document.getElementById("storyModal");
-const closeStoryModal = document.getElementById("closeStoryModal");
-const storyFileName = document.getElementById("storyFileName");
-const uploadStoryBtn = document.getElementById("uploadStoryBtn");
+const $ = id => document.getElementById(id);
+
+let currentType = "post";
+let isUploading = false;
 
 async function uploadToCloudinary(file) {
-    if (!file) throw new Error("No file selected");
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-    let resourceType = "image";
-    if (file.type && file.type.startsWith("video/")) resourceType = "video";
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: formData });
-    const data = await res.json();
-    if (!res.ok ||!data.secure_url) throw new Error(data.error?.message || "Upload failed");
-    return data;
+  if (!file) {
+    throw new Error("पहले फोटो या वीडियो चुनें।");
+  }
+
+  if (!file.type.startsWith("image/") &&
+      !file.type.startsWith("video/")) {
+    throw new Error("केवल फोटो या वीडियो अपलोड करें।");
+  }
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const resourceType = file.type.startsWith("video/")
+    ? "video"
+    : "image";
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok || !result.secure_url) {
+    throw new Error(
+      result.error?.message || "Cloudinary अपलोड विफल हुआ।"
+    );
+  }
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    resourceType: result.resource_type
+  };
 }
 
-postBtn?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = false; });
-closeModal?.addEventListener("click", () => { if(uploadModal) uploadModal.hidden = true; });
-closeStoryModal?.addEventListener("click", () => { if(storyModal) storyModal.hidden = true; });
+function showStatus(message) {
+  const status = $("upStatus");
 
-storyFile?.addEventListener("change", () => {
-    if (storyFile.files[0] && storyModal) {
-        if (storyFileName) storyFileName.textContent = storyFile.files[0].name;
-        storyModal.hidden = false;
+  if (status) {
+    status.textContent = message;
+    status.style.display = "block";
+  }
+}
+
+function closeUploadSheet() {
+  const sheet = $("createSheet");
+  const overlay = $("overlay");
+  const status = $("upStatus");
+
+  if (sheet) sheet.style.display = "none";
+  if (overlay) overlay.style.display = "none";
+  if (status) status.style.display = "none";
+}
+
+async function createPost(file) {
+  const myId = localStorage.getItem("my_user_id");
+
+  if (!myId) {
+    throw new Error("यूज़र ID नहीं मिली। पेज रिफ्रेश करें।");
+  }
+
+  showStatus("मीडिया Cloudinary पर अपलोड हो रहा है...");
+
+  const media = await uploadToCloudinary(file);
+
+  showStatus("पोस्ट Firestore में सेव हो रही है...");
+
+  await addDoc(collection(db, "posts"), {
+    url: media.url,
+    mediaUrl: media.url,
+    publicId: media.publicId,
+    resourceType: media.resourceType,
+    type: currentType,
+    mediaType: file.type.startsWith("video/")
+      ? "video"
+      : "image",
+    userId: myId,
+    caption: "",
+    likes: [],
+    likesCount: 0,
+    comments: [],
+    time: Date.now(),
+    createdAt: serverTimestamp()
+  });
+
+  showStatus("पोस्ट सफलतापूर्वक अपलोड हो गई! ✅");
+
+  const fileInput = $("fileInput");
+  if (fileInput) fileInput.value = "";
+
+  setTimeout(closeUploadSheet, 900);
+}
+
+function initializeUploadSystem() {
+  const fileInput = $("fileInput");
+  const postOption = $("optPost");
+  const reelOption = $("optReel");
+
+  if (!fileInput || !postOption || !reelOption) {
+    console.error("Upload के लिए HTML elements नहीं मिले।");
+    return;
+  }
+
+  postOption.addEventListener("click", () => {
+    currentType = "post";
+    fileInput.accept = "image/*,video/*";
+    fileInput.click();
+  });
+
+  reelOption.addEventListener("click", () => {
+    currentType = "reel";
+    fileInput.accept = "video/*";
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+
+    if (!file || isUploading) return;
+
+    isUploading = true;
+
+    try {
+      await createPost(file);
+    } catch (error) {
+      console.error("Upload error:", error);
+      showStatus("अपलोड विफल: " + error.message);
+      alert("Upload Error: " + error.message);
+    } finally {
+      isUploading = false;
     }
-});
+  });
+}
 
-uploadBtn?.addEventListener("click", async () => {
-    const user = auth.currentUser; if (!user) return alert("Pehle Login karo!");
-    const file = mediaFile?.files[0]; if (!file) return alert("Photo/Video select karo!");
-    uploadBtn.textContent = "Uploading..."; uploadBtn.disabled = true;
-    try {
-        const data = await uploadToCloudinary(file);
-        await addDoc(collection(db, "posts"), {
-            uid: user.uid,
-            username: user.displayName || user.email,
-            userPhoto: user.photoURL || "",
-            caption: caption?.value || "",
-            mediaUrl: data.secure_url,
-            mediaType: file.type.startsWith("video/")? "video" : "image",
-            createdAt: serverTimestamp(),
-            likes: [],
-            likesCount: 0
-        });
-        if (uploadModal) uploadModal.hidden = true;
-        if (caption) caption.value = "";
-        if (mediaFile) mediaFile.value = "";
-        alert("Post Uploaded ✅");
-        location.reload();
-    } catch (e) { alert("Error: " + e.message); }
-    uploadBtn.textContent = "Upload"; uploadBtn.disabled = false;
-});
-
-uploadStoryBtn?.addEventListener("click", async () => {
-    const user = auth.currentUser; if (!user) return alert("Login karo!");
-    const file = storyFile?.files[0]; if (!file) return alert("Story select karo!");
-    uploadStoryBtn.textContent = "Uploading..."; uploadStoryBtn.disabled = true;
-    try {
-        const data = await uploadToCloudinary(file);
-        await addDoc(collection(db, "stories"), {
-            uid: user.uid,
-            userName: user.displayName || user.email,
-            username: user.displayName || user.email,
-            userPhoto: user.photoURL || "",
-            storyUrl: data.secure_url,
-            storyUrl1: data.secure_url,
-            type: file.type.startsWith("video/")? "video" : "image",
-            mediaType: file.type.startsWith("video/")? "video" : "image",
-            views: [],
-            createdAt: serverTimestamp(),
-            expiresAt: Date.now() + 86400000
-        });
-        if (storyModal) storyModal.hidden = true;
-        if (storyFile) storyFile.value = "";
-        alert("Story Uploaded! ✅");
-        location.reload();
-    } catch (e) { alert("Error: " + e.message); }
-    uploadStoryBtn.textContent = "Upload"; uploadStoryBtn.disabled = false;
-});
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeUploadSystem
+  );
+} else {
+  initializeUploadSystem();
+}
