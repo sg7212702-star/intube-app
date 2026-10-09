@@ -135,17 +135,21 @@ function initializeUploadSystem() {
     return;
   }
 
-  postOption.addEventListener("click", () => {
-    currentType = "post";
-    fileInput.accept = "image/*,video/*";
-    fileInput.click();
-  });
+  postOption.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  currentType = "post";
+  fileInput.setAttribute("accept", "image/*,video/*");
+  fileInput.click();
+});
 
-  reelOption.addEventListener("click", () => {
-    currentType = "reel";
-    fileInput.accept = "video/*";
-    fileInput.click();
-  });
+reelOption.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  currentType = "reel";
+  fileInput.setAttribute("accept", "video/*");
+  fileInput.click();
+});
 
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files?.[0];
