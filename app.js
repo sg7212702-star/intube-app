@@ -1,47 +1,16 @@
-// FINAL APP.JS - BUTTON 100% WORKING
-const openSheet = () => {
-  const sheet = document.getElementById("createSheet");
-  if(sheet){
-    sheet.classList.add("show","open","active");
-    sheet.style.bottom = "0";
-    sheet.style.display = "block";
-  }
-  document.getElementById("overlay")?.classList.add("show");
-  document.getElementById("sheetOverlay")?.classList.add("show");
-  console.log("Sheet Opened ✅");
-};
+// FINAL APP.JS - BUTTONconst $ = (id) => document.getElementById(id);
+const openSheet = () => { $("createSheet").style.bottom = "0"; $("overlay")?.classList.add("show"); $("sheetOverlay")?.classList.add("show"); };
+const closeAll = () => { $("createSheet").style.bottom = "-100%"; $("overlay")?.classList.remove("show"); $("sheetOverlay")?.classList.remove("show"); $("sideMenu")?.classList.remove("show"); $("sideOverlay")?.classList.remove("show"); };
+const openMenu = () => { $("sideMenu")?.classList.add("show"); $("sideOverlay")?.classList.add("show"); };
 
-const closeAll = () => {
-  document.getElementById("createSheet")?.classList.remove("show","open","active");
-  document.getElementById("overlay")?.classList.remove("show");
-  document.getElementById("sheetOverlay")?.classList.remove("show");
-  document.getElementById("sideMenu")?.classList.remove("show");
-  document.getElementById("sideOverlay")?.classList.remove("show");
-};
-
-const openMenu = () => {
-  document.getElementById("sideMenu")?.classList.add("show");
-  document.getElementById("sideOverlay")?.classList.add("show");
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("addBtn")?.addEventListener("click", openSheet);
-  document.getElementById("menuBtn")?.addEventListener("click", openMenu);
-  document.getElementById("closeMenu")?.addEventListener("click", closeAll);
-  document.getElementById("overlay")?.addEventListener("click", closeAll);
-  document.getElementById("sideOverlay")?.addEventListener("click", closeAll);
-  document.getElementById("sheetOverlay")?.addEventListener("click", closeAll);
-  
-  document.getElementById("optPost")?.addEventListener("click", () => {
-    closeAll();
-    document.getElementById("postFile")?.click();
-  });
-  document.getElementById("optStory")?.addEventListener("click", () => {
-    closeAll();
-    document.getElementById("storyFile")?.click();
-  });
+document.addEventListener("click", (e)=>{
+  const t = e.target.closest("#addBtn, #menuBtn, #closeMenu, #overlay, #sideOverlay, #sheetOverlay, #optPost, #optStory, #optReel, #optLive");
+  if(!t) return;
+  if(t.id==="addBtn") openSheet();
+  if(t.id==="menuBtn") openMenu();
+  if(t.id==="closeMenu" || t.id==="overlay" || t.id==="sideOverlay" || t.id==="sheetOverlay") closeAll();
+  if(t.id==="optPost"){ closeAll(); $("postFile")?.click(); }
+  if(t.id==="optStory"){ closeAll(); $("storyFile")?.click(); }
+  if(t.id==="optReel"){ closeAll(); $("reelFile")?.click(); }
 });
-
-// Global ke liye bhi
-window.openSheet = openSheet;
-window.closeAll = closeAll;
+window.closeAll = closeAll; 100% WORKING
