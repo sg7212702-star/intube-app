@@ -1,23 +1,14 @@
-// LOCAL STORAGE SYSTEM - No Cloudinary, No Firebase Storage
-console.log("Local Storage Mode ON");
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Image ko Base64 me convert karke Local Storage me save karega
-export async function uploadToLocal(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      resolve(e.target.result); // yehi image ka URL ban jayega
-    };
-    reader.readAsDataURL(file);
-  });
-}
+export const firebaseConfig = {
+  apiKey: "AIzaSyAc3-JpXa5pHM1l-llqCq1v8z2v8hW8cXk",
+  authDomain: "intube-app.firebaseapp.com",
+  projectId: "intube-app",
+  storageBucket: "intube-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};
 
-// Profile Save
-export function saveProfileLocal(data) {
-  localStorage.setItem("intube_profile", JSON.stringify(data));
-}
-
-// Profile Get
-export function getProfileLocal() {
-  return JSON.parse(localStorage.getItem("intube_profile") || "{}");
-}
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
