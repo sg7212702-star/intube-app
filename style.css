@@ -1,88 +1,56 @@
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:-apple-system,system-ui;overflow-x:hidden}
-.app{max-width:470px;margin:0 auto;background:#000;min-height:100vh;padding-bottom:70px;position:relative}
+body{background:#000;color:#fff;font-family:system-ui}
+.app{max-width:100%;margin:0 auto;min-height:100vh;padding-bottom:80px}
 
-/* TOP - Transparent Glass */
-.topGlass{
-  height:60px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;position:sticky;top:0;z-index:50;
-  background:rgba(0,0,0,0.45);backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border-bottom:1px solid rgba(255,255,255,0.08)
-}
-.logo{font-weight:900;font-size:21px;letter-spacing:.3px}
-.topIcons{display:flex;gap:10px}
-.tBtn{
-  width:34px;height:34px;border-radius:50%;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.12);
-  backdrop-filter:blur(12px);color:#fff;font-size:18px
-}
+/* TOP - Fix */
+.topBar{height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);border-bottom:1px solid #1a1a1a;position:sticky;top:0;z-index:10}
+.logo{font-size:18px;font-weight:800}
+.topBtns{display:flex;gap:8px}
+.topBtns button{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:16px}
 
-/* STORY BAR - Transparent */
-.storyBar{
-  display:flex;gap:14px;padding:12px 12px;overflow-x:auto;
-  background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(255,255,255,0.06)
-}
+/* STORY - Fix */
+.storyBar{display:flex;gap:14px;padding:10px 10px;overflow-x:auto;border-bottom:1px solid #1a1a1a;background:#000}
 .storyBar::-webkit-scrollbar{display:none}
-.sItem{min-width:64px;text-align:center}
-.sRing{
-  width:64px;height:64px;border-radius:50%;padding:2.5px;
-  background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 12px rgba(214,41,118,0.25)
-}
-.sRing.add{
-  background:rgba(255,255,255,0.08);
-  border:1px dashed rgba(255,255,255,0.2);
-  box-shadow:none;font-size:26px;color:#fff
-}
-.sRing img{width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover}
-.sItem span{font-size:11px;opacity:.7;display:block;margin-top:6px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.story{min-width:60px;text-align:center}
+.addStory{width:60px;height:60px;border-radius:50%;background:#151515;border:1px dashed #333;display:flex;align-items:center;justify-content:center;font-size:24px}
+.story span{font-size:10px;display:block;margin-top:5px;opacity:.7}
 
-/* POST - Instagram exact buttons */
-.post{background:#000;border-bottom:1px solid rgba(255,255,255,0.08)}
-.pHead{height:54px;display:flex;align-items:center;gap:10px;padding:0 12px}
-.pHead img{width:32px;height:32px;border-radius:50%;background:#111;object-fit:cover}
-.pHead b{font-size:13px;flex:1}
-.pHead .more{margin-left:auto;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);width:28px;height:28px;border-radius:50%;color:#fff}
-.pImg{width:100%;display:block;max-height:700px;object-fit:cover;background:#0a0a0a;filter:none!important}
-.pActions{height:48px;display:flex;align-items:center;gap:16px;padding:0 12px}
-.pActions button{
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
-  width:32px;height:32px;border-radius:50%;backdrop-filter:blur(10px);
-  color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center
-}
-.pActions button.liked{background:rgba(255,48,64,0.15);border-color:rgba(255,48,64,0.3);color:#ff3040}
+/* POST - Green Filter Hatao */
+.post{border-bottom:1px solid #1a1a1a}
+.postHead{height:50px;display:flex;align-items:center;gap:10px;padding:0 12px}
+.postHead img{width:30px;height:30px;border-radius:50%;background:#222;object-fit:cover}
+.postHead b{font-size:13px}
+.pImg, .post img, #feed img{width:100%;height:auto;display:block;background:#0a0a0a;filter:none!important;-webkit-filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
+.pActions{display:flex;gap:14px;padding:10px 12px;font-size:20px}
 .pActions .save{margin-left:auto}
-.pInfo{padding:0 12px 12px;font-size:13px;line-height:16px}
-.pInfo b{margin-right:4px}
+.caption{padding:0 12px 10px;font-size:13px}
 
-/* BOTTOM - Full Transparent Glass - Instagram jaisa */
-.bottomGlass{
-  position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
-  width:calc(100% - 20px);max-width:450px;height:52px;
+/* BOTTOM - Sab button visible - Yeh main fix hai */
+.bottomBar{
+  position:fixed;bottom:0;left:0;right:0;height:62px;
   display:flex;justify-content:space-around;align-items:center;
-  background:rgba(18,18,20,0.65);backdrop-filter:blur(30px) saturate(180%);
-  -webkit-backdrop-filter:blur(30px) saturate(180%);
-  border:1px solid rgba(255,255,255,0.12);border-radius:28px;
-  z-index:100;box-shadow:0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)
+  background:rgba(0,0,0,0.95);backdrop-filter:blur(25px);
+  border-top:1px solid #1a1a1a;z-index:999;
+  padding-bottom:env(safe-area-inset-bottom)
 }
-.bBtn{
-  background:none;border:none;color:#6b7280;font-size:22px;
-  width:44px;height:44px;border-radius:50%;transition:.2s
+.bottomBar button{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;background:none;border:none;
+  color:#888;font-size:20px;gap:2px;height:100%
 }
-.bBtn.active{color:#fff;background:rgba(255,255,255,0.10);backdrop-filter:blur(10px);box-shadow:0 0 15px rgba(255,255,255,0.15)}
-.bBtn.add{
-  width:28px;height:28px;border:1px solid rgba(255,255,255,0.9)!important;
-  border-radius:8px!important;font-size:18px!important;color:#fff!important;
-  display:flex;align-items:center;justify-content:center
+.bottomBar button span{font-size:9px;display:block;margin-top:1px}
+.bottomBar button.active{color:#fff}
+.bottomBar .plus{
+  width:36px!important;flex:none!important;
+  height:36px!important;background:#fff!important;
+  color:#000!important;border-radius:10px!important;
+  font-size:22px!important;font-weight:900
 }
 
-/* SHEET - Glass */
-.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;width:calc(100% - 20px);max-width:450px;background:rgba(20,20,22,0.85);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:12px;display:none;z-index:200}
+/* SHEET */
+.sheet{position:fixed;left:0;right:0;bottom:0;background:#121212;border-radius:18px 18px 0 0;padding:12px;display:none;z-index:1000;border-top:1px solid #222}
 .sheet.show{display:block}
-.sheetItem{padding:16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin:6px 0;font-weight:600;backdrop-filter:blur(10px)}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);display:none;z-index:150}#overlay.show{display:block}
-.view{display:none}.view.active{display:block}
+.handle{width:36px;height:4px;background:#333;border-radius:10px;margin:0 auto 12px}
+.item{padding:16px;background:#1e1e1e;border-radius:12px;margin:8px 0;font-weight:600}
+.item.cancel{background:#000;text-align:center;color:#aaa}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:900}#overlay.show{display:block}
