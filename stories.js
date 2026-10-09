@@ -1,15 +1,14 @@
 import { db } from "./firebase.js";
-import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const bar = document.getElementById("storyBar") || document.querySelector(".stories");
-if(bar){
-  const q = query(collection(db,"stories"), orderBy("createdAt","desc"));
-  onSnapshot(q,(snap)=>{
-    let html=`<div class="story sItem" onclick="document.getElementById('storyFile').click()"><div class="ring sRing"><img src="https://i.pravatar.cc/100"><span style="position:absolute;font-size:20px">+</span></div><div class="sName">Your Story</div></div>`;
-    snap.forEach(d=>{
-      const s=d.data();
-      html+=`<div class="story sItem"><div class="ring sRing"><img src="${s.fileUrl||s.imageUrl}"></div><div class="sName">User</div></div>`;
-    });
-    bar.innerHTML=html;
+import { collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const box=document.getElementById("otherStories");
+onSnapshot(collection(db,"stories"), snap=>{
+  box.innerHTML="";
+  snap.forEach(d=>{
+    const s=d.data();
+    // 24h expiry logic
+    if(Date.now() - (s.score||0) > 86400000) return;
+    const div=document.createElement("div"); div.className="sItem";
+    div.innerHTML=`<div class="sRing"><img src="${s.url}"></div><p>user</p>`;
+    box.appendChild(div);
   });
-}
+});
