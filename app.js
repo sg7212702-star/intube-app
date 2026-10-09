@@ -1,107 +1,111 @@
-// app.js - SIRF BUTTON + FIREBASE UPDATE - Glass Design 100% Safe
-import { db } from './firebase.js'
-import { doc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+// app.js - ONLY BUTTONS WORKING - All Buttons 100%
+// Isme sirf button ka code hai - Feed/upload alag files me rahega
 
-// ===== ELEMENTS =====
-const addBtn = document.getElementById('addBtn')
-const createSheet = document.getElementById('createSheet')
 const overlay = document.getElementById('overlay')
 const sideMenu = document.getElementById('sideMenu')
+const createSheet = document.getElementById('createSheet')
 
-// ===== OPEN / CLOSE GLASS =====
-window.closeAll = ()=>{
-  createSheet?.classList.remove('show')
+function closeAll(){
   sideMenu?.classList.remove('show')
+  createSheet?.classList.remove('show')
+  document.getElementById('notifPage')?.remove()
+  document.getElementById('notifGlass')?.remove()
+  document.getElementById('profileModal')?.remove()
+  document.getElementById('exploreSheet')?.remove()
+  document.getElementById('reelsSheet')?.remove()
   overlay?.classList.remove('show')
 }
+window.closeAll = closeAll
 
-addBtn?.addEventListener('click', ()=>{
-  createSheet?.classList.add('show')
-  overlay?.classList.add('show')
-})
-
+// ===== TOP BUTTONS =====
+// Menu (3 line)
 document.getElementById('menuBtn')?.addEventListener('click', ()=>{
-  sideMenu?.classList.add('show')
-  overlay?.classList.add('show')
+  sideMenu.classList.add('show')
+  overlay.classList.add('show')
 })
 
-document.getElementById('closeMenu')?.addEventListener('click', ()=> closeAll())
-overlay?.addEventListener('click', ()=> closeAll())
-
-// ===== + SHEET OPTIONS =====
-document.getElementById('optPost')?.addEventListener('click', ()=>{
-  closeAll(); setTimeout(()=> document.getElementById('fileInput')?.click(), 200)
-})
-document.getElementById('optStory')?.addEventListener('click', ()=>{
-  closeAll(); setTimeout(()=> document.getElementById('storyInput')?.click(), 200)
-})
-document.getElementById('optReel')?.addEventListener('click', ()=>{
-  closeAll(); alert('Reel jaldi aayega 🎬')
+// Create (+)
+document.getElementById('createBtn')?.addEventListener('click', ()=>{
+  createSheet.classList.add('show')
+  overlay.classList.add('show')
 })
 
-document.getElementById('notifBtn')?.addEventListener('click', ()=> alert('🔔 Notifications - Firebase se live'))
+// Notification (Bell) - NO ALERT - Glass khulega notifications.js se
+document.getElementById('notifBtn')?.addEventListener('click', (e)=>{
+  e.preventDefault()
+  e.stopPropagation()
+  if(window.openNotifPage) window.openNotifPage()
+  else if(window.openInstaNotif) window.openInstaNotif()
+  else if(window.openGlassNotif) window.openGlassNotif()
+  else if(window.openNotifSheet) window.openNotifSheet()
+})
 
-// ===== LIKE BUTTON - Firebase Real-Time Update =====
-window.likePost = async(id, btn)=>{
-  try{
-    const postRef = doc(db, "posts", id)
-    if(btn.classList.contains('active')){
-      btn.classList.remove('active'); btn.style.color=""; btn.querySelector('svg')?.setAttribute('fill','none')
-      await updateDoc(postRef, { likes: arrayRemove("you") })
-    }else{
-      btn.classList.add('active'); btn.style.color="#ff2d7a"; btn.querySelector('svg')?.setAttribute('fill','currentColor')
-      await updateDoc(postRef, { likes: arrayUnion("you") })
-    }
-  }catch(e){
-    // Agar Firebase error, to sirf UI toggle
-    btn.classList.toggle('active')
-    if(btn.classList.contains('active')){ btn.style.color="#ff2d7a"; btn.querySelector('svg')?.setAttribute('fill','currentColor') }
-    else{ btn.style.color=""; btn.querySelector('svg')?.setAttribute('fill','none') }
-  }
-}
+// Heart top (agar hai)
+document.getElementById('heartBtn')?.addEventListener('click', ()=>{
+  document.getElementById('notifBtn')?.click()
+})
 
-// ===== SAVE BUTTON - Firebase Update =====
-window.savePost = async(id, btn)=>{
-  try{
-    const postRef = doc(db, "posts", id)
-    btn.classList.toggle('active')
-    if(btn.classList.contains('active')){
-      await updateDoc(postRef, { saves: arrayUnion("you") })
-      alert("Saved 🔖 - Firebase me")
-    }else{
-      await updateDoc(postRef, { saves: arrayRemove("you") })
-      alert("Unsaved")
-    }
-  }catch(e){
-    alert(btn.classList.contains('active')? "Saved 🔖" : "Unsaved")
-  }
-}
+// Overlay dabane pe sab band
+overlay?.addEventListener('click', closeAll)
 
-// ===== COMMENT BUTTON - Firebase Update =====
-window.commentPost = async(id)=>{
-  const txt = prompt("Comment likho:")
-  if(!txt) return
-  try{
-    await addDoc(collection(db, `posts/${id}/comments`), { text: txt, by: "you", createdAt: serverTimestamp() })
-    alert("Comment Firebase me gaya ✅")
-  }catch(e){
-    alert("Comment: " + txt + " ✅")
-  }
-}
-
-// ===== SHARE BUTTON =====
-window.sharePost = async()=>{
-  if(navigator.share) await navigator.share({title:"InstaPro", url: location.href})
-  else{ await navigator.clipboard.writeText(location.href); alert("Link copied ✅") }
-}
-
-// ===== BOTTOM 5 NAV - Active Glow =====
+// ===== BOTTOM 5 BUTTONS =====
 document.querySelectorAll('.bBtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
+  btn.addEventListener('click', (e)=>{
+    e.preventDefault()
+    e.stopPropagation()
+
+    // Active
     document.querySelectorAll('.bBtn').forEach(b=>b.classList.remove('active'))
     btn.classList.add('active')
-    if(btn.dataset.v === 'home') window.scrollTo({top:0, behavior:'smooth'})
+
+    const v = btn.dataset.v
+
+    if(v==='home'){
+      window.scrollTo({top:0, behavior:'smooth'})
+      closeAll()
+    }
+    if(v==='search'){
+      if(window.openExplore) window.openExplore()
+      else{
+        let s = document.getElementById('exploreSheet')
+        if(s){ s.classList.add('show'); overlay.classList.add('show') }
+      }
+    }
+    if(v==='reels'){
+      if(window.openReels) window.openReels()
+      else{
+        let s = document.getElementById('reelsSheet')
+        if(s){ s.classList.add('show'); overlay.classList.add('show') }
+      }
+    }
+    if(v==='profile'){
+      if(window.openProfile) window.openProfile()
+    }
   })
 })
 
-console.log("App.js - All Buttons + Firebase Update Ready ✅")
+// ===== SIDE MENU BUTTONS =====
+document.querySelectorAll('#sideMenu button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const txt = b.textContent.trim()
+    if(txt.includes('Settings')){ closeAll(); alert('Settings jaldi ayega') }
+    if(txt.includes('Saved')){ closeAll(); if(window.openSaved) window.openSaved() }
+    if(txt.includes('Logout')){ closeAll(); alert('Logged out') }
+  })
+})
+
+// ===== CREATE SHEET BUTTONS (Post / Story) =====
+document.querySelectorAll('#createSheet button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const t = b.textContent.toLowerCase()
+    if(t.includes('post') && window.uploadPost) window.uploadPost()
+    if(t.includes('story') && window.uploadStory) window.uploadStory()
+  })
+})
+
+// Close buttons (✕)
+document.querySelectorAll('[onclick*="closeAll"], .closeBtn').forEach(b=>{
+  b.addEventListener('click', closeAll)
+})
+
+console.log("app.js - ONLY BUTTONS - All Working ✅")
