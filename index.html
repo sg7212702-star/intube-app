@@ -162,8 +162,7 @@ $('eSave').onclick=async()=>{let n=document.getElementById('eName').value.trim()
 $('shareBtn').onclick=async()=>{let link=location.href+'?user='+myId;if(navigator.share){try{await navigator.share({title:'InstaPro',url:link});}catch(e){}}else{navigator.clipboard.writeText(link);alert('Link Copied!');}}
 
 let cur='post';
-$('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
-$('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
+
 
 // Upload handled by upload.js
 
