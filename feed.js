@@ -1,30 +1,38 @@
 import { db } from "./firebase.js";
-import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const feed=document.getElementById('feed');
-const postsGrid=document.getElementById('postsGrid');
-const reelsGrid=document.getElementById('reelsGrid');
-const myId=localStorage.getItem('my_user_id')||'user_'+Math.random().toString(36).substr(2,6);
-localStorage.setItem('my_user_id',myId);
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const $=id=>document.getElementById(id);
+const feed=$('feed');
+const myId=localStorage.getItem('my_user_id')||'user';
 
-onSnapshot(query(collection(db,"posts"),orderBy("time","desc")), snap=>{
+// INSTAGRAM ALGORITHM: Time decay + Likes + Following boost
+function instaScore(p){
+  const hoursAgo = (Date.now() - p.time) / 3600000;
+  const timeScore = Math.max(0, 100 - hoursAgo*2); // naya post = high score
+  const likeScore = (p.likesCount||0) * 5;
+  const followBoost = p.userId===myId ? 50 : 0; // apne post ko boost
+  return timeScore + likeScore + followBoost;
+}
+
+onSnapshot(query(collection(db,"posts"), orderBy("time","desc")), snap=>{
   if(!feed) return;
-  if(snap.empty){ feed.innerHTML='<div class="empty">No posts yet - Be first to post!</div>'; return; }
+  let posts=[]; snap.forEach(d=>posts.push({id:d.id,...d.data()}));
+  // Algorithm sort
+  posts.sort((a,b)=> instaScore(b) - instaScore(a));
+  
+  if(posts.length===0){ feed.innerHTML='<div class="empty">No posts yet - Be first to post! ✨</div>'; return; }
   feed.innerHTML='';
-  let myCount=0;
-  let postsHTML='';
-  let reelsHTML='';
-  snap.forEach(d=>{
-    let p=d.data();
-    if(p.userId===myId) myCount++;
-    let media = p.url.startsWith('data:video') || p.type==='reel'? `<video src="${p.url}" controls playsinline style="width:100%"></video>` : `<img src="${p.url}" style="width:100%">`;
-    feed.innerHTML+=`<div class="postCard"><div style="padding:10px;display:flex;gap:8px;align-items:center"><img src="https://i.pravatar.cc/40?u=${p.userId}" style="width:32px;height:32px;border-radius:50%"><b>${p.userName||'User'}</b></div>${media}<div style="padding:10px"><b>${p.userName||'User'}</b> ${p.caption||''}</div><div style="padding:0 12px 12px;display:flex;gap:12px">♡ ${p.likesCount||0} 💬 ↗️</div></div>`;
-    if(p.type==='reel' || p.url.startsWith('data:video')) reelsHTML+=`<div style="aspect-ratio:9/16;background:#111"><video src="${p.url}" style="width:100%;height:100%;object-fit:cover"></video></div>`;
-    else postsHTML+=`<div style="aspect-ratio:1/1;background:#111"><img src="${p.url}" style="width:100%;height:100%;object-fit:cover"></div>`;
+  posts.forEach(p=>{
+    let div=document.createElement('div'); div.className='postCard';
+    div.innerHTML=`
+    <div class="postHead"><img src="https://i.pravatar.cc/100?u=${p.userId}"><div><b>${p.userName||'User'}</b><br><span style="font-size:11px;opacity:0.6">${Math.floor((Date.now()-p.time)/60000)}m ago • ${p.likesCount||0} likes</span></div><div style="margin-left:auto">⋯</div></div>
+    <div class="postMedia"><img src="${p.url}" style="width:100%"></div>
+    <div class="postActions"><span onclick="likePost('${p.id}')">♡ ${p.likesCount||0}</span> <span>💬</span> <span>↗️</span></div>
+    <div style="padding:0 12px 12px"><b>${p.userName}</b> ${p.caption||''}</div>`;
+    feed.appendChild(div);
   });
-  document.getElementById('postsCount').innerText=myCount;
-  if(postsGrid) postsGrid.innerHTML=postsHTML;
-  if(reelsGrid) reelsGrid.innerHTML=reelsHTML;
-}, err=>{
-  console.log(err);
-  feed.innerHTML='<div class="empty">Firebase error - Check config</div>';
 });
+
+window.likePost=async(id)=>{
+  const ref=doc(db,"posts",id);
+  await updateDoc(ref,{likesCount:increment(1)});
+};
