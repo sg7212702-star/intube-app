@@ -1,115 +1,49 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro</title>
-<link rel="stylesheet" href="./style.css">
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro 👑</title>
 <style>
-body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
-#topBar{display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2a0a2a;position:sticky;top:0;background:#0e0014;z-index:10}
-.logo{font-weight:900;font-size:22px;background:linear-gradient(90deg,#ff4d9d,#ff8a5b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.btn{width:42px;height:42px;border-radius:50%;border:1px solid #333;background:#1a0a1a;color:#fff}
-.view{display:none;min-height:85vh;padding-bottom:90px}.view.active{display:block}
-.postCard{background:#1a0e1e;border-radius:18px;margin:12px auto;overflow:hidden;border:1px solid #2a1630;width:calc(100% - 24px);max-width:600px}
-#bottomBar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px;background:#0e0014;border-top:1px solid #2a0a2a;z-index:50}
-#bottomBar button{width:64px;height:52px;border-radius:18px;border:none;background:#1c0e1e;color:#fff;font-size:22px}
-#bottomBar button.active{background:#2a0a2a;box-shadow:0 0 12px #ff4d9d}
-.p-header{display:flex;gap:16px;padding:16px;align-items:center}
-.p-avatar{width:86px;height:86px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
-.p-avatar img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #0e0014}
-.p-stats{display:flex;flex:1;justify-content:space-around;text-align:center}
-#storyBar{display:flex;gap:14px;overflow-x:auto;padding:12px;border-bottom:1px solid #222;scrollbar-width:none}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(120% 120% at 0% 0%, #0f172a 0%, #020617 50%, #000000 100%);color:#fff;font-family:system-ui,sans-serif;overflow-x:hidden;padding-bottom:90px}
+.top{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(180deg, rgba(15,23,42,0.9) 0%, rgba(2,6,23,0.8) 100%);backdrop-filter:blur(30px);border-bottom:1px solid rgba(56,189,248,0.15)}
+.logo{font-weight:900;font-size:26px;background:linear-gradient(90deg,#38bdf8,#818cf8,#c084fc,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.glassBtn{width:40px;height:40px;border-radius:50%;border:1px solid rgba(56,189,248,0.2);background:rgba(56,189,248,0.15);color:#e0f2fe;display:flex;align-items:center;justify-content:center}
+#storyBar{display:flex;gap:16px;padding:14px 12px;overflow-x:auto;scrollbar-width:none;background:rgba(2,6,23,0.6);border-bottom:1px solid rgba(56,189,248,0.08)}
 #storyBar::-webkit-scrollbar{display:none}
-.sItem{min-width:66px;text-align:center}.sPlus{width:62px;height:62px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px dashed #555}
-.sRing{width:62px;height:62px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
-.sRing img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid #000}
-.sName{font-size:11px;margin-top:4px}
-.empty{padding:60px;text-align:center;opacity:.4}
-#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998}
-#createSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1022;border-radius:22px 22px 0 0;padding:18px;z-index:9999}
-#profileMenuSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1235;padding:20px;z-index:10000;border-radius:20px 20px 0 0}
-#fileInput,#storyInput{position:fixed;left:-9999px;width:1px;height:1px;opacity:0}
-*{box-sizing:border-box}html,body{width:100%;max-width:100%;overflow-x:hidden}
-</style></head><body>
-
-<div id="topBar"><button id="addBtn" class="btn">+</button><div class="logo">InstaPro 👑</div><button id="notifBtn" class="btn">♡</button></div>
-
-<div id="view-home" class="view active">
-  <div id="storyBar">
-    <div class="sItem" id="yourStoryBtn"><div class="sPlus">+</div><div class="sName">Your Story</div></div>
-    <div id="otherStories" style="display:flex;gap:14px"></div>
-  </div>
-  <div id="feed"><div class="empty">Loading feed...</div></div>
-</div>
-
-<div id="view-reels" class="view"><div id="reelsFeed"><div class="empty">Loading reels...</div></div></div>
-<div id="view-search" class="view"><div style="padding:12px"><input id="searchIn" placeholder="Search..." style="width:100%;padding:14px;border-radius:12px;background:#1a0e1e;border:1px solid #333;color:#fff"></div><div id="searchRes"></div></div>
-<div id="view-notif" class="view"><div style="padding:16px">Notifications</div></div>
-
-<div id="view-profile" class="view">
-  <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center"><b id="profileTopName">_</b><div id="menuBtn" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer">☰</div></div>
-  <div class="p-header"><div class="p-avatar"><img id="profilePic" src="https://i.pravatar.cc/150?u=new"></div><div class="p-stats"><div><b id="postsCount">0</b><br><span style="font-size:12px;opacity:.6">Posts</span></div><div><b>0</b><br><span style="font-size:12px;opacity:.6">Followers</span></div><div><b>0</b><br><span style="font-size:12px;opacity:.6">Following</span></div></div></div>
-  <div style="padding:0 16px 4px"><b id="nameText">New User</b> <span id="categoryText" style="font-size:12px;opacity:.6;background:#2a2a3a;padding:2px 6px;border-radius:10px">Creator</span><div id="bioText" style="margin-top:6px">Welcome to InstaPro ✨</div></div>
-  <div style="display:flex;gap:8px;padding:0 16px 16px"><button id="editBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:#2a2a3a;color:#fff;font-weight:600">Edit profile</button><button id="shareBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:#2a2a3a;color:#fff;font-weight:600">Share profile</button></div>
-  <div style="display:flex;border-top:1px solid #222"><button id="tabPosts" style="flex:1;padding:12px;background:transparent;border:none;color:#fff;font-weight:700;opacity:1;border-bottom:2px solid #fff">POSTS</button><button id="tabReels" style="flex:1;padding:12px;background:transparent;border:none;color:#fff;opacity:.5;font-weight:700">REELS</button></div>
-  <div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px"></div><div id="reelsGrid" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
-</div>
-
-<!-- SHEETS - SINGLE TIME ONLY -->
-<div id="overlay"></div>
-<div id="createSheet"><div style="width:40px;height:5px;background:#444;border-radius:10px;margin:0 auto 12px"></div><div style="display:flex;justify-content:space-between;padding-bottom:12px"><b>Create</b><button id="closeSheet" style="background:#333;color:#fff;border:none;width:30px;height:30px;border-radius:50%">✕</button></div><button id="optPost" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px;text-align:left">📷 New Post</button><button id="optReel" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px;text-align:left">🎬 New Reel</button><button id="optStory" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;text-align:left">⭕ New Story</button></div>
-
-<div id="profileMenuSheet"><div style="width:40px;height:4px;background:#555;margin:0 auto 15px;border-radius:10px"></div><div id="mSettings" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">⚙️ Settings and privacy</div><div style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">📊 Your activity</div><div id="mLogout" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0;color:#ff5a5b">🚪 Log out</div><div onclick="document.getElementById('profileMenuSheet').style.display='none';document.getElementById('overlay').style.display='none'" style="padding:14px;background:#333;border-radius:12px;text-align:center;margin-top:10px">Cancel</div></div>
-
-<div id="subPage" style="display:none;position:fixed;inset:0;background:#0e0e14;z-index:10001;overflow:auto"><div style="display:flex;gap:12px;padding:14px;border-bottom:1px solid #222;position:sticky;top:0;background:#0e0e14"><button id="subBack" style="background:none;border:none;color:#fff;font-size:22px">←</button><b id="subTitle">Settings</b></div><div id="subContent" style="padding:16px"></div></div>
-  <!-- PROFILE EDIT - INSTA REAL TIME -->
-<div id="editProfileSheet" style="display:none;position:fixed;inset:0;background:#0e0014;z-index:10010;overflow:auto">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #2a1630;position:sticky;top:0;background:#0e0014;z-index:2">
-    <div style="display:flex;gap:16px;align-items:center"><span onclick="closeEditProfile()" style="font-size:24px;cursor:pointer">✕</span><b style="font-size:18px">Edit profile</b></div>
-    <button onclick="saveProfileReal()" style="background:#0095f6;color:#fff;border:none;padding:8px 18px;border-radius:20px;font-weight:800">Done ✓</button>
-  </div>
-
-  <div style="padding:20px 16px;text-align:center;border-bottom:1px solid #222">
-    <div style="position:relative;width:96px;height:96px;margin:0 auto"><img id="editAvatarPreview" src="https://i.pravatar.cc/150" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #2a1630"><div onclick="document.getElementById('avatarInput').click()" style="position:absolute;bottom:0;right:0;background:#0095f6;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #0e0014;cursor:pointer">📷</div></div>
-    <div onclick="document.getElementById('avatarInput').click()" style="color:#0095f6;margin-top:10px;font-weight:700;cursor:pointer">Change profile photo</div>
-    <input id="avatarInput" type="file" accept="image/*" style="display:none">
-  </div>
-
-  <div style="padding:0 16px">
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Name</div><input id="editName" placeholder="Name" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none"><div style="font-size:11px;opacity:.4;margin-top:4px">Help people discover your account by using the name you're known by.</div></div>
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Username</div><input id="editUsername" placeholder="Username" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none"></div>
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Category</div><select id="editCategory" style="width:100%;background:#1a0e1e;color:#fff;border:1px solid #333;padding:12px;border-radius:10px;outline:none"><option>Creator</option><option>Digital creator</option><option>Artist</option><option>Entrepreneur</option><option>Photographer</option><option>Musician</option><option>Personal blog</option></select></div>
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Bio</div><textarea id="editBio" placeholder="Bio ✨" style="width:100%;background:transparent;border:none;color:#fff;font-size:16px;outline:none;resize:none;height:70px"></textarea><div style="text-align:right;font-size:12px;opacity:.4"><span id="bioCount">0</span>/150</div></div>
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Links</div><input id="editLink" placeholder="Add link" style="width:100%;background:transparent;border:none;color:#0095f6;font-size:15px;outline:none"></div>
-    <div style="padding:16px 0;border-bottom:1px solid #1a1a1a"><div style="font-size:13px;opacity:.6;margin-bottom:6px">Gender</div><select id="editGender" style="width:100%;background:#1a0e1e;color:#fff;border:1px solid #333;padding:12px;border-radius:10px;outline:none"><option value="">Prefer not to say</option><option>Male</option><option>Female</option><option>Other</option></select></div>
-    <div style="padding:16px 0"><div style="background:rgba(255,255,255,0.06);padding:12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center"><span>🔒 Private Account</span><input type="checkbox" id="editPrivate"></div></div>
-    <div style="padding:10px 0 40px"><div style="background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;font-size:11px;opacity:.5;line-height:16px">📡 Real-time Firebase: intube-61cca<br>✅ Public Safe Rules ON<br>⚡ Changes turant sab device pe dikhenge</div></div>
-  </div>
-</div>
-<input id="fileInput" type="file" accept="image/*,video/*"><input id="storyInput" type="file" accept="image/*,video/*">
-<div id="includeStoryViewer"></div>
-
-<div id="bottomBar"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
-
-<!-- EDITOR - SINGLE TIME -->
-<div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:10002;flex-direction:column">
-<div id="editTop" style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(0,0,0,.85);borde
-<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:relati
-<div id="editBottom" style="background:rgba(20,20,20,.92);border-top:1px solid rgba(255,255,255,.12)"><div style="display:flex"><button
-<div id="captionPage" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.95);z-index:10003;flex-direc
-</div>
-
-<!-- SIRF DESIGN - LOGIC ALAG FILE ME -->
-<script type="module" src="./firebase.js"></script>
-<script type="module" src="./menu.js"></script>
-<script type="module" src="./stories.js"></script>
-<script type="module" src="./story-seen.js"></script>
-<script type="module" src="./feed.js"></script>
-<script type="module" src="./reels.js"></script>
-<script type="module" src="./profile.js"></script>
-<script type="module" src="./upload.js"></script>
-<script type="module" src="./editor.js"></script>
-<script type="module" src="./search.js"></script>
+.sItem{flex:0 0 68px;min-width:68px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.sRing{width:68px;height:68px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#38bdf8,#818cf8,#c084fc,#f472b6);display:flex;align-items:center;justify-content:center}
+.sRing img{width:100%;height:100%;border-radius:50%;border:3px solid #020617;object-fit:cover;background:#0f172a}
+.sName{font-size:11px;color:#bae6fd}
+.view{display:none;min-height:60vh}.view.active{display:block !important}
+.postCard{margin:16px;background:linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,41,59,0.6));backdrop-filter:blur(24px);border:1px solid rgba(56,189,248,0.12);border-radius:20px;overflow:hidden}
+.postHead{padding:12px 16px;display:flex;gap:10px;align-items:center}
+.postHead img{width:34px;height:34px;border-radius:50%}
+.postMedia{width:100%;display:block;max-height:75vh;object-fit:cover;background:#111}
+.postActions{display:flex;gap:18px;padding:12px 16px;font-size:22px}
+.bottom{position:fixed;bottom:0;left:0;right:0;z-index:70;display:flex;justify-content:space-around;padding:10px 0 14px;background:linear-gradient(180deg, rgba(2,6,23,0.85) 0%, rgba(15,23,42,0.95) 100%);backdrop-filter:blur(40px);border-top:1px solid rgba(56,189,248,0.12)}
+.bottom button{width:48px;height:48px;border-radius:14px;border:none;background:transparent;color:#64748b;font-size:24px;display:flex;align-items:center;justify-content:center;transition:0.2s}
+.bottom button.active{background:linear-gradient(135deg, rgba(56,189,248,0.2), rgba(129,140,248,0.15));color:#e0f2fe;border:1px solid rgba(56,189,248,0.25);transform:translateY(-2px)}
+#overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);backdrop-filter:blur(16px);z-index:90;display:none}
+#overlay.show{display:block}
+#createSheet{position:fixed;left:12px;right:12px;bottom:90px;background:linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95));border:1px solid rgba(56,189,248,0.15);border-radius:22px;padding:8px;display:none;z-index:95}
+#createSheet.show{display:block}
+.sheetItem{padding:18px;border-radius:14px;margin:6px;background:rgba(56,189,248,0.08);color:#e0f2fe;text-align:center;font-weight:600;cursor:pointer}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.grid3 img{width:100%;aspect-ratio:1;object-fit:cover}
+</style></head>
+<body>
+<div class="top"><button class="glassBtn" id="addTopBtn">+</button><div class="logo">InstaPro 👑</div><button class="glassBtn">♡</button></div>
+<div id="storyBar"></div>
+<div id="homeView" class="view active"><div id="feed"></div></div>
+<div id="searchView" class="view"><div style="margin:12px;padding:12px;background:rgba(15,23,42,0.7);border-radius:16px;border:1px solid rgba(56,189,248,0.1);display:flex;gap:8px">🔍<input id="searchInput" placeholder="Search..." style="background:transparent;border:none;outline:none;color:#fff;width:100%"></div><div id="searchResult" class="grid3"></div></div>
+<div id="reelsView" class="view"><div style="padding:40px;text-align:center;opacity:0.5">Reels - Premium Blue Coming</div></div>
+<div id="profileView" class="view"><div style="padding:20px;display:flex;gap:16px"><div class="sRing" style="width:86px;height:86px"><img src="https://i.pravatar.cc/150?img=12"></div><div style="flex:1;display:flex;justify-content:space-around;text-align:center"><div><b id="postCount">0</b><br>Posts</div><div><b>1.2K</b><br>Followers</div><div><b>340</b><br>Following</div></div></div><div class="grid3" id="profileGrid"></div></div>
+<nav class="bottom"><button id="homeBtn" data-view="homeView" class="active">⌂</button><button id="reelsBtn" data-view="reelsView">▶</button><button id="addBtn">＋</button><button id="searchBtn" data-view="searchView">⌕</button><button id="profileBtn" data-view="profileView">◯</button></nav>
+<div id="overlay"></div><div id="createSheet"><div class="sheetItem" onclick="alert('New Post')">📷 New Post</div><div class="sheetItem" onclick="alert('New Story')">⭕ New Story</div><div class="sheetItem" id="closeSheet" style="background:rgba(255,80,80,.15)">Cancel</div></div>
 <script>
-fetch('./story-viewer.html').then(r=>r.text()).then(h=>{
-  document.getElementById('includeStoryViewer').innerHTML=h;
-});
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+let posts=[{id:1,user:'ananya',avatar:'https://i.pravatar.cc/150?img=1',img:'https://picsum.photos/seed/insta1/600/800',likes:342,liked:false},{id:2,user:'rohit_k',avatar:'https://i.pravatar.cc/150?img=8',img:'https://picsum.photos/seed/insta2/600/800',likes:1205,liked:false},{id:3,user:'priya',avatar:'https://i.pravatar.cc/150?img=5',img:'https://picsum.photos/seed/insta3/600/800',likes:89,liked:false}];
+let stories=[{user:'Your story',avatar:'https://i.pravatar.cc/150?img=12'},{user:'ananya',avatar:'https://i.pravatar.cc/150?img=1'},{user:'rohit_k',avatar:'https://i.pravatar.cc/150?img=8'},{user:'priya',avatar:'https://i.pravatar.cc/150?img=5'}];
+function showView(id){$$('.view').forEach(v=>v.classList.remove('active'));$('#'+id).classList.add('active');$$('.bottom button').forEach(b=>b.classList.remove('active'));const ab=$(`[data-view="${id}"]`);if(ab)ab.classList.add('active')}
+function render(){const f=$('#feed');if(f)f.innerHTML=posts.map(p=>`<div class="postCard"><div class="postHead"><img src="${p.avatar}"><b>${p.user}</b></div><img class="postMedia" src="${p.img}"><div class="postActions"><span class="likeBtn" data-id="${p.id}" style="cursor:pointer">${p.liked?'❤️':'🤍'}</span><span>💬</span><span>✈️</span></div><div style="padding:0 16px 16px"><b>${p.likes} likes</b> • ${p.user}</div></div>`).join('');const sb=$('#storyBar');if(sb)sb.innerHTML=stories.map(s=>`<div class="sItem"><div class="sRing"><img src="${s.avatar}"></div><span class="sName">${s.user}</span></div>`).join('');const pg=$('#profileGrid');if(pg)pg.innerHTML=posts.map(p=>`<img src="${p.img}">`).join('');const pc=$('#postCount');if(pc)pc.textContent=posts.length}
+document.addEventListener('DOMContentLoaded',()=>{render();$$('.bottom button[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));const open=()=>{$('#createSheet').classList.add('show');$('#overlay').classList.add('show')};const close=()=>{$('#createSheet').classList.remove('show');$('#overlay').classList.remove('show')};$('#addBtn').addEventListener('click',open);$('#addTopBtn').addEventListener('click',open);$('#overlay').addEventListener('click',close);$('#closeSheet').addEventListener('click',close);document.addEventListener('click',e=>{const l=e.target.closest('.likeBtn');if(l){const p=posts.find(x=>x.id==l.dataset.id);if(p){p.liked=!p.liked;p.likes+=p.liked?1:-1;render()}}});showView('homeView')});
 </script>
 </body></html>
