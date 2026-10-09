@@ -124,15 +124,8 @@ async function up(file){
   });
 }
 
-// --- PRO UPLOAD SYSTEM ---
-$('fileInput').onchange=async e=>{
- let f=e.target.files[0]; if(!f) return;
- $('upStatus').innerText='Saving...'; $('upStatus').style.display='block';
- let url=await up(f);
- await addDoc(collection(db,"posts"),{url:url, type:cur, userId:myId, likes:[], likesCount:0, comments:[], time:Date.now()});
- $('upStatus').innerText='Posted!';
- setTimeout(()=>{ $('upStatus').style.display='none'; $('createSheet').style.display='none'; $('overlay').style.display='none'; },800);
-};
+<!-- NEW UPLOAD SYSTEM -->
+<script type="module" src="./upload.js"></script>
 
 // --- PRO REALTIME FEED WITH LIKE & COMMENT ---
 onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{
