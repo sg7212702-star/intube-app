@@ -193,5 +193,15 @@ document.getElementById('closeSheet').onclick=document.getElementById('overlay')
 document.getElementById('optPost').onclick=(e)=>{e.preventDefault();let i=document.getElementById('fileInput');i.accept='image/*,video/*';i.value='';i.click();};
 document.getElementById('optReel').onclick=(e)=>{e.preventDefault();let i=document.getElementById('fileInput');i.accept='video/*';i.value='';i.click();};
 </script>
+  <script>
+(function(){const $=id=>document.getElementById(id);
+function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));let e=$(v);if(e)e.classList.add('active');document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active'));if(v=='view-home')$('homeBtn').classList.add('active');if(v=='view-reels')$('reelsBtn').classList.add('active');if(v=='view-profile')$('profileBtn').classList.add('active');if(v=='view-search')$('searchBtn').classList.add('active');}
+$('homeBtn').onclick=()=>showView('view-home');
+$('reelsBtn').onclick=()=>showView('view-reels');
+$('profileBtn').onclick=()=>showView('view-profile');
+$('searchBtn').onclick=()=>showView('view-search');
+let n=$('notifBtn');if(n)n.onclick=()=>showView('view-notif');
+})();
+  </script>
 </body>
 </html>
