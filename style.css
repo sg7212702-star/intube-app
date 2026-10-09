@@ -7,8 +7,6 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
 .app{max-width:470px;margin:0 auto;min-height:100vh;padding-bottom:90px;background:#000;position:relative}
-
-/* TOP GLASS */
 .topGlass{
   height:60px;display:flex;justify-content:space-between;align-items:center;
   padding:0 14px;position:sticky;top:0;z-index:50;
@@ -25,8 +23,6 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
   backdrop-filter:blur(15px);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1)
 }
 .iconGlass .dot{position:absolute;top:4px;right:5px;width:8px;height:8px;background:var(--pink);border-radius:50%;box-shadow:0 0 10px var(--pink)}
-
-/* STORY GLASS */
 .storyGlass{
   display:flex;gap:12px;padding:12px;overflow-x:auto;
   background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);
@@ -38,14 +34,12 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
 .sRing.add{background:var(--glass2);border:1px dashed var(--border);box-shadow:none;font-size:28px;color:#fff}
 .sRing img{width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover;display:block}
 .sItem p{font-size:11px;opacity:.7;margin-top:6px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* POST GLASS - Premium */
 .post{background:rgba(10,10,12,0.8);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2px}
 .postTop{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px}
 .postTop img{width:34px;height:34px;border-radius:50%;background:#111;object-fit:cover;border:1px solid var(--border)}
 .postTop b{font-size:13px;flex:1}
 .postTop .more{width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:#fff;backdrop-filter:blur(10px)}
-.postImg{width:100%;display:block;background:#0a0a0a;filter:none!important}
+.postImg{width:100%;display:block;background:#0a0a0a;filter:none!important;-webkit-filter:none!important;object-fit:contain!important;max-height:700px!important}
 .postActions{height:54px;display:flex;align-items:center;gap:10px;padding:0 12px}
 .postActions button{
   width:38px;height:38px;border-radius:50%;background:var(--glass2);
@@ -56,8 +50,6 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
 .postActions .like.active{background:rgba(255,45,122,0.2);border-color:var(--pink);color:var(--pink);box-shadow:0 0 15px rgba(255,45,122,0.5)}
 .postActions .save{margin-left:auto}
 .postInfo{padding:0 12px 14px;font-size:13px;line-height:17px}
-
-/* BOTTOM GLASS - Most Premium */
 .bottomGlass{
   position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
   width:calc(100% - 24px);max-width:446px;height:62px;
@@ -77,21 +69,18 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
   border:none!important
 }
 .avatarBtn{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #fff}
-
-/* MENUS GLASS */
 .overlayGlass{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(12px);display:none;z-index:150}
-.overlayGlass.show{display:block}
+.overlayGlass.show{display:block!important}
 .sideGlass{position:fixed;top:0;left:-85%;width:80%;max-width:320px;height:100%;background:rgba(12,12,15,0.92);backdrop-filter:blur(30px);z-index:200;transition:0.35s}
-.sideGlass.show{left:0}
-.sideHead{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(----borde)}
-.sideHead button{width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(----border);color:#fff}
-.mItem{padding:16px;background:var(--glass2);border:1px solid var(----border);border-radius:12px;margin:8px 0}
-.sheetGlass{position:fixed;left:50%;transform:translateX(-50%);bottom:-100%;width:calc(100% - 24px);max-width:446px;background:rgba(18,18,20,0.96);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:0 0 20px 0;z-index:200;transition:0.35s}
-.sheetGlass.show{bottom:0}
+.sideGlass.show{left:0!important}
+.sideHead{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)}
+.sideHead button{width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:#fff}
+.mItem{padding:16px;background:var(--glass2);border:1px solid var(--border);border-radius:12px;margin:8px 0}
+.sheetGlass{position:fixed;left:50%;transform:translateX(-50%);bottom:-100%;width:calc(100% - 24px);max-width:446px;background:rgba(18,18,20,0.96);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:0 0 20px 0;z-index:500;transition:0.35s}
+.sheetGlass.show{bottom:0!important}
 .handle{width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:10px;margin:10px auto 12px}
 .sOpt{padding:16px;background:var(--glass2);border:1px solid var(--border);border-radius:12px;margin:8px 12px;font-weight:600}
 .sOpt.cancel{background:rgba(0,0,0,0.4);color:#aaa}
-/* FINAL FIX - Photo blur hatana + Layout sahi */
 .postImg{filter:none!important;-webkit-filter:none!important;width:100%!important;display:block!important;background:#000!important;object-fit:contain!important;max-height:700px!important}
 #feed img{filter:none!important;-webkit-filter:none!important;width:100%!important;display:block!important}
 #feed{padding-bottom:120px!important}
