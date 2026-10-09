@@ -1,400 +1,85 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro</title>
+<link rel="stylesheet" href="./style.css">
 <style>
 body{background:#0e0014;color:#fff;margin:0;font-family:system-ui}
 #topBar{display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2a0a2a;position:sticky;top:0;background:#0e0014;z-index:10}
 .logo{font-weight:900;font-size:22px;background:linear-gradient(90deg,#ff4d9d,#ff8a5b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .btn{width:42px;height:42px;border-radius:50%;border:1px solid #333;background:#1a0a1a;color:#fff}
 .view{display:none;min-height:85vh;padding-bottom:90px}.view.active{display:block}
-.postCard{background:#1a0e1e;border-radius:18px;margin:12px;overflow:hidden;border:1px solid #2a1630}
-.postCard img,.postCard video{width:100%;display:block}
+.postCard{background:#1a0e1e;border-radius:18px;margin:12px auto;overflow:hidden;border:1px solid #2a1630;width:calc(100% - 24px);max-width:600px}
 #bottomBar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px;background:#0e0014;border-top:1px solid #2a0a2a;z-index:50}
 #bottomBar button{width:64px;height:52px;border-radius:18px;border:none;background:#1c0e1e;color:#fff;font-size:22px}
 #bottomBar button.active{background:#2a0a2a;box-shadow:0 0 12px #ff4d9d}
-#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20}
-#createSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1022;border-radius:22px 22px 0 0;padding:18px;z-index:30}
-#createSheet button{width:100%;padding:16px;margin:6px 0;border-radius:12px;border:none;background:#2a1630;color:#fff;text-align:left}
 .p-header{display:flex;gap:16px;padding:16px;align-items:center}
 .p-avatar{width:86px;height:86px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
-.p-avatar img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #0e0014;background:#222}
+.p-avatar img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #0e0014}
 .p-stats{display:flex;flex:1;justify-content:space-around;text-align:center}
-.p-stats b{display:block;font-size:18px}.p-stats span{font-size:12px;opacity:.6}
-.p-btns{display:flex;gap:8px;padding:0 16px 16px}.p-btns button{flex:1;padding:8px;border-radius:8px;border:none;background:#2a2a3a;color:#fff;font-weight:600}
-.p-tabs{display:flex;border-top:1px solid #222;border-bottom:1px solid #222}
-.p-tabs button{flex:1;padding:12px;background:transparent;border:none;color:#fff;opacity:.5;font-weight:700}.p-tabs button.active{opacity:1;border-bottom:2px solid #fff}
+#storyBar{display:flex;gap:14px;overflow-x:auto;padding:12px;border-bottom:1px solid #222;scrollbar-width:none}
+#storyBar::-webkit-scrollbar{display:none}
+.sItem{min-width:66px;text-align:center}.sPlus{width:62px;height:62px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px dashed #555}
+.sRing{width:62px;height:62px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
+.sRing img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid #000}
+.sName{font-size:11px;margin-top:4px}
 .empty{padding:60px;text-align:center;opacity:.4}
-/* MOBILE LAYOUT FIX */
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  width: 100%;
-  max-width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-img,
-video {
-  max-width: 100%;
-}
-
-.view {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.postCard {
-  width: calc(100% - 24px);
-  max-width: 600px;
-  margin: 12px auto;
-}
-
-#feed,
-#reelsFeed,
-#postsGrid,
-#reelsGrid {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-#bottomBar {
-  width: 100%;
-  left: 0;
-  right: 0;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-#topBar {
-  width: 100%;
-  max-width: 100%;
-}
-
-@media (max-width: 600px) {
-  body {
-    font-size: 14px;
-  }
-
-  .postCard img,
-  .postCard video {
-    display: block;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-  }
-                                                      }  
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998}
+#createSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1022;border-radius:22px 22px 0 0;padding:18px;z-index:9999}
+#profileMenuSheet{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e1235;padding:20px;z-index:10000;border-radius:20px 20px 0 0}
+#fileInput,#storyInput{position:fixed;left:-9999px;width:1px;height:1px;opacity:0}
+*{box-sizing:border-box}html,body{width:100%;max-width:100%;overflow-x:hidden}
 </style></head><body>
+
 <div id="topBar"><button id="addBtn" class="btn">+</button><div class="logo">InstaPro 👑</div><button id="notifBtn" class="btn">♡</button></div>
 
-<div id="view-home" class="view active"><div id="feed"><div class="empty">Loading feed...</div></div></div>
+<div id="view-home" class="view active">
+  <div id="storyBar">
+    <div class="sItem" id="yourStoryBtn"><div class="sPlus">+</div><div class="sName">Your Story</div></div>
+    <div id="otherStories" style="display:flex;gap:14px"></div>
+  </div>
+  <div id="feed"><div class="empty">Loading feed...</div></div>
+</div>
+
 <div id="view-reels" class="view"><div id="reelsFeed"><div class="empty">Loading reels...</div></div></div>
 <div id="view-search" class="view"><div style="padding:12px"><input id="searchIn" placeholder="Search..." style="width:100%;padding:14px;border-radius:12px;background:#1a0e1e;border:1px solid #333;color:#fff"></div><div id="searchRes"></div></div>
 <div id="view-notif" class="view"><div style="padding:16px">Notifications</div></div>
+
 <div id="view-profile" class="view">
-  <!-- FIX 1: id="menuBtn" add + clickable + clean name -->
   <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center"><b id="profileTopName">_</b><div id="menuBtn" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer">☰</div></div>
-  <div class="p-header"><div class="p-avatar"><img id="profilePic" src="https://i.pravatar.cc/150?u=new"></div><div class="p-stats"><div><b id="postsCount">0</b><span>Posts</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div></div>
+  <div class="p-header"><div class="p-avatar"><img id="profilePic" src="https://i.pravatar.cc/150?u=new"></div><div class="p-stats"><div><b id="postsCount">0</b><br><span style="font-size:12px;opacity:.6">Posts</span></div><div><b>0</b><br><span style="font-size:12px;opacity:.6">Followers</span></div><div><b>0</b><br><span style="font-size:12px;opacity:.6">Following</span></div></div></div>
   <div style="padding:0 16px 4px"><b id="nameText">New User</b> <span id="categoryText" style="font-size:12px;opacity:.6;background:#2a2a3a;padding:2px 6px;border-radius:10px">Creator</span><div id="bioText" style="margin-top:6px">Welcome to InstaPro ✨</div></div>
-  <div class="p-btns"><button id="editBtn">Edit profile</button><button id="shareBtn">Share profile</button></div>
-  <div id="highlightsBox" style="display:flex;gap:14px;padding:12px 16px;overflow:auto"></div>
-  <div class="p-tabs"><button id="tabPosts" class="active">POSTS</button><button id="tabReels">REELS</button></div>
-  <div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
-  <div id="reelsGrid" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
+  <div style="display:flex;gap:8px;padding:0 16px 16px"><button id="editBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:#2a2a3a;color:#fff;font-weight:600">Edit profile</button><button id="shareBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:#2a2a3a;color:#fff;font-weight:600">Share profile</button></div>
+  <div style="display:flex;border-top:1px solid #222"><button id="tabPosts" style="flex:1;padding:12px;background:transparent;border:none;color:#fff;font-weight:700;opacity:1;border-bottom:2px solid #fff">POSTS</button><button id="tabReels" style="flex:1;padding:12px;background:transparent;border:none;color:#fff;opacity:.5;font-weight:700">REELS</button></div>
+  <div id="postsGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px"></div><div id="reelsGrid" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:2px"></div>
 </div>
 
-<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998"></div>
-<div id="createSheet" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;z-index:9999;border-radius:20px 20px 0 0;padding:16px">
-<button type="button" id="optPost" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px">📷 New Post</button>
-<button type="button" id="optReel" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px">🎬 New Reel</button>
-<button type="button" id="closeSheet" style="width:100%;padding:14px;background:#000;color:#fff;border-radius:12px">Close</button>
-<div id="upStatus" style="display:none;padding:10px;font-size:12px;color:#aaa"></div>
-</div>
-<input id="fileInput" type="file" accept="image/*,video/*" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0">
-
-<div id="bottomBar" style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#000;border-top:1px solid #222;padding:10px 0;z-index:9997">
-<button type="button" id="homeBtn" class="active">⌂</button>
-<button type="button" id="reelsBtn">▶</button>
-<button type="button" id="createBtn">+</button>
-<button type="button" id="searchBtn">⌕</button>
-<button type="button" id="profileBtn">◯</button>
-</div>
-
-<!-- PRO GLASS EDITOR - FINAL FIXED -->
-<div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column">
-<div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(0,0,0,0.85);border-bottom:1px solid rgba(255,255,255,0.12)">
-<button onclick="closeEditor()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff">✕</button>
-<span style="color:#fff;font-weight:800;font-size:14px">PRO EDITOR • GLASS</span>
-<button onclick="goToCaption()" style="background:#0095f6;color:#fff;font-weight:800;padding:8px 18px;border-radius:20px;border:1px solid rgba(255,255,255,0.3)">Next</button>
-</div>
-<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:relative;overflow:hidden">
-<img id="editorImage" src="" style="max-width:100%;max-height:100%;object-fit:contain">
-<div id="textOverlays" style="position:absolute;inset:0;pointer-events:none;z-index:2"></div>
-<canvas id="editorCanvas" style="display:none"></canvas>
-</div>
-<div style="background:rgba(20,20,20,0.92);border-top:1px solid rgba(255,255,255,0.12)">
-<div style="display:flex">
-<button id="tabFilter" onclick="showTab('filter')" style="flex:1;background:rgba(255,255,255,0.12);border:none;color:#fff;padding:14px 0;font-weight:800;border-bottom:2px solid #fff">FILTERS</button>
-<button id="tabEdit" onclick="showTab('edit')" style="flex:1;background:transparent;border:none;color:rgba(255,255,255,0.5);padding:14px 0;font-weight:700">EDIT</button>
-</div>
-<div id="filterRow" style="display:flex;gap:12px;overflow-x:auto;padding:16px">
-<div onclick="applyFilter('none',this)" style="min-width:70px;text-align:center"><div class="fbox" style="width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,0.2);border:2px solid #fff;display:flex;align-items:center;justify-content:center">🖼️</div><p style="color:#fff;font-size:10px;margin-top:6px">Normal</p></div>
-<div onclick="applyFilter('grayscale(100%)',this)" style="min-width:70px;text-align:center"><div class="fbox" style="width:64px;height:64px;border-radius:14px;background:rgba(120,120,120,0.3);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center">⚫</div><p style="color:#fff;font-size:10px;margin-top:6px">Mono</p></div>
-<div onclick="applyFilter('sepia(0.9)',this)" style="min-width:70px;text-align:center"><div class="fbox" style="width:64px;height:64px;border-radius:14px;background:rgba(180,140,100,0.4);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center">📜</div><p style="color:#fff;font-size:10px;margin-top:6px">Sepia</p></div>
-<div onclick="applyFilter('contrast(140%) saturate(140%)',this)" style="min-width:70px;text-align:center"><div class="fbox" style="width:64px;height:64px;border-radius:14px;background:rgba(0,200,255,0.3);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center">🌈</div><p style="color:#fff;font-size:10px;margin-top:6px">Vivid</p></div>
-<div onclick="applyFilter('brightness(120%)',this)" style="min-width:70px;text-align:center"><div class="fbox" style="width:64px;height:64px;border-radius:14px;background:rgba(255,255,200,0.3);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center">☀️</div><p style="color:#fff;font-size:10px;margin-top:6px">Bright</p></div>
-</div>
-<div id="editRow" style="display:none;padding:16px;gap:10px;flex-wrap:wrap">
-<button onclick="changeRatio()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 18px;border-radius:20px;font-weight:700">✂️ Crop</button>
-<button onclick="rotateImg()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 18px;border-radius:20px;font-weight:700">🔄 Rotate</button>
-<button onclick="addText()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 18px;border-radius:20px;font-weight:700">Aa Text</button>
-<button onclick="clearTexts()" style="background:rgba(255,60,60,0.2);color:#fff;border:1px solid rgba(255,80,80,0.3);padding:10px 18px;border-radius:20px;font-weight:700">🗑️ Clear</button>
-<label style="flex:1;min-width:140px;background:rgba(255,255,255,0.1);color:#fff;padding:10px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);display:flex;gap:8px;font-size:12px">☀️<input id="brightRange" type="range" min="50" max="200" value="100" oninput="updateEdit()" style="flex:1"></label>
-<label style="flex:1;min-width:140px;background:rgba(255,255,255,0.1);color:#fff;padding:10px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);display:flex;gap:8px;font-size:12px">◐<input id="contrastRange" type="range" min="50" max="200" value="100" oninput="updateEdit()" style="flex:1"></label>
-<label style="flex:1;min-width:140px;background:rgba(255,255,255,0.1);color:#fff;padding:10px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);display:flex;gap:8px;font-size:12px">🎨<input id="saturateRange" type="range" min="0" max="200" value="100" oninput="updateEdit()" style="flex:1"></label>
-</div>
-</div>
-<div id="captionPage" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.95);z-index:100000;flex-direction:column">
-<div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(0,0,0,0.6);border-bottom:1px solid rgba(255,255,255,0.1)">
-<button onclick="backToEdit()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff">←</button>
-<span style="color:#fff;font-weight:800">New Post</span>
-<button onclick="postNow()" style="background:#0095f6;color:#fff;font-weight:800;padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.3)">Share</button>
-</div>
-<div style="margin:16px;padding:16px;display:flex;gap:12px;background:rgba(255,255,255,0.08);border-radius:16px;border:1px solid rgba(255,255,255,0.12)">
-<img id="captionThumb" src="" style="width:64px;height:64px;border-radius:12px;object-fit:cover">
-<textarea id="captionInput" placeholder="Write caption... ✨" style="flex:1;background:transparent;border:none;color:#fff;outline:none;resize:none;height:100px"></textarea>
-</div>
-</div>
-</div>
-
+<!-- SHEETS - SINGLE TIME ONLY -->
 <div id="overlay"></div>
-<div id="createSheet">
-<div style="display:flex;justify-content:space-between;padding:16px"><b>Create</b><button id="closeSheet">✕</button></div>
-<div id="optPost" style="padding:14px;background:#222;margin:8px;border-radius:12px">New Post 🖼️</div>
-<div id="optReel" style="padding:14px;background:#222;margin:8px;border-radius:12px">New Reel 🎬</div>
+<div id="createSheet"><div style="width:40px;height:5px;background:#444;border-radius:10px;margin:0 auto 12px"></div><div style="display:flex;justify-content:space-between;padding-bottom:12px"><b>Create</b><button id="closeSheet" style="background:#333;color:#fff;border:none;width:30px;height:30px;border-radius:50%">✕</button></div><button id="optPost" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px;text-align:left">📷 New Post</button><button id="optReel" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;margin-bottom:10px;text-align:left">🎬 New Reel</button><button id="optStory" style="width:100%;padding:14px;background:#222;color:#fff;border:1px solid #333;border-radius:12px;text-align:left">⭕ New Story</button></div>
+
+<div id="profileMenuSheet"><div style="width:40px;height:4px;background:#555;margin:0 auto 15px;border-radius:10px"></div><div id="mSettings" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">⚙️ Settings and privacy</div><div style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">📊 Your activity</div><div id="mLogout" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0;color:#ff5a5b">🚪 Log out</div><div onclick="document.getElementById('profileMenuSheet').style.display='none';document.getElementById('overlay').style.display='none'" style="padding:14px;background:#333;border-radius:12px;text-align:center;margin-top:10px">Cancel</div></div>
+
+<div id="subPage" style="display:none;position:fixed;inset:0;background:#0e0e14;z-index:10001;overflow:auto"><div style="display:flex;gap:12px;padding:14px;border-bottom:1px solid #222;position:sticky;top:0;background:#0e0e14"><button id="subBack" style="background:none;border:none;color:#fff;font-size:22px">←</button><b id="subTitle">Settings</b></div><div id="subContent" style="padding:16px"></div></div>
+
+<input id="fileInput" type="file" accept="image/*,video/*"><input id="storyInput" type="file" accept="image/*,video/*">
+
+<div id="bottomBar"><button id="homeBtn" class="active">⌂</button><button id="reelsBtn">▶</button><button id="createBtn">+</button><button id="searchBtn">⌕</button><button id="profileBtn">◯</button></div>
+
+<!-- EDITOR - SINGLE TIME -->
+<div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:10002;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(0,0,0,.85);border-bottom:1px solid rgba(255,255,255,.12)"><button onclick="closeEditor()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff">✕</button><span style="color:#fff;font-weight:800">PRO EDITOR • GLASS</span><button onclick="goToCaption()" style="background:#0095f6;color:#fff;font-weight:800;padding:8px 18px;border-radius:20px;border:1px solid rgba(255,255,255,.3)">Next</button></div>
+<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:relative;overflow:hidden"><img id="editorImage" style="max-width:100%;max-height:100%;object-fit:contain"><div id="textOverlays" style="position:absolute;inset:0;pointer-events:none;z-index:2"></div><canvas id="editorCanvas" style="display:none"></canvas></div>
+<div style="background:rgba(20,20,20,.92);border-top:1px solid rgba(255,255,255,.12)"><div style="display:flex"><button id="tabFilter" onclick="showTab('filter')" style="flex:1;background:rgba(255,255,255,.12);border:none;color:#fff;padding:14px 0;font-weight:800;border-bottom:2px solid #fff">FILTERS</button><button id="tabEdit" onclick="showTab('edit')" style="flex:1;background:transparent;border:none;color:rgba(255,255,255,.5);padding:14px 0;font-weight:700">EDIT</button></div><div id="filterRow" style="display:flex;gap:12px;overflow-x:auto;padding:16px"><div onclick="applyFilter('none',this)" style="min-width:70px;text-align:center"><div style="width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,.2);border:2px solid #fff;display:flex;align-items:center;justify-content:center">🖼️</div><p style="font-size:10px;margin-top:6px">Normal</p></div><div onclick="applyFilter('grayscale(100%)',this)" style="min-width:70px;text-align:center"><div style="width:64px;height:64px;border-radius:14px;background:#888;display:flex;align-items:center;justify-content:center">⚫</div><p style="font-size:10px;margin-top:6px">Mono</p></div><div onclick="applyFilter('sepia(0.9)',this)" style="min-width:70px;text-align:center"><div style="width:64px;height:64px;border-radius:14px;background:#b48c64;display:flex;align-items:center;justify-content:center">📜</div><p style="font-size:10px;margin-top:6px">Sepia</p></div><div onclick="applyFilter('contrast(140%) saturate(140%)',this)" style="min-width:70px;text-align:center"><div style="width:64px;height:64px;border-radius:14px;background:#00c8ff;display:flex;align-items:center;justify-content:center">🌈</div><p style="font-size:10px;margin-top:6px">Vivid</p></div></div><div id="editRow" style="display:none;padding:16px;gap:10px;flex-wrap:wrap"><button onclick="changeRatio()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 18px;border-radius:20px">✂️ Crop</button><button onclick="rotateImg()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 18px;border-radius:20px">🔄 Rotate</button><button onclick="addText()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 18px;border-radius:20px">Aa Text</button></div></div>
+<div id="captionPage" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.95);z-index:10003;flex-direction:column"><div style="display:flex;justify-content:space-between;padding:14px"><button onclick="backToEdit()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff">←</button><b>New Post</b><button onclick="postNow()" style="background:#0095f6;color:#fff;padding:8px 20px;border-radius:20px;border:none">Share</button></div><div style="margin:16px;padding:16px;display:flex;gap:12px;background:rgba(255,255,255,.08);border-radius:16px"><img id="captionThumb" style="width:64px;height:64px;border-radius:12px;object-fit:cover"><textarea id="captionInput" placeholder="Write caption... ✨" style="flex:1;background:transparent;border:none;color:#fff;outline:none;resize:none;height:100px"></textarea></div></div>
 </div>
 
-<input type="file" id="fileInput" style="display:none">
-<canvas id="editorCanvas" style="display:none"></canvas>
-
-<div id="instaEditor" style="position:fixed;inset:0;background:#000;z-index:200;display:none;flex-direction:column">
-<div style="display:flex;justify-content:space-between;padding:12px;background:#111">
-<button onclick="closeEditor()">✕</button>
-<div>
-<button onclick="showTab('filter')">Filters</button>
-<button onclick="showTab('edit')">Edit</button>
-<button onclick="goToCaption()" style="background:#0095f6;color:#fff;padding:6px 14px;border:none;border-radius:8px">Next</button>
-</div></div>
-<div id="editArea" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#000">
-<img id="editorImage" style="max-width:100%;max-height:70vh">
-<div id="textOverlays" style="position:absolute;inset:0;pointer-events:none"></div>
-</div>
-<div id="filterRow" style="display:flex;gap:8px;padding:10px;background:#111;overflow-x:auto"></div>
-<div id="editRow" style="display:none;padding:10px;background:#111;gap:8px;flex-wrap:wrap">
-<button onclick="changeRatio()">Crop</button>
-<button onclick="rotateImg()">Rotate</button>
-<button onclick="addText()">Text</button>
-<button onclick="clearTexts()">Clear</button>
-<input id="brightRange" type="range" min="50" max="150" value="100" oninput="updateEdit()">
-<input id="contrastRange" type="range" min="50" max="150" value="100" oninput="updateEdit()">
-<input id="saturateRange" type="range" min="0" max="200" value="100" oninput="updateEdit()">
-</div>
-</div>
-
-<div id="captionPage" style="position:fixed;inset:0;background:#000;z-index:210;display:none;flex-direction:column;padding:10px">
-<div style="display:flex;justify-content:space-between">
-<button onclick="backToEdit()">Back</button>
-<button onclick="postNow()" style="background:#0095f6;color:#fff;padding:8px 16px;border:none;border-radius:8px">Share</button>
-</div>
-<div style="display:flex;gap:10px;padding:10px">
-<img id="captionThumb" style="width:60px;height:60px">
-<textarea id="captionInput" placeholder="Caption..."></textarea>
-</div>
-</div>
-
-<div id="profileMenuSheet" style="position:fixed;bottom:0;left:0;right:0;background:#1e1235;padding:20px;z-index:999;border-radius:20px 20px 0 0;display:none">
-<div style="width:40px;height:4px;background:#555;margin:0 auto 15px;border-radius:10px"></div>
-<div onclick="localStorage.clear();location.reload()" style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">🚪 Logout</div>
-<div style="padding:14px;background:#2a1a4a;border-radius:12px;margin:8px 0">⚙️ Settings</div>
-<div onclick="document.getElementById('profileMenuSheet').style.display='none';document.getElementById('overlay').style.display='none'" style="padding:14px;background:#333;border-radius:12px;text-align:center">Cancel</div>
-</div>
-
-<script type="module">
-import { db } from "./firebase.js";
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-let cf='none';
-let cr='original';
-let rt=0;
-window.finalImageBase64=null;
-const $=id=>document.getElementById(id);
-window.closeEditor=()=>{
- $('instaEditor').style.display='none';
- $('textOverlays').innerHTML='';
- $('captionPage').style.display='none';
- $('fileInput').value='';
-};
-window.showTab=(t)=>{
- if(t==='filter'){
-  $('filterRow').style.display='flex';
-  $('editRow').style.display='none';
- } else {
-  $('filterRow').style.display='none';
-  $('editRow').style.display='flex';
- }
-};
-window.applyFilter=(f)=>{
- cf=f;
- updateEdit();
-};
-window.updateEdit=()=>{
- let b=$('brightRange').value;
- let c=$('contrastRange').value;
- let s=$('saturateRange').value;
- $('editorImage').style.filter=cf+' brightness('+b+'%) contrast('+c+'%) saturate('+s+'%)';
-};
-window.changeRatio=()=>{
- let i=$('editorImage');
- if(cr==='original'){
-  i.style.aspectRatio='1/1';
-  i.style.objectFit='cover';
-  cr='1:1';
- } else if(cr==='1:1'){
-  i.style.aspectRatio='4/5';
-  cr='4:5';
- } else {
-  i.style.aspectRatio='auto';
-  i.style.objectFit='contain';
-  cr='original';
- }
-};
-window.rotateImg=()=>{
- rt=(rt+90)%360;
- $('editorImage').style.transform='rotate('+rt+'deg)';
-};
-window.addText=()=>{
- let t=prompt('Text likho:');
- if(!t) return;
- let d=document.createElement('div');
- d.textContent=t;
- d.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:white;font-size:28px;font-weight:900;text-shadow:0 2px 10px black;pointer-events:auto;z-index:10';
- d.onclick=function(){if(confirm('Delete?'))this.remove();};
- $('textOverlays').style.pointerEvents='auto';
- $('textOverlays').appendChild(d);
-};
-window.clearTexts=()=>{
- $('textOverlays').innerHTML='';
-};
-window.goToCaption=()=>{
- $('captionThumb').src=$('editorImage').src;
- $('captionPage').style.display='flex';
-};
-window.backToEdit=()=>{
- $('captionPage').style.display='none';
-};
-$('fileInput').addEventListener('change',(e)=>{
- let f=e.target.files[0];
- if(!f) return;
- let r=new FileReader();
- r.onload=ev=>{
-  window.finalImageBase64=ev.target.result;
-  $('editorImage').src=window.finalImageBase64;
-  $('editorImage').style.filter='none';
-  $('editorImage').style.transform='rotate(0deg)';
-  rt=0; cf='none';
-  $('instaEditor').style.display='flex';
-  $('createSheet').style.display='none';
-  $('overlay').style.display='none';
- };
- r.readAsDataURL(f);
-});
-window.postNow=async()=>{
- if(!window.finalImageBase64) return alert('Photo nahi');
- try{
-  let i=$('editorImage');
-  let c=$('editorCanvas');
-  let x=c.getContext('2d');
-  c.width=i.naturalWidth||1080;
-  c.height=i.naturalHeight||1080;
-  x.filter=i.style.filter||'none';
-  x.save();
-  x.translate(c.width/2,c.height/2);
-  x.rotate(rt*Math.PI/180);
-  x.drawImage(i,-c.width/2,-c.height/2,c.width,c.height);
-  x.restore();
-  let d=c.toDataURL('image/jpeg',0.9);
-  await addDoc(collection(db,"posts"),{
-   url:d,type:'post',
-   userId:localStorage.getItem('my_user_id')||'user',
-   userName:localStorage.getItem('my_user_name')||'User',
-   caption:$('captionInput').value||'',
-   time:Date.now(),likes:[],likesCount:0
-  });
-  alert('✅ Posted!');
-  location.reload();
- }catch(err){alert(err.message);}
-};
-function openSheet(){
- $('createSheet').style.display='block';
- $('overlay').style.display='block';
-}
-function closeSheet(){
- $('createSheet').style.display='none';
- $('overlay').style.display='none';
- $('profileMenuSheet').style.display='none';
-}
-$('createBtn').onclick=(e)=>{e.preventDefault();openSheet();};
-let topBtn=document.querySelector('header button');
-if(topBtn) topBtn.onclick=(e)=>{e.preventDefault();openSheet();};
-$('overlay').onclick=()=>closeSheet();
-$('closeSheet').onclick=()=>closeSheet();
-$('optPost').onclick=()=>{
- let i=$('fileInput'); i.accept='image/*,video/*'; i.value=''; i.click();
-};
-$('optReel').onclick=()=>{
- let i=$('fileInput'); i.accept='video/*'; i.value=''; i.click();
-};
-</script>
-
-<script>
-(function(){
- const $=id=>document.getElementById(id);
- function showView(v){
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-  let e=$(v); if(e) e.classList.add('active');
-  document.querySelectorAll('#bottomBar button').forEach(b=>b.classList.remove('active'));
-  if(v=='view-home') $('homeBtn').classList.add('active');
-  if(v=='view-reels') $('reelsBtn').classList.add('active');
-  if(v=='view-profile') $('profileBtn').classList.add('active');
-  if(v=='view-search') $('searchBtn').classList.add('active');
- }
- $('homeBtn').onclick=()=>showView('view-home');
- $('reelsBtn').onclick=()=>showView('view-reels');
- $('profileBtn').onclick=()=>showView('view-profile');
- $('searchBtn').onclick=()=>showView('view-search');
- let n=$('notifBtn'); if(n) n.onclick=()=>showView('view-notif');
-
- // PROFILE 3-LINE MENU FIX
- let pv=$('view-profile');
- if(pv){
-  pv.querySelectorAll('button').forEach(btn=>{
-   if(btn.textContent.includes('☰')){
-    btn.onclick=()=>{
-     $('profileMenuSheet').style.display='block';
-     $('overlay').style.display='block';
-     $('overlay').onclick=()=>{
-      $('profileMenuSheet').style.display='none';
-      $('overlay').style.display='none';
-     };
-    };
-   }
-  });
- }
-})();
-</script>
-</body>
-</html>
+<!-- SIRF DESIGN - LOGIC ALAG FILE ME -->
+<script type="module" src="./firebase.js"></script>
+<script type="module" src="./menu.js"></script>
+<script type="module" src="./stories.js"></script>
+<script type="module" src="./feed.js"></script>
+<script type="module" src="./reels.js"></script>
+<script type="module" src="./profile.js"></script>
+<script type="module" src="./upload.js"></script>
+<script type="module" src="./editor.js"></script>
+<script type="module" src="./search.js"></script>
+</body></html>
