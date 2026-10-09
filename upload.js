@@ -1,180 +1,68 @@
-import { firebaseConfig } from "./firebase.js";
+import { db } from "./firebase.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-  initializeApp,
-  getApps
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const app = getApps().length
-  ? getApps()[0]
-  : initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-const CLOUD_NAME = "kujnbe0a";
-const UPLOAD_PRESET = "intube_free";
-
-const $ = id => document.getElementById(id);
-
-let currentType = "post";
-let isUploading = false;
-
-async function uploadToCloudinary(file) {
-  if (!file) {
-    throw new Error("पहले फोटो या वीडियो चुनें।");
+// Auto User ID banayega, error kabhi nahi dega
+function getMyId(){
+  let id = localStorage.getItem('my_user_id');
+  if(!id){
+    id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    localStorage.setItem('my_user_id', id);
+    localStorage.setItem('my_user_name', 'User_'+id.slice(-4));
   }
+  return id;
+}
 
-  if (!file.type.startsWith("image/") &&
-      !file.type.startsWith("video/")) {
-    throw new Error("केवल फोटो या वीडियो अपलोड करें।");
-  }
-
-  const formData = new FormData();
-
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
-
-  const resourceType = file.type.startsWith("video/")
-    ? "video"
-    : "image";
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
-    {
-      method: "POST",
-      body: formData
+async function compress(file){
+  return new Promise((res)=>{
+    if(file.type.includes('video')){
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.readAsDataURL(file);
+      return;
     }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || !result.secure_url) {
-    throw new Error(
-      result.error?.message || "Cloudinary अपलोड विफल हुआ।"
-    );
-  }
-
-  return {
-    url: result.secure_url,
-    publicId: result.public_id,
-    resourceType: result.resource_type
-  };
-}
-
-function showStatus(message) {
-  const status = $("upStatus");
-
-  if (status) {
-    status.textContent = message;
-    status.style.display = "block";
-  }
-}
-
-function closeUploadSheet() {
-  const sheet = $("createSheet");
-  const overlay = $("overlay");
-  const status = $("upStatus");
-
-  if (sheet) sheet.style.display = "none";
-  if (overlay) overlay.style.display = "none";
-  if (status) status.style.display = "none";
-}
-
-async function createPost(file) {
-  const myId = localStorage.getItem("my_user_id");
-
-  if (!myId) {
-    throw new Error("यूज़र ID नहीं मिली। पेज रिफ्रेश करें।");
-  }
-
-  showStatus("मीडिया Cloudinary पर अपलोड हो रहा है...");
-
-  const media = await uploadToCloudinary(file);
-
-  showStatus("पोस्ट Firestore में सेव हो रही है...");
-
-  await addDoc(collection(db, "posts"), {
-url: media.url,
-    publicId: media.publicId,
-    resourceType: media.resourceType,
-    type: currentType,
-    mediaType: file.type.startsWith("video/")
-      ? "video"
-      : "image",
-    userId: myId,
-    caption: "",
-    likes: [],
-    likesCount: 0,
-    comments: [],
-    time: Date.now(),
-    createdAt: serverTimestamp()
-  });
-
-  showStatus("पोस्ट सफलतापूर्वक अपलोड हो गई! ✅");
-
-  const fileInput = $("fileInput");
-  if (fileInput) fileInput.value = "";
-
-  setTimeout(closeUploadSheet, 900);
-}
-
-function initializeUploadSystem() {
-  const fileInput = $("fileInput");
-  const postOption = $("optPost");
-  const reelOption = $("optReel");
-
-  if (!fileInput || !postOption || !reelOption) {
-    console.error("Upload के लिए HTML elements नहीं मिले।");
-    return;
-  }
-
-  postOption.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  currentType = "post";
-  fileInput.setAttribute("accept", "image/*,video/*");
-  fileInput.click();
-});
-
-reelOption.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  currentType = "reel";
-  fileInput.setAttribute("accept", "video/*");
-  fileInput.click();
-});
-
-  fileInput.addEventListener("change", async () => {
-    const file = fileInput.files?.[0];
-
-    if (!file || isUploading) return;
-
-    isUploading = true;
-
-    try {
-      await createPost(file);
-    } catch (error) {
-      console.error("Upload error:", error);
-      showStatus("अपलोड विफल: " + error.message);
-      alert("Upload Error: " + error.message);
-    } finally {
-      isUploading = false;
-    }
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e=>{
+      img.src = e.target.result;
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(w>800){ h = h*800/w; w = 800; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        res(canvas.toDataURL('image/jpeg',0.6));
+      };
+    };
+    reader.readAsDataURL(file);
   });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializeUploadSystem
-  );
-} else {
-  initializeUploadSystem();
+const fileInput = document.getElementById('fileInput');
+
+if(fileInput){
+ fileInput.addEventListener('change', async e=>{
+  let f = e.target.files[0]; if(!f) return;
+
+  const myId = getMyId(); // Yahi fix hai - ID khud banayega
+  const myName = localStorage.getItem('my_user_name') || 'User';
+
+  let url = await compress(f);
+  try{
+   await addDoc(collection(db,"posts"),{
+     url: url,
+     imageUrl: url,
+     type: f.type.includes('video')? 'reel':'post',
+     userId: myId,
+     user: myId,
+     userName: myName,
+     likes: [], likesCount: 0, comments: [], time: Date.now(), caption: ''
+   });
+   alert('Posted! ✅');
+   document.getElementById('createSheet').style.display='none';
+   document.getElementById('overlay').style.display='none';
+  }catch(err){
+   alert('Upload Error: '+err.message);
+  }
+  fileInput.value = '';
+ });
 }
