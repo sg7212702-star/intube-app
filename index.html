@@ -133,39 +133,27 @@ video {
 </div>
 
 </div>
-<div id="instaEditor" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;flex-direction:column;">
-<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#121212;">
-<span onclick="closeEditor()" style="color:white;font-size:24px;">←</span>
-<div style="display:flex;align-items:center;background:#2a2a2a;padding:6px 12px;border-radius:20px;flex:1;margin:0 12px;"><span style="color:white;font-size:12px;">Tulsi Kumar · Aao Na</span><span style="color:white;margin-left:auto;">+</span></div>
-<div style="width:24px;"></div>
+<div id="instaEditor" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+<!-- TOP - Pro Glass -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(0,0,0,0.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.12);">
+<button onclick="closeEditor()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.14);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);color:white;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</button>
+<div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 8px #00ff88;"></span><span style="color:white;font-weight:700;font-size:16px;letter-spacing:0.3px;">New Post • Pro Editor</span></div>
+<button onclick="goToCaption()" style="background:linear-gradient(135deg,rgba(0,149,246,0.95),rgba(0,120,220,0.95));backdrop-filter:blur(12px);color:white;font-weight:700;font-size:14px;padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);box-shadow:0 4px 20px rgba(0,149,246,0.4),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;">Next →</button>
 </div>
-<div style="text-align:center;color:#666;font-size:11px;padding:4px;">Suggested Audio</div>
-<div style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;position:relative;">
-<img id="editorImage" src="" style="max-width:100%;max-height:70vh;">
+
+<!-- CENTER PHOTO -->
+<div id="editArea" style="flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,#111,#000);position:relative;overflow:hidden;">
+<img id="editorImage" src="" style="max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.8);border-radius:4px;transition:all 0.25s ease;">
+<div id="textOverlays" style="position:absolute;inset:0;pointer-events:none;"></div>
 <canvas id="editorCanvas" style="display:none;"></canvas>
-<div id="textOverlays" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
 </div>
-<div style="background:#121212;padding:12px;">
-<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;">
-<button onclick="addAudio()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Audio</button>
-<button onclick="addText()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Text</button>
-<button onclick="addOverlay()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Overlay</button>
-<button onclick="showFilters()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Filter</button>
-<button onclick="showEdit()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Edit</button>
-<button onclick="changeRatio()" style="background:#2a2a2a;border:none;color:white;padding:10px 14px;border-radius:12px;min-width:58px;">Ratio</button>
-</div>
-<div id="filterRow" style="display:none;gap:8px;margin-bottom:12px;">
-<button onclick="applyFilter('none')" style="background:#3a3a3a;color:white;border:none;padding:8px 12px;border-radius:20px;">Normal</button>
-<button onclick="applyFilter('grayscale(100%)')" style="background:#3a3a3a;color:white;border:none;padding:8px 12px;border-radius:20px;">B&W</button>
-<button onclick="applyFilter('sepia(100%)')" style="background:#3a3a3a;color:white;border:none;padding:8px 12px;border-radius:20px;">Sepia</button>
-<button onclick="applyFilter('contrast(150%)')" style="background:#3a3a3a;color:white;border:none;padding:8px 12px;border-radius:20px;">Vivid</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;">
-<img id="thumbPreview" src="" style="width:48px;height:48px;border-radius:8px;border:2px solid white;">
-<button onclick="postNow()" style="background:#5046ff;color:white;border:none;padding:12px 28px;border-radius:24px;font-weight:bold;">Next</button>
-</div>
-</div>
-</div>
+
+<!-- BOTTOM PRO GLASS -->
+<div style="background:rgba(16,16,16,0.82);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);border-top:1px solid rgba(255,255,255,0.12);box-shadow:0 -10px 40px rgba(0,0,0,0.5);">
+<!-- Tabs Pro -->
+<div style="display:flex;background:rgba(255,255,255,0.04);">
+<button id="tabFilter" onclick="showTab('filter')" style="flex:1;background:rgba(255,255,255,0.08);border:none;color:white;padding:16px 0;font-weight:700;font-size:14px;border-bottom:2px solid white;cursor:pointer;backdrop-filter:blur(8px);">✨ FILTER</button>
+<button id="tab
 <!-- Menu -->
 <script src="./menu.js"></script>
 
