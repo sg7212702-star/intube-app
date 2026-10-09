@@ -180,10 +180,24 @@ document.getElementById('closeSheet').onclick = document.getElementById('overlay
 </div>
 
 <!-- Sare System alag file se - Isse order sahi rahega -->
-<script type="module" src="./firebase.js"></script>
-<script type="module" src="./profile.js"></script>
-<script type="module" src="./upload.js"></script>
-<script type="module" src="./feed.js"></script>
+<script>
+// AUTO ID FIX - User ID nahi milega to khud bana dega
+(function(){
+  if(!localStorage.getItem('my_user_id')){
+    let id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    localStorage.setItem('my_user_id', id);
+    localStorage.setItem('my_user_name', 'User_'+id.slice(-4));
+  }
+  // Purana wala guest ID delete
+  localStorage.removeItem('guest_id');
+})();
+</script>
+<script type="module" src="./firebase.js?v=999"></script>
+<script type="module" src="./profile.js?v=999"></script>
+<script type="module" src="./upload.js?v=999"></script>
+<script type="module" src="./feed.js?v=999"></script>
 
+</body>
+</html>
 </body>
 </html>
