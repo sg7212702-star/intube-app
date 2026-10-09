@@ -76,4 +76,23 @@ window.postNow = async ()=>{
   await addDoc(collection(db,"posts"),{
    url: finalBase64,
    type: 'post',
-   userId: localStorage.get
+   userId: localStorage.getItem('my_user_id') || 'user_'+Date.now(),
+   userName: localStorage.getItem('my_user_name') || 'User',
+   caption: '',
+   time: Date.now(),
+   filter: currentFilter,
+   likes: [],
+   likesCount: 0
+  });
+
+  document.getElementById('instaEditor').style.display='none';
+  document.getElementById('textOverlays').innerHTML='';
+  alert('Posted! ✅ Feed check karo');
+  location.reload();
+
+ }catch(err){
+  alert('Fail: '+err.message);
+  console.error(err);
+  btn.textContent='Next'; btn.disabled=false;
+ }
+};
