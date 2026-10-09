@@ -1,56 +1,93 @@
+:root{
+  --glass:rgba(18,18,22,0.72);
+  --glass2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.12);
+  --pink:#ff2d7a; --blue:#38bdf8;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:system-ui}
-.app{max-width:100%;margin:0 auto;min-height:100vh;padding-bottom:80px}
+body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
+.app{max-width:470px;margin:0 auto;min-height:100vh;padding-bottom:90px;background:#000;position:relative}
 
-/* TOP - Fix */
-.topBar{height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);border-bottom:1px solid #1a1a1a;position:sticky;top:0;z-index:10}
-.logo{font-size:18px;font-weight:800}
-.topBtns{display:flex;gap:8px}
-.topBtns button{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:16px}
+/* TOP GLASS */
+.topGlass{
+  height:60px;display:flex;justify-content:space-between;align-items:center;
+  padding:0 14px;position:sticky;top:0;z-index:50;
+  background:var(--glass);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  border-bottom:1px solid var(--border)
+}
+.topGlass .left{display:flex;align-items:center;gap:12px}
+.menuBtn{width:36px;height:36px;border-radius:12px;background:var(--glass2);border:1px solid var(--border);color:#fff;font-size:18px;backdrop-filter:blur(10px)}
+.logo{font-weight:900;font-size:22px;letter-spacing:.5px;background:linear-gradient(90deg,var(--pink),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topGlass .right{display:flex;gap:10px}
+.iconGlass{
+  width:38px;height:38px;border-radius:50%;background:var(--glass2);
+  border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(15px);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1)
+}
+.iconGlass .dot{position:absolute;top:4px;right:5px;width:8px;height:8px;background:var(--pink);border-radius:50%;box-shadow:0 0 10px var(--pink)}
 
-/* STORY - Fix */
-.storyBar{display:flex;gap:14px;padding:10px 10px;overflow-x:auto;border-bottom:1px solid #1a1a1a;background:#000}
-.storyBar::-webkit-scrollbar{display:none}
-.story{min-width:60px;text-align:center}
-.addStory{width:60px;height:60px;border-radius:50%;background:#151515;border:1px dashed #333;display:flex;align-items:center;justify-content:center;font-size:24px}
-.story span{font-size:10px;display:block;margin-top:5px;opacity:.7}
+/* STORY GLASS */
+.storyGlass{
+  display:flex;gap:12px;padding:12px;overflow-x:auto;
+  background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,0.06)
+}
+.storyGlass::-webkit-scrollbar{display:none}
+.sItem{min-width:64px;text-align:center}
+.sRing{width:64px;height:64px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,var(--pink),var(--blue),#a78bfa);box-shadow:0 0 15px rgba(255,45,122,0.3);display:flex;align-items:center;justify-content:center}
+.sRing.add{background:var(--glass2);border:1px dashed var(--border);box-shadow:none;font-size:28px;color:#fff}
+.sRing img{width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover;display:block}
+.sItem p{font-size:11px;opacity:.7;margin-top:6px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* POST - Green Filter Hatao */
-.post{border-bottom:1px solid #1a1a1a}
-.postHead{height:50px;display:flex;align-items:center;gap:10px;padding:0 12px}
-.postHead img{width:30px;height:30px;border-radius:50%;background:#222;object-fit:cover}
-.postHead b{font-size:13px}
-.pImg, .post img, #feed img{width:100%;height:auto;display:block;background:#0a0a0a;filter:none!important;-webkit-filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
-.pActions{display:flex;gap:14px;padding:10px 12px;font-size:20px}
-.pActions .save{margin-left:auto}
-.caption{padding:0 12px 10px;font-size:13px}
+/* POST GLASS - Premium */
+.post{background:rgba(10,10,12,0.8);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2px}
+.postTop{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px}
+.postTop img{width:34px;height:34px;border-radius:50%;background:#111;object-fit:cover;border:1px solid var(--border)}
+.postTop b{font-size:13px;flex:1}
+.postTop .more{width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:#fff;backdrop-filter:blur(10px)}
+.postImg{width:100%;display:block;background:#0a0a0a;filter:none!important}
+.postActions{height:54px;display:flex;align-items:center;gap:10px;padding:0 12px}
+.postActions button{
+  width:38px;height:38px;border-radius:50%;background:var(--glass2);
+  border:1px solid var(--border);backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;color:#fff;transition:.2s
+}
+.postActions button:active{transform:scale(0.88)}
+.postActions .like.active{background:rgba(255,45,122,0.2);border-color:var(--pink);color:var(--pink);box-shadow:0 0 15px rgba(255,45,122,0.5)}
+.postActions .save{margin-left:auto}
+.postInfo{padding:0 12px 14px;font-size:13px;line-height:17px}
 
-/* BOTTOM - Sab button visible - Yeh main fix hai */
-.bottomBar{
-  position:fixed;bottom:0;left:0;right:0;height:62px;
+/* BOTTOM GLASS - Most Premium */
+.bottomGlass{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 24px);max-width:446px;height:62px;
   display:flex;justify-content:space-around;align-items:center;
-  background:rgba(0,0,0,0.95);backdrop-filter:blur(25px);
-  border-top:1px solid #1a1a1a;z-index:999;
-  padding-bottom:env(safe-area-inset-bottom)
+  background:var(--glass);backdrop-filter:blur(35px) saturate(180%);-webkit-backdrop-filter:blur(35px) saturate(180%);
+  border:1px solid var(--border);border-radius:30px;z-index:100;
+  box-shadow:0 15px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset, 0 1px 0 rgba(255,255,255,0.1) inset
 }
-.bottomBar button{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;background:none;border:none;
-  color:#888;font-size:20px;gap:2px;height:100%
+.bBtn{flex:1;background:none;border:none;color:#6a6a7a;height:100%;display:flex;align-items:center;justify-content:center;transition:.2s}
+.bBtn.active{color:#fff}
+.bBtn.active svg{filter:drop-shadow(0 0 8px currentColor)}
+.plusGlass{
+  flex:none!important;width:46px!important;height:46px!important;
+  background:linear-gradient(135deg,var(--pink),var(--blue))!important;
+  border-radius:15px!important;color:#fff!important;
+  box-shadow:0 0 20px rgba(255,45,122,0.5), 0 0 20px rgba(56,189,248,0.35)!important;
+  border:none!important
 }
-.bottomBar button span{font-size:9px;display:block;margin-top:1px}
-.bottomBar button.active{color:#fff}
-.bottomBar .plus{
-  width:36px!important;flex:none!important;
-  height:36px!important;background:#fff!important;
-  color:#000!important;border-radius:10px!important;
-  font-size:22px!important;font-weight:900
-}
+.avatarBtn{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #fff}
 
-/* SHEET */
-.sheet{position:fixed;left:0;right:0;bottom:0;background:#121212;border-radius:18px 18px 0 0;padding:12px;display:none;z-index:1000;border-top:1px solid #222}
-.sheet.show{display:block}
-.handle{width:36px;height:4px;background:#333;border-radius:10px;margin:0 auto 12px}
-.item{padding:16px;background:#1e1e1e;border-radius:12px;margin:8px 0;font-weight:600}
-.item.cancel{background:#000;text-align:center;color:#aaa}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:900}#overlay.show{display:block}
+/* MENUS GLASS */
+.overlayGlass{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(12px);display:none;z-index:150}
+.overlayGlass.show{display:block}
+.sideGlass{position:fixed;top:0;left:-85%;width:80%;max-width:320px;height:100%;background:rgba(12,12,15,0.92);backdrop-filter:blur(35px);border-right:1px solid var(--border);z-index:200;transition:.3s;padding:16px}
+.sideGlass.show{left:0}
+.sideHead{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sideHead button{width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:#fff}
+.mItem{padding:16px;background:var(--glass2);border:1px solid var(--border);border-radius:12px;margin:8px 0;backdrop-filter:blur(10px)}
+.sheetGlass{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:calc(100% - 24px);max-width:446px;background:rgba(18,18,22,0.9);backdrop-filter:blur(35px);border:1px solid var(--border);border-radius:22px;padding:12px;display:none;z-index:200;box-shadow:0 20px 50px rgba(0,0,0,0.6)}
+.sheetGlass.show{display:block}
+.handle{width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:10px;margin:0 auto 12px}
+.sOpt{padding:16px;background:var(--glass2);border:1px solid var(--border);border-radius:12px;margin:8px 0;font-weight:600;text-align:center;backdrop-filter:blur(10px)}
+.sOpt.cancel{background:rgba(0,0,0,0.4);color:#aaa}
