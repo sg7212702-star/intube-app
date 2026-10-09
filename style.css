@@ -91,17 +91,18 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
 .handle{width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:10px;margin:0 auto 12px}
 .sOpt{padding:16px;background:var(--glass2);border:1px solid var(--border);border-radius:12px;margin:8px 0;font-weight:600;text-align:center;backdrop-filter:blur(10px)}
 .sOpt.cancel{background:rgba(0,0,0,0.4);color:#aaa}
-/* === LAYOUT FIX ONLY - Button design same rahega === */
-#feed{padding:0 0 100px 0 !important}
-#feed img, #feed video{
+/* === FINAL LAYOUT FIX - Filter hatao === */
+.postImg, #feed img, #feed video, .feedImg{
+  filter:none !important;
+  -webkit-filter:none !important;
+  backdrop-filter:none !important;
   width:100% !important;
   height:auto !important;
-  max-height:600px !important;
+  max-height:700px !important;
   object-fit:contain !important;
-  display:block;
-  background:#000;
+  background:#000 !important;
+  display:block !important;
 }
-.topGlass{padding:10px 12px !important; height:52px !important}
-.storyGlass{padding:8px 12px !important; gap:12px !important}
-.bottomGlass{bottom:10px !important; width:90% !important; left:50% !important; transform:translateX(-50%) !important}
-.app{overflow-x:hidden !important}
+.topGlass{height:56px !important; display:flex !important; justify-content:space-between !important}
+.storyGlass{display:flex !important; gap:10px !important; padding:8px 10px !important; overflow-x:auto !important}
+#feed{padding-bottom:120px !important}
