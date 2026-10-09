@@ -96,30 +96,29 @@ let cur='post';
 $('optPost').onclick=()=>{cur='post';$('fileInput').accept='image/*,video/*';$('fileInput').click();};
 $('optReel').onclick=()=>{cur='reel';$('fileInput').accept='video/*';$('fileInput').click();};
 async function up(file){
-  // COMPRESS + LOCAL STORAGE - Firebase me fit hoga, Like/Comment chalega
-async function up(file){
   return new Promise((res)=>{
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = e => {
-      img.src = e.target.result;
-      img.onload = ()=>{
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if(w>800){ h = h*800/w; w=800; } // size chota
+    if(file.type.includes('video')){
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result);
+      r.readAsDataURL(file);
+      return;
+    }
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{
+      img.src=e.target.result;
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width, h=img.height;
+        if(w>800){ h=h*800/w; w=800; }
         canvas.width=w; canvas.height=h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        res(canvas.toDataURL('image/jpeg',0.6)); // 60% quality
+        res(canvas.toDataURL('image/jpeg',0.6));
       };
-      if(file.type.includes('video')) res(e.target.result);
     };
     reader.readAsDataURL(file);
   });
 }
-    const r=new FileReader();
-    r.onload=e=>res(e.target.result);
-    r.readAsDataURL(file);
-  });
 }
 onSnapshot(query(collection(db,"posts"),orderBy("time","desc")),snap=>{
   let all=[]; snap.forEach(d=>all.push({...d.data(), id:d.id}));
