@@ -1,47 +1,151 @@
 import { db } from './firebase.js';
-import { collection, query, where, onSnapshot, orderBy, addDoc, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-let myUid = localStorage.getItem('my_user_id');
-let storiesMap = {};
+const storyBar = document.getElementById('storyBar');
+const otherStoriesDiv = document.getElementById('otherStories');
+let myId = localStorage.getItem('my_user_id');
+let myFollowing = JSON.parse(localStorage.getItem('my_following')||'[]');
+window.allStories = [];
+let unsubscribe = null;
 
-const q = query(collection(db,'stories'), where('expiresAt','>',Date.now()), orderBy('expiresAt','desc'));
+// Instagram Algorithm Score
+function getStoryScore(s){
+  let score = 0;
+  let now = Date.now();
+  let ageHours = (now - s.createdAt) / 3600000;
 
-onSnapshot(q, (snap)=>{
-  let el=document.getElementById('otherStories'); if(!el) return;
-  el.innerHTML=''; storiesMap={};
-  snap.forEach(d=>{
-    let s={id:d.id,...d.data()};
-    if(storiesMap[s.userId]) return; // Ek user = ek ring - Duplicate khatam
-    storiesMap[s.userId]=s;
-  });
-  Object.values(storiesMap).forEach(s=>{
-    if(s.userId===myUid) return;
-    let seen=localStorage.getItem('seen_'+s.id);
-    let ring=seen?'background:#333':'background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)';
-    let div=document.createElement('div');
-    div.style.cssText='min-width:66px;text-align:center;cursor:pointer';
-    div.innerHTML=`<div style="width:62px;height:62px;border-radius:50%;padding:3px;${ring}"><img src="${s.userPic}" style="width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover"></div><div style="font-size:11px;margin-top:4px">${(s.userName||'User').slice(0,8)}</div>`;
-    div.onclick=()=>openStoryViewer(s);
-    el.appendChild(div);
-  });
-});
+  // 1. Unseen boost (Sabse important - IG ka main logic)
+  let isSeen = localStorage.getItem('seen_'+s.id);
+  if(!isSeen) score += 1000;
 
-// Upload - Your Story + se
-let inp=document.getElementById('storyInput');
-if(inp){
-  inp.onchange=(e)=>{
-    let file=e.target.files[0]; if(!file) return;
-    let reader=new FileReader();
-    reader.onload=async(ev)=>{
-      let uSnap=await getDoc(doc(db,'users',myUid));
-      let u=uSnap.exists()?uSnap.data():{};
-      await addDoc(collection(db,'stories'),{
-        userId:myUid, userName:u.name||'User', userPic:u.pic||'https://i.pravatar.cc/100',
-        mediaUrl:ev.target.result, mediaType:file.type.includes('video')?'video':'image',
-        createdAt:Date.now(), expiresAt:Date.now()+86400000, views:0, likes:0, isPublic:true
-      });
-      alert('Story uploaded - 24h public!');
-    };
-    reader.readAsDataURL(file);
-  };
+  // 2. Close Friends / Following boost
+  if(myFollowing.includes(s.userId)) score += 500;
+
+  // 3. Recency boost (Nayi story upar) - Time decay
+  score += Math.max(0, 200 - (ageHours * 15));
+
+  // 4. Engagement boost (Zyada views/likes wali upar)
+  score += (s.views||0) * 0.5 + (s.likes||0) * 2;
+
+  // 5. Your Story hamesha first
+  if(s.userId === myId) score += 10000;
+
+  return score;
 }
+
+function render(list){
+  if(!storyBar) return;
+
+  // Algorithm se sort karo
+  list.sort((a,b)=> getStoryScore(b) - getStoryScore(a));
+  window.allStories = list;
+
+  const myStory = list.find(s=>s.userId===myId);
+  const others = list.filter(s=>s.userId!==myId);
+
+  // REAL IG UI
+  storyBar.innerHTML = `
+    <div class="sItem" id="yourStoryBtn">
+      <div class="sPlusRing ${myStory?'hasStory':''}">
+        ${myStory?`<img src="${myStory.userPic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`:'+'}
+      </div>
+      <div class="sName">Your story</div>
+    </div>
+    ${others.map(s=>{
+      let isSeen = localStorage.getItem('seen_'+s.id);
+      return `
+      <div class="sItem" onclick="openStoryViewer('${s.id}')">
+        <div class="sRing ${isSeen?'seen':'unseen'}">
+          <img src="${s.userPic}" loading="lazy">
+        </div>
+        <div class="sName">${s.userName.split(' ')[0].substring(0,8)}</div>
+      </div>`;
+    }).join('')}
+  `;
+
+  // Your story par click = upload + agar story hai to viewer
+  const yBtn = document.getElementById('yourStoryBtn');
+  if(yBtn) yBtn.onclick = ()=>{
+    if(myStory) openStoryViewer(myStory.id);
+    else document.getElementById('storyFileInput')?.click();
+  };
+
+  if(otherStoriesDiv) otherStoriesDiv.innerHTML = '';
+}
+
+// REALTIME FIREBASE LISTENER - Instagram jaisa live update
+function startRealtimeListener(){
+  if(unsubscribe) unsubscribe();
+
+  // Sirf 24 ghante ki stories (expiresAt > now)
+  const q = query(
+    collection(db,'stories'),
+    where('expiresAt','>', Date.now()),
+    orderBy('expiresAt','desc')
+  );
+
+  unsubscribe = onSnapshot(q, (snap)=>{
+    let list = [];
+    snap.docChanges().forEach(change=>{
+      let data = {id: change.doc.id,...change.doc.data()};
+      // Realtime animation ke liye
+      if(change.type === 'added'){
+        console.log('🔥 New story live:', data.userName);
+      }
+      list.push(data);
+    });
+
+    // Agar docChanges khali hai to full list lo
+    if(list.length === 0){
+      list = snap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+
+    // Duplicate user ki stories ko group karo (ek user ki multiple stories)
+    let grouped = {};
+    list.forEach(s=>{
+      if(!grouped[s.userId]) grouped[s.userId] = s;
+      else {
+        // Agar same user ki nayi story hai to latest rakho
+        if(s.createdAt > grouped[s.userId].createdAt) grouped[s.userId] = s;
+      }
+    });
+
+    let finalList = Object.values(grouped);
+    render(finalList);
+  }, (err)=>{
+    console.error('Story realtime error:', err);
+  });
+}
+
+// Viewer opener
+window.openStoryViewer = (id)=>{
+  const s = window.allStories.find(x=>x.id===id);
+  if(s && window.openStoryViewerReal){
+    // Haptic feedback (IG jaisa)
+    if(navigator.vibrate) navigator.vibrate(10);
+    window.openStoryViewerReal(s);
+  }
+};
+
+// Start
+startRealtimeListener();
+
+// Har 1 min me expiry check (purani stories auto hide)
+setInterval(()=>{
+  window.allStories = window.allStories.filter(s=> s.expiresAt > Date.now());
+  render(window.allStories);
+}, 60000);
+
+// Following list realtime update karo (close friends algorithm ke liye)
+async function loadFollowing(){
+  if(!myId) return;
+  try{
+    let snap = await getDoc(doc(db,'users',myId));
+    if(snap.exists()){
+      let data = snap.data();
+      myFollowing = data.following || [];
+      localStorage.setItem('my_following', JSON.stringify(myFollowing));
+    }
+  }catch(e){}
+}
+loadFollowing();
