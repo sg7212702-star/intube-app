@@ -26,7 +26,6 @@ function openMenu(){
 function openNotifBox(){
   let box=$("notifBox");
   if(!box){
-    // Agar HTML me box nahi hai to JS se banao - Design kharab nahi hoga
     box=document.createElement("div");
     box.id="notifBox";
     box.innerHTML=`<div style="display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.25)"><b>Notifications</b><span id="closeNotif" style="cursor:pointer">✕</span></div><div id="notifList" style="padding:10px"><div style="text-align:center;opacity:.6;padding:20px">No notifications yet</div></div>`;
@@ -45,7 +44,7 @@ function openNotifBox(){
   ov.style.display="block"; ov.classList.add("show");
 }
 
-// PAGE SWITCH - Bina HTML bigade
+// PAGE SWITCH - FIXED - Coming Soon Hataya
 function ensurePages(){
   if($("homePage")) return;
   const story=$(".storyGlass") || document.querySelector(".storyGlass");
@@ -58,7 +57,6 @@ function ensurePages(){
   ["explore","reels","profile","chat"].forEach(name=>{
     if($(name+"Page")) return;
     const div=document.createElement("div"); div.id=name+"Page"; div.className="page"; div.style.display="none";
-    div.innerHTML=`<div style="padding:70px 15px 80px 15px"><h3 style="margin:0 0 10px 0">${name.charAt(0).toUpperCase()+name.slice(1)}</h3><p style="opacity:.6">This is ${name} page - Coming soon</p></div>`;
     document.querySelector(".app")?.appendChild(div);
   });
 }
@@ -70,7 +68,6 @@ function openPage(name){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-// ===== UPLOAD BINA STORAGE KE =====
 function compress(file){
   return new Promise(res=>{
     const r=new FileReader();
@@ -89,28 +86,23 @@ function compress(file){
 document.addEventListener("DOMContentLoaded", ()=>{
   ensurePages();
 
-  // Top
   $("menuBtn")?.addEventListener("click", openMenu);
   $("notifBtn")?.addEventListener("click", openNotifBox);
   document.querySelectorAll(".iconGlass")[1]?.addEventListener("click", ()=>openPage("chat"));
 
-  // Close
   $("closeMenu")?.addEventListener("click", closeAll);
   $("overlay")?.addEventListener("click", closeAll);
   $("sideOverlay")?.addEventListener("click", closeAll);
   $("sheetOverlay")?.addEventListener("click", closeAll);
   $("cancelSheet")?.addEventListener("click", closeAll);
 
-  // Plus - 3 jagah
   $("addBtn")?.addEventListener("click", openSheet);
   $("addStoryBtn")?.addEventListener("click", openSheet);
 
-  // Sheet options
   $("optPost")?.addEventListener("click", ()=>$("postFile")?.click());
   $("optStory")?.addEventListener("click", ()=>$("storyFile")?.click());
   $("optReel")?.addEventListener("click", ()=>alert("Reel - Cloudinary jodna padega"));
 
-  // File upload
   $("postFile")?.addEventListener("change", async e=>{
     const f=e.target.files[0]; if(!f) return;
     closeAll();
@@ -126,7 +118,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     alert("✅ Story Added!");
   });
 
-  // Bottom Nav - MAIN FIX
   document.querySelectorAll(".bBtn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       if(btn.id==="addBtn") return;
@@ -140,7 +131,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     });
   });
 
-  // Side menu
   document.querySelectorAll(".mItem").forEach(m=>{
     m.addEventListener("click", ()=>{
       const t=m.textContent||"";
