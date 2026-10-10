@@ -1,58 +1,52 @@
-import { auth, db } from "./firebase-config.js";
+// auth.js - REAL REGISTRATION - 0 SE START
+import { db } from "./firebase.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-GoogleAuthProvider,
-signInWithPopup,
-onAuthStateChanged,
-signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const auth = getAuth();
 
-import {
-doc,
-setDoc,
-serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Registration
+window.registerUser = async () => {
+  const email = document.getElementById("regEmail").value;
+  const pass = document.getElementById("regPass").value;
+  const name = document.getElementById("regName").value;
+  if(!email ||!pass ||!name) return alert("Sab bharo!");
 
-const loginBtn = document.getElementById("googleLoginBtn");
-const loginScreen = document.getElementById("loginScreen");
-const app = document.getElementById("app");
-
-const provider = new GoogleAuthProvider();
-
-if(loginBtn){
-loginBtn.onclick = async () => {
-try{
-const result = await signInWithPopup(auth, provider);
-
-await setDoc(
-doc(db,"users",result.user.uid),
-{
-uid: result.user.uid,
-name: result.user.displayName || "",
-photo: result.user.photoURL || "",
-email: result.user.email || "",
-lastSeen: serverTimestamp()
-},
-{ merge:true }
-);
-
-}catch(err){
-alert(err.message);
-}
-};
+  const cred = await createUserWithEmailAndPassword(auth, email, pass);
+  // Firestore me user ko 0 se create karo - NO FAKE DATA
+  await setDoc(doc(db, "users", cred.user.uid), {
+    name: name,
+    email: email,
+    bio: "",
+    avatar: "",
+    posts: 0,
+    followers: 0,
+    following: 0,
+    createdAt: serverTimestamp()
+  });
+  alert("✅ Account ban gaya - Ab sab 0 se start hoga!");
+  location.href = "index.html";
 }
 
-onAuthStateChanged(auth,(user)=>{
-if(user){
-if(loginScreen) loginScreen.style.display="none";
-if(app) app.style.display="block";
-window.currentUser=user;
-}else{
-if(loginScreen) loginScreen.style.display="flex";
-if(app) app.style.display="none";
+// Login
+window.loginUser = async () => {
+  const email = document.getElementById("logEmail").value;
+  const pass = document.getElementById("logPass").value;
+  await signInWithEmailAndPassword(auth, email, pass);
+  location.href = "index.html";
 }
-});
 
-window.logoutINTUBE = async ()=>{
-await signOut(auth);
-};
+// Check - Agar login nahi hai to auth.html pe bhejo
+onAuthStateChanged(auth, (user)=>{
+  if(!user &&!location.href.includes("auth.html")){
+    location.href = "auth.html";
+  }
+  if(user && location.href.includes("auth.html")){
+    location.href = "index.html";
+  }
+  // Real user ka naam dikhao
+  if(user){
+    const el = document.getElementById("realUserName");
+    if(el) el.innerText = user.email.split("@")[0];
+  }
+}
