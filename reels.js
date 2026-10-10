@@ -1,17 +1,18 @@
-// reels.js - same posts ko reel ki tarah dikhayega
 import { db } from "./firebase.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const rBox=document.getElementById("reelsBox");
-if(rBox){ onSnapshot(collection(db,"posts"),(s)=>{ rBox.innerHTML=""; s.forEach(d=>{ rBox.innerHTML+=`<img src="${d.data().fileUrl}" style="width:100%;height:90vh;object-fit:cover">`; }); }); }
+import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// explore.js
-import { db } from "./firebase.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const eBox=document.getElementById("exploreGrid");
-if(eBox){ onSnapshot(collection(db,"posts"),(s)=>{ eBox.innerHTML=""; s.forEach(d=>{ eBox.innerHTML+=`<img src="${d.data().fileUrl}" style="width:100%;aspect-ratio:1;object-fit:cover">`; }); }); }
-
-// profile.js
-import { db } from "./firebase.js";
-import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const pGrid=document.getElementById("profileGrid");
-if(pGrid){ onSnapshot(collection(db,"posts"),(s)=>{ pGrid.innerHTML=""; s.forEach(d=>{ pGrid.innerHTML+=`<img src="${d.data().fileUrl}" style="width:100%;aspect-ratio:1;object-fit:cover">`; }); }); }
+document.addEventListener("DOMContentLoaded", ()=>{
+  const reelPage=document.getElementById("reelsPage");
+  if(!reelPage) return;
+  reelPage.innerHTML = `<div style="padding:60px 0 80px 0"><h3 style="padding:0 15px">Reels</h3><div id="reelsFeed"></div></div>`;
+  const feed=document.getElementById("reelsFeed");
+  
+  onSnapshot(query(collection(db,"posts"),orderBy("createdAt","desc")), snap=>{
+    feed.innerHTML="";
+    snap.forEach(d=>{
+      const p=d.data();
+      feed.innerHTML+=`<div style="height:85vh;margin:10px;border-radius:20px;overflow:hidden;position:relative;background:#000"><img src="${p.url}" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;bottom:20px;left:15px;color:#fff"><b>InstaPro</b><br>❤️ ${p.likes||0} Likes</div></div>`;
+    });
+    if(snap.empty) feed.innerHTML=`<p style="text-align:center;opacity:.5;padding:30px">Post dalo - Reels ban jayega!</p>`;
+  });
+});
