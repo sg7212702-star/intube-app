@@ -1,7 +1,6 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>InstaPro Premium Glass</title><link rel="stylesheet" href="style.css?v=final"></head><body>
 <div class="app">
 
-<!-- TOP GLASS - Full Instagram Menu -->
 <header class="topGlass">
   <div class="left">
     <button class="menuBtn" id="menuBtn">☰</button>
@@ -18,16 +17,13 @@
   </div>
 </header>
 
-<!-- STORY GLASS -->
 <div class="storyGlass">
-  <div class="sItem"><div class="sRing add"><span>+</span></div><p>Your story</p></div>
+  <div class="sItem"><div class="sRing add" id="addStoryBtn"><span>+</span></div><p>Your story</p></div>
   <div id="otherStories" style="display:flex;gap:12px"></div>
 </div>
 
-<!-- FEED - Premium Post Glass -->
 <main id="feed"></main>
 
-<!-- BOTTOM GLASS - 5 Premium Buttons -->
 <nav class="bottomGlass">
   <button class="bBtn active" data-v="home">
     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.005 16.175H4.987V12.142L12 5.914l7.013 6.228v4.033h-4.018v-4.01h-5.99v4.01z"/></svg>
@@ -46,29 +42,28 @@
 
 </div>
 
-<!-- SHEETS - Glass Menu -->
 <div id="overlay" class="overlayGlass"></div>
 <div id="sideMenu" class="sideGlass">
   <div class="sideHead"><b>Menu</b><button id="closeMenu">✕</button></div>
   <div class="mItem">⚙️ Settings</div><div class="mItem">🔖 Saved</div><div class="mItem">🌙 Dark Mode</div><div class="mItem">🚪 Logout</div>
 </div>
-<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo/Video</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt" id="optReel">🎬 Reel</div><div class="sOpt cancel" onclick="closeAll()">Cancel</div></div>
+<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo/Video</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt" id="optReel">🎬 Reel</div><div class="sOpt cancel" id="cancelSheet">Cancel</div></div>
 
-<input type="file" id="postFile" hidden accept="image/*,video/*">
-<input type="file" id="storyFile" hidden accept="image/*,video/*">
-<input type="file" id="reelFile" hidden accept="video/*">
+<!-- FIX: hidden hatao, display:none lagao - loop khatam -->
+<input type="file" id="postFile" style="display:none" accept="image/*,video/*">
+<input type="file" id="storyFile" style="display:none" accept="image/*,video/*">
+<input type="file" id="reelFile" style="display:none" accept="video/*">
 
 <div id="sideOverlay" class="overlayGlass"></div>
 <div id="sheetOverlay" class="overlayGlass"></div>
 
 <script type="module" src="firebase.js"></script>
-<script src="app.js"></script>
-<script type="module" src="upload.js"></script>
 <script type="module" src="feed.js"></script>
+<script type="module" src="stories.js"></script>
+<script type="module" src="upload.js"></script>
+<script type="module" src="app.js"></script>
 <script type="module" src="like.js"></script>
 <script type="module" src="comment.js"></script>
-<script type="module" src="stories.js"></script>
 <script src="auth.js"></script>
 <script src="profile.js"></script>
-</body>
-</html>
+</body></html>
