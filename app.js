@@ -1,105 +1,105 @@
-import { db, storage } from "./firebase.js";
+import { db } from "./firebase.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const $ = id => document.getElementById(id);
 
-// ---- SHEET OPEN/CLOSE ----
 function closeAll(){
   const s=$("createSheet"); if(s){ s.classList.remove("show"); s.style.bottom="-100%"; }
-  $("overlay")?.classList.remove("show");
-  $("sheetOverlay")?.classList.remove("show");
-  $("sideOverlay")?.classList.remove("show");
+  ["overlay","sheetOverlay","sideOverlay"].forEach(id=>$(id)?.classList.remove("show"));
   $("sideMenu")?.classList.remove("show");
 }
 function openSheet(){
   const s=$("createSheet"); if(s){ s.classList.add("show"); s.style.bottom="0"; }
-  $("overlay")?.classList.add("show");
-  $("sheetOverlay")?.classList.add("show");
+  $("overlay")?.classList.add("show"); $("sheetOverlay")?.classList.add("show");
 }
 function openMenu(){
-  $("sideMenu")?.classList.add("show");
-  $("sideOverlay")?.classList.add("show");
+  $("sideMenu")?.classList.add("show"); $("sideOverlay")?.classList.add("show");
 }
 window.closeAll = closeAll;
 
-// ---- UPLOAD ----
-async function realUpload(file, type){
-  if(!file) return;
-  closeAll();
-  alert("Uploading: "+file.name);
-  try{
-    const r = ref(storage, `${type}_${Date.now()}_${file.name}`);
-    await uploadBytes(r, file);
-    const url = await getDownloadURL(r);
-    await addDoc(collection(db, type==="story"?"stories":"posts"), {
-      url, type: file.type.includes("video")?"video":"image",
-      likes:0, score:Date.now(), createdAt: serverTimestamp()
-    });
-    alert("✅ Upload Done!");
-    location.reload();
-  }catch(e){ alert("FAIL: "+e.message); }
+// ---- BINA STORAGE KE UPLOAD - BASE64 ----
+function compressImage(file){
+  return new Promise((resolve)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement("canvas");
+        const MAX = 600; // 600px tak compress - Firestore limit ke liye
+        let w = img.width, h = img.height;
+        if(w>h){ if(w>MAX){ h*=MAX/w; w=MAX; } }
+        else{ if(h>MAX){ w*=MAX/h; h=MAX; } }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg", 0.7)); // 70% quality
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-// ---- ALL BUTTONS WORKING ----
-document.addEventListener("DOMContentLoaded",()=>{
-  console.log("ALL BUTTONS FIXED");
+async function doUpload(file, type){
+  if(!file){ return; }
+  closeAll();
+  alert("Uploading: "+file.name+" - Compress ho raha hai...");
+  try{
+    // Video ke liye storage chahiye, isliye sirf photo allow
+    if(file.type.includes("video")){
+      alert("Video ke liye Storage billing chahiye - Abhi sirf Photo upload karo sir!");
+      return;
+    }
+    const base64Url = await compressImage(file);
+    await addDoc(collection(db, type==="story"?"stories":"posts"), {
+      url: base64Url, // Base64 hi URL hai
+      type: "image",
+      likes:0, comments:0, score:Date.now(),
+      createdAt: serverTimestamp()
+    });
+    alert("✅ Photo Upload Done! Billing 0!");
+    location.reload();
+  }catch(e){
+    console.error(e);
+    alert("FAIL: "+e.message);
+  }
+}
 
-  // 1. TOP BUTTONS
-  $("menuBtn").addEventListener("click", openMenu);
-  $("closeMenu").addEventListener("click", closeAll);
-  $("notifBtn")?.addEventListener("click", ()=> alert("🔔 Notifications - 3 new likes!"));
-  document.querySelectorAll(".topGlass.iconGlass")[1]?.addEventListener("click", ()=> alert("✈️ Messages - Coming Soon"));
+document.addEventListener("DOMContentLoaded", ()=>{
+  $("menuBtn")?.addEventListener("click", openMenu);
+  $("closeMenu")?.addEventListener("click", closeAll);
+  $("overlay")?.addEventListener("click", closeAll);
+  $("sideOverlay")?.addEventListener("click", closeAll);
+  $("sheetOverlay")?.addEventListener("click", closeAll);
+  $("cancelSheet")?.addEventListener("click", closeAll);
+  $("notifBtn")?.addEventListener("click", ()=> alert("🔔 3 new likes!"));
 
-  // 2. OVERLAY CLOSE
-  $("overlay").addEventListener("click", closeAll);
-  $("sideOverlay").addEventListener("click", closeAll);
-  $("sheetOverlay").addEventListener("click", closeAll);
-  $("cancelSheet").addEventListener("click", closeAll);
+  $("addBtn")?.addEventListener("click", openSheet);
+  document.querySelector(".sRing.add")?.addEventListener("click", openSheet);
+  document.getElementById("addStoryBtn")?.addEventListener("click", openSheet);
 
-  // 3. BOTTOM 5 BUTTONS - ALL WORKING NOW
-  $("addBtn").addEventListener("click", openSheet); // PLUS - Glass wala
-  $("addStoryBtn").addEventListener("click", openSheet); // Your Story +
+  $("optPost")?.addEventListener("click", ()=> $("postFile").click());
+  $("optStory")?.addEventListener("click", ()=> $("storyFile").click());
+  $("optReel")?.addEventListener("click", ()=> alert("Reel ke liye Storage billing chahiye - Abhi Post use karo"));
 
-  document.querySelectorAll(".bottomGlass.bBtn").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      if(btn.id==="addBtn") return; // already handled
-      document.querySelectorAll(".bottomGlass.bBtn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      const v = btn.dataset.v;
-      if(v==="home"){ window.scrollTo({top:0, behavior:"smooth"}); }
-      if(v==="search"){ alert("🔍 Search - Coming Soon"); }
-      if(v==="reels"){ alert("🎬 Reels - Swipe karo"); }
-      if(v==="profile"){ alert("👤 Profile - Coming Soon"); }
+  $("postFile")?.addEventListener("change", e=>{ if(e.target.files[0]) doUpload(e.target.files[0],"post"); });
+  $("storyFile")?.addEventListener("change", e=>{ if(e.target.files[0]) doUpload(e.target.files[0],"story"); });
+
+  document.querySelectorAll(".bBtn").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      if(b.id==="addBtn") return;
+      document.querySelectorAll(".bBtn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      const v=b.dataset.v;
+      if(v==="home") window.scrollTo({top:0,behavior:"smooth"});
+      else alert("Coming Soon: "+v);
     });
   });
 
-  // 4. CREATE SHEET - POST/STORY/REEL
-  $("optPost").addEventListener("click", ()=> $("postFile").click());
-  $("optStory").addEventListener("click", ()=> $("storyFile").click());
-  $("optReel").addEventListener("click", ()=> $("reelFile").click());
-
-  // 5. FILE SELECT -> UPLOAD
-  $("postFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) realUpload(f,"post"); });
-  $("storyFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) realUpload(f,"story"); });
-  $("reelFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) realUpload(f,"post"); });
-
-  // 6. SIDE MENU - 4 OPTIONS WORKING
-  document.querySelectorAll(".sideGlass.mItem").forEach(item=>{
-    item.style.cursor="pointer";
-    item.addEventListener("click", ()=>{
-      const t = item.textContent;
-      if(t.includes("Settings")) alert("⚙️ Settings - Dark mode yahi hai");
-      if(t.includes("Saved")) alert("🔖 Saved Posts - 0 posts");
-      if(t.includes("Dark Mode")){
-        document.body.classList.toggle("dark");
-        alert(document.body.classList.contains("dark")? "🌙 Dark ON" : "☀️ Light ON");
-      }
-      if(t.includes("Logout")){ alert("🚪 Logout Done"); location.reload(); }
+  document.querySelectorAll(".mItem").forEach(m=>{
+    m.addEventListener("click", ()=>{
+      if(m.textContent.includes("Dark")){ document.body.classList.toggle("dark"); }
+      else alert(m.textContent+" - Coming Soon");
       closeAll();
     });
   });
-
-  // 7. STORY RING CLICK
-  document.querySelector(".sRing.add")?.addEventListener("click", openSheet);
 });
