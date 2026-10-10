@@ -1,5 +1,4 @@
-// FINAL FIREBASE.JS - Bina Storage Ke - Free Wala
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -11,10 +10,7 @@ const firebaseConfig = {
   messagingSenderId: "627409965607",
   appId: "1:627409965607:web:a1d71800d812fe668b7402"
 };
-
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-
 signInAnonymously(auth).catch(()=>{});
-console.log("Firebase Free Connected ✅");
