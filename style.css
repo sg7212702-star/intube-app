@@ -85,3 +85,5 @@ body{background:#000;color:#fff;font-family:-apple-system,sans-serif}
 #feed img{filter:none!important;-webkit-filter:none!important;width:100%!important;display:block!important}
 #feed{padding-bottom:120px!important}
 .topGlass{height:60px!important}
+#profileSheet{position:fixed;left:50%;transform:translateX(-50%);bottom:-100%;width:calc(100% - 24px);max-width:446px;background:rgba(18,18,20,0.96);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:0 0 20px 0;z-index:9999;transition:0.35s;max-height:85vh;overflow-y:auto}
+#profileSheet.open{bottom:0!important}
