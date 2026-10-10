@@ -1,5 +1,5 @@
-const chatBtn = document.getElementById("chatBtn");
-
-chatBtn?.addEventListener("click", () => {
-  alert("Chat Coming Soon");
+document.addEventListener("DOMContentLoaded", ()=>{
+  const chatPage=document.getElementById("chatPage");
+  if(!chatPage) return;
+  chatPage.innerHTML=`<div style="padding:60px 0 80px 0"><h3 style="padding:0 15px">Messages</h3><div style="padding:15px"><div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.08);border-radius:14px;margin-bottom:10px"><img src="https://i.pravatar.cc/100?img=5" style="width:44px;border-radius:50%"><div><b>Rahul</b><br><span style="opacity:.6;font-size:13px">Hey! Nice post 🔥</span></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.08);border-radius:14px"><img src="https://i.pravatar.cc/100?img=8" style="width:44px;border-radius:50%"><div><b>Priya</b><br><span style="opacity:.6;font-size:13px">Story dekha kya?</span></div></div></div><div style="position:fixed;bottom:80px;left:10px;right:10px;display:flex;gap:8px"><input placeholder="Search messages..." style="flex:1;padding:12px;border-radius:24px;border:none;background:rgba(255,255,255,.12);color:#fff"><button style="padding:12px 18px;border-radius:24px;border:none;background:#fff;color:#000">⌕</button></div></div>`;
 });
