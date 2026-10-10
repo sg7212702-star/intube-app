@@ -1,73 +1,158 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>InstaPro Premium Glass</title><link rel="stylesheet" href="style.css?v=final"></head><body>
-<div class="app">
+// stories.js - InstaPro Real Instagram Story System
+import { db } from "./firebase.js";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-<header class="topGlass">
-  <div class="left">
-    <button class="menuBtn" id="menuBtn">☰</button>
-    <h1 class="logo">InstaPro</h1>
-  </div>
-  <div class="right">
-    <button class="iconGlass" id="notifBtn">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <span class="dot"></span>
-    </button>
-    <button class="iconGlass">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-    </button>
-  </div>
-</header>
+document.addEventListener("DOMContentLoaded", ()=>{
+  setTimeout(()=>{
 
-<div class="storyGlass">
-  <div class="sItem"><div class="sRing add" id="addStoryBtn"><span>+</span></div><p>Your story</p></div>
-  <div id="otherStories" style="display:flex;gap:12px"></div>
-</div>
+    const otherStories = document.getElementById("otherStories");
+    const addStoryBtn = document.getElementById("addStoryBtn");
+    const storyFile = document.getElementById("storyFile");
+    if(!otherStories) return;
 
-<main id="feed"></main>
+    // --- CSS Inject Instagram Style ---
+    const style = document.createElement("style");
+    style.textContent=`
+     .storyItem{ min-width:68px; text-align:center; cursor:pointer; }
+     .storyRing{ width:62px; height:62px; border-radius:50%; padding:3px; background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5); display:flex; align-items:center; justify-content:center; }
+     .storyRing.seen{ background:#2a2a2a; }
+     .storyRing.add{ background:rgba(255,255,255,.15); border:1px dashed rgba(255,255,255,.3); }
+     .storyRing img{ width:100%; height:100%; border-radius:50%; object-fit:cover; border:3px solid #000; background:#000; }
+      #storyViewer{ position:fixed; inset:0; background:#000; z-index:100000; display:none; flex-direction:column; }
+     .storyProgress{ display:flex; gap:4px; padding:8px; }
+     .storyProgress div{ height:2px; background:rgba(255,255,255,.35); flex:1; border-radius:10px; overflow:hidden; }
+     .storyProgress div span{ display:block; height:100%; width:0%; background:#fff; transition:width.1s linear; }
+    `;
+    document.head.appendChild(style);
 
-<nav class="bottomGlass">
-  <button class="bBtn active" data-v="home">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.005 16.175H4.987V12.142L12 5.914l7.013 6.228v4.033h-4.018v-4.01h-5.99v4.01z"/></svg>
-  </button>
-  <button class="bBtn" data-v="search">
-    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-  </button>
-  <button class="bBtn plusGlass" id="addBtn">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-  <button class="bBtn" data-v="reels">
-    <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-  </button>
-  <button class="bBtn" data-v="profile"><img id="myAvatar" class="avatarBtn" src="https://i.pravatar.cc/100?img=12"></button>
-</nav>
+    // Viewer HTML
+    let viewer = document.getElementById("storyViewer");
+    if(!viewer){
+      viewer=document.createElement("div");
+      viewer.id="storyViewer";
+      viewer.innerHTML=`
+        <div class="storyProgress" id="storyProg"><div><span></span></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px;">
+          <div style="display:flex; gap:10px; align-items:center;"><img id="sViewAvatar" src="https://i.pravatar.cc/100" style="width:32px;height:32px;border-radius:50%"><b id="sViewName" style="color:#fff; font-size:14px;">user</b><span style="color:rgba(255,255,255,.6); font-size:12px;" id="sViewTime">2h ago</span></div>
+          <div id="sClose" style="width:32px;height:32px; background:rgba(255,255,255,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">✕</div>
+        </div>
+        <div id="sViewContent" style="flex:1; display:flex; align-items:center; justify-content:center; background:#000;"></div>
+        <div style="padding:12px 16px; display:flex; gap:10px;"><input placeholder="Reply..." style="flex:1; padding:10px 14px; border-radius:20px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; outline:none;"><span style="font-size:22px;">✈️</span></div>
+      `;
+      document.body.appendChild(viewer);
+    }
 
-</div>
+    let storiesData = [];
+    let currentIndex = 0;
+    let progressInterval;
 
-<div id="overlay" class="overlayGlass"></div>
-<div id="sideMenu" class="sideGlass">
-  <div class="sideHead"><b>Menu</b><button id="closeMenu">✕</button></div>
-  <div class="mItem">⚙️ Settings</div><div class="mItem">🔖 Saved</div><div class="mItem">🌙 Dark Mode</div><div class="mItem">🚪 Logout</div>
-</div>
-<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo/Video</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt" id="optReel">🎬 Reel</div><div class="sOpt cancel" id="cancelSheet">Cancel</div></div>
+    function openStory(index){
+      currentIndex = index;
+      const s = storiesData[index];
+      if(!s) return;
+      viewer.style.display="flex";
+      document.getElementById("sViewAvatar").src = s.avatar;
+      document.getElementById("sViewName").textContent = s.user;
+      document.getElementById("sViewTime").textContent = "Just now";
 
-<!-- FIX: hidden hatao, display:none lagao - loop khatam -->
-<input type="file" id="postFile" style="display:none" accept="image/*,video/*">
-<input type="file" id="storyFile" style="display:none" accept="image/*,video/*">
-<input type="file" id="reelFile" style="display:none" accept="video/*">
+      const content = document.getElementById("sViewContent");
+      const isVideo = s.url.includes(".mp4") || s.url.includes("video");
+      content.innerHTML = isVideo? `<video src="${s.url}" autoplay style="width:100%; max-height:100%;"></video>` : `<img src="${s.url}" style="width:100%; max-height:100%; object-fit:contain;">`;
 
-<div id="sideOverlay" class="overlayGlass"></div>
-<div id="sheetOverlay" class="overlayGlass"></div>
+      // Progress
+      const progBar = document.querySelector("#storyProg span");
+      progBar.style.width="0%";
+      let w=0;
+      clearInterval(progressInterval);
+      progressInterval = setInterval(()=>{
+        w+=0.8;
+        progBar.style.width=w+"%";
+        if(w>=100){
+          clearInterval(progressInterval);
+          if(currentIndex < storiesData.length-1){
+            openStory(currentIndex+1);
+          }else{
+            viewer.style.display="none";
+          }
+        }
+      }, 40);
+    }
 
-<script type="module" src="firebase.js"></script>
-<script type="module" src="feed.js"></script>
-<script type="module" src="stories.js"></script>
-<script type="module" src="upload.js"></script>
-<script type="module" src="app.js"></script>
-<script type="module" src="like.js"></script>
-<script type="module" src="comment.js"></script>
-<script src="auth.js"></script>
-<script src="profile.js"></script>
-<script type="module" src="explore.js"></script>
-<script type="module" src="reels.js"></script>
-<script type="module" src="chat.js"></script>
-<script type="module" src="notifications.js"></script>
-</body></html>
+    document.getElementById("sClose").addEventListener("click", ()=>{ viewer.style.display="none"; clearInterval(progressInterval); });
+    viewer.addEventListener("click", (e)=>{ if(e.target===viewer || e.target.id==="sViewContent") viewer.style.display="none"; });
+
+    // Upload - Instagram style
+    addStoryBtn?.addEventListener("click", ()=> storyFile?.click());
+
+    storyFile?.addEventListener("change", async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const userName = user?.displayName || user?.email?.split("@")[0] || "You";
+      const avatar = user?.photoURL || "https://i.pravatar.cc/150?img=32";
+
+      // Show uploading
+      addStoryBtn.innerHTML = `<span>⏳</span>`;
+
+      // Convert to base64 for quick demo (Firebase Storage ke bina)
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        try{
+          await addDoc(collection(db,"stories"), {
+            url: reader.result,
+            user: userName,
+            avatar: avatar,
+            uid: user?.uid || "anon",
+            createdAt: serverTimestamp(),
+            expireAt: Date.now() + 24*60*60*1000 // 24h
+          });
+          alert("✅ Story uploaded! Instagram jaisa dikhega ab!");
+          addStoryBtn.innerHTML = `<span>+</span>`;
+        }catch(err){
+          console.log(err);
+          alert("Upload failed: "+err.message);
+          addStoryBtn.innerHTML = `<span>+</span>`;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Real-time render - Instagram jaisa
+    try{
+      const q = query(collection(db,"stories"), orderBy("createdAt","desc"));
+      onSnapshot(q, snap=>{
+        otherStories.innerHTML="";
+        storiesData=[];
+
+        if(snap.empty){
+          otherStories.innerHTML=`<div style="color:rgba(255,255,255,.4); font-size:12px; padding:16px;">No stories yet - Add your first story!</div>`;
+          return;
+        }
+
+        let i=0;
+        snap.forEach(doc=>{
+          const s = doc.data();
+          // 24h expiry check
+          if(s.expireAt && s.expireAt < Date.now()) return;
+
+          storiesData.push(s);
+          const div=document.createElement("div");
+          div.className="storyItem";
+          div.innerHTML=`
+            <div class="storyRing"><img src="${s.avatar}"></div>
+            <p style="font-size:11px; color:#fff; margin-top:6px; max-width:68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.user}</p>
+          `;
+          const idx=i;
+          div.addEventListener("click", ()=> openStory(idx));
+          otherStories.appendChild(div);
+          i++;
+        });
+      });
+    }catch(e){ console.log("story err",e); }
+
+    console.log("✅ Instagram Story System Ready");
+  },700);
+});
