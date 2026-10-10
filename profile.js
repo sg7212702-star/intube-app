@@ -1,116 +1,88 @@
-// profile.js - InstaPro Premium Instagram Glass Profile
+// profile.js - InstaPro Ultimate Instagram Glass Profile System
 import { db } from "./firebase.js";
 import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", ()=>{
   setTimeout(()=>{
 
-    let profilePage = document.getElementById("profilePage");
-    if(!profilePage){
-      profilePage=document.createElement("div");
-      profilePage.id="profilePage";
-      profilePage.className="page";
-      profilePage.style.display="none";
-      document.querySelector(".app")?.appendChild(profilePage);
+    let page = document.getElementById("profilePage");
+    if(!page){
+      page=document.createElement("div"); page.id="profilePage"; page.className="page"; page.style.display="none";
+      document.querySelector(".app")?.appendChild(page);
     }
 
-    profilePage.innerHTML=`
+    page.innerHTML=`
       <style>
-        .glass{ background:rgba(255,255,255,0.12); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,0.22); }
-        .glassBtn{ background:rgba(255,255,255,0.14); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:8px 16px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
-        .glassBtn.primary{ background:linear-gradient(135deg,#ff6a8a,#8a6cff); border:none; }
-        .stat{ text-align:center; flex:1; }
-        .stat b{ display:block; color:#fff; font-size:17px; }
-        .stat span{ color:rgba(255,255,255,.55); font-size:12px; }
-        .highlight{ min-width:62px; text-align:center; }
-        .highlight img{ width:58px; height:58px; border-radius:50%; border:2px solid rgba(255,255,255,.25); padding:2px; background:rgba(255,255,255,.08); }
+        .glass{ background:rgba(255,255,255,0.14); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,0.24); }
+        .glassBtn{ background:rgba(255,255,255,0.14); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,0.22); border-radius:12px; padding:10px; color:#fff; font-weight:600; cursor:pointer; transition:.2s; }
+        .glassBtn:active{ transform:scale(0.96); }
+        .sheet{ position:fixed; left:0; right:0; bottom:-100%; background:rgba(20,20,20,0.85); backdrop-filter:blur(32px) saturate(180%); -webkit-backdrop-filter:blur(32px); border-top:1px solid rgba(255,255,255,0.2); border-radius:28px 28px 0 0; z-index:200; transition:bottom .4s cubic-bezier(.32,.72,0,1); max-height:85vh; overflow:auto; }
+        .sheet.show{ bottom:0; }
+        .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(6px); z-index:199; display:none; }
+        .overlay.show{ display:block; }
+        .inputGlass{ width:100%; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.18); color:#fff; outline:none; font-size:14px; backdrop-filter:blur(10px); }
+        .inputGlass::placeholder{ color:rgba(255,255,255,.5); }
       </style>
 
-      <div style="padding:66px 0 90px 0; min-height:100vh; background:#000; color:#fff;">
-        
-        <!-- Header -->
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:0 16px;">
-          <div style="display:flex; align-items:center; gap:6px;"><b style="font-size:20px;">instapro_user</b><span style="color:#2ecc71; font-size:12px;">▼</span></div>
+      <div style="background:#000; min-height:100vh; padding-bottom:90px; color:#fff;">
+        <!-- Top -->
+        <div style="position:sticky; top:0; z-index:20; background:rgba(0,0,0,.78); backdrop-filter:blur(22px); display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08);">
+          <div style="display:flex; align-items:center; gap:6px;"><b id="topUsername" style="font-size:19px;">sg7212</b> ▼ <span style="background:#ff3040; font-size:10px; padding:3px 7px; border-radius:12px; margin-left:6px;">9+</span></div>
           <div style="display:flex; gap:10px;">
-            <div class="glass" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;">☰</div>
-            <div class="glass" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;">+</div>
+            <div id="createBtn" class="glass" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;">⊕</div>
+            <div id="menuBtnP" class="glass" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;">☰</div>
           </div>
         </div>
 
-        <!-- Avatar + Stats -->
-        <div style="display:flex; align-items:center; gap:16px; padding:18px 16px 10px 16px;">
-          <div style="position:relative;">
-            <img src="https://i.pravatar.cc/150?img=32" style="width:84px;height:84px;border-radius:50%; border:3px solid rgba(255,255,255,.2);">
-            <div style="position:absolute; bottom:0; right:0; width:22px;height:22px; background:#2ecc71; border-radius:50%; border:3px solid #000; display:flex; align-items:center; justify-content:center; font-size:10px;">+</div>
-          </div>
-          <div style="flex:1; display:flex;">
-            <div class="stat"><b id="postCount">0</b><span>Posts</span></div>
-            <div class="stat"><b>1.2K</b><span>Followers</span></div>
-            <div class="stat"><b>380</b><span>Following</span></div>
-          </div>
+        <!-- Info -->
+        <div style="display:flex; padding:18px 16px 10px; gap:18px; align-items:center;">
+          <div style="position:relative;"><img id="avatarImg" src="https://i.pravatar.cc/150?img=32" style="width:86px;height:86px;border-radius:50%;border:2px solid rgba(255,255,255,.15);"><div id="changeAvatar" style="position:absolute; bottom:0; right:0; width:26px;height:26px; background:linear-gradient(135deg,#ff6a8a,#8a6cff); border-radius:50%; border:3px solid #000; display:flex;align-items:center;justify-content:center; cursor:pointer;">+</div></div>
+          <div style="flex:1; display:flex; text-align:center;"><div style="flex:1"><b id="countPosts" style="display:block;font-size:17px">0</b><span style="font-size:13px;color:#a8a8a8">posts</span></div><div id="openFollowers" style="flex:1;cursor:pointer"><b style="display:block;font-size:17px">1,248</b><span style="font-size:13px;color:#a8a8a8">followers</span></div><div id="openFollowing" style="flex:1;cursor:pointer"><b style="display:block;font-size:17px">420</b><span style="font-size:13px;color:#a8a8a8">following</span></div></div>
         </div>
 
-        <!-- Bio -->
-        <div style="padding:0 16px 12px 16px;">
-          <b style="font-size:14px;">Sourabh G | InstaPro 🚀</b><br>
-          <span style="color:rgba(255,255,255,.65); font-size:13px; line-height:1.3;">Premium Glass UI • Developer • Jabalpur, MP<br>Building Instagram Clone with Firebase 🔥</span><br>
-          <span style="color:#6db3ff; font-size:13px;">github.com/sg7212</span>
+        <div style="padding:0 16px 12px;">
+          <b id="displayName" style="font-size:14px;">Sourabh Gaur</b>
+          <div id="displayBio" style="font-size:14px; line-height:1.35; color:rgba(255,255,255,.85); margin-top:2px;">🚀 Building InstaPro Premium<br>💻 Developer • Jabalpur, MP<br>Building with Firebase 🔥</div>
+          <div id="displayLink" style="color:#8ab4f8; font-size:14px; margin-top:4px;">github.com/sg7212</div>
         </div>
 
-        <!-- Edit Buttons - Glass -->
-        <div style="display:flex; gap:8px; padding:0 16px 14px 16px;">
-          <div class="glassBtn" style="flex:1; text-align:center;">Edit profile</div>
-          <div class="glassBtn" style="flex:1; text-align:center;">Share profile</div>
-          <div class="glass" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;">👤</div>
+        <div style="display:flex; gap:8px; padding:0 16px 16px;">
+          <div id="editProfileBtn" class="glassBtn" style="flex:1;text-align:center;">Edit profile</div>
+          <div id="shareProfileBtn" class="glassBtn" style="flex:1;text-align:center;">Share profile</div>
+          <div id="discoverBtn" class="glass" style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;">👤</div>
         </div>
 
-        <!-- Highlights - Glass -->
-        <div style="display:flex; gap:12px; overflow:auto; padding:4px 16px 14px 16px; scrollbar-width:none;">
-          <div class="highlight"><div class="glass" style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px">+</div><div style="font-size:11px; margin-top:4px; opacity:.7">New</div></div>
-          <div class="highlight"><img src="https://picsum.photos/100?random=11"><div style="font-size:11px; margin-top:4px;">Travel ✈️</div></div>
-          <div class="highlight"><img src="https://picsum.photos/100?random=12"><div style="font-size:11px; margin-top:4px;">Code 💻</div></div>
-          <div class="highlight"><img src="https://picsum.photos/100?random=13"><div style="font-size:11px; margin-top:4px;">Food 🍔</div></div>
+        <!-- Highlights Glass -->
+        <div style="display:flex; gap:14px; padding:0 16px 16px; overflow:auto;">
+          <div style="text-align:center"><div class="glass" style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer">+</div><div style="font-size:11px;margin-top:6px;opacity:.7">New</div></div>
+          <div style="text-align:center"><img src="https://picsum.photos/80?random=11" style="width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:2px"><div style="font-size:11px;margin-top:6px">Travel ✈️</div></div>
+          <div style="text-align:center"><img src="https://picsum.photos/80?random=12" style="width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:2px"><div style="font-size:11px;margin-top:6px">Code 💻</div></div>
         </div>
 
-        <!-- Tabs - Glass -->
         <div style="display:flex; border-top:1px solid rgba(255,255,255,.12);">
-          <div style="flex:1; text-align:center; padding:12px; border-top:1px solid #fff;"><span style="font-size:18px;">⊞</span></div>
-          <div style="flex:1; text-align:center; padding:12px; opacity:.4;"><span style="font-size:18px;">▶️</span></div>
-          <div style="flex:1; text-align:center; padding:12px; opacity:.4;"><span style="font-size:18px;">👤</span></div>
+          <div class="tabBtn active" data-tab="posts" style="flex:1;text-align:center;padding:12px;border-top:1px solid #fff;cursor:pointer">⊞</div>
+          <div class="tabBtn" data-tab="reels" style="flex:1;text-align:center;padding:12px;opacity:.5;cursor:pointer">▶️</div>
+          <div class="tabBtn" data-tab="tagged" style="flex:1;text-align:center;padding:12px;opacity:.5;cursor:pointer">👤</div>
         </div>
 
-        <!-- Posts Grid -->
-        <div id="profileGrid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; background:rgba(255,255,255,.08);">
-          <div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:rgba(255,255,255,.5);">
-            <div style="font-size:40px; margin-bottom:10px;">📸</div>
-            <div>No posts yet? Upload from + button</div>
-          </div>
-        </div>
-
+        <div id="grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px;"></div>
       </div>
-    `;
 
-    // Load real posts from Firebase
-    const grid = profilePage.querySelector("#profileGrid");
-    const postCountEl = profilePage.querySelector("#postCount");
+      <!-- Overlay -->
+      <div id="pOverlay" class="overlay"></div>
 
-    try{
-      const q = query(collection(db,"posts"), orderBy("createdAt","desc"));
-      onSnapshot(q, snap=>{
-        if(postCountEl) postCountEl.textContent = snap.size;
-        if(snap.empty){
-          grid.innerHTML=`<div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:rgba(255,255,255,.5);"><div style="font-size:40px;">📸</div><div>No posts yet</div><div style="font-size:12px; opacity:.5; margin-top:4px;">Your uploaded posts will appear here</div></div>`;
-          return;
-        }
-        grid.innerHTML="";
-        snap.forEach(d=>{
-          const data=d.data();
-          grid.innerHTML+=`<div style="aspect-ratio:1; overflow:hidden; background:#111; position:relative;"><img src="${data.url}" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,.5); backdrop-filter:blur(8px); border-radius:10px; padding:2px 6px; font-size:11px; color:#fff;">❤️ ${data.likes||0}</div></div>`;
-        });
-      });
-    }catch(e){ console.log("profile load err",e); }
+      <!-- EDIT PROFILE SHEET - Glass Premium Instagram -->
+      <div id="editSheet" class="sheet">
+        <div style="padding:18px 18px 90px 18px;">
+          <div style="width:44px;height:5px;background:rgba(255,255,255,.3);border-radius:10px;margin:0 auto 18px;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">Edit profile</b><div id="closeEdit" class="glass" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer">✕</div></div>
+          
+          <div style="text-align:center; margin:18px 0;"><img id="editAvatarPreview" src="https://i.pravatar.cc/150?img=32" style="width:90px;height:90px;border-radius:50%"><div id="editPhotoBtn" style="color:#8ab4f8; margin-top:8px; font-weight:600; cursor:pointer; font-size:14px;">Edit picture or avatar</div></div>
 
-    console.log("✅ Profile Glass Ready");
-
-  },700);
-});
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div><label style="font-size:12px; color:rgba(255,255,255,.6)">Name</label><input id="inpName" class="inputGlass" value="Sourabh Gaur"></div>
+            <div><label style="font-size:12px; color:rgba(255,255,255,.6)">Username</label><input id="inpUser" class="inputGlass" value="sg7212"></div>
+            <div><label style="font-size:12px; color:rgba(255,255,255,.6)">Bio</label><textarea id="inpBio" class="inputGlass" rows="3">🚀 Building InstaPro Premium
+💻 Developer • Jabalpur, MP</textarea></div>
+            <div><label style="font-size:12px; color:rgba(255,255,255,.6)">Links</label><input id="inpLink" class="inputGlass" value="github.com/sg7212"><div id="addLink" class="glassBtn" style="margin-top:8px; text-align:center; background:rgba(255,255,255,.08)">+ Add link</div></div>
+            <div><label style="font-size:12px; color:rgba(255,255,255,.6)">Gender</label><div
