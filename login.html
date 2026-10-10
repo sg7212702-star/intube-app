@@ -1,57 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>InstaPro - Login</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui}
-body{height:100vh;background:radial-gradient(130% 130% at 15% 15%,#ff4d9d 0%,#ff8a5b 30%,#1a0030 60%,#0e0014 100%);display:flex;align-items:center;justify-content:center;padding:16px;overflow:hidden}
-.glass{width:100%;max-width:390px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border-radius:28px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.15)}
-.logo{font-size:38px;font-weight:950;letter-spacing:-1px;background:linear-gradient(90deg,#ff4d9d,#ffb86a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{opacity:0.6;font-size:13px;margin:6px 0 22px}
-.input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.13);background:rgba(0,0,0,0.28);color:#fff;outline:none;margin-bottom:10px;font-size:14px;backdrop-filter:blur(8px)}
-.input:focus{border-color:#ff4d9d;box-shadow:0 0 0 3px rgba(255,77,157,0.2)}
-/* TRANSPARENT PREMIUM CLASSIC BUTTON */
-.btn-trans{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.06);color:#fff;font-weight:800;letter-spacing:0.3px;cursor:pointer;backdrop-filter:blur(12px);transition:0.25s;position:relative;overflow:hidden}
-.btn-trans::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,77,157,0.25),rgba(255,138,91,0.25));opacity:0;transition:0.25s}
-.btn-trans:hover::before{opacity:1}
-.btn-trans:hover{transform:translateY(-1px);border-color:rgba(255,255,255,0.28);box-shadow:0 8px 24px rgba(255,77,157,0.25)}
-.btn-trans:active{transform:scale(0.98)}
-.btn-white{width:100%;padding:13px;border-radius:14px;border:none;background:#fff;color:#000;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px}
-.divider{display:flex;align-items:center;gap:12px;margin:18px 0;opacity:0.5;font-size:11px;letter-spacing:1px}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)}
-.row{display:flex;gap:10px}
-</style>
-</head>
-<body>
-<div class="glass">
-  <div class="logo">InstaPro</div>
-  <div class="sub">Transparent Classic • Real-time Firebase</div>
-
-  <button class="btn-white" onclick="doGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Continue with Gmail</button>
-
-  <div class="divider">OR EMAIL</div>
-
-  <input id="email" class="input" placeholder="Email address">
-  <input id="pass" class="input" type="password" placeholder="Password">
-  <div class="row">
-    <button class="btn-trans" onclick="doLogin()">LOGIN</button>
-    <button class="btn-trans" onclick="doSignup()">SIGNUP</button>
-  </div>
-
-  <div class="divider">OR MOBILE OTP</div>
-
-  <input id="phone" class="input" placeholder="+91 98XXXX XXXXX" value="+91">
-  <button class="btn-trans" onclick="doPhone()" style="background:rgba(37,211,102,0.12);border-color:rgba(37,211,102,0.25)">📱 SEND OTP</button>
-  
-  <div id="otpBox" style="display:none;gap:10px;margin-top:10px">
-    <input id="otp" class="input" placeholder="Enter 6-digit OTP" style="margin:0">
-    <button class="btn-trans" onclick="verifyOTP()" style="width:auto;padding:14px 20px">VERIFY</button>
-  </div>
-
-  <div id="recaptcha"></div>
-  <div style="text-align:center;margin-top:18px;font-size:10px;opacity:0.35">Classic Transparent • Premium Glass • intube-61cca</div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{margin:0;background:#000;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.glass{width:92%;max-width:360px;background:rgba(255,255,255,.12);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:28px}
+input{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;box-sizing:border-box}
+button{width:100%;padding:14px;border-radius:12px;border:0;background:#fff;color:#000;font-weight:700;margin-top:12px;cursor:pointer}
+</style></head><body>
+<div class="glass"><h2 style="text-align:center">InstaPro</h2>
+<div id="regBox"><input id="regName" placeholder="Full Name"><input id="regEmail" placeholder="Email"><input id="regPass" type="password" placeholder="Password"><button onclick="registerUser()">Create Account - 0 to Start</button><p style="text-align:center;opacity:.6;font-size:13px;margin-top:10px" onclick="showLogin()">Already have account? Login</p></div>
+<div id="logBox" style="display:none"><input id="logEmail" placeholder="Email"><input id="logPass" type="password" placeholder="Password"><button onclick="loginUser()">Login</button><p style="text-align:center;opacity:.6;font-size:13px;margin-top:10px" onclick="showReg()">Create new account</p></div>
+</div><script>function showLogin(){regBox.style.display='none';logBox.style.display='block'}function showReg(){logBox.style.display='none';regBox.style.display='block'}</script><script type="module" src="auth.js"></script></body></html>
