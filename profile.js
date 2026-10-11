@@ -1,7 +1,7 @@
 // InstaPro Profile System
 // Profile, Edit Profile, Follow, Followers, Following, Posts and Reels
 
-import {
+import { auth, db } from "./firebase.js";
 doc,
 getDoc,
 getDocs,
