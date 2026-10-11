@@ -257,19 +257,26 @@ async function saveProfile() {
     return;
   }
 
-  const name = $("editName").value.trim();
-  const username = $("editUsername").value.trim().replace(/^@/, "");
-  const bio = $("editBio").value.trim();
-  const link = $("editLink").value.trim();
-  const photo = $("editPhoto").value.trim();
+  const usernameInput = $("editUsername");
+  const bioInput = $("editBio");
+  const linkInput = $("editLink");
+  const photoInput = $("editPhoto");
+  const button = $("saveProfileBtn");
 
-  if (!name || !username) {
-    showMessage("Name aur Username zaroor bharein.");
+  if (!usernameInput || !bioInput || !linkInput || !photoInput || !button) {
+    showMessage("Profile form nahi mila. Page refresh karein.");
     return;
   }
 
+  const username = usernameInput.value.trim().replace(/^@/, "");
+  const bio = bioInput.value.trim();
+  const link = linkInput.value.trim();
+  const photo = photoInput.value.trim();
+
   if (!/^[a-zA-Z0-9._]{3,30}$/.test(username)) {
-    showMessage("Username 3-30 characters ka ho. Letters, numbers, dot aur underscore allowed hain.");
+    showMessage(
+      "Username 3-30 characters ka hona chahiye. Letters, numbers, dot aur underscore allowed hain."
+    );
     return;
   }
 
@@ -279,27 +286,34 @@ async function saveProfile() {
   }
 
   if (photo && !/^https?:\/\/\S+$/i.test(photo)) {
-    showMessage("Photo ke liye valid https:// image URL dein.");
+    showMessage("Profile photo ke liye valid image URL dein.");
     return;
   }
 
-  const button = $("saveProfileBtn");
   button.disabled = true;
   button.textContent = "Saving...";
 
   try {
     const ref = doc(db, "users", currentUser.uid);
+    const existingSnap = await getDoc(ref);
+    const existingData = existingSnap.exists()
+      ? existingSnap.data()
+      : {};
 
-    await setDoc(ref, {
-      uid: currentUser.uid,
-      name,
-      username,
-      bio,
-      link,
-      photo,
-      email: currentUser.email || "",
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    await setDoc(
+      ref,
+      {
+        uid: currentUser.uid,
+        name: existingData.name || currentUser.displayName || "User",
+        username: username,
+        bio: bio,
+        link: link,
+        photo: photo,
+        email: currentUser.email || "",
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
 
     closeEditPanel();
     showMessage("Profile update ho gayi!");
