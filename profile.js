@@ -1,24 +1,22 @@
 // InstaPro Profile System
 // Profile, Edit Profile, Follow, Followers, Following, Posts and Reels
 
-import { auth, db } from "./firebase.js";
-
 import {
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  collection,
-  query,
-  where,
-  onSnapshot,
-  serverTimestamp,
-  runTransaction,
-  arrayUnion,
-  arrayRemove
+doc,
+getDoc,
+getDocs,
+setDoc,
+updateDoc,
+deleteDoc,
+collection,
+query,
+where,
+onSnapshot,
+serverTimestamp,
+runTransaction,
+arrayUnion,
+arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
