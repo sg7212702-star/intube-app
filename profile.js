@@ -125,10 +125,101 @@ function setupProfileHTML() {
 
           <h3>Edit Profile</h3>
 
-          <label>Name</label>
-          <input id="editName" maxlength="80" placeholder="Your name"
-            style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+          const user = snapshot.data();
 
+// Profile photo
+const avatar = $("pAvatar");
+const navAvatar = $("myAvatar");
+const photo = user.photo || DEFAULT_AVATAR;
+
+if (avatar) avatar.src = photo;
+if (navAvatar) navAvatar.src = photo;
+
+// Username and name
+const usernameTop = $("profileUsernameTop");
+const nameElement = $("pName");
+const bioElement = $("pBio");
+
+if (usernameTop) {
+    usernameTop.textContent = user.username || user.name || "user";
+}
+
+if (nameElement) {
+    nameElement.textContent = user.name || "";
+}
+
+if (bioElement) {
+    bioElement.textContent = user.bio || "";
+}
+
+// Website link
+const linkContainer = $("pLink");
+
+if (linkContainer) {
+    linkContainer.replaceChildren();
+
+    if (user.link) {
+        try {
+            const safeUrl = new URL(user.link);
+
+            if (["http:", "https:"].includes(safeUrl.protocol)) {
+                const link = document.createElement("a");
+
+                link.href = safeUrl.href;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = user.link;
+                link.style.color = "#9ed4ff";
+
+                linkContainer.append(link);
+            }
+        } catch {
+            // Ignore invalid URL
+        }
+    }
+}
+
+// Followers and following
+const followers = Array.isArray(user.followers)
+    ? user.followers
+    : [];
+
+const following = Array.isArray(user.following)
+    ? user.following
+    : [];
+
+const followersCount = $("pFollowersCount");
+const followingCount = $("pFollowingCount");
+
+if (followersCount) {
+    followersCount.textContent = followers.length;
+}
+
+if (followingCount) {
+    followingCount.textContent = following.length;
+}
+
+// Edit profile fields
+if (isOwnProfile) {
+    const editName = $("editName");
+    const editUsername = $("editUsername");
+    const editBio = $("editBio");
+    const editLink = $("editLink");
+    const editPhoto = $("editPhoto");
+
+    if (editName) editName.value = user.name || "";
+    if (editUsername) editUsername.value = user.username || "";
+    if (editBio) editBio.value = user.bio || "";
+    if (editLink) editLink.value = user.link || "";
+    if (editPhoto) editPhoto.value = user.photo || "";
+}
+
+// Show profile page
+const profilePage = $("profilePage");
+
+if (profilePage) {
+    profilePage.style.display = "block";
+}
           <label>Username</label>
           <input id="editUsername" maxlength="30" placeholder="username"
             style="display:block;width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
