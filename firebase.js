@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDibgzp64G1QB7Pma-7Zx4yMAV06go8cNU",
@@ -10,7 +10,8 @@ const firebaseConfig = {
   messagingSenderId: "627409965607",
   appId: "1:627409965607:web:a1d71800d812fe668b7402"
 };
+
 const app = initializeApp(firebaseConfig);
+
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-signInAnonymously(auth).catch(()=>{});
