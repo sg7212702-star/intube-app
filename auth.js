@@ -135,4 +135,36 @@ window.logoutUser = async function () {
 // Authentication state
 onAuthStateChanged(auth, async (user) => {
   const currentPage = window.location.pathname;
-  const isLoginPage = currentPage.endsWith("/
+
+  const isLoginPage =
+    currentPage.endsWith("/login.html") ||
+    currentPage.endsWith("login.html");
+
+  if (!user && !isLoginPage) {
+    window.location.replace("login.html");
+    return;
+  }
+
+  if (user && isLoginPage) {
+    window.location.replace("index.html");
+    return;
+  }
+
+  if (user) {
+    try {
+      await saveUserProfile(user);
+    } catch (error) {
+      console.error("Profile sync error:", error);
+    }
+  }
+
+  authInitialized = true;
+
+  window.dispatchEvent(
+    new CustomEvent("instapro-auth-ready", {
+      detail: { user }
+    })
+  );
+});
+
+window.getInstaProAuthStatus = () => authInitialized;
