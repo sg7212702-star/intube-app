@@ -1,5 +1,6 @@
-// upload.js - InstaPro Photo + Video Upload
-import { auth, db } from "./firebase.js";
+// upload.js - InstaPro Firebase + Cloudinary Upload
+
+import { auth, db, storage } from "./firebase.js";
 
 import {
   collection,
@@ -7,143 +8,232 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+// -------------------------------------
+// CONFIGURATION
+// -------------------------------------
+
+const CLOUDINARY_CLOUD_NAME = "kujnbe0a";
+const CLOUDINARY_UPLOAD_PRESET = "intube_free";
+
 const $ = (id) => document.getElementById(id);
 
-let selectedType = "post";
 let uploadInProgress = false;
 
+// Prevent duplicate initialization if this module is imported twice.
+if (!window.__instaProUploadInitialized) {
+  window.__instaProUploadInitialized = true;
+  initializeUploadSystem();
+}
+
 // -------------------------------------
-// OPEN FILE PICKER
+// INITIALIZE BUTTONS AND INPUTS
 // -------------------------------------
 
-function openGallery(inputId, type) {
+function initializeUploadSystem() {
+  const postButton = $("optPost");
+  const storyButton = $("optStory");
+
+  postButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openGallery("postFile");
+  });
+
+  storyButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openGallery("storyFile");
+  });
+
+  connectFileInput("postFile", "post");
+  connectFileInput("storyFile", "story");
+
+  console.log("InstaPro upload system initialized.");
+}
+
+// -------------------------------------
+// OPEN GALLERY
+// -------------------------------------
+
+function openGallery(inputId) {
   const input = $(inputId);
 
   if (!input) {
     alert(
-      "File input nahi mila: " +
-      inputId +
-      "\nindex.html mein is ID ko check karein."
+      "File input nahi mila: " + inputId +
+      "\nindex.html mein ID check karein."
     );
-    console.error("Missing file input:", inputId);
+    console.error("Missing upload input:", inputId);
     return;
   }
 
-  selectedType = type;
-
   input.setAttribute("accept", "image/*,video/*");
-
-  // Allow selecting the same file again
   input.value = "";
-
-  // Open gallery
   input.click();
 }
 
 // -------------------------------------
-// POST BUTTON
+// CONNECT FILE INPUT
 // -------------------------------------
 
-$("optPost")?.addEventListener("click", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
+function connectFileInput(inputId, type) {
+  const input = $(inputId);
 
-  openGallery("postFile", "post");
-});
+  if (!input) {
+    console.error("Upload input nahi mila:", inputId);
+    return;
+  }
 
-// -------------------------------------
-// STORY BUTTON
-// -------------------------------------
+  // Avoid attaching this module's listener more than once.
+  if (input.dataset.instaProUploadBound === "true") {
+    return;
+  }
 
-$("optStory")?.addEventListener("click", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
+  input.dataset.instaProUploadBound = "true";
+  input.setAttribute("accept", "image/*,video/*");
 
-  openGallery("storyFile", "story");
-});
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
 
-// -------------------------------------
-// COMPRESS IMAGE
-// -------------------------------------
+    if (!file) return;
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const result = event.target.result;
-
-      // Keep videos unchanged
-      if (!file.type.startsWith("image/")) {
-        resolve(result);
-        return;
-      }
-
-      // Compress larger images
-      if (result.length <= 900000) {
-        resolve(result);
-        return;
-      }
-
-      const img = new Image();
-
-      img.onload = () => {
-        try {
-          const canvas = document.createElement("canvas");
-
-          const maxSize = 1080;
-
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxSize || height > maxSize) {
-            const ratio = Math.min(
-              maxSize / width,
-              maxSize / height
-            );
-
-            width = Math.round(width * ratio);
-            height = Math.round(height * ratio);
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const context = canvas.getContext("2d");
-
-          if (!context) {
-            reject(new Error("Image compression failed."));
-            return;
-          }
-
-          context.drawImage(img, 0, 0, width, height);
-
-          resolve(canvas.toDataURL("image/jpeg", 0.7));
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      img.onerror = () => {
-        reject(new Error("Image read nahi ho payi."));
-      };
-
-      img.src = result;
-    };
-
-    reader.onerror = () => {
-      reject(new Error("File read nahi ho payi."));
-    };
-
-    reader.readAsDataURL(file);
+    try {
+      await handleFile(file, type);
+    } finally {
+      input.value = "";
+    }
   });
 }
 
 // -------------------------------------
-// UPLOAD FILE TO FIRESTORE
+// CLOUDINARY VIDEO UPLOAD
 // -------------------------------------
 
-async function handleFile(file, type) {
+async function uploadVideoToCloudinary(file, onProgress) {
+  const endpoint =
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    body: formData
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    console.error("Cloudinary error:", result);
+
+    throw new Error(
+      result.error?.message ||
+      "Cloudinary video upload fail ho gaya."
+    );
+  }
+
+  if (typeof onProgress === "function") {
+    onProgress(100);
+  }
+
+  if (!result.secure_url) {
+    throw new Error("Cloudinary ne video URL nahi diya.");
+  }
+
+  return result.secure_url;
+}
+
+// -------------------------------------
+// FIREBASE STORAGE PHOTO UPLOAD
+// -------------------------------------
+
+async function uploadPhotoToFirebase(file, onProgress) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+  const filePath =
+    `posts/${auth.currentUser.uid}/${Date.now()}_${safeName}`;
+
+  const fileRef = ref(storage, filePath);
+
+  const task = uploadBytesResumable(fileRef, file, {
+    contentType: file.type
+  });
+
+  const downloadURL = await new Promise((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        const progress = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+
+        if (typeof onProgress === "function") {
+          onProgress(progress);
+        }
+      },
+      reject,
+      async () => {
+        try {
+          resolve(await getDownloadURL(task.snapshot.ref));
+        } catch (error) {
+          reject(error);
+        }
+      }
+    );
+  });
+
+  return downloadURL;
+}
+
+// -------------------------------------
+// UPLOAD STATUS
+// -------------------------------------
+
+function showUploadStatus(message) {
+  let status = $("instaProUploadStatus");
+
+  if (!status) {
+    status = document.createElement("div");
+    status.id = "instaProUploadStatus";
+
+    status.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 999999;
+      width: max-content;
+      max-width: 85%;
+      padding: 18px 24px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.92);
+      color: white;
+      font: 15px Arial, sans-serif;
+      text-align: center;
+      overflow-wrap: anywhere;
+      box-shadow: 0 5px 25px rgba(0,0,0,.35);
+    `;
+
+    document.body.appendChild(status);
+  }
+
+  status.textContent = message;
+  return status;
+}
+
+// -------------------------------------
+// MAIN UPLOAD HANDLER
+// -------------------------------------
+
+async function handleFile(file, postType) {
   if (!file) return;
 
   if (uploadInProgress) {
@@ -154,47 +244,47 @@ async function handleFile(file, type) {
   const user = auth.currentUser;
 
   if (!user || user.isAnonymous) {
-    alert("Pehle apne account se login karein.");
+    alert("Pehle Google account se login karein.");
     return;
   }
 
-  // Firestore documents have a size limit.
-  // Large videos should use Firebase Storage.
-  if (file.size > 700000) {
-    alert(
-      "Yeh file Firestore ke liye bahut badi hai.\n\n" +
-      "Chhoti photo (700 KB se kam) try karein. " +
-      "Video upload ke liye Firebase Storage chahiye."
-    );
+  const isVideo = file.type.startsWith("video/");
+  const isImage = file.type.startsWith("image/");
 
+  if (!isVideo && !isImage) {
+    alert("Sirf image ya video file select karein.");
+    return;
+  }
+
+  if (file.size === 0) {
+    alert("Selected file khaali hai.");
     return;
   }
 
   uploadInProgress = true;
 
-  const loading = document.createElement("div");
-
-  loading.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.92);
-    color: white;
-    padding: 20px 30px;
-    border-radius: 14px;
-    z-index: 999999;
-    max-width: 85%;
-    overflow-wrap: anywhere;
-  `;
-
-  loading.textContent = `Uploading ${type}: ${file.name}`;
-
-  document.body.appendChild(loading);
+  const status = showUploadStatus("Upload shuru ho raha hai...");
 
   try {
-    const base64 = await fileToBase64(file);
-    const isVideo = file.type.startsWith("video/");
+    let mediaUrl = "";
+
+    if (isVideo) {
+      status.textContent = "Cloudinary par video upload ho raha hai...";
+
+      mediaUrl = await uploadVideoToCloudinary(file, (progress) => {
+        status.textContent = `Video upload ho raha hai: ${progress}%`;
+      });
+    } else {
+      status.textContent = "Firebase Storage par photo upload ho rahi hai...";
+
+      mediaUrl = await uploadPhotoToFirebase(file, (progress) => {
+        status.textContent = `Photo upload ho rahi hai: ${progress}%`;
+      });
+    }
+
+    status.textContent = "Firebase mein post save ho rahi hai...";
+
+    const now = Date.now();
 
     const data = {
       uid: user.uid,
@@ -204,77 +294,56 @@ async function handleFile(file, type) {
         user.email?.split("@")[0] ||
         "InstaPro User",
       photo: user.photoURL || "",
-      imageUrl: base64,
+      imageUrl: mediaUrl,
+      mediaUrl: mediaUrl,
       type: isVideo ? "video" : "image",
+      contentType: isVideo ? "video" : "image",
       caption: "",
       createdAt: serverTimestamp()
     };
 
-    if (type === "story") {
-      data.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    if (postType === "story") {
+      data.expiresAt = now + 24 * 60 * 60 * 1000;
 
       await addDoc(collection(db, "stories"), data);
-
-      alert("Story Firestore mein save ho gayi!");
     } else {
       await addDoc(collection(db, "posts"), data);
-
-      alert("Post Firestore mein save ho gayi!");
     }
 
-    // Notify other app modules
+    status.textContent =
+      postType === "story"
+        ? "Story successfully upload ho gayi! ✅"
+        : "Post successfully share ho gayi! ✅";
+
     window.dispatchEvent(
       new CustomEvent("instapro-upload-success", {
         detail: {
-          type,
-          mediaType: isVideo ? "video" : "image"
+          type: postType,
+          mediaType: isVideo ? "video" : "image",
+          mediaUrl
         }
       })
     );
 
+    await new Promise((resolve) => setTimeout(resolve, 900));
+
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("InstaPro upload error:", error);
+
+    status.textContent =
+      "Upload fail ho gaya: " +
+      (error.message || "Unknown error");
+
+    await new Promise((resolve) => setTimeout(resolve, 1800));
 
     alert(
-      "Upload fail ho gaya:\n" +
-      (error.message || "Unknown error")
+      "Upload fail ho gaya.\n\n" +
+      (error.message || "Unknown error") +
+      "\n\nConsole mein error check karein."
     );
 
   } finally {
-    loading.remove();
+    status.remove();
     uploadInProgress = false;
   }
 }
-
-// -------------------------------------
-// FILE INPUT EVENTS
-// -------------------------------------
-
-function connectFileInput(inputId, type) {
-  const input = $(inputId);
-
-  if (!input) {
-    console.error(
-      `Upload input #${inputId} index.html mein nahi mila.`
-    );
-    return;
-  }
-
-  input.setAttribute("accept", "image/*,video/*");
-
-  input.addEventListener("change", async () => {
-    const file = input.files?.[0];
-
-    if (!file) return;
-
-    await handleFile(file, type);
-
-    // Allow selecting the same file again
-    input.value = "";
-  });
-}
-
-connectFileInput("postFile", "post");
-connectFileInput("storyFile", "story");
-
-console.log("InstaPro upload.js initialized.");
