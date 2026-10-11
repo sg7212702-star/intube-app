@@ -681,8 +681,9 @@ function loadProfileRealtime(uid) {
       $("pFollowingCount").textContent = following.length;
 
       if (isOwnProfile) {
-        $("editName").value = user.name || "";
-        $("editUsername").value = user.username || "";
-        $("editBio").value = user.bio || "";
-        $("editLink").value = user.link || "";
-        $("edit
+    $("editName").value = user.name || "";
+    $("editUsername").value = user.username || "";
+    $("editBio").value = user.bio || "";
+    $("editLink").value = user.link || "";
+    $("editAvatarPreview").src = user.photo || "";
+      }
