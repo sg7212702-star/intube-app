@@ -11,20 +11,58 @@
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       <span class="dot"></span>
     </button>
-    <button class="iconGlass">
+    <button class="iconGlass" id="chatTopBtn">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
   </div>
 </header>
 
-<div class="storyGlass">
-  <div class="sItem"><div class="sRing add" id="addStoryBtn"><span>+</span></div><p>Your story</p></div>
-  <div id="otherStories" style="display:flex;gap:12px"></div>
+<!-- HOME PAGE WRAPPER - Ye main fix hai -->
+<div id="homePage" class="page" style="display:block;">
+  <div class="storyGlass">
+    <div class="sItem"><div class="sRing add" id="addStoryBtn"><span>+</span></div><p>Your story</p></div>
+    <div id="otherStories" style="display:flex;gap:12px"></div>
+  </div>
+  <main id="feed"></main>
 </div>
 
-<main id="feed"></main>
+<!-- EXPLORE / SEARCH PAGE - Niche Search se khulega -->
+<div id="explorePage" class="page" style="display:none; padding-top:60px; min-height:100vh; padding-bottom:90px; background:#000;">
+  <div style="margin:10px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); display:flex; gap:8px">
+    <span>🔍</span><input id="searchInput" placeholder="Search..." style="flex:1; background:transparent; border:0; color:#fff; outline:none">
+  </div>
+  <div id="exploreGrid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; padding:6px;"></div>
+  <div id="exploreEmpty" style="text-align:center; opacity:.5; padding:40px">No posts yet - Pehla post karo!</div>
+</div>
 
-<nav class="bottomGlass">
+<!-- REELS PAGE -->
+<div id="reelsPage" class="page" style="display:none; padding-top:60px; min-height:100vh; padding-bottom:90px; background:#000;">
+  <div style="padding:12px"><b>Reels</b> <span style="opacity:.5; font-size:12px">(Posts as Reels - No Billing)</span></div>
+  <div id="reelsGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:6px;"></div>
+</div>
+
+<!-- CHAT PAGE - Real Time -->
+<div id="chatPage" class="page" style="display:none; padding-top:60px; min-height:100vh; padding-bottom:90px; background:#000; display:flex; flex-direction:column;">
+  <div style="padding:12px; border-bottom:1px solid rgba(255,255,255,.1)"><b>Messages</b> <span style="opacity:.5; font-size:12px">Real Time Firestore</span></div>
+  <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; height:60vh;"></div>
+  <div style="display:flex; gap:8px; padding:10px; position:fixed; bottom:75px; left:0; right:0; background:#000; border-top:1px solid rgba(255,255,255,.1)">
+    <input id="chatInput" placeholder="Message..." style="flex:1; padding:12px; border-radius:20px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1); color:#fff">
+    <button id="chatSend" style="padding:10px 18px; border-radius:20px; border:0; background:#fff; color:#000; font-weight:600">Send</button>
+  </div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div id="profilePage" class="page" style="display:none; padding-top:60px; min-height:100vh; padding-bottom:90px; background:#000;">
+  <div style="padding:20px; text-align:center">
+    <div style="width:86px; height:86px; border-radius:50%; background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); margin:0 auto 12px; padding:3px"><img id="myAvatarLarge" src="https://i.pravatar.cc/100?img=12" style="width:100%; height:100%; border-radius:50%; border:3px solid #000"></div>
+    <b>Your Profile</b>
+    <p style="opacity:.6; font-size:13px; margin-top:6px">0 Posts • 0 Followers • 0 Following</p>
+    <p style="opacity:.5; font-size:12px; margin-top:8px">Real time - Firestore se 0 se start</p>
+  </div>
+  <div id="myPosts" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; padding:6px;"></div>
+</div>
+
+<nav class="bottomGlass" style="z-index: 9990;">
   <button class="bBtn active" data-v="home">
     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.005 16.175H4.987V12.142L12 5.914l7.013 6.228v4.033h-4.018v-4.01h-5.99v4.01z"/></svg>
   </button>
@@ -47,12 +85,10 @@
   <div class="sideHead"><b>Menu</b><button id="closeMenu">✕</button></div>
   <div class="mItem">⚙️ Settings</div><div class="mItem">🔖 Saved</div><div class="mItem">🌙 Dark Mode</div><div class="mItem">🚪 Logout</div>
 </div>
-<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo/Video</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt" id="optReel">🎬 Reel</div><div class="sOpt cancel" id="cancelSheet">Cancel</div></div>
+<div id="createSheet" class="sheetGlass"><div class="handle"></div><div class="sOpt" id="optPost">📷 Post - Photo Only (No Bill)</div><div class="sOpt" id="optStory">⭕ Story</div><div class="sOpt cancel" id="cancelSheet">Cancel</div></div>
 
-<!-- FIX: hidden hatao, display:none lagao - loop khatam -->
-<input type="file" id="postFile" style="display:none" accept="image/*,video/*">
-<input type="file" id="storyFile" style="display:none" accept="image/*,video/*">
-<input type="file" id="reelFile" style="display:none" accept="video/*">
+<input type="file" id="postFile" style="display:none" accept="image/*">
+<input type="file" id="storyFile" style="display:none" accept="image/*">
 
 <div id="sideOverlay" class="overlayGlass"></div>
 <div id="sheetOverlay" class="overlayGlass"></div>
@@ -64,8 +100,8 @@
 <script type="module" src="app.js"></script>
 <script type="module" src="like.js"></script>
 <script type="module" src="comment.js"></script>
-<script src="auth.js"></script>
-<script src="profile.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module" src="profile.js"></script>
 <script type="module" src="explore.js"></script>
 <script type="module" src="reels.js"></script>
 <script type="module" src="chat.js"></script>
