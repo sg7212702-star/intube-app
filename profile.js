@@ -824,4 +824,5 @@ window.openProfile = function (uid) {
     }
 
     loadProfileRealtime(uid);
+loadUserMedia(uid);
 };
