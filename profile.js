@@ -639,6 +639,7 @@ function loadUserMedia(uid) {
 function loadProfileRealtime(uid) {
   viewingUid = uid;
 
+  // Purane realtime listener ko band karein
   if (profileUnsubscribe) {
     profileUnsubscribe();
     profileUnsubscribe = null;
@@ -654,54 +655,109 @@ function loadProfileRealtime(uid) {
 
       const user = snapshot.data();
 
-      $("pAvatar").src = user.photo || DEFAULT_AVATAR;
-      $("profileUsernameTop").textContent =
-        user.username || user.name || "user";
-      $("pName").textContent = user.name || "";
-      $("pBio").textContent = user.bio || "";
+      // Profile photo
+      const avatar = $("pAvatar");
+      if (avatar) {
+        avatar.src = user.photo || DEFAULT_AVATAR;
+      }
 
+      // Username
+      const usernameTop = $("profileUsernameTop");
+      if (usernameTop) {
+        usernameTop.textContent =
+          user.username || user.name || "user";
+      }
+
+      // Name
+      const nameElement = $("pName");
+      if (nameElement) {
+        nameElement.textContent = user.name || "";
+      }
+
+      // Bio
+      const bioElement = $("pBio");
+      if (bioElement) {
+        bioElement.textContent = user.bio || "";
+      }
+
+      // Website link
       const linkContainer = $("pLink");
-      linkContainer.replaceChildren();
 
-      if (user.link) {
-        try {
-          const safeUrl = new URL(user.link);
+      if (linkContainer) {
+        linkContainer.replaceChildren();
 
-          if (["http:", "https:"].includes(safeUrl.protocol)) {
-            const link = document.createElement("a");
-            link.href = safeUrl.href;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = user.link;
-            link.style.color = "#9ed4ff";
-            linkContainer.append(link);
+        if (user.link) {
+          try {
+            const safeUrl = new URL(user.link);
+
+            if (
+              safeUrl.protocol === "http:" ||
+              safeUrl.protocol === "https:"
+            ) {
+              const link = document.createElement("a");
+
+              link.href = safeUrl.href;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = user.link;
+              link.style.color = "#9ed4ff";
+
+              linkContainer.appendChild(link);
+            }
+          } catch (error) {
+            console.warn("Invalid profile website URL:", error);
           }
-        } catch {
-          // Ignore invalid URL
         }
       }
 
+      // Followers aur following
       const followers = Array.isArray(user.followers)
         ? user.followers
         : [];
+
       const following = Array.isArray(user.following)
         ? user.following
         : [];
 
-      $("pFollowersCount").textContent = followers.length;
-      $("pFollowingCount").textContent = following.length;
-
-      if (isOwnProfile) {
-    $("editName").value = user.name || "";
-    $("editUsername").value = user.username || "";
-    $("editBio").value = user.bio || "";
-    $("editLink").value = user.link || "";
-    $("editAvatarPreview").src = user.photo || "";
+      const followersCount = $("pFollowersCount");
+      if (followersCount) {
+        followersCount.textContent = followers.length;
       }
-    }
-  });
-}
 
+      const followingCount = $("pFollowingCount");
+      if (followingCount) {
+        followingCount.textContent = following.length;
+      }
+
+      // Edit form mein existing data bharein
+      if (isOwnProfile) {
+        const editUsername = $("editUsername");
+        if (editUsername) {
+          editUsername.value = user.username || "";
+        }
+
+        const editBio = $("editBio");
+        if (editBio) {
+          editBio.value = user.bio || "";
+        }
+
+        const editLink = $("editLink");
+        if (editLink) {
+          editLink.value = user.link || "";
+        }
+
+        const editPhoto = $("editPhoto");
+        if (editPhoto) {
+          editPhoto.value = user.photo || "";
+        }
+      }
+    },
+    (error) => {
+      console.error("Profile realtime error:", error);
+      showMessage("Profile load nahi hui: " + error.message);
+    }
+  );
+}
 // Profile initialization
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
