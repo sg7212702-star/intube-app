@@ -84,4 +84,99 @@ function switchTab(t){
   $("errorMsg").textContent="";
 }
 tabLogin.onclick=()=>switchTab("login");
-tabSignup.onclick=()=>switchTab("
+tabSignup.onclick = () => switchTab("signup");
+
+async function saveProfile(user) {
+  const userRef = doc(db, "users", user.uid);
+  const snapshot = await getDoc(userRef);
+
+  const profile = {
+    uid: user.uid,
+    name: user.displayName || user.email?.split("@")[0] || "Insta Pro User",
+    email: user.email || "",
+    avatar: user.photoURL || "",
+    updatedAt: serverTimestamp()
+  };
+
+  if (!snapshot.exists()) {
+    profile.bio = "";
+    profile.followers = 0;
+    profile.following = 0;
+    profile.posts = 0;
+    profile.createdAt = serverTimestamp();
+  }
+
+  await setDoc(userRef, profile, { merge: true });
+}
+
+// LOGIN
+$("loginBtn").onclick = async () => {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPass").value;
+
+  if (!email || !password) {
+    showError("Email aur password bhariye.");
+    return;
+  }
+
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    await saveProfile(result.user);
+    window.location.href = "index.html";
+  } catch (error) {
+    showError(error.message);
+  }
+};
+
+// SIGN UP
+$("signupBtn").onclick = async () => {
+  const email = $("signupEmail").value.trim();
+  const password = $("signupPass").value;
+
+  if (!email || !password) {
+    showError("Email aur password bhariye.");
+    return;
+  }
+
+  if (password.length < 6) {
+    showError("Password kam se kam 6 characters ka hona chahiye.");
+    return;
+  }
+
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await saveProfile(result.user);
+    window.location.href = "index.html";
+  } catch (error) {
+    showError(error.message);
+  }
+};
+
+// GOOGLE LOGIN
+$("googleBtn").onclick = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    const result = await signInWithPopup(auth, provider);
+    await saveProfile(result.user);
+    window.location.href = "index.html";
+  } catch (error) {
+    showError(error.message);
+  }
+};
+
+// ERROR MESSAGE
+function showError(message) {
+  $("errorMsg").textContent = message;
+}
+
+// EXISTING LOGIN SESSION
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    window.location.replace("index.html");
+  }
+});
+</script>
+</body>
+</html>
