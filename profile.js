@@ -729,3 +729,32 @@ onAuthStateChanged(auth, async (user) => {
         console.error("Profile initialization error:", error);
     }
 });
+// OPEN PROFILE FUNCTION
+window.openProfile = function (uid) {
+    if (!uid && currentUser) {
+        uid = currentUser.uid;
+    }
+
+    if (!uid) {
+        console.error("Profile UID nahi mila");
+        return;
+    }
+
+    viewingUid = uid;
+    isOwnProfile = Boolean(currentUser && currentUser.uid === uid);
+
+    const profilePage = document.getElementById("profilePage");
+
+    if (!profilePage) {
+        console.error("profilePage element nahi mila");
+        return;
+    }
+
+    if (typeof window.showPage === "function") {
+        window.showPage("profilePage");
+    } else {
+        profilePage.style.display = "block";
+    }
+
+    loadProfileRealtime(uid);
+};
