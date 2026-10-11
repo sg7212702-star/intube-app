@@ -33,8 +33,7 @@ let currentTab = "posts";
 
 const $ = (id) => document.getElementById(id);
 
-const DEFAULT_AVATAR = "https://i.pravatar.cc/150";
-
+const DEFAULT_AVATAR = "";
 function showMessage(message) {
   alert(message);
 }
