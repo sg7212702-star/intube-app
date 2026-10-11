@@ -687,3 +687,45 @@ function loadProfileRealtime(uid) {
     $("editLink").value = user.link || "";
     $("editAvatarPreview").src = user.photo || "";
       }
+    }
+  });
+}
+
+// Profile initialization
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+
+    if (!user || user.isAnonymous) return;
+
+    try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email || "",
+                name: user.displayName || user.email?.split("@")[0] || "User",
+                username: user.displayName || user.email?.split("@")[0] || "user",
+                photo: user.photoURL || "",
+                bio: "",
+                link: "",
+                followers: [],
+                following: [],
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        setupProfileHTML();
+
+        const params = new URLSearchParams(window.location.search);
+        const targetUid = params.get("profile") || user.uid;
+
+        isOwnProfile = targetUid === user.uid;
+        window.openProfile(targetUid);
+
+    } catch (error) {
+        console.error("Profile initialization error:", error);
+    }
+});
