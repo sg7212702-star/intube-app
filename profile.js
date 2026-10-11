@@ -654,11 +654,36 @@ function loadProfileRealtime(uid) {
 
       const user = snapshot.data();
 
-      // Profile photo
-      const avatar = $("pAvatar");
-      if (avatar) {
-        avatar.src = user.photo || DEFAULT_AVATAR;
-      }
+      // Profile photo - Google Firebase Auth
+const avatar = $("pAvatar");
+
+  if (avatar) {
+    const savedPhoto = user.photo || "";
+
+    // Purani random photo ko ignore karein
+    const isRandomPhoto = savedPhoto.includes("i.pravatar.cc");
+
+    const googlePhoto = currentUser?.photoURL || "";
+
+    const profilePhoto =
+      savedPhoto && !isRandomPhoto
+        ? savedPhoto
+        : googlePhoto;
+
+    if (profilePhoto) {
+      avatar.src = profilePhoto;
+      avatar.style.display = "block";
+
+      avatar.onerror = () => {
+        avatar.onerror = null;
+        avatar.removeAttribute("src");
+        avatar.style.display = "none";
+      };
+    } else {
+      avatar.removeAttribute("src");
+      avatar.style.display = "none";
+    }
+  }
 
       // Username
       const usernameTop = $("profileUsernameTop");
