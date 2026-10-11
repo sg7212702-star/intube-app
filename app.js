@@ -56,21 +56,54 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("addStoryBtn")?.addEventListener("click", openSheet);
   document.querySelector(".storyGlass")?.addEventListener("click", openSheet);
 
-  // BOTTOM NAV - SEARCH + ALL FIX
-  document.querySelectorAll(".bBtn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      if(btn.id==="addBtn") return; // + button ke liye alag hai
-      document.querySelectorAll(".bBtn").forEach(b=>b.classList.remove("active"));
+  // BOTTOM NAV - PROFILE FIREBASE FIX
+  document.querySelectorAll(".bBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (btn.id === "addBtn") return;
+
+      document.querySelectorAll(".bBtn").forEach(b => {
+        b.classList.remove("active");
+      });
+
       btn.classList.add("active");
-      const v=btn.dataset.v;
+
+      const v = btn.dataset.v;
       console.log("Nav Clicked:", v);
-      if(v==="home") openPage("home");
-      else if(v==="search") openPage("explore");
-      else if(v==="reels") openPage("reels");
-      else if(v==="profile") openPage("profile");
+
+      if (v === "home") {
+        openPage("home");
+
+      } else if (v === "search") {
+        openPage("explore");
+
+      } else if (v === "reels") {
+        openPage("reels");
+
+      } else if (v === "profile") {
+        openPage("profile");
+
+        try {
+          const { auth } = await import("./firebase.js");
+          const user = auth.currentUser;
+
+          if (!user || user.isAnonymous) {
+            console.error("Login user nahi mila");
+            return;
+          }
+
+          if (typeof window.openProfile === "function") {
+            window.openProfile(user.uid);
+          } else {
+            console.error("Profile function nahi mila");
+          }
+
+        } catch (error) {
+          console.error("Profile open error:", error);
+        }
+      }
     });
   });
 
   openPage("home");
-  console.log("✅ FINAL - All Buttons Fixed - No Overlap - No Billing");
+  console.log("✅ Navigation initialized");
 });
