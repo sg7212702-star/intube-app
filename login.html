@@ -1,10 +1,87 @@
-<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-body{margin:0;background:#000;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.glass{width:92%;max-width:360px;background:rgba(255,255,255,.12);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:28px}
-input{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;box-sizing:border-box}
-button{width:100%;padding:14px;border-radius:12px;border:0;background:#fff;color:#000;font-weight:700;margin-top:12px;cursor:pointer}
-</style></head><body>
-<div class="glass"><h2 style="text-align:center">InstaPro</h2>
-<div id="regBox"><input id="regName" placeholder="Full Name"><input id="regEmail" placeholder="Email"><input id="regPass" type="password" placeholder="Password"><button onclick="registerUser()">Create Account - 0 to Start</button><p style="text-align:center;opacity:.6;font-size:13px;margin-top:10px" onclick="showLogin()">Already have account? Login</p></div>
-<div id="logBox" style="display:none"><input id="logEmail" placeholder="Email"><input id="logPass" type="password" placeholder="Password"><button onclick="loginUser()">Login</button><p style="text-align:center;opacity:.6;font-size:13px;margin-top:10px" onclick="showReg()">Create new account</p></div>
-</div><script>function showLogin(){regBox.style.display='none';logBox.style.display='block'}function showReg(){logBox.style.display='none';regBox.style.display='block'}</script><script type="module" src="auth.js"></script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InstaPro • Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
+<style>
+*{margin:0; padding:0; box-sizing:border-box}
+body{height:100vh; background:#000; display:flex; align-items:center; justify-content:center; font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#fff;}
+.bg{position:fixed; inset:0; background: radial-gradient(1200px 600px at 10% -10%, #feda75 0%, transparent 40%), radial-gradient(800px 500px at 90% 90%, #d62976 0%, transparent 40%), radial-gradient(1000px 600px at 50% 50%, #962fbf55 0%, transparent 50%), #000;}
+.wrap{position:relative; width:100%; max-width:380px; margin:12px;}
+.card{width:100%; padding:28px 24px; border-radius:22px; background:rgba(18,18,18,0.72); backdrop-filter:blur(30px) saturate(180%); -webkit-backdrop-filter:blur(30px) saturate(180%); border:1px solid rgba(255,255,255,.12); box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.logo{font-family:'Grand Hotel',cursive; font-size:44px; text-align:center; letter-spacing:1px;}
+.tag{font-size:12px; opacity:.5; text-align:center; margin-bottom:18px; margin-top:2px;}
+.tabs{display:flex; background:rgba(255,255,255,.08); border-radius:12px; padding:4px; margin-bottom:16px; border:1px solid rgba(255,255,255,.08);}
+.tab{flex:1; padding:10px; border-radius:9px; text-align:center; font-size:14px; font-weight:600; cursor:pointer; transition:.25s; opacity:.6;}
+.tab.active{background:rgba(255,255,255,.95); color:#000; opacity:1; box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.input{width:100%; padding:13px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.08); color:#fff; outline:none; font-size:14px; margin-bottom:10px; transition:.2s;}
+.input:focus{border-color:#0095f6; background:rgba(255,255,255,.12);}
+.input::placeholder{color:rgba(255,255,255,.4);}
+.btn{width:100%; padding:13px; border-radius:12px; border:0; background:#0095f6; color:#fff; font-weight:700; font-size:14px; cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;}
+.btn:active{transform:scale(.98);}
+.btn:disabled{opacity:.5;}
+.btn-google{background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); backdrop-filter:blur(10px);}
+.btn-google:hover{background:rgba(255,255,255,.15);}
+.divider{display:flex; align-items:center; gap:12px; margin:16px 0; font-size:12px; opacity:.4;}
+.divider div{flex:1; height:1px; background:rgba(255,255,255,.15);}
+.error{font-size:12px; color:#ff3040; min-height:16px; text-align:center; margin-bottom:8px;}
+.foot{font-size:12px; text-align:center; opacity:.5; margin-top:14px; line-height:1.4;}
+.foot b{color:#fff; cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+<div class="card">
+  <div class="logo">InstaPro</div>
+  <div class="tag">Glass • Transparent • Instagram</div>
+
+  <div class="tabs">
+    <div id="tabLogin" class="tab active">Log in</div>
+    <div id="tabSignup" class="tab">Sign up</div>
+  </div>
+
+  <div id="errorMsg" class="error"></div>
+
+  <!-- LOGIN -->
+  <div id="loginForm">
+    <input id="loginEmail" class="input" type="email" placeholder="Email">
+    <input id="loginPass" class="input" type="password" placeholder="Password">
+    <button id="loginBtn" class="btn">Log in</button>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signupForm" style="display:none;">
+    <input id="signupEmail" class="input" type="email" placeholder="Email">
+    <input id="signupPass" class="input" type="password" placeholder="Password (min 6 chars)">
+    <button id="signupBtn" class="btn">Sign up →</button>
+  </div>
+
+  <div class="divider"><div></div>OR<div></div></div>
+
+  <button id="googleBtn" class="btn btn-google">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;"> Continue with Google
+  </button>
+
+  <div class="foot">Bina login ke Home me entry nahi milegi 🔒<br>Login = Firebase se verified user</div>
+</div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const $=id=>document.getElementById(id);
+const tabLogin=$("tabLogin"), tabSignup=$("tabSignup");
+const loginForm=$("loginForm"), signupForm=$("signupForm");
+
+function switchTab(t){
+  if(t==="login"){ tabLogin.classList.add("active"); tabSignup.classList.remove("active"); loginForm.style.display="block"; signupForm.style.display="none"; }
+  else { tabSignup.classList.add("active"); tabLogin.classList.remove("active"); signupForm.style.display="block"; loginForm.style.display="none"; }
+  $("errorMsg").textContent="";
+}
+tabLogin.onclick=()=>switchTab("login");
+tabSignup.onclick=()=>switchTab("
