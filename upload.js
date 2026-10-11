@@ -1,38 +1,80 @@
-// upload.js - ONLY IMAGE - Firestore Base64 - No Storage = No Billing
-import { db } from "./firebase.js";
+// upload.js - INSTAGRAM UPLOAD - PHOTO + VIDEO - WORKING - NO BILLING
+import { auth, db } from "./firebase.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-function compress(file){
-  return new Promise(res=>{
-    const r=new FileReader();
-    r.onload=e=>{
-      const img=new Image();
-      img.onload=()=>{
-        const c=document.createElement("canvas"); let w=img.width,h=img.height,M=720;
-        if(w>h){ if(w>M){h*=M/w;w=M} } else { if(h>M){w*=M/h;h=M} }
-        c.width=w;c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
-        res(c.toDataURL("image/jpeg",0.70)); // 70% quality = billing 0
-      }; img.src=e.target.result;
-    }; r.readAsDataURL(file);
+const $ = id=>document.getElementById(id);
+let selectedType = "post"; // post or story
+
+// Sheet buttons
+$("optPost")?.addEventListener("click", ()=>{
+  selectedType = "post";
+  $("postFile").setAttribute("accept","image/*,video/*");
+  $("postFile").click();
+});
+
+$("optStory")?.addEventListener("click", ()=>{
+  selectedType = "story";
+  $("storyFile").setAttribute("accept","image/*,video/*");
+  $("storyFile").click();
+});
+
+// Compress Image/Video to Base64 - No Storage Billing
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      // Compress if image > 1MB
+      if(file.type.startsWith("image/") && e.target.result.length > 900000){
+        const img = new Image();
+        img.onload = ()=>{
+          const canvas = document.createElement("canvas");
+          const max = 1080;
+          let w=img.width, h=img.height;
+          if(w>max || h>max){
+            if(w>h){ h*=max/w; w=max; } else { w*=max/h; h=max; }
+          }
+          canvas.width=w; canvas.height=h;
+          canvas.getContext("2d").drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL("image/jpeg",0.7));
+        };
+        img.src = e.target.result;
+      } else {
+        resolve(e.target.result);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
-$("postFile")?.addEventListener("change", async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  if(f.type.includes("video")){ alert("Video upload band hai - Billing bachane ke liye sirf Photo allow hai!"); return; }
-  const url=await compress(f);
-  await addDoc(collection(db,"posts"),{url, type:"image", likes:0, createdAt:serverTimestamp()});
-  alert("✅ Posted!"); location.reload();
-});
+// Upload Handler
+async function handleFile(file, type){
+  if(!file) return;
+  const user = auth.currentUser;
+  if(!user) return alert("Login karo pehle!");
 
-$("storyFile")?.addEventListener("change", async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const url=await compress(f);
-  await addDoc(collection(db,"stories"),{url, createdAt:serverTimestamp()});
-  alert("✅ Story Added!");
-});
+  // Loading
+  const loading = document.createElement("div");
+  loading.style.cssText="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.9); padding:20px 30px; border-radius:14px; z-index:999999; border:1px solid rgba(255,255,255,.1);";
+  loading.innerHTML=`⏳ Uploading ${type}...<br><small style="opacity:.6">${file.name}</small>`;
+  document.body.appendChild(loading);
 
-$("optPost")?.addEventListener("click", ()=>$("postFile")?.click());
-$("optStory")?.addEventListener("click", ()=>$("storyFile")?.click());
-// VIDEO HATA DIYA
-const optReel=$("optReel"); if(optReel) optReel.style.display="none";
+  try{
+    const base64 = await fileToBase64(file);
+    const isVideo = file.type.startsWith("video/");
+
+    if(type==="story"){
+      // Story - 24hr
+      await addDoc(collection(db,"stories"),{
+        uid: user.uid,
+        email: user.email,
+        username: user.displayName || user.email.split("@")[0],
+        photo: user.photoURL || "",
+        imageUrl: base64,
+        type: isVideo? "video" : "image",
+        createdAt: serverTimestamp(),
+        expiresAt: Date.now() + 24*60*60*1000
+      });
+      alert("✅ Story Upload Ho Gaya! 24hr tak dikhega");
+    } else {
+      // Post -
