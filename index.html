@@ -25,6 +25,38 @@
   </div>
   <main id="feed"></main>
 </div>
+  <!-- Instagram Style Comments Panel -->
+<div id="commentsPanel" class="comments-panel" style="display:none;">
+  <div class="comments-backdrop" data-close-comments="true"></div>
+
+  <section class="comments-sheet" role="dialog" aria-modal="true" aria-labelledby="commentsTitle">
+    <div class="comments-handle"></div>
+
+    <header class="comments-header">
+      <h3 id="commentsTitle">Comments</h3>
+      <button type="button" id="closeCommentsBtn" aria-label="Close comments">✕</button>
+    </header>
+
+    <div id="commentsList" class="comments-list">
+      <p class="comments-loading">Loading comments...</p>
+    </div>
+
+    <form id="commentForm" class="comment-form">
+      <img id="commentCurrentUserAvatar" src="https://www.gravatar.com/avatar/?d=mp" alt="Your profile">
+
+      <input
+        id="commentInput"
+        type="text"
+        placeholder="Add a comment..."
+        maxlength="2000"
+        autocomplete="off"
+        required
+      >
+
+      <button id="sendCommentBtn" type="submit">Post</button>
+    </form>
+  </section>
+</div>
 
 <!-- EXPLORE / SEARCH PAGE - Niche Search se khulega -->
 <div id="explorePage" class="page" style="display:none; padding-top:60px; min-height:100vh; padding-bottom:90px; background:#000;">
