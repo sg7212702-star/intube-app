@@ -73,13 +73,13 @@ unsubscribeNotifications = null;
 const notificationsRef = collection(db, "users", user.uid, "notifications");
 const notificationsQuery = query(notificationsRef, orderBy("createdAt", "desc"));
 
-unsubscribeNotifications = onSnapshot(
-notificationsQuery,
-(snapshot) => {
-if (snapshot.empty) {
-list.innerHTML = " <div style="text-align:center;padding:60px 20px;opacity:.75"> <div style="font-size:48px">🔔</div> <h3 style="margin:12px 0 6px">No notifications yet</h3> <p style="font-size:13px;opacity:.7">Likes, comments aur follows yahan dikhenge.</p> </div>";
-return;
-}
+list.innerHTML = `
+  <div style="text-align:center;padding:60px 20px;opacity:.75">
+    <div style="font-size:48px">🔔</div>
+    <h3 style="margin:12px 0 6px">No notifications yet</h3>
+    <p style="font-size:13px;opacity:.7">Likes, comments aur follows yahan dikhenge.</p>
+  </div>
+`;
 
   list.innerHTML = snapshot.docs.map((item) => {
     const n = item.data();
