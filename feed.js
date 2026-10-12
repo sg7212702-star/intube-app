@@ -54,34 +54,31 @@ let feedStarted = false;
 // ------------------------------------------------------
 
 function getCurrentUser() {
-  return auth.currentUser;
+return auth.currentUser;
 }
 
 console.log("InstaPro Feed: Firebase modules loaded.");
+
 // ------------------------------------------------------
 // Helpers
 // ------------------------------------------------------
 
 function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
-}
-
-function getCurrentUser() {
-  return auth.currentUser;
+return String(value).replace(/[&<>"']/g, (char) => ({
+"&": "&",
+"<": "<",
+">": ">",
+'"': """,
+"'": "'"
+})[char]);
 }
 
 function getUsername(user) {
-  return (
-    user?.displayName ||
-    user?.email?.split("@")[0] ||
-    "InstaPro User"
-  );
+return (
+user?.displayName ||
+user?.email?.split("@")[0] ||
+"InstaPro User"
+);
 }
 
 function getAvatar(user) {
