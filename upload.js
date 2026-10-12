@@ -89,8 +89,12 @@ function openGallery(inputId) {
   }
 
   input.setAttribute("accept", "image/*,video/*");
-  input.value = "";
-  input.click();
+input.value = "";
+
+console.log("Gallery input:", input);
+console.log("Gallery input ID:", input.id);
+
+input.click();;
 }
 
 // -------------------------------------
