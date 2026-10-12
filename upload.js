@@ -54,24 +54,34 @@ function initializeUploadSystem() {
   const postButton = $("optPost");
   const storyButton = $("optStory");
 
-  postButton?.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openGallery("postFile");
-  });
+  console.log("Post button:", postButton);
+  console.log("Story button:", storyButton);
+  console.log("Post file input:", $("postFile"));
+  console.log("Story file input:", $("storyFile"));
 
-  storyButton?.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    openGallery("storyFile");
-  });
+  if (postButton) {
+    postButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("Post Upload clicked");
+      openGallery("postFile");
+    });
+  }
+
+  if (storyButton) {
+    storyButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("Story Share clicked");
+      openGallery("storyFile");
+    });
+  }
 
   connectFileInput("postFile", "post");
   connectFileInput("storyFile", "story");
 
   console.log("InstaPro upload system initialized.");
 }
-
 // -------------------------------------
 // OPEN GALLERY
 // -------------------------------------
