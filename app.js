@@ -38,7 +38,15 @@ function openPage(name){
 document.addEventListener("DOMContentLoaded",()=>{
   // TOP BUTTONS - FINAL
   $("menuBtn")?.addEventListener("click", openMenu);
-  $("notifBtn")?.addEventListener("click", ()=>import("./notifications.js").then(m=>m.openNotif()));
+  $("notifBtn")?.addEventListener("click", async () => {
+  try {
+    const m = await import("./notifications.js");
+    m.openNotif();
+  } catch (error) {
+    console.error("Notifications open error:", error);
+    alert("Notifications error: " + error.message);
+  }
+});
   
   // CHAT BUTTON - Top right send icon
   const chatIcons = document.querySelectorAll(".iconGlass");
