@@ -1,16 +1,19 @@
 // ======================================================
 // InstaPro Feed System
-// Firebase Firestore + Firebase Auth + Cloudinary media
+// Firebase Firestore + Firebase Auth + Cloudinary Media
 // Real-time posts, likes, comments, save, share, delete
 // ======================================================
 
 import { auth, db } from "./firebase.js";
 
 import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
   collection,
   doc,
   getDoc,
-  getDocs,
   addDoc,
   setDoc,
   deleteDoc,
@@ -18,26 +21,43 @@ import {
   query,
   orderBy,
   onSnapshot,
-  where,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
   increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ------------------------------------------------------
+// Collection Names
+// ------------------------------------------------------
+
 const FEED_COLLECTION = "posts";
 const SAVED_COLLECTION = "savedPosts";
 const COMMENTS_COLLECTION = "comments";
-const USERS_COLLECTION = "users";
+
+// ------------------------------------------------------
+// Feed Elements
+// ------------------------------------------------------
 
 const feed = document.getElementById("feed");
+
+// ------------------------------------------------------
+// Feed State
+// ------------------------------------------------------
 
 let unsubscribeFeed = null;
 let currentPosts = [];
 let feedStarted = false;
 
-const userCache = new Map();
+// ------------------------------------------------------
+// Authentication Helper
+// ------------------------------------------------------
 
+function getCurrentUser() {
+  return auth.currentUser;
+}
+
+console.log("InstaPro Feed: Firebase modules loaded.");
 // ------------------------------------------------------
 // Helpers
 // ------------------------------------------------------
