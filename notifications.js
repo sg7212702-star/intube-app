@@ -1,11 +1,12 @@
 import { db, auth } from "./firebase.js";
+
 import {
-collection,
-query,
-orderBy,
-onSnapshot,
-doc,
-updateDoc
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let unsubscribeNotifications = null;
@@ -21,125 +22,329 @@ function escapeHTML(value = "") {
 }
 
 export function openNotif() {
-let page = document.getElementById("notifFullPage");
+  let page = document.getElementById("notifFullPage");
 
-if (!page) {
-page = document.createElement("div");
-page.id = "notifFullPage";
+  if (!page) {
+    page = document.createElement("div");
+    page.id = "notifFullPage";
 
-page.innerHTML = `
-  <div style="position:fixed;inset:0;background:rgba(10,10,12,0.72);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);z-index:9999;display:flex;flex-direction:column;color:white">
-    <div style="height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.15)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="closeNotifFull" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;cursor:pointer">←</div>
-        <b style="font-size:18px">Notifications</b>
+    page.innerHTML = `
+      <div style="
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        display:flex;
+        flex-direction:column;
+        color:white;
+        background:rgba(10,10,15,.72);
+        backdrop-filter:blur(30px) saturate(180%);
+        -webkit-backdrop-filter:blur(30px) saturate(180%);
+        font-family:inherit;
+      ">
+        <div style="
+          height:64px;
+          flex-shrink:0;
+          display:flex;
+          align-items:center;
+          gap:14px;
+          padding:0 18px;
+          border-bottom:1px solid rgba(255,255,255,.15);
+          background:rgba(255,255,255,.04);
+        ">
+          <button id="closeNotifFull" aria-label="Back" style="
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            border:1px solid rgba(255,255,255,.22);
+            background:rgba(255,255,255,.09);
+            color:white;
+            font-size:24px;
+            cursor:pointer;
+          ">‹</button>
+
+          <div style="flex:1">
+            <div style="font-size:19px;font-weight:700">
+              Notifications
+            </div>
+            <div style="font-size:11px;opacity:.6;margin-top:2px">
+              Your latest activity
+            </div>
+          </div>
+
+          <div style="
+            width:38px;
+            height:38px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:50%;
+            border:1px solid rgba(255,255,255,.15);
+            background:rgba(255,255,255,.07);
+            font-size:19px;
+          ">♧</div>
+        </div>
+
+        <div id="realNotifList" style="
+          flex:1;
+          overflow-y:auto;
+          padding:16px;
+          overscroll-behavior:contain;
+        ">
+          <div style="text-align:center;padding:50px 15px;opacity:.7">
+            Loading notifications...
+          </div>
+        </div>
       </div>
-    </div>
-    <div id="realNotifList" style="flex:1;overflow-y:auto;padding:16px">
-      <p style="text-align:center;opacity:.7;padding:30px">Loading notifications...</p>
-    </div>
-  </div>
-`;
+    `;
 
-document.body.appendChild(page);
+    document.body.appendChild(page);
 
-page.querySelector("#closeNotifFull").onclick = () => {
-  page.style.display = "none";
-  document.body.style.overflow = "";
+    page.querySelector("#closeNotifFull").onclick = () => {
+      page.style.display = "none";
+      document.body.style.overflow = "";
+
+      if (unsubscribeNotifications) {
+        unsubscribeNotifications();
+        unsubscribeNotifications = null;
+      }
+    };
+  }
+
+  page.style.display = "block";
+  document.body.style.overflow = "hidden";
+
+  const list = page.querySelector("#realNotifList");
+  const user = auth.currentUser;
+
+  if (!user) {
+    list.innerHTML = `
+      <div style="
+        text-align:center;
+        padding:60px 20px;
+        border:1px solid rgba(255,255,255,.14);
+        border-radius:22px;
+        background:rgba(255,255,255,.06);
+        backdrop-filter:blur(20px);
+      ">
+        <div style="font-size:42px;margin-bottom:12px">🔐</div>
+        <div style="font-size:16px;font-weight:600">Login required</div>
+        <p style="font-size:13px;opacity:.7">
+          Notifications dekhne ke liye login karein.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
   if (unsubscribeNotifications) {
     unsubscribeNotifications();
     unsubscribeNotifications = null;
   }
-};
 
-}
+  list.innerHTML = `
+    <div style="text-align:center;padding:50px 15px;opacity:.7">
+      Loading notifications...
+    </div>
+  `;
 
-page.style.display = "block";
-document.body.style.overflow = "hidden";
+  const notificationsRef = collection(
+    db,
+    "users",
+    user.uid,
+    "notifications"
+  );
 
-const list = page.querySelector("#realNotifList");
-const user = auth.currentUser;
+  const notificationsQuery = query(
+    notificationsRef,
+    orderBy("createdAt", "desc")
+  );
 
-if (!user) {
-list.innerHTML = '<p style="text-align:center;padding:30px;opacity:.75">Notifications dekhne ke liye login karein.</p>';
-return;
-}
+  unsubscribeNotifications = onSnapshot(
+    notificationsQuery,
 
-if (unsubscribeNotifications) {
-unsubscribeNotifications();
-unsubscribeNotifications = null;
-}
+    (snapshot) => {
+      if (snapshot.empty) {
+        list.innerHTML = `
+          <div style="
+            text-align:center;
+            padding:60px 20px;
+            border:1px solid rgba(255,255,255,.13);
+            border-radius:24px;
+            background:rgba(255,255,255,.055);
+            backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px);
+          ">
+            <div style="font-size:52px;margin-bottom:12px">🔔</div>
+            <h3 style="margin:10px 0;font-size:18px">
+              No notifications yet
+            </h3>
+            <p style="font-size:13px;line-height:1.6;opacity:.65">
+              Likes, comments aur follows ki notifications yahan dikhenge.
+            </p>
+          </div>
+        `;
+        return;
+      }
 
-const notificationsRef = collection(db, "users", user.uid, "notifications");
-const notificationsQuery = query(notificationsRef, orderBy("createdAt", "desc"));
+      list.innerHTML = snapshot.docs.map((item) => {
+        const n = item.data();
 
-list.innerHTML = `
-  <div style="text-align:center;padding:60px 20px;opacity:.75">
-    <div style="font-size:48px">🔔</div>
-    <h3 style="margin:12px 0 6px">No notifications yet</h3>
-    <p style="font-size:13px;opacity:.7">Likes, comments aur follows yahan dikhenge.</p>
-  </div>
-`;
-
-  list.innerHTML = snapshot.docs.map((item) => {
-    const n = item.data();
-    const username = escapeHTML(n.fromUsername || "InstaPro User");
-    const message = escapeHTML(n.message || "interacted with you");
-    const photo = escapeHTML(n.fromPhoto || "https://www.gravatar.com/avatar/?d=mp");
-    const type = escapeHTML(n.type || "activity");
-    const unread = n.read === false;
-    const time = n.createdAt?.toDate
-      ? escapeHTML(n.createdAt.toDate().toLocaleString())
-      : "";
-
-    return `
-      <div data-notif-id="${escapeHTML(item.id)}"
-           data-post-id="${escapeHTML(n.postId || "")}"
-           data-from-uid="${escapeHTML(n.fromUid || "")}"
-           style="display:flex;gap:12px;align-items:center;padding:14px 12px;margin-bottom:10px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:${unread ? "rgba(100,150,255,.15)" : "rgba(255,255,255,.06)"};cursor:pointer">
-        <img src="${photo}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.src='https://www.gravatar.com/avatar/?d=mp'">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:14px;overflow-wrap:anywhere"><strong>${username}</strong> ${message}</div>
-          <div style="font-size:11px;opacity:.65;margin-top:5px">${type.toUpperCase()}${time ? " · " + time : ""}</div>
-        </div>
-        ${unread ? '<span style="width:8px;height:8px;background:#70a7ff;border-radius:50%;flex-shrink:0"></span>' : ""}
-      </div>`;
-  }).join("");
-
-  list.querySelectorAll("[data-notif-id]").forEach((row) => {
-    row.onclick = async () => {
-      const notificationId = row.dataset.notifId;
-
-      try {
-        await updateDoc(
-          doc(db, "users", user.uid, "notifications", notificationId),
-          { read: true }
+        const username = escapeHTML(
+          n.fromUsername || "InstaPro User"
         );
-      } catch (error) {
-        console.error("Notification read update error:", error);
-      }
 
-      const postId = row.dataset.postId;
-      const fromUid = row.dataset.fromUid;
+        const message = escapeHTML(
+          n.message || "interacted with you"
+        );
 
-      if (postId) {
-        document.dispatchEvent(new CustomEvent("open-notification-post", {
-          detail: { postId, fromUid }
-        }));
-      } else if (fromUid) {
-        document.dispatchEvent(new CustomEvent("open-notification-profile", {
-          detail: { uid: fromUid }
-        }));
-      }
-    };
-  });
-},
-(error) => {
-  console.error("Notifications loading error:", error);
-  list.innerHTML = '<p style="text-align:center;padding:30px">Notifications load nahi hue. Firestore Rules aur indexes check karein.</p>';
-}
+        const photo = escapeHTML(
+          n.fromPhoto || "https://www.gravatar.com/avatar/?d=mp"
+        );
 
-);
+        const type = escapeHTML(n.type || "activity");
+
+        const unread = n.read === false;
+
+        const time = n.createdAt?.toDate
+          ? escapeHTML(n.createdAt.toDate().toLocaleString())
+          : "";
+
+        return `
+          <div
+            data-notif-id="${escapeHTML(item.id)}"
+            data-post-id="${escapeHTML(n.postId || "")}"
+            data-from-uid="${escapeHTML(n.fromUid || "")}"
+            style="
+              display:flex;
+              align-items:center;
+              gap:12px;
+              padding:14px;
+              margin-bottom:12px;
+              border:1px solid rgba(255,255,255,.15);
+              border-radius:20px;
+              background:${unread
+                ? "rgba(100,150,255,.15)"
+                : "rgba(255,255,255,.055)"};
+              box-shadow:0 8px 25px rgba(0,0,0,.08);
+              backdrop-filter:blur(22px);
+              -webkit-backdrop-filter:blur(22px);
+              cursor:pointer;
+              transition:background .2s;
+            "
+          >
+            <img
+              src="${photo}"
+              alt=""
+              onerror="this.onerror=null;this.src='https://www.gravatar.com/avatar/?d=mp'"
+              style="
+                width:46px;
+                height:46px;
+                flex-shrink:0;
+                border-radius:50%;
+                object-fit:cover;
+                border:1px solid rgba(255,255,255,.25);
+              "
+            >
+
+            <div style="flex:1;min-width:0">
+              <div style="
+                font-size:14px;
+                line-height:1.5;
+                overflow-wrap:anywhere;
+              ">
+                <strong>${username}</strong> ${message}
+              </div>
+
+              <div style="
+                display:flex;
+                flex-wrap:wrap;
+                gap:6px;
+                margin-top:6px;
+                font-size:10px;
+                opacity:.65;
+              ">
+                <span>${type.toUpperCase()}</span>
+                ${time ? `<span>· ${time}</span>` : ""}
+              </div>
+            </div>
+
+            ${unread ? `
+              <span style="
+                width:9px;
+                height:9px;
+                flex-shrink:0;
+                border-radius:50%;
+                background:#78aaff;
+                box-shadow:0 0 10px rgba(120,170,255,.5);
+              "></span>
+            ` : ""}
+          </div>
+        `;
+      }).join("");
+
+      list.querySelectorAll("[data-notif-id]").forEach((row) => {
+        row.onclick = async () => {
+          const notificationId = row.dataset.notifId;
+          const postId = row.dataset.postId;
+          const fromUid = row.dataset.fromUid;
+
+          try {
+            await updateDoc(
+              doc(
+                db,
+                "users",
+                user.uid,
+                "notifications",
+                notificationId
+              ),
+              { read: true }
+            );
+          } catch (error) {
+            console.error(
+              "Notification read update error:",
+              error
+            );
+          }
+
+          if (postId) {
+            document.dispatchEvent(
+              new CustomEvent("open-notification-post", {
+                detail: { postId, fromUid }
+              })
+            );
+          } else if (fromUid) {
+            document.dispatchEvent(
+              new CustomEvent("open-notification-profile", {
+                detail: { uid: fromUid }
+              })
+            );
+          }
+        };
+      });
+    },
+
+    (error) => {
+      console.error("Notifications loading error:", error);
+
+      list.innerHTML = `
+        <div style="
+          text-align:center;
+          padding:35px 20px;
+          border:1px solid rgba(255,100,100,.2);
+          border-radius:20px;
+          background:rgba(255,80,80,.07);
+        ">
+          <div style="font-size:36px">⚠️</div>
+          <p style="font-size:14px">
+            Notifications load nahi hue.
+          </p>
+          <p style="font-size:12px;opacity:.7">
+            Firestore Rules aur createdAt field check karein.
+          </p>
+        </div>
+      `;
+    }
+  );
 }
 
 const oldBox = document.getElementById("notifBox");
