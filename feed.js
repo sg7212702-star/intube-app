@@ -612,7 +612,7 @@ if (feed) {
     if (action === "like") {
       await toggleLike(postId);
     } else if (action === "comments") {
-      await openComments(postId);
+      openCommentsPanel(postId);
     } else if (action === "save") {
       await toggleSave(postId);
     } else if (action === "share") {
