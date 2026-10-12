@@ -112,43 +112,85 @@ function connectFileInput(inputId, type) {
 }
 
 // -------------------------------------
-// CLOUDINARY VIDEO UPLOAD
+// CLOUDINARY PHOTO AND VIDEO UPLOAD
 // -------------------------------------
 
-async function uploadVideoToCloudinary(file, onProgress) {
+async function uploadToCloudinary(file, onProgress) {
+  const isVideo = file.type.startsWith("video/");
+  const resourceType = isVideo ? "video" : "image";
+
   const endpoint =
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
 
   const formData = new FormData();
-
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    body: formData
+  const result = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("POST", endpoint, true);
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && typeof onProgress === "function") {
+        const progress = Math.round(
+          (event.loaded / event.total) * 100
+        );
+
+        onProgress(progress);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      let response;
+
+      try {
+        response = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error("Cloudinary ka response read nahi ho paya."));
+        return;
+      }
+
+      if (xhr.status < 200 || xhr.status >= 300) {
+        console.error("Cloudinary upload error:", response);
+
+        reject(
+          new Error(
+            response.error?.message ||
+            `Cloudinary upload fail: HTTP ${xhr.status}`
+          )
+        );
+
+        return;
+      }
+
+      resolve(response);
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(
+        new Error(
+          "Network error: Cloudinary connection fail. Internet aur Cloudinary settings check karein."
+        )
+      );
+    });
+
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload cancel ho gaya."));
+    });
+
+    xhr.send(formData);
   });
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    console.error("Cloudinary error:", result);
-
-    throw new Error(
-      result.error?.message ||
-      "Cloudinary video upload fail ho gaya."
-    );
+  if (!result.secure_url) {
+    throw new Error("Cloudinary ne media URL nahi diya.");
   }
 
   if (typeof onProgress === "function") {
     onProgress(100);
   }
 
-  if (!result.secure_url) {
-    throw new Error("Cloudinary ne video URL nahi diya.");
-  }
-
-  return result.secure_url;
+  return result;
 }
 
 // -------------------------------------
