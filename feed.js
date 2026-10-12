@@ -376,39 +376,63 @@ function renderFeed() {
 // ------------------------------------------------------
 
 async function toggleLike(postId) {
-  const user = getCurrentUser();
+const user = getCurrentUser();
 
-  if (!user) {
-    showMessage("Like karne ke liye login karein.");
-    return;
+if (!user) {
+showMessage("Like karne ke liye login karein.");
+return;
+}
+
+const postRef = getPostRef(postId);
+
+try {
+const snapshot = await getDoc(postRef);
+
+if (!snapshot.exists()) {
+  showMessage("Yeh post ab available nahi hai.");
+  return;
+}
+
+const post = snapshot.data();
+const likes = Array.isArray(post.likes) ? post.likes : [];
+const alreadyLiked = likes.includes(user.uid);
+
+await updateDoc(postRef, {
+  likes: alreadyLiked
+    ? arrayRemove(user.uid)
+    : arrayUnion(user.uid),
+  likeCount: alreadyLiked
+    ? Math.max(0, getSafeCount(post.likeCount ?? likes.length) - 1)
+    : getSafeCount(post.likeCount ?? likes.length) + 1
+});
+
+if (!alreadyLiked) {
+  const ownerUid = post.uid || post.userId || post.authorId;
+
+  if (ownerUid && ownerUid !== user.uid) {
+    await addDoc(
+      collection(db, "users", ownerUid, "notifications"),
+      {
+        type: "like",
+        fromUid: user.uid,
+        fromUsername:
+          user.displayName ||
+          user.email?.split("@")[0] ||
+          "user",
+        fromPhoto: user.photoURL || "",
+        postId: postId,
+        message: "liked your post",
+        createdAt: serverTimestamp(),
+        read: false
+      }
+    );
   }
+}
 
-  const postRef = getPostRef(postId);
-
-  try {
-    const snapshot = await getDoc(postRef);
-
-    if (!snapshot.exists()) {
-      showMessage("Yeh post ab available nahi hai.");
-      return;
-    }
-
-    const post = snapshot.data();
-    const likes = Array.isArray(post.likes) ? post.likes : [];
-    const alreadyLiked = likes.includes(user.uid);
-
-    await updateDoc(postRef, {
-      likes: alreadyLiked
-        ? arrayRemove(user.uid)
-        : arrayUnion(user.uid),
-      likeCount: alreadyLiked
-        ? Math.max(0, getSafeCount(post.likeCount ?? likes.length) - 1)
-        : getSafeCount(post.likeCount ?? likes.length) + 1
-    });
-  } catch (error) {
-    console.error("Like error:", error);
-    showMessage("Like save nahi hua. Firestore Rules check karein.");
-  }
+} catch (error) {
+console.error("Like error:", error);
+showMessage("Like save nahi hua. Firestore Rules check karein.");
+}
 }
 
 // ------------------------------------------------------
