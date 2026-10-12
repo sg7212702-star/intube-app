@@ -447,10 +447,15 @@ function openCommentsPanel(postId) {
   const avatar = document.getElementById("commentCurrentUserAvatar");
   const form = document.getElementById("commentForm");
 
-  if (!panel || !list || !input || !form) {
-    showMessage("Comments panel HTML index.html mein nahi mila.");
-    return;
-  }
+if (!panel || !list || !input || !form) {
+alert(
+"Panel: " + !!panel +
+"\nList: " + !!list +
+"\nInput: " + !!input +
+"\nForm: " + !!form
+);
+return;
+}
 
   activeCommentsPostId = postId;
   panel.style.display = "block";
