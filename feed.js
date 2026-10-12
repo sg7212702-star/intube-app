@@ -412,11 +412,28 @@ async function toggleLike(postId) {
 }
 
 // ------------------------------------------------------
-// Comments
-// Stores each comment in posts/{postId}/comments
+// Instagram Style Real-Time Comments Panel
 // ------------------------------------------------------
 
-async function openComments(postId) {
+let activeCommentsPostId = null;
+let unsubscribeComments = null;
+
+function closeCommentsPanel() {
+  const panel = document.getElementById("commentsPanel");
+
+  if (unsubscribeComments) {
+    unsubscribeComments();
+    unsubscribeComments = null;
+  }
+
+  if (panel) {
+    panel.style.display = "none";
+  }
+
+  activeCommentsPostId = null;
+}
+
+function openCommentsPanel(postId) {
   const user = getCurrentUser();
 
   if (!user) {
@@ -424,21 +441,101 @@ async function openComments(postId) {
     return;
   }
 
-  const commentText = prompt("Apna comment likhein:");
+  const panel = document.getElementById("commentsPanel");
+  const list = document.getElementById("commentsList");
+  const input = document.getElementById("commentInput");
+  const avatar = document.getElementById("commentCurrentUserAvatar");
+  const form = document.getElementById("commentForm");
 
-  if (commentText === null) return;
-
-  const text = commentText.trim();
-
-  if (!text) {
-    showMessage("Comment khali nahi ho sakta.");
+  if (!panel || !list || !input || !form) {
+    showMessage("Comments panel HTML index.html mein nahi mila.");
     return;
   }
+
+  activeCommentsPostId = postId;
+  panel.style.display = "block";
+
+  if (avatar) {
+    avatar.src = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
+  }
+
+  if (unsubscribeComments) {
+    unsubscribeComments();
+    unsubscribeComments = null;
+  }
+
+  list.innerHTML = '<p class="comments-loading">Loading comments...</p>';
+
+  const commentsQuery = query(
+    getCommentRef(postId),
+    orderBy("createdAt", "asc")
+  );
+
+  unsubscribeComments = onSnapshot(
+    commentsQuery,
+    (snapshot) => {
+      if (activeCommentsPostId !== postId) return;
+
+      if (snapshot.empty) {
+        list.innerHTML = '<p class="comments-loading">Abhi koi comment nahi hai. Pehla comment karein!</p>';
+        return;
+      }
+
+      list.innerHTML = snapshot.docs.map((item) => {
+        const comment = item.data();
+        const username = escapeHTML(comment.username || "InstaPro User");
+        const text = escapeHTML(comment.text || "");
+        const photo = escapeHTML(
+          comment.photo || "https://www.gravatar.com/avatar/?d=mp"
+        );
+
+        return `
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:18px">
+            <img
+              src="${photo}"
+              alt=""
+              style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"
+            >
+            <div style="min-width:0;overflow-wrap:anywhere">
+              <strong>${username}</strong>
+              <span>${text}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    },
+    (error) => {
+      console.error("Comments loading error:", error);
+      list.innerHTML = '<p class="comments-loading">Comments load nahi hue. Firestore Rules check karein.</p>';
+    }
+  );
+}
+
+document.getElementById("commentForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const user = getCurrentUser();
+  const input = document.getElementById("commentInput");
+  const sendButton = document.getElementById("sendCommentBtn");
+  const postId = activeCommentsPostId;
+
+  if (!user) {
+    showMessage("Comment karne ke liye login karein.");
+    return;
+  }
+
+  if (!postId || !input) return;
+
+  const text = input.value.trim();
+
+  if (!text) return;
 
   if (text.length > 2000) {
     showMessage("Comment 2000 characters se chhota rakhein.");
     return;
   }
+
+  if (sendButton) sendButton.disabled = true;
 
   try {
     await addDoc(getCommentRef(postId), {
@@ -449,18 +546,22 @@ async function openComments(postId) {
       createdAt: serverTimestamp()
     });
 
-    const postRef = getPostRef(postId);
-
-    await updateDoc(postRef, {
+    await updateDoc(getPostRef(postId), {
       commentCount: increment(1)
     });
 
-    showMessage("Comment post ho gaya.");
+    input.value = "";
   } catch (error) {
-    console.error("Comment error:", error);
+    console.error("Comment post error:", error);
     showMessage("Comment save nahi hua. Firestore Rules check karein.");
+  } finally {
+    if (sendButton) sendButton.disabled = false;
   }
-}
+});
+
+document.getElementById("closeCommentsBtn")?.addEventListener("click", closeCommentsPanel);
+
+document.querySelector("#commentsPanel .comments-backdrop")?.addEventListener("click", closeCommentsPanel);
 
 // ------------------------------------------------------
 // Saved posts
