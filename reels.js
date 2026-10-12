@@ -653,6 +653,52 @@ function openReelComments(postId) {
         const post = postSnap.data();
         const ownerUid = post.uid || post.userId || post.authorId;
 
-        if (ownerUid && ownerUid !== user.uid) {
-          try {
-            await addDoc(collection(db, "users", owne
+if (ownerUid && ownerUid !== user.uid) {
+  try {
+    await addDoc(
+      collection(db, "users", ownerUid, "notifications"),
+      {
+        type: "comment",
+        fromUid: user.uid,
+        fromUsername:
+          user.displayName ||
+          user.email?.split("@")[0] ||
+          "User",
+        fromPhoto: user.photoURL || "",
+        postId: postId,
+        message: "commented on your Reel",
+        createdAt: serverTimestamp(),
+        read: false
+      }
+    );
+  } catch (notificationError) {
+    console.error(
+      "Reel notification error:",
+      notificationError
+    );
+  }
+}
+
+commentInput.value = "";
+showToast("Comment added successfully");
+
+} catch (error) {
+  console.error("Reel comment error:", error);
+  showToast("Comment save nahi hua");
+}
+});
+}
+
+window.addEventListener("pagehide", () => {
+  if (unsubscribeReels) {
+    unsubscribeReels();
+  }
+
+  if (unsubscribeActiveComments) {
+    unsubscribeActiveComments();
+  }
+
+  if (reelsObserver) {
+    reelsObserver.disconnect();
+  }
+});
