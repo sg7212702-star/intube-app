@@ -194,47 +194,64 @@ async function uploadToCloudinary(file, onProgress) {
 }
 
 // -------------------------------------
-// FIREBASE STORAGE PHOTO UPLOAD
+// CLOUDINARY PHOTO UPLOAD
 // -------------------------------------
 
-async function uploadPhotoToFirebase(file, onProgress) {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+async function uploadPhotoToCloudinary(file, onProgress) {
+  const endpoint =
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-  const filePath =
-    `posts/${auth.currentUser.uid}/${Date.now()}_${safeName}`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-  const fileRef = ref(storage, filePath);
+  const result = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-  const task = uploadBytesResumable(fileRef, file, {
-    contentType: file.type
-  });
+    xhr.open("POST", endpoint, true);
 
-  const downloadURL = await new Promise((resolve, reject) => {
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-
-        if (typeof onProgress === "function") {
-          onProgress(progress);
-        }
-      },
-      reject,
-      async () => {
-        try {
-          resolve(await getDownloadURL(task.snapshot.ref));
-        } catch (error) {
-          reject(error);
-        }
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && typeof onProgress === "function") {
+        onProgress(Math.round((event.loaded / event.total) * 100));
       }
-    );
+    });
+
+    xhr.addEventListener("load", () => {
+      let response;
+
+      try {
+        response = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error("Cloudinary response read nahi ho paya."));
+        return;
+      }
+
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(
+          new Error(
+            response.error?.message ||
+            `Photo upload fail: HTTP ${xhr.status}`
+          )
+        );
+        return;
+      }
+
+      resolve(response);
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Cloudinary network connection fail."));
+    });
+
+    xhr.send(formData);
   });
 
-  return downloadURL;
-}
+  if (!result.secure_url) {
+    throw new Error("Cloudinary se photo URL nahi mila.");
+  }
 
+  return result.secure_url;
+}
 // -------------------------------------
 // UPLOAD STATUS
 // -------------------------------------
