@@ -3,21 +3,34 @@ import { db, auth } from "./firebase.js";
 import {
   doc,
   getDoc,
-  updateDoc,
+  setDoc,
   onSnapshot,
   collection,
   query,
   where,
-  orderBy,
-  limit
+  limit,
+  writeBatch,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let stopProfileListener = null;
-let stopPostsListener = null;
-let viewingUid = null;
+const CLOUD_NAME = "kujnbe0a";
+const UPLOAD_PRESET = "intube_free";
 
-const esc = (value = "") =>
-  String(value).replace(/[&<>"']/g, c => ({
+let profileUnsub = null;
+let viewerUnsub = null;
+let postsUnsub = null;
+
+let viewingUid = null;
+let profileData = {};
+let profilePosts = [];
+let viewerFollowing = [];
+let activeTab = "posts";
+
+const $ = (selector, root = document) =>
+  root.querySelector(selector);
+
+const esc = value =>
+  String(value ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -25,202 +38,43 @@ const esc = (value = "") =>
     "'": "&#39;"
   })[c]);
 
-function profileStyles() {
-  if (document.getElementById("instaProProfileStyles")) return;
-
-  const style = document.createElement("style");
-  style.id = "instaProProfileStyles";
-
-  style.textContent = `
-    #instaProProfile {
-      position:fixed;
-      inset:0;
-      z-index:9990;
-      overflow-y:auto;
-      color:#fff;
-      background:
-        radial-gradient(ellipse at 10% 0%,rgba(138,43,226,.22),transparent 42%),
-        radial-gradient(ellipse at 100% 20%,rgba(0,210,255,.16),transparent 38%),
-        rgba(8,9,18,.96);
-      font-family:inherit;
-      backdrop-filter:blur(28px);
-      -webkit-backdrop-filter:blur(28px);
-    }
-
-    #instaProProfile * { box-sizing:border-box; }
-
-    #instaProProfile .ip-top {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:15px 16px;
-      position:sticky;
-      top:0;
-      z-index:5;
-      background:rgba(12,13,24,.76);
-      backdrop-filter:blur(24px);
-      border-bottom:1px solid rgba(255,255,255,.1);
-    }
-
-    #instaProProfile .ip-glass {
-      border:1px solid rgba(255,255,255,.13);
-      background:rgba(255,255,255,.055);
-      box-shadow:0 10px 35px rgba(0,0,0,.14);
-      backdrop-filter:blur(22px);
-      -webkit-backdrop-filter:blur(22px);
-      border-radius:20px;
-    }
-
-    #instaProProfile .ip-avatar {
-      width:94px;
-      height:94px;
-      padding:3px;
-      border-radius:50%;
-      background:linear-gradient(135deg,#ff3d9a,#8b5cf6,#16d9ff,#ffcc70);
-      box-shadow:0 0 25px rgba(180,75,255,.22);
-    }
-
-    #instaProProfile .ip-avatar img {
-      width:100%;
-      height:100%;
-      border-radius:50%;
-      object-fit:cover;
-      border:3px solid #11121c;
-    }
-
-    #instaProProfile .ip-btn {
-      border:1px solid rgba(255,255,255,.15);
-      border-radius:12px;
-      padding:10px 14px;
-      background:rgba(255,255,255,.09);
-      color:#fff;
-      font-weight:650;
-      font-size:12px;
-      cursor:pointer;
-    }
-
-    #instaProProfile .ip-primary {
-      background:linear-gradient(110deg,#8b5cf6,#ec4899);
-      border:0;
-    }
-
-    #instaProProfile .ip-stats {
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:8px;
-      margin:20px 0;
-    }
-
-    #instaProProfile .ip-stat {
-      text-align:center;
-      padding:13px 5px;
-    }
-
-    #instaProProfile .ip-stat strong {
-      display:block;
-      font-size:19px;
-      font-weight:800;
-    }
-
-    #instaProProfile .ip-stat span {
-      display:block;
-      margin-top:4px;
-      font-size:11px;
-      opacity:.65;
-    }
-
-    #instaProProfile .ip-tabs {
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      border-bottom:1px solid rgba(255,255,255,.12);
-      margin-top:22px;
-    }
-
-    #instaProProfile .ip-tab {
-      padding:15px 4px;
-      border:0;
-      border-bottom:2px solid transparent;
-      color:rgba(255,255,255,.55);
-      background:transparent;
-      font-size:13px;
-      cursor:pointer;
-    }
-
-    #instaProProfile .ip-tab.active {
-      color:#fff;
-      border-bottom-color:#d66bff;
-    }
-
-    #instaProProfile .ip-grid {
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:3px;
-    }
-
-    #instaProProfile .ip-post {
-      position:relative;
-      aspect-ratio:3/4;
-      overflow:hidden;
-      background:rgba(255,255,255,.07);
-      cursor:pointer;
-    }
-
-    #instaProProfile .ip-post img,
-    #instaProProfile .ip-post video {
-      width:100%;
-      height:100%;
-      object-fit:cover;
-    }
-
-    #instaProProfile .ip-video-icon {
-      position:absolute;
-      right:7px;
-      top:7px;
-      padding:4px 6px;
-      background:rgba(0,0,0,.55);
-      border-radius:8px;
-      font-size:12px;
-    }
-
-    #instaProProfile .ip-empty {
-      grid-column:1/-1;
-      text-align:center;
-      padding:50px 18px;
-      opacity:.7;
-      font-size:13px;
-    }
-
-    @media(min-width:700px) {
-      #instaProProfile .ip-content {
-        max-width:650px;
-        margin:auto;
-      }
-
-      #instaProProfile .ip-grid {
-        gap:5px;
-      }
-    }
-  `;
-
-  document.head.appendChild(style);
+function myId() {
+  return localStorage.getItem("my_user_id") ||
+    auth.currentUser?.uid ||
+    null;
 }
 
-function currentUsername(user, data = {}) {
-  return data.username ||
+function usernameFor(data, uid) {
+  return String(
+    data.username ||
     data.displayName ||
-    user?.displayName ||
-    user?.email?.split("@")[0] ||
-    "InstaPro User";
+    data.name ||
+    auth.currentUser?.displayName ||
+    uid ||
+    "instapro_user"
+  );
 }
 
-function getCount(value) {
-  if (Array.isArray(value)) return value.length;
-  return Number(value) || 0;
+function photoFor(data) {
+  return data.photoURL ||
+    data.photoUrl ||
+    data.profilePic ||
+    data.photo ||
+    auth.currentUser?.photoURL ||
+    "https://www.gravatar.com/avatar/?d=mp";
 }
 
-function mediaURL(post) {
-  return post.mediaURL ||
-    post.mediaUrl ||
+function postOwner(post) {
+  return post.userId ||
+    post.uid ||
+    post.authorId ||
+    post.ownerUid ||
+    "";
+}
+
+function postUrl(post) {
+  return post.mediaUrl ||
+    post.mediaURL ||
     post.imageUrl ||
     post.imageURL ||
     post.videoUrl ||
@@ -230,386 +84,1203 @@ function mediaURL(post) {
     "";
 }
 
-function isVideo(post, url = "") {
-  const type = String(post.type || post.mediaType || "").toLowerCase();
+function isReel(post) {
+  return String(
+    post.currentType || post.type || ""
+  ).toLowerCase() === "reel";
+}
+
+function isVideo(post) {
+  const type = String(
+    post.mediaType ||
+    post.resourceType ||
+    post.type ||
+    ""
+  ).toLowerCase();
+
   return type.includes("video") ||
-    type.includes("reel") ||
-    /\.(mp4|webm|mov)(\?|$)/i.test(url);
+    type === "reel" ||
+    isReel(post) ||
+    /\.(mp4|webm|mov)(\?|$)/i.test(postUrl(post));
 }
 
 function stopListeners() {
-  if (stopProfileListener) stopProfileListener();
-  if (stopPostsListener) stopPostsListener();
+  if (profileUnsub) profileUnsub();
+  if (viewerUnsub) viewerUnsub();
+  if (postsUnsub) postsUnsub();
 
-  stopProfileListener = null;
-  stopPostsListener = null;
+  profileUnsub = null;
+  viewerUnsub = null;
+  postsUnsub = null;
+}
+
+function addStyles() {
+  if ($("#ipProfileStyle")) return;
+
+  const style = document.createElement("style");
+  style.id = "ipProfileStyle";
+
+  style.textContent = `
+    #ipProfileOverlay {
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      overflow:auto;
+      color:#fff;
+      background:
+        radial-gradient(
+          ellipse at 5% 0%,
+          rgba(221,45,160,.23),
+          transparent 38%
+        ),
+        radial-gradient(
+          ellipse at 100% 22%,
+          rgba(63,113,255,.2),
+          transparent 38%
+        ),
+        rgba(7,7,16,.94);
+      backdrop-filter:blur(26px);
+      -webkit-backdrop-filter:blur(26px);
+      font-family:inherit;
+    }
+
+    #ipProfileOverlay * {
+      box-sizing:border-box;
+    }
+
+    #ipProfileOverlay .ipp-wrap {
+      max-width:720px;
+      margin:0 auto;
+      min-height:100%;
+      padding-bottom:28px;
+    }
+
+    #ipProfileOverlay .ipp-top {
+      position:sticky;
+      top:0;
+      z-index:4;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:13px 16px;
+      background:rgba(13,12,26,.78);
+      border-bottom:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(24px);
+    }
+
+    #ipProfileOverlay .ipp-glass {
+      border:1px solid rgba(255,255,255,.13);
+      background:linear-gradient(
+        135deg,
+        rgba(255,255,255,.105),
+        rgba(255,255,255,.035)
+      );
+      box-shadow:0 12px 32px rgba(0,0,0,.16);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border-radius:18px;
+    }
+
+    #ipProfileOverlay .ipp-btn {
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:12px;
+      padding:10px 13px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-weight:700;
+      font-size:12px;
+      cursor:pointer;
+    }
+
+    #ipProfileOverlay .ipp-btn:disabled {
+      opacity:.6;
+      cursor:wait;
+    }
+
+    #ipProfileOverlay .ipp-primary {
+      border:0;
+      background:linear-gradient(
+        110deg,
+        #8b5cf6,
+        #ec4899
+      );
+    }
+
+    #ipProfileOverlay .ipp-head {
+      display:flex;
+      align-items:center;
+      gap:20px;
+      padding:22px 17px 8px;
+    }
+
+    #ipProfileOverlay .ipp-avatar {
+      width:98px;
+      height:98px;
+      flex:0 0 98px;
+      padding:3px;
+      border-radius:50%;
+      background:linear-gradient(
+        135deg,
+        #ff3d9a,
+        #8b5cf6,
+        #16d9ff,
+        #ffcc70
+      );
+      box-shadow:0 0 28px rgba(190,75,255,.22);
+    }
+
+    #ipProfileOverlay .ipp-avatar img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:50%;
+      border:3px solid #11121c;
+      background:#222;
+    }
+
+    #ipProfileOverlay .ipp-stats {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      padding:16px;
+    }
+
+    #ipProfileOverlay .ipp-stat {
+      text-align:center;
+      padding:12px 4px;
+    }
+
+    #ipProfileOverlay .ipp-stat strong {
+      display:block;
+      font-size:19px;
+    }
+
+    #ipProfileOverlay .ipp-stat span {
+      display:block;
+      font-size:11px;
+      opacity:.7;
+      margin-top:3px;
+    }
+
+    #ipProfileOverlay .ipp-tabs {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      margin-top:20px;
+      border-top:1px solid rgba(255,255,255,.12);
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+
+    #ipProfileOverlay .ipp-tab {
+      padding:14px 4px;
+      background:transparent;
+      border:0;
+      border-bottom:2px solid transparent;
+      color:rgba(255,255,255,.55);
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    #ipProfileOverlay .ipp-tab.active {
+      color:#fff;
+      border-bottom-color:#e879f9;
+    }
+
+    #ipProfileOverlay .ipp-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:3px;
+    }
+
+    #ipProfileOverlay .ipp-tile {
+      position:relative;
+      aspect-ratio:3/4;
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      cursor:pointer;
+    }
+
+    #ipProfileOverlay .ipp-tile img,
+    #ipProfileOverlay .ipp-tile video {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+
+    #ipProfileOverlay .ipp-reelTag {
+      position:absolute;
+      right:7px;
+      top:7px;
+      background:#0009;
+      padding:4px 7px;
+      border-radius:8px;
+    }
+
+    #ipProfileOverlay .ipp-empty {
+      grid-column:1/-1;
+      text-align:center;
+      padding:45px 18px;
+      opacity:.7;
+    }
+
+    #ipProfileOverlay .ipp-modal {
+      position:fixed;
+      inset:0;
+      z-index:10001;
+      background:#000a;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+
+    #ipProfileOverlay .ipp-modalCard {
+      width:min(100%,440px);
+      padding:19px;
+    }
+
+    #ipProfileOverlay .ipp-input {
+      width:100%;
+      margin:7px 0 14px;
+      padding:12px;
+      border-radius:11px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25);
+      color:#fff;
+      font:inherit;
+    }
+
+    #ipProfileOverlay .ipp-highlight {
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:12px 16px;
+    }
+
+    #ipProfileOverlay .ipp-highlightBubble {
+      min-width:65px;
+      text-align:center;
+      font-size:10px;
+      opacity:.8;
+    }
+
+    #ipProfileOverlay .ipp-highlightBubble i {
+      display:grid;
+      place-items:center;
+      width:52px;
+      height:52px;
+      margin:0 auto 6px;
+      border-radius:50%;
+      border:1px solid #ffffff55;
+      background:#ffffff0c;
+      font-style:normal;
+      font-size:20px;
+    }
+
+    @media(max-width:380px) {
+      #ipProfileOverlay .ipp-head {
+        gap:13px;
+      }
+
+      #ipProfileOverlay .ipp-avatar {
+        width:82px;
+        height:82px;
+        flex-basis:82px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
 }
 
 function closeProfile() {
   stopListeners();
 
-  const page = document.getElementById("instaProProfile");
-  if (page) page.remove();
+  $("#ipProfileOverlay")?.remove();
 
   document.body.style.overflow = "";
 }
 
-function findPostOwner(post) {
-  return post.uid ||
-    post.userId ||
-    post.authorId ||
-    post.ownerUid ||
-    "";
+function render(data = profileData, posts = profilePosts) {
+  const page = $("#ipProfileOverlay");
+
+  if (!page) return;
+
+  const uid = viewingUid;
+  const own = myId() === uid;
+
+  const name =
+    data.displayName ||
+    data.name ||
+    usernameFor(data, uid);
+
+  const username = usernameFor(data, uid)
+    .replace(/^@/, "");
+
+  const photo = photoFor(data);
+
+  const bio =
+    data.bio ||
+    data.about ||
+    "Welcome to my InstaPro profile ✨";
+
+  const followers = Array.isArray(data.followers)
+    ? data.followers.length
+    : Number(data.followersCount || data.followers || 0);
+
+  const following = Array.isArray(data.following)
+    ? data.following.length
+    : Number(data.followingCount || data.following || 0);
+
+  const ownPosts = posts.filter(
+    post => postOwner(post) === uid
+  );
+
+  const postCount = ownPosts.filter(
+    post => !isReel(post)
+  ).length;
+
+  const reelCount = ownPosts.filter(
+    post => isReel(post)
+  ).length;
+
+  const isFollowing = viewerFollowing.includes(uid);
+
+  page.innerHTML = `
+    <div class="ipp-wrap">
+
+      <header class="ipp-top">
+        <button class="ipp-btn" id="ippBack">‹ Back</button>
+        <strong style="font-size:17px">InstaPro ✦</strong>
+        <button class="ipp-btn" id="ippRefresh">↻</button>
+      </header>
+
+      <main>
+        <div class="ipp-head">
+
+          <div class="ipp-avatar">
+            <img
+              id="ippPhoto"
+              src="${esc(photo)}"
+              alt="Profile photo"
+            >
+          </div>
+
+          <div style="flex:1;min-width:0">
+            <div style="
+              font-size:19px;
+              font-weight:850;
+              overflow-wrap:anywhere
+            ">
+              ${esc(name)}
+            </div>
+
+            <div style="font-size:12px;opacity:.68;margin-top:4px">
+              @${esc(username)}
+            </div>
+
+            <div style="
+              font-size:11px;
+              margin-top:8px;
+              color:#e6a7ff
+            ">
+              ${esc(data.category || "CREATOR")}
+            </div>
+          </div>
+
+        </div>
+
+        <div style="
+          padding:7px 17px 0;
+          white-space:pre-wrap;
+          overflow-wrap:anywhere;
+          font-size:13px;
+          line-height:1.65
+        ">
+          ${esc(bio)}
+        </div>
+
+        ${data.website ? `
+          <div style="
+            padding:5px 17px;
+            color:#a5d8ff;
+            font-size:12px;
+            overflow-wrap:anywhere
+          ">
+            ${esc(data.website)}
+          </div>
+        ` : ""}
+
+        <div class="ipp-stats">
+
+          <div class="ipp-stat ipp-glass">
+            <strong>${postCount}</strong>
+            <span>Posts</span>
+          </div>
+
+          <div class="ipp-stat ipp-glass">
+            <strong>${followers}</strong>
+            <span>Followers</span>
+          </div>
+
+          <div class="ipp-stat ipp-glass">
+            <strong>${following}</strong>
+            <span>Following</span>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:8px;padding:0 16px">
+
+          ${own ? `
+            <button
+              id="ippEdit"
+              class="ipp-btn ipp-primary"
+              style="flex:1"
+            >
+              ✦ Edit profile
+            </button>
+
+            <button
+              id="ippPhotoBtn"
+              class="ipp-btn"
+              style="flex:1"
+            >
+              📷 Change photo
+            </button>
+          ` : `
+            <button
+              id="ippFollow"
+              class="ipp-btn ipp-primary"
+              style="flex:1"
+            >
+              ${isFollowing ? "Following ✓" : "Follow +"}
+            </button>
+          `}
+
+          <button
+            id="ippShare"
+            class="ipp-btn"
+            style="flex:1"
+          >
+            ↗ Share
+          </button>
+
+        </div>
+
+        <div class="ipp-highlight">
+
+          <div class="ipp-highlightBubble">
+            <i>＋</i>
+            New
+          </div>
+
+          ${(Array.isArray(data.highlights) ? data.highlights : [])
+            .slice(0, 12)
+            .map(h => `
+              <div class="ipp-highlightBubble">
+                <i>${esc(h.emoji || "✦")}</i>
+                ${esc(h.title || "Highlight")}
+              </div>
+            `).join("")}
+
+        </div>
+
+        <div class="ipp-tabs">
+
+          <button
+            class="ipp-tab ${activeTab === "posts" ? "active" : ""}"
+            data-tab="posts"
+          >
+            ▦ POSTS (${postCount})
+          </button>
+
+          <button
+            class="ipp-tab ${activeTab === "reels" ? "active" : ""}"
+            data-tab="reels"
+          >
+            ▷ REELS (${reelCount})
+          </button>
+
+          <button
+            class="ipp-tab ${activeTab === "tagged" ? "active" : ""}"
+            data-tab="tagged"
+          >
+            ♙ TAGGED
+          </button>
+
+        </div>
+
+        <div id="ippGrid" class="ipp-grid"></div>
+
+      </main>
+    </div>
+  `;
+
+  const grid = $("#ippGrid", page);
+
+  let filtered = [];
+
+  if (activeTab === "posts") {
+    filtered = ownPosts.filter(post => !isReel(post));
+  } else if (activeTab === "reels") {
+    filtered = ownPosts.filter(post => isReel(post));
+  }
+
+  if (activeTab === "tagged") {
+    grid.innerHTML = `
+      <div class="ipp-empty">
+        Tagged posts ke liye tagging system abhi alag se add karna hoga.
+      </div>
+    `;
+  } else if (!filtered.length) {
+    grid.innerHTML = `
+      <div class="ipp-empty">
+        <div style="font-size:38px">▧</div>
+        <strong>No ${activeTab} yet</strong>
+        <p>Uploaded media yahan dikhai dega.</p>
+      </div>
+    `;
+  } else {
+    grid.innerHTML = filtered.map(post => {
+      const url = postUrl(post);
+
+      if (!url) return "";
+
+      return `
+        <div class="ipp-tile" data-post-id="${esc(post.id)}">
+
+          ${isVideo(post) ? `
+            <video
+              src="${esc(url)}"
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <span class="ipp-reelTag">▷</span>
+          ` : `
+            <img
+              src="${esc(url)}"
+              loading="lazy"
+              alt="Post"
+            >
+          `}
+
+        </div>
+      `;
+    }).join("");
+  }
+
+  $("#ippBack", page).onclick = closeProfile;
+
+  $("#ippRefresh", page).onclick = () =>
+    openProfile(uid);
+
+  page.querySelectorAll("[data-tab]").forEach(button => {
+    button.onclick = () => {
+      activeTab = button.dataset.tab;
+      render();
+    };
+  });
+
+  $("#ippShare", page).onclick = async () => {
+    const link = new URL(location.href);
+
+    link.searchParams.set("user", uid);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name} on InstaPro`,
+          text: `Check out @${username}`,
+          url: link.href
+        });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link.href);
+        alert("Profile link copied.");
+      } else {
+        prompt("Copy profile link:", link.href);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error(error);
+      }
+    }
+  };
+
+  $("#ippEdit", page)?.addEventListener(
+    "click",
+    () => showEdit(data)
+  );
+
+  $("#ippPhotoBtn", page)?.addEventListener(
+    "click",
+    () => $("#ippPhotoInput")?.click()
+  );
+
+  $("#ippFollow", page)?.addEventListener(
+    "click",
+    toggleFollow
+  );
+
+  grid.querySelectorAll("[data-post-id]").forEach(tile => {
+    tile.onclick = () => {
+      document.dispatchEvent(
+        new CustomEvent("open-notification-post", {
+          detail: {
+            postId: tile.dataset.postId,
+            fromUid: uid
+          }
+        })
+      );
+    };
+  });
+
+  $("#ippPhoto", page).onerror = () => {
+    $("#ippPhoto").src =
+      "https://www.gravatar.com/avatar/?d=mp";
+  };
+}
+function showEdit(data) {
+  const page = $("#ipProfileOverlay");
+
+  const modal = document.createElement("div");
+  modal.className = "ipp-modal";
+
+  modal.innerHTML = `
+    <div class="ipp-modalCard ipp-glass">
+
+      <h3 style="margin:0 0 16px">
+        Edit profile
+      </h3>
+
+      <label>Name</label>
+      <input
+        class="ipp-input"
+        id="ippName"
+        maxlength="60"
+        value="${esc(data.displayName || data.name || "")}"
+      >
+
+      <label>Username</label>
+      <input
+        class="ipp-input"
+        id="ippUsername"
+        maxlength="30"
+        value="${esc(data.username || "")}"
+      >
+
+      <label>Bio</label>
+      <textarea
+        class="ipp-input"
+        id="ippBio"
+        maxlength="160"
+        rows="3"
+      >${esc(data.bio || "")}</textarea>
+
+      <label>Category</label>
+      <input
+        class="ipp-input"
+        id="ippCategory"
+        maxlength="40"
+        value="${esc(data.category || "Creator")}"
+      >
+
+      <label>Website</label>
+      <input
+        class="ipp-input"
+        id="ippWebsite"
+        maxlength="180"
+        value="${esc(data.website || "")}"
+      >
+
+      <div
+        id="ippEditStatus"
+        style="font-size:12px;opacity:.8;margin:4px 0 12px"
+      ></div>
+
+      <div style="display:flex;gap:9px">
+
+        <button
+          id="ippCancel"
+          class="ipp-btn"
+          style="flex:1"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="ippSave"
+          class="ipp-btn ipp-primary"
+          style="flex:1"
+        >
+          Save changes
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  page.appendChild(modal);
+
+  $("#ippCancel", modal).onclick = () =>
+    modal.remove();
+
+  modal.addEventListener("click", event => {
+    if (event.target === modal) modal.remove();
+  });
+
+  $("#ippSave", modal).onclick = async () => {
+    const status = $("#ippEditStatus", modal);
+
+    const name = $("#ippName", modal)
+      .value.trim();
+
+    const username = $("#ippUsername", modal)
+      .value.trim()
+      .replace(/^@/, "")
+      .replace(/\s+/g, "")
+      .toLowerCase();
+
+    const bio = $("#ippBio", modal)
+      .value.trim();
+
+    const category = $("#ippCategory", modal)
+      .value.trim();
+
+    const website = $("#ippWebsite", modal)
+      .value.trim();
+
+    if (!name) {
+      status.textContent = "Name is required.";
+      return;
+    }
+
+    if (
+      username &&
+      !/^[a-z0-9._]{3,30}$/.test(username)
+    ) {
+      status.textContent =
+        "Username 3–30 characters ka hona chahiye.";
+      return;
+    }
+
+    status.textContent = "Saving to Firebase…";
+
+    try {
+      await setDoc(
+        doc(db, "users", viewingUid),
+        {
+          name,
+          displayName: name,
+          username: username ||
+            name.toLowerCase().replace(/\s+/g, ""),
+          bio,
+          category,
+          website,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      modal.remove();
+
+    } catch (error) {
+      console.error("Edit profile failed:", error);
+
+      status.textContent =
+        "Save failed. Login aur Firestore Rules check karein.";
+    }
+  };
+}
+
+async function uploadProfilePhoto(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    throw new Error("Please select an image.");
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error("Photo 8 MB se chhoti honi chahiye.");
+  }
+
+  const form = new FormData();
+
+  form.append("file", file);
+  form.append("upload_preset", UPLOAD_PRESET);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    {
+      method: "POST",
+      body: form
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok || !result.secure_url) {
+    throw new Error(
+      result.error?.message || "Photo upload failed."
+    );
+  }
+
+  await setDoc(
+    doc(db, "users", viewingUid),
+    {
+      photoURL: result.secure_url,
+      photoUrl: result.secure_url,
+      photo: result.secure_url,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+}
+
+async function toggleFollow() {
+  const followerUid = myId();
+  const targetUid = viewingUid;
+
+  if (!followerUid) {
+    alert("Pehle login karein.");
+    return;
+  }
+
+  if (followerUid === targetUid) return;
+
+  const button = $("#ippFollow");
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Please wait…";
+  }
+
+  try {
+    const [mineSnap, targetSnap] =
+      await Promise.all([
+        getDoc(doc(db, "users", followerUid)),
+        getDoc(doc(db, "users", targetUid))
+      ]);
+
+    const mine = mineSnap.exists()
+      ? mineSnap.data()
+      : {};
+
+    const target = targetSnap.exists()
+      ? targetSnap.data()
+      : {};
+
+    const following = Array.isArray(mine.following)
+      ? mine.following
+      : [];
+
+    const followers = Array.isArray(target.followers)
+      ? target.followers
+      : [];
+
+    const already = following.includes(targetUid);
+
+    const batch = writeBatch(db);
+
+    batch.set(
+      doc(db, "users", followerUid),
+      {
+        following: already
+          ? following.filter(id => id !== targetUid)
+          : [...following, targetUid],
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    batch.set(
+      doc(db, "users", targetUid),
+      {
+        followers: already
+          ? followers.filter(id => id !== followerUid)
+          : [
+              ...new Set([
+                ...followers,
+                followerUid
+              ])
+            ],
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await batch.commit();
+
+  } catch (error) {
+    console.error("Follow action failed:", error);
+
+    alert(
+      "Follow update fail hua. Login aur Firestore Rules check karein."
+    );
+
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 export async function openProfile(uid = null) {
-  const user = auth.currentUser;
+  const currentId = myId();
+  const targetUid = uid || currentId;
 
-  if (!uid && !user) {
+  if (!targetUid) {
     alert("Profile dekhne ke liye pehle login karein.");
     return;
   }
 
-  viewingUid = uid || user.uid;
+  viewingUid = targetUid;
+  activeTab = "posts";
 
   stopListeners();
-  profileStyles();
+  addStyles();
 
-  let page = document.getElementById("instaProProfile");
-  if (page) page.remove();
+  $("#ipProfileOverlay")?.remove();
 
-  page = document.createElement("section");
-  page.id = "instaProProfile";
+  const page = document.createElement("section");
+  page.id = "ipProfileOverlay";
 
   page.innerHTML = `
-    <div class="ip-top">
-      <button class="ip-btn" id="ipBack">‹ Back</button>
-      <strong style="font-size:17px">InstaPro</strong>
-      <button class="ip-btn" id="ipRefresh">↻</button>
-    </div>
+    <div class="ipp-wrap">
 
-    <div class="ip-content" style="padding:18px 15px 35px">
-      <div style="text-align:center;padding:35px 10px">
-        Loading profile...
+      <header class="ipp-top">
+        <button class="ipp-btn" id="ippInitialBack">
+          ‹ Back
+        </button>
+
+        <strong>InstaPro ✦</strong>
+
+        <span></span>
+      </header>
+
+      <div style="padding:55px 20px;text-align:center">
+        Loading glass profile…
       </div>
+
     </div>
   `;
 
   document.body.appendChild(page);
   document.body.style.overflow = "hidden";
 
-  page.querySelector("#ipBack").onclick = closeProfile;
-  page.querySelector("#ipRefresh").onclick = () => openProfile(viewingUid);
+  $("#ippInitialBack", page).onclick =
+    closeProfile;
 
-  const content = page.querySelector(".ip-content");
+  const userRef = doc(db, "users", targetUid);
 
-  const userRef = doc(db, "users", viewingUid);
+  try {
+    const snap = await getDoc(userRef);
 
-  const renderProfile = (data, posts = []) => {
-    if (!document.getElementById("instaProProfile")) return;
+    if (!snap.exists() && targetUid === currentId) {
+      const user = auth.currentUser;
 
-    const ownProfile = auth.currentUser?.uid === viewingUid;
-    const name = currentUsername(
-      { ...data, displayName: data.displayName },
-      data
+      await setDoc(
+        userRef,
+        {
+          name: user?.displayName || "InstaPro User",
+          displayName: user?.displayName || "InstaPro User",
+
+          username: (
+            user?.email?.split("@")[0] ||
+            targetUid
+          ).toLowerCase().replace(/[^a-z0-9._]/g, ""),
+
+          bio: "Welcome to my InstaPro profile ✨",
+          photoURL: user?.photoURL || "",
+
+          followers: [],
+          following: [],
+
+          createdAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "Profile initialization error:",
+      error
     );
+  }
 
-    const username = data.username ||
-      auth.currentUser?.email?.split("@")[0] ||
-      "user";
+  // Current viewer ka following status realtime mein.
+  if (currentId) {
+    viewerUnsub = onSnapshot(
+      doc(db, "users", currentId),
 
-    const photo = data.photoURL ||
-      data.photoUrl ||
-      data.profilePic ||
-      data.photo ||
-      "https://www.gravatar.com/avatar/?d=mp";
+      snapshot => {
+        viewerFollowing =
+          snapshot.exists() &&
+          Array.isArray(snapshot.data().following)
+            ? snapshot.data().following
+            : [];
 
-    const bio = data.bio || data.about || "Welcome to my InstaPro profile ✨";
+        if ($("#ipProfileOverlay")) {
+          render(profileData, profilePosts);
+        }
+      },
 
-    const followers = getCount(data.followers);
-    const following = getCount(data.following);
-
-    const ownPosts = posts.filter(post => {
-      const owner = findPostOwner(post);
-      return !owner || owner === viewingUid;
-    });
-
-    content.innerHTML = `
-      <div style="display:flex;align-items:center;gap:22px;padding:12px 4px">
-        <div class="ip-avatar">
-          <img src="${esc(photo)}" alt="Profile photo"
-            onerror="this.onerror=null;this.src='https://www.gravatar.com/avatar/?d=mp'">
-        </div>
-
-        <div style="flex:1;min-width:0">
-          <div style="font-size:19px;font-weight:800;overflow-wrap:anywhere">
-            ${esc(name)}
-          </div>
-          <div style="font-size:12px;opacity:.65;margin-top:4px">
-            @${esc(username)}
-          </div>
-          <div style="font-size:11px;margin-top:9px;color:#d7a2ff">
-            ✦ CREATOR PROFILE
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:15px;font-size:13px;line-height:1.7;white-space:pre-wrap">
-        ${esc(bio)}
-      </div>
-
-      <div class="ip-stats">
-        <div class="ip-stat ip-glass">
-          <strong>${ownPosts.length}</strong>
-          <span>Posts</span>
-        </div>
-        <div class="ip-stat ip-glass">
-          <strong>${followers}</strong>
-          <span>Followers</span>
-        </div>
-        <div class="ip-stat ip-glass">
-          <strong>${following}</strong>
-          <span>Following</span>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px">
-        ${ownProfile ? `
-          <button class="ip-btn ip-primary" id="ipEdit" style="flex:1">
-            ✨ Edit Profile
-          </button>
-        ` : `
-          <button class="ip-btn ip-primary" id="ipFollow" style="flex:1">
-            Follow
-          </button>
-        `}
-        <button class="ip-btn" id="ipShare" style="flex:1">
-          ↗ Share Profile
-        </button>
-      </div>
-
-      <div class="ip-glass" style="padding:15px;margin-top:18px">
-        <div style="font-size:13px;font-weight:700">✦ Profile highlights</div>
-        <div style="font-size:11px;opacity:.65;margin-top:6px">
-          Photos, videos and reels in one place
-        </div>
-      </div>
-
-      <div class="ip-tabs">
-        <button class="ip-tab active" data-tab="all">▦ Posts</button>
-        <button class="ip-tab" data-tab="videos">▷ Videos</button>
-        <button class="ip-tab" data-tab="reels">✦ Reels</button>
-      </div>
-
-      <div id="ipMediaGrid" class="ip-grid" style="margin-top:3px"></div>
-    `;
-
-    const grid = content.querySelector("#ipMediaGrid");
-
-    const drawGrid = (tab = "all") => {
-      const filtered = ownPosts.filter(post => {
-        const url = mediaURL(post);
-        const video = isVideo(post, url);
-        const type = String(post.type || post.mediaType || "").toLowerCase();
-
-        if (tab === "videos") return video;
-        if (tab === "reels") return type.includes("reel");
-        return true;
-      });
-
-      if (!filtered.length) {
-        grid.innerHTML = `
-          <div class="ip-empty">
-            <div style="font-size:36px;margin-bottom:12px">▧</div>
-            <strong>No ${tab === "all" ? "posts" : tab} yet</strong>
-            <p>Uploaded photos and videos will appear here.</p>
-          </div>
-        `;
-        return;
+      error => {
+        console.error(
+          "Viewer follow state error:",
+          error
+        );
       }
+    );
+  }
 
-      grid.innerHTML = filtered.map(post => {
-        const url = mediaURL(post);
-        const video = isVideo(post, url);
+  // Target profile realtime listener.
+  profileUnsub = onSnapshot(
+    userRef,
 
-        if (!url) {
-          return `
-            <div class="ip-post" style="padding:10px;font-size:11px">
-              Media URL unavailable
+    snapshot => {
+      if (!$("#ipProfileOverlay")) return;
+
+      if (!snapshot.exists()) {
+        const wrap = $(
+          "#ipProfileOverlay .ipp-wrap"
+        );
+
+        if (wrap) {
+          wrap.innerHTML += `
+            <div style="padding:25px;text-align:center">
+              Profile data nahi mila.
+              User ID aur Firestore Rules check karein.
             </div>
           `;
         }
 
-        return `
-          <div class="ip-post" data-post-id="${esc(post.id || "")}">
-            ${video
-              ? `<video src="${esc(url)}" muted playsinline preload="metadata"></video>
-                 <span class="ip-video-icon">▷</span>`
-              : `<img src="${esc(url)}" loading="lazy" alt="Post"
-                   onerror="this.style.opacity='.2'">`
-            }
-          </div>
-        `;
-      }).join("");
-
-      grid.querySelectorAll("[data-post-id]").forEach(tile => {
-        tile.onclick = () => {
-          const postId = tile.dataset.postId;
-
-          document.dispatchEvent(new CustomEvent("open-notification-post", {
-            detail: { postId, fromUid: viewingUid }
-          }));
-        };
-      });
-    };
-
-    drawGrid();
-
-    content.querySelectorAll("[data-tab]").forEach(button => {
-      button.onclick = () => {
-        content.querySelectorAll("[data-tab]").forEach(tab =>
-          tab.classList.remove("active")
-        );
-
-        button.classList.add("active");
-        drawGrid(button.dataset.tab);
-      };
-    });
-
-    content.querySelector("#ipShare").onclick = async () => {
-      const shareData = {
-        title: name + " on InstaPro",
-        text: "Check out @" + username + " on InstaPro",
-        url: location.href
-      };
-
-      try {
-        if (navigator.share) {
-          await navigator.share(shareData);
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareData.url);
-          alert("Profile link copied.");
-        } else {
-          alert(shareData.text);
-        }
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Profile share error:", error);
-        }
-      }
-    };
-
-    const editButton = content.querySelector("#ipEdit");
-
-    if (editButton) {
-      editButton.onclick = async () => {
-        const newName = prompt("Enter your name:", name);
-        if (newName === null) return;
-
-        const newBio = prompt("Enter your bio:", bio);
-        if (newBio === null) return;
-
-        try {
-          await updateDoc(userRef, {
-            displayName: newName.trim(),
-            bio: newBio.trim()
-          });
-
-          alert("Profile updated successfully.");
-        } catch (error) {
-          console.error("Profile update error:", error);
-          alert("Profile update failed. Check Firestore Rules.");
-        }
-      };
-    }
-
-    const followButton = content.querySelector("#ipFollow");
-
-    if (followButton) {
-      const loggedInUser = auth.currentUser;
-
-      if (loggedInUser) {
-        getDoc(doc(db, "users", loggedInUser.uid)).then(mySnap => {
-          const followingList = mySnap.exists()
-            ? mySnap.data().following || []
-            : [];
-
-          const followingArray = Array.isArray(followingList)
-            ? followingList
-            : [];
-
-          followButton.textContent = followingArray.includes(viewingUid)
-            ? "Following"
-            : "Follow";
-        }).catch(console.error);
-      }
-
-      followButton.onclick = () => {
-        document.dispatchEvent(new CustomEvent("open-notification-profile", {
-          detail: { uid: viewingUid }
-        }));
-
-        alert("Follow action ko existing app follow system se connect karna hoga.");
-      };
-    }
-  };
-
-  stopProfileListener = onSnapshot(
-    userRef,
-    async snapshot => {
-      if (!snapshot.exists()) {
-        content.innerHTML = `
-          <div class="ip-glass" style="padding:25px;text-align:center">
-            Profile data nahi mila.
-          </div>
-        `;
         return;
       }
 
-      const data = snapshot.data();
+      profileData = snapshot.data();
 
-      try {
-        const postsRef = collection(db, "posts");
-        const postsQuery = query(
-          postsRef,
-          where("uid", "==", viewingUid),
-          limit(100)
-        );
-
-        if (stopPostsListener) stopPostsListener();
-
-        stopPostsListener = onSnapshot(
-          postsQuery,
-          postsSnapshot => {
-            const posts = postsSnapshot.docs.map(item => ({
-              id: item.id,
-              ...item.data()
-            }));
-
-            renderProfile(data, posts);
-          },
-          error => {
-            console.error("Profile posts error:", error);
-            renderProfile(data, []);
-          }
-        );
-      } catch (error) {
-        console.error("Profile posts query error:", error);
-        renderProfile(data, []);
-      }
+      render(profileData, profilePosts);
     },
-    error => {
-      console.error("Profile loading error:", error);
 
-      content.innerHTML = `
-        <div class="ip-glass" style="padding:25px;text-align:center">
-          Profile load nahi hua. Firestore Rules check karein.
-        </div>
-      `;
+    error => {
+      console.error(
+        "Profile listener error:",
+        error
+      );
+
+      const wrap = $(
+        "#ipProfileOverlay .ipp-wrap"
+      );
+
+      if (wrap) {
+        wrap.innerHTML += `
+          <div style="padding:24px;text-align:center">
+            Profile load nahi hui.
+            Firebase Rules check karein.
+          </div>
+        `;
+      }
     }
   );
+
+  // Current upload.js ke userId schema se posts load.
+  postsUnsub = onSnapshot(
+    query(
+      collection(db, "posts"),
+      where("userId", "==", targetUid),
+      limit(200)
+    ),
+
+    snapshot => {
+      profilePosts = snapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      profilePosts.sort(
+        (a, b) =>
+          Number(b.time || 0) -
+          Number(a.time || 0)
+      );
+
+      render(profileData, profilePosts);
+    },
+
+    error => {
+      console.error(
+        "Profile posts listener error:",
+        error
+      );
+
+      const grid = $("#ippGrid");
+
+      if (grid) {
+        grid.innerHTML = `
+          <div class="ipp-empty">
+            Posts load nahi ho sake.
+            Firestore Rules aur query check karein.
+          </div>
+        `;
+      }
+    }
+  );
+
+  // Profile photo picker.
+  let picker = $("#ippPhotoInput");
+
+  if (!picker) {
+    picker = document.createElement("input");
+
+    picker.id = "ippPhotoInput";
+    picker.type = "file";
+    picker.accept = "image/*";
+    picker.hidden = true;
+
+    page.appendChild(picker);
+  }
+
+  picker.onchange = async () => {
+    const file = picker.files?.[0];
+
+    if (!file) return;
+
+    try {
+      await uploadProfilePhoto(file);
+
+      alert("Profile photo updated.");
+
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Photo update failed: " +
+        error.message
+      );
+
+    } finally {
+      picker.value = "";
+    }
+  };
 }
 
 export function closeProfilePage() {
   closeProfile();
-            }
+}
+
+// Existing HTML ke saath compatibility.
+window.openProfile = openProfile;
+window.closeProfilePage = closeProfilePage;
+
+// Bottom navigation se profile open karna.
+document.addEventListener("DOMContentLoaded", () => {
+  const profileButton = $("#profileBtn");
+
+  if (profileButton) {
+    profileButton.addEventListener("click", () => {
+      const requestedUid =
+        new URLSearchParams(location.search)
+          .get("user");
+
+      openProfile(requestedUid || null);
+    });
+  }
+});
