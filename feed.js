@@ -630,7 +630,7 @@ if (feed) {
 // Authentication changes
 // ------------------------------------------------------
 
-auth.onAuthStateChanged((user) => {
+onAuthStateChanged(auth, (user) => {
   if (!feed) return;
 
   if (user) {
