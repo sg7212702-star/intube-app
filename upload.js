@@ -262,29 +262,26 @@ async function handleFile(file, postType) {
   }
 
   uploadInProgress = true;
-
   const status = showUploadStatus("Upload shuru ho raha hai...");
 
   try {
-    let mediaUrl = "";
+    status.textContent = isVideo
+      ? "Cloudinary par video upload ho raha hai..."
+      : "Cloudinary par photo upload ho rahi hai...";
 
-    if (isVideo) {
-      status.textContent = "Cloudinary par video upload ho raha hai...";
+    const result = await uploadToCloudinary(file, (progress) => {
+      status.textContent =
+        `${isVideo ? "Video" : "Photo"} upload ho rahi hai: ${progress}%`;
+    });
 
-      mediaUrl = await uploadVideoToCloudinary(file, (progress) => {
-        status.textContent = `Video upload ho raha hai: ${progress}%`;
-      });
-    } else {
-      status.textContent = "Firebase Storage par photo upload ho rahi hai...";
+    const mediaUrl =
+      typeof result === "string" ? result : result?.secure_url;
 
-      mediaUrl = await uploadPhotoToFirebase(file, (progress) => {
-        status.textContent = `Photo upload ho rahi hai: ${progress}%`;
-      });
+    if (!mediaUrl) {
+      throw new Error("Cloudinary se media URL nahi mila.");
     }
 
-    status.textContent = "Firebase mein post save ho rahi hai...";
-
-    const now = Date.now();
+    status.textContent = "Firebase Firestore mein data save ho raha hai...";
 
     const data = {
       uid: user.uid,
@@ -295,19 +292,27 @@ async function handleFile(file, postType) {
         "InstaPro User",
       photo: user.photoURL || "",
       imageUrl: mediaUrl,
-      mediaUrl: mediaUrl,
+      mediaUrl,
       type: isVideo ? "video" : "image",
       contentType: isVideo ? "video" : "image",
       caption: "",
       createdAt: serverTimestamp()
     };
 
-    if (postType === "story") {
-      data.expiresAt = now + 24 * 60 * 60 * 1000;
+    let savedDocument;
 
-      await addDoc(collection(db, "stories"), data);
+    if (postType === "story") {
+      data.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      savedDocument = await addDoc(
+        collection(db, "stories"),
+        data
+      );
     } else {
-      await addDoc(collection(db, "posts"), data);
+      savedDocument = await addDoc(
+        collection(db, "posts"),
+        data
+      );
     }
 
     status.textContent =
@@ -318,6 +323,7 @@ async function handleFile(file, postType) {
     window.dispatchEvent(
       new CustomEvent("instapro-upload-success", {
         detail: {
+          id: savedDocument.id,
           type: postType,
           mediaType: isVideo ? "video" : "image",
           mediaUrl
@@ -325,7 +331,9 @@ async function handleFile(file, postType) {
       })
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    console.log("InstaPro upload successful:", savedDocument.id);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
   } catch (error) {
     console.error("InstaPro upload error:", error);
@@ -334,16 +342,15 @@ async function handleFile(file, postType) {
       "Upload fail ho gaya: " +
       (error.message || "Unknown error");
 
-    await new Promise((resolve) => setTimeout(resolve, 1800));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     alert(
       "Upload fail ho gaya.\n\n" +
-      (error.message || "Unknown error") +
-      "\n\nConsole mein error check karein."
+      (error.message || "Unknown error")
     );
 
   } finally {
     status.remove();
     uploadInProgress = false;
   }
-}
+                   }
