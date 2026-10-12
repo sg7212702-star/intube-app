@@ -574,7 +574,24 @@ document.getElementById("commentForm")?.addEventListener("submit", async (event)
       text,
       createdAt: serverTimestamp()
     });
+const postSnap = await getDoc(getPostRef(postId));
+if (postSnap.exists()) {
+const postData = postSnap.data();
+const ownerUid = postData.uid || postData.userId || postData.authorId;
 
+if (ownerUid && ownerUid !== user.uid) {
+await addDoc(collection(db, "users", ownerUid, "notifications"), {
+type: "comment",
+fromUid: user.uid,
+fromUsername: getUsername(user),
+fromPhoto: user.photoURL || "",
+postId: postId,
+message: "commented on your post",
+createdAt: serverTimestamp(),
+read: false
+});
+}
+}
     await updateDoc(getPostRef(postId), {
       commentCount: increment(1)
     });
