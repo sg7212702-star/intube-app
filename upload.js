@@ -25,10 +25,25 @@ const $ = (id) => document.getElementById(id);
 
 let uploadInProgress = false;
 
-// Prevent duplicate initialization if this module is imported twice.
-if (!window.__instaProUploadInitialized) {
+// -------------------------------------
+// SAFE UPLOAD INITIALIZATION
+// -------------------------------------
+
+function startInstaProUploadSystem() {
+  if (window.__instaProUploadInitialized) return;
+
   window.__instaProUploadInitialized = true;
   initializeUploadSystem();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    startInstaProUploadSystem,
+    { once: true }
+  );
+} else {
+  startInstaProUploadSystem();
 }
 
 // -------------------------------------
