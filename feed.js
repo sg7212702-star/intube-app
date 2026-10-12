@@ -64,13 +64,13 @@ console.log("InstaPro Feed: Firebase modules loaded.");
 // ------------------------------------------------------
 
 function escapeHTML(value = "") {
-return String(value).replace(/[&<>"']/g, (char) => ({
-"&": "&",
-"<": "<",
-">": ">",
-'"': """,
-"'": "'"
-})[char]);
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
 }
 
 function getUsername(user) {
