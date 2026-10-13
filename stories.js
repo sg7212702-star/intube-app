@@ -342,11 +342,11 @@ function openStoryGroup(group, startIndex = 0) {
   currentIndex = 0;
   viewer = document.createElement("div");
   viewer.className = "instapro-story-viewer";
-  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;animation:instaStoryViewerIn .18s ease-out;";
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.96);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;animation:instaStoryViewerIn .18s ease-out;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);";
   if (!document.getElementById("instapro-story-animations")) {
     const style = document.createElement("style");
     style.id = "instapro-story-animations";
-    style.textContent = "@keyframes instaStoryViewerIn{from{opacity:.4;transform:scale(.985)}to{opacity:1;transform:scale(1)}} .insta-story-account .sRing{transition:transform .18s ease,filter .18s ease} .insta-story-account .sRing:active{transform:scale(.94);filter:brightness(1.15)} .is-like{transition:transform .15s ease} .is-like:active{transform:scale(1.25)}";
+    style.textContent = "@keyframes instaStoryViewerIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}} @keyframes instaStoryBarGlow{0%{opacity:.65}50%{opacity:1}100%{opacity:.65}} .instapro-story-viewer .is-head,.instapro-story-viewer .is-progress,.instapro-story-viewer .is-footer{background:transparent!important} .instapro-story-viewer .is-progress>div{box-shadow:0 1px 4px #0008} .instapro-story-viewer .is-head{padding-top:4px} .instapro-story-viewer .is-footer{padding-bottom:calc(18px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.22))!important} .insta-story-account .sRing{transition:transform .18s ease,filter .18s ease} .insta-story-account .sRing:active{transform:scale(.94);filter:brightness(1.15)} .is-like{transition:transform .15s ease} .is-like:active{transform:scale(1.25)}";
     document.head.appendChild(style);
   }
   viewer.innerHTML = `
@@ -420,7 +420,7 @@ function showAt(index) {
   const media = document.createElement(isVideo(story) ? "video" : "img");
   media.src = url;
   media.alt = "Story";
-  media.style.cssText = "max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;";
+  media.style.cssText = "max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:transparent;";
   if (media.tagName === "VIDEO") {
     media.autoplay = true;
     media.playsInline = true;
