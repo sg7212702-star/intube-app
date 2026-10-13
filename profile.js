@@ -819,18 +819,7 @@ postTiles.forEach((tile, index) => {
     toggleFollow
   );
 
-  grid.querySelectorAll("[data-post-id]").forEach(tile => {
-    tile.onclick = () => {
-      document.dispatchEvent(
-        new CustomEvent("open-notification-post", {
-          detail: {
-            postId: tile.dataset.postId,
-            fromUid: uid
-          }
-        })
-      );
-    };
-  });
+  // Keep the post viewer click handler installed above; do not overwrite tile.onclick.
 
   $("#ippPhoto", page).onerror = () => {
     $("#ippPhoto").src =
@@ -1332,7 +1321,7 @@ postsUnsub = onSnapshot(
     picker.accept = "image/*";
     picker.hidden = true;
 
-    page.appendChild(picker);
+    document.body.appendChild(picker);
   }
 
   picker.onchange = async () => {
