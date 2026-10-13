@@ -289,18 +289,46 @@
     }
   }
 
-  function continueUpload() {
+  async function renderEditedImage(file) {
+    const media = root?.querySelector("#ipeMedia");
+    if (!media || media.tagName !== "IMG") return file;
+    const image = new Image();
+    image.src = sourceUrl;
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error("Edited photo load nahi ho payi."));
+    });
+    const sideways = Math.abs(rotation % 180) === 90;
+    const canvas = document.createElement("canvas");
+    canvas.width = sideways ? image.naturalHeight : image.naturalWidth;
+    canvas.height = sideways ? image.naturalWidth : image.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Photo editor canvas start nahi hua.");
+    const val = key => Number(root.querySelector('[data-adjust="' + key + '"]').value);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.scale(mirrored ? -1 : 1, 1);
+    ctx.filter = `${FILTERS[filterIndex][1]} brightness(${val("brightness")}%) contrast(${val("contrast")}%) saturate(${val("saturation")}%)`;
+    ctx.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, file.type || "image/jpeg", 0.94));
+    if (!blob) throw new Error("Edited photo export nahi ho paya.");
+    const name = file.name.replace(/\\.[^.]+$/, "") + "-instapro." + ((blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg"));
+    return new File([blob], name, { type: blob.type || file.type, lastModified: Date.now() });
+  }
+
+  async function continueUpload() {
     if (!sourceFile || !sourceInput) {
       alert("Editor ka upload connection nahi mila. Gallery se dobara select karein.");
       return;
     }
-    const file = sourceFile;
     const input = sourceInput;
     const desiredType = uploadType;
-    window.__instaProPendingMusicFile = audioFile || null;
-    close();
-    if (desiredType === "reel") input.dataset.instaProUploadType = "reel";
+    let file = sourceFile;
     try {
+      if (file.type.startsWith("image/")) file = await renderEditedImage(file);
+      window.__instaProPendingMusicFile = audioFile || null;
+      close();
+      if (desiredType === "reel") input.dataset.instaProUploadType = "reel";
       const transfer = new DataTransfer();
       transfer.items.add(file);
       input.files = transfer.files;
