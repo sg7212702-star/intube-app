@@ -244,25 +244,8 @@ import {
     if (action === "use") { await useTrack(track); }
   }
 
-  // Add a Music Library option to the existing create sheet without editing index.html.
-  function addCreateOption() {
-    const sheet = document.getElementById("createSheet");
-    if (!sheet || document.getElementById("optMusicLibrary")) return;
-    const cancel = document.getElementById("cancelSheet");
-    const option = document.createElement("div");
-    option.className = "sOpt";
-    option.id = "optMusicLibrary";
-    option.textContent = "🎵 Music Library";
-    sheet.insertBefore(option, cancel || null);
-    option.addEventListener("click", () => {
-      sheet.classList.remove("show"); sheet.style.bottom = "-100%";
-      ["overlay","sheetOverlay"].forEach(id => { const e=document.getElementById(id); if(e){e.classList.remove("show");e.style.display="none";} });
-      open();
-    });
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addCreateOption, {once:true});
-  else addCreateOption();
+  // The library is opened only from the Editor's "Add music" section.
+  // Do not add a separate Music Library option to the home (+) create sheet.
 
   window.InstaProMusic = { open, openPicker(onSelect) { open({onSelect}); }, close };
   console.log("InstaPro Music Library initialized");
