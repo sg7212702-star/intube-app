@@ -1227,6 +1227,25 @@ async function toggleFollow() {
 
     await batch.commit();
 
+    if (!already) {
+      try {
+        const actor = auth.currentUser;
+        if (actor) {
+          await addDoc(collection(db, "users", targetUid, "notifications"), {
+            type: "follow",
+            message: "started following you",
+            fromUid: actor.uid,
+            fromUsername: actor.displayName || actor.email?.split("@")[0] || "InstaPro User",
+            fromPhoto: actor.photoURL || "",
+            createdAt: serverTimestamp(),
+            read: false
+          });
+        }
+      } catch (notificationError) {
+        console.warn("Profile follow notification could not be saved:", notificationError);
+      }
+    }
+
   } catch (error) {
     console.error("Follow action failed:", error);
 
