@@ -292,12 +292,17 @@ const notice = window.InstaProUploadNotification;
     // The post stores musicUrl as a soundtrack reference; it is not re-encoded into the video.
     let soundtrackUrl = "";
     const soundtrackFile = window.__instaProPendingMusicFile || null;
+    const soundtrackTrack = window.__instaProPendingMusicTrack || null;
     if (soundtrackFile) {
       status.textContent = "Editor music upload ho raha hai...";
       const soundtrackResult = await uploadToCloudinary(soundtrackFile);
       soundtrackUrl = soundtrackResult.secure_url;
+    } else if (soundtrackTrack?.audioUrl) {
+      // Library audio is already hosted; save its reference rather than re-uploading it.
+      soundtrackUrl = soundtrackTrack.audioUrl;
     }
     window.__instaProPendingMusicFile = null;
+    window.__instaProPendingMusicTrack = null;
 
     // Firestore save starts
     status.textContent =
@@ -325,7 +330,13 @@ const notice = window.InstaProUploadNotification;
       caption: "",
       postType: postType === "reel" ? "reel" : postType,
       isReel: postType === "reel",
-      ...(soundtrackUrl ? { musicUrl: soundtrackUrl, musicName: soundtrackFile?.name || "Soundtrack" } : {}),
+      ...(soundtrackUrl ? {
+        musicUrl: soundtrackUrl,
+        musicName: soundtrackTrack?.title || soundtrackFile?.name || "Soundtrack",
+        ...(soundtrackTrack?.artistName ? { musicArtist: soundtrackTrack.artistName } : {}),
+        ...(soundtrackTrack?.id ? { musicTrackId: soundtrackTrack.id } : {}),
+        ...(soundtrackTrack?.language ? { musicLanguage: soundtrackTrack.language } : {})
+      } : {}),
       likes: [],
       likesCount: 0,
       comments: [],
