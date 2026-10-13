@@ -1,7 +1,7 @@
 // ======================================================
-// InstaPro Feed System
-// Firebase Firestore + Firebase Auth + Cloudinary Media
-// Real-time posts, likes, comments, save, share, delete
+// InstaPro Professional Feed System
+// Part 1 of 3
+// Firebase + Real-time Feed + Profile Header
 // ======================================================
 
 import { auth, db } from "./firebase.js";
@@ -24,47 +24,51 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
-  increment
+  increment,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ------------------------------------------------------
-// Collection Names
+// CONFIGURATION
 // ------------------------------------------------------
 
 const FEED_COLLECTION = "posts";
+const USERS_COLLECTION = "users";
 const SAVED_COLLECTION = "savedPosts";
 const COMMENTS_COLLECTION = "comments";
 
-// ------------------------------------------------------
-// Feed Elements
-// ------------------------------------------------------
-
 const feed = document.getElementById("feed");
 
+const $ = id => document.getElementById(id);
+
 // ------------------------------------------------------
-// Feed State
+// STATE
 // ------------------------------------------------------
 
 let unsubscribeFeed = null;
+let unsubscribeComments = null;
+
 let currentPosts = [];
+let profileCache = new Map();
+
 let feedStarted = false;
+let activeCommentsPostId = null;
+let renderingFeed = false;
 
 // ------------------------------------------------------
-// Authentication Helper
+// AUTH
 // ------------------------------------------------------
 
 function getCurrentUser() {
-return auth.currentUser;
+  return auth.currentUser;
 }
 
-console.log("InstaPro Feed: Firebase modules loaded.");
-
 // ------------------------------------------------------
-// Helpers
+// SAFE HELPERS
 // ------------------------------------------------------
 
 function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, (char) => ({
+  return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -73,34 +77,68 @@ function escapeHTML(value = "") {
   })[char]);
 }
 
+function safeCount(value) {
+  return Math.max(0, Number(value) || 0);
+}
+
 function getUsername(user) {
-return (
-user?.displayName ||
-user?.email?.split("@")[0] ||
-"InstaPro User"
-);
+  return (
+    user?.username ||
+    user?.displayName ||
+    user?.name ||
+    user?.email?.split("@")[0] ||
+    "InstaPro User"
+  );
 }
 
 function getAvatar(user) {
   return (
     user?.photoURL ||
+    user?.photoUrl ||
+    user?.photo ||
+    user?.avatar ||
+    user?.userPhoto ||
     "https://www.gravatar.com/avatar/?d=mp"
   );
 }
 
+function getOwnerUid(post) {
+  return (
+    post?.uid ||
+    post?.userId ||
+    post?.authorId ||
+    post?.ownerUid ||
+    ""
+  );
+}
+
 function getPostMedia(post) {
-  return post.mediaUrl || post.imageUrl || post.url || "";
+  return (
+    post?.mediaUrl ||
+    post?.imageUrl ||
+    post?.url ||
+    post?.videoUrl ||
+    ""
+  );
 }
 
 function getPostType(post) {
-  const type = String(
-    post.mediaType ||
-    post.contentType ||
-    post.type ||
+  const value = String(
+    post?.currentType ||
+    post?.mediaType ||
+    post?.contentType ||
+    post?.type ||
     "image"
   ).toLowerCase();
 
-  return type.includes("video") ? "video" : "image";
+  if (
+    value.includes("video") ||
+    value === "reel"
+  ) {
+    return "video";
+  }
+
+  return "image";
 }
 
 function formatDate(timestamp) {
@@ -122,7 +160,8 @@ function formatDate(timestamp) {
       hour: "2-digit",
       minute: "2-digit"
     }).format(date);
-  } catch {
+
+  } catch (error) {
     return "Just now";
   }
 }
@@ -135,21 +174,307 @@ function getPostRef(postId) {
   return doc(db, FEED_COLLECTION, postId);
 }
 
+function getUserRef(uid) {
+  return doc(db, USERS_COLLECTION, uid);
+}
+
 function getCommentRef(postId) {
-  return collection(db, FEED_COLLECTION, postId, COMMENTS_COLLECTION);
+  return collection(
+    db,
+    FEED_COLLECTION,
+    postId,
+    COMMENTS_COLLECTION
+  );
 }
 
-function getSafeCount(value) {
-  return Math.max(0, Number(value) || 0);
-}
-
-function isPostOwner(post) {
+function isOwnPost(post) {
   const user = getCurrentUser();
-  return !!user && post.uid === user.uid;
+
+  if (!user) return false;
+
+  return getOwnerUid(post) === user.uid;
 }
 
 // ------------------------------------------------------
-// Feed startup
+// PROFILE CACHE
+// ------------------------------------------------------
+
+async function getUserProfile(uid, post = {}) {
+  if (!uid) {
+    return {
+      username:
+        post.username ||
+        post.displayName ||
+        "InstaPro User",
+
+      photoURL:
+        post.photoURL ||
+        post.photo ||
+        post.userPhoto ||
+        ""
+    };
+  }
+
+  if (profileCache.has(uid)) {
+    const cached = profileCache.get(uid);
+
+    return {
+      ...cached,
+
+      username:
+        cached.username ||
+        post.username ||
+        post.displayName ||
+        "InstaPro User",
+
+      photoURL:
+        cached.photoURL ||
+        post.photoURL ||
+        post.photo ||
+        post.userPhoto ||
+        ""
+    };
+  }
+
+  try {
+    const snapshot = await getDoc(getUserRef(uid));
+
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+
+      const profile = {
+        ...data,
+
+        username:
+          data.username ||
+          data.displayName ||
+          data.name ||
+          post.username ||
+          post.displayName ||
+          "InstaPro User",
+
+        photoURL:
+          data.photoURL ||
+          data.photoUrl ||
+          data.photo ||
+          data.avatar ||
+          post.photoURL ||
+          post.photo ||
+          post.userPhoto ||
+          ""
+      };
+
+      profileCache.set(uid, profile);
+
+      return profile;
+    }
+
+  } catch (error) {
+    console.warn(
+      "Profile load error:",
+      uid,
+      error.message
+    );
+  }
+
+  const fallback = {
+    username:
+      post.username ||
+      post.displayName ||
+      "InstaPro User",
+
+    photoURL:
+      post.photoURL ||
+      post.photo ||
+      post.userPhoto ||
+      ""
+  };
+
+  profileCache.set(uid, fallback);
+
+  return fallback;
+}
+
+// ------------------------------------------------------
+// PROFILE HEADER CSS
+// ------------------------------------------------------
+
+function injectFeedStyles() {
+  if (document.getElementById("instaproProfessionalFeedCSS")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+
+  style.id = "instaproProfessionalFeedCSS";
+
+  style.textContent = `
+    .instapro-feed-post {
+      width: 100%;
+      min-width: 0;
+      margin: 12px 0;
+      overflow: hidden;
+      border-radius: 14px;
+      box-sizing: border-box;
+      background: var(--card-bg, rgba(255,255,255,.045));
+      border: 1px solid rgba(128,128,128,.20);
+      color: inherit;
+    }
+
+    .ip-feed-header {
+      width: 100%;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .ip-feed-avatar {
+      display: block;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #252525;
+      border: 1px solid rgba(255,255,255,.18);
+      cursor: pointer;
+    }
+
+    .ip-feed-user-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .ip-feed-username {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      cursor: pointer;
+    }
+
+    .ip-feed-date {
+      display: block;
+      font-size: 11px;
+      opacity: .65;
+      line-height: 17px;
+      overflow-wrap: anywhere;
+    }
+
+    .ip-feed-follow {
+      flex-shrink: 0;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #0095f6;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .ip-feed-follow.following {
+      background: rgba(128,128,128,.20);
+      color: inherit;
+      border: 1px solid rgba(128,128,128,.30);
+    }
+
+    .ip-feed-more {
+      flex-shrink: 0;
+      width: 34px;
+      height: 36px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 25px;
+      cursor: pointer;
+    }
+
+    .ip-feed-media {
+      display: block;
+      width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      background: #080808;
+    }
+
+    .ip-feed-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .ip-feed-action {
+      padding: 5px 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .ip-feed-caption {
+      margin: 12px 0 4px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .ip-feed-view-comments {
+      display: block;
+      padding: 10px 0 4px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      opacity: .65;
+      cursor: pointer;
+    }
+
+    .ip-feed-follow:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    @media (max-width: 360px) {
+      .ip-feed-header {
+        gap: 7px;
+        padding: 9px;
+      }
+
+      .ip-feed-avatar {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+      }
+
+      .ip-feed-follow {
+        padding: 6px 9px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+injectFeedStyles();
+
+console.log("InstaPro Feed Part 1 loaded.");
+// ======================================================
+// PART 2 OF 3
+// Professional Post Cards + Follow + Likes + Save + Share
+// ======================================================
+
+// ------------------------------------------------------
+// REAL-TIME FEED
 // ------------------------------------------------------
 
 function startFeed() {
@@ -169,44 +494,49 @@ function startFeed() {
 
   unsubscribeFeed = onSnapshot(
     postsQuery,
-    (snapshot) => {
-      currentPosts = snapshot.docs.map((item) => ({
+
+    snapshot => {
+      currentPosts = snapshot.docs.map(item => ({
         id: item.id,
         ...item.data()
       }));
 
-      renderFeed();
-    },
-    (error) => {
-      console.error("InstaPro feed error:", error);
+      profileCache.clear();
 
-      if (feed) {
-        feed.innerHTML = `
-          <div style="padding:24px;text-align:center">
-            <h3>Feed load nahi ho payi</h3>
-            <p>Firebase Firestore Rules aur internet connection check karein.</p>
-            <button type="button" data-feed-action="retry">
-              Retry
-            </button>
-          </div>
-        `;
-      }
+      renderFeed();
+
+    },
+
+    error => {
+      console.error("Feed error:", error);
+
+      feed.innerHTML = `
+        <div style="padding:28px;text-align:center">
+          <h3>Feed load nahi ho payi</h3>
+          <p>Internet aur Firebase Firestore Rules check karein.</p>
+          <button type="button" data-feed-action="retry">
+            Retry
+          </button>
+        </div>
+      `;
     }
   );
 }
 
 // ------------------------------------------------------
-// Render posts
+// RENDER FEED
 // ------------------------------------------------------
 
-function renderFeed() {
-  if (!feed) return;
+async function renderFeed() {
+  if (!feed || renderingFeed) return;
 
-  if (!getCurrentUser()) {
+  const user = getCurrentUser();
+
+  if (!user) {
     feed.innerHTML = `
       <div style="padding:40px 20px;text-align:center">
         <h3>Login required</h3>
-        <p>Posts dekhne ke liye pehle login karein.</p>
+        <p>Posts dekhne ke liye login karein.</p>
       </div>
     `;
     return;
@@ -214,241 +544,531 @@ function renderFeed() {
 
   if (!currentPosts.length) {
     feed.innerHTML = `
-      <div style="text-align:center;padding:60px 20px;opacity:.75">
-        <div style="font-size:48px">📸</div>
+      <div style="text-align:center;padding:55px 20px">
+        <div style="font-size:46px">📸</div>
         <h3>No Posts Yet</h3>
-        <p>Sabse pehle post upload karein.</p>
+        <p>Apni pehli post upload karein.</p>
       </div>
     `;
     return;
   }
 
-  const fragment = document.createDocumentFragment();
+  renderingFeed = true;
 
-  currentPosts.forEach((post) => {
-    const mediaUrl = getPostMedia(post);
+  try {
+    const fragment = document.createDocumentFragment();
 
-    if (!mediaUrl) {
-      console.warn("Post media URL missing:", post.id);
+    for (const post of currentPosts) {
+      const mediaUrl = getPostMedia(post);
+
+      if (!mediaUrl) continue;
+
+      const ownerUid = getOwnerUid(post);
+
+      const profile = await getUserProfile(ownerUid, post);
+
+      const ownerName = escapeHTML(
+        profile.username || "InstaPro User"
+      );
+
+      const avatar = escapeHTML(
+        profile.photoURL ||
+        "https://www.gravatar.com/avatar/?d=mp"
+      );
+
+      const ownPost = !!user && ownerUid === user.uid;
+
+      const isFollowing =
+        Array.isArray(profile.followers) &&
+        profile.followers.includes(user.uid);
+
+      const mediaType = getPostType(post);
+
+      const likes = Array.isArray(post.likes)
+        ? post.likes
+        : [];
+
+      const liked = likes.includes(user.uid);
+
+      const saved =
+        Array.isArray(post.savedBy) &&
+        post.savedBy.includes(user.uid);
+
+      const likeCount = safeCount(
+        post.likesCount ??
+        post.likeCount ??
+        likes.length
+      );
+
+      const commentCount = safeCount(
+        post.commentsCount ??
+        post.commentCount
+      );
+
+      const shareCount = safeCount(post.shareCount);
+
+      const card = document.createElement("article");
+
+      card.className = "instapro-feed-post";
+
+      card.dataset.postId = post.id;
+
+      const mediaHTML = mediaType === "video"
+        ? `
+          <video
+            class="ip-feed-media"
+            src="${escapeHTML(mediaUrl)}"
+            controls
+            playsinline
+            preload="metadata"
+          ></video>
+        `
+        : `
+          <img
+            class="ip-feed-media"
+            src="${escapeHTML(mediaUrl)}"
+            alt="Post by ${ownerName}"
+            loading="lazy"
+            onerror="this.style.background='#222'"
+          >
+        `;
+
+      card.innerHTML = `
+        <div class="ip-feed-header">
+
+          <img
+            class="ip-feed-avatar"
+            src="${avatar}"
+            alt="${ownerName}"
+            data-feed-action="profile"
+            data-uid="${escapeHTML(ownerUid)}"
+          >
+
+          <div class="ip-feed-user-info">
+
+            <strong
+              class="ip-feed-username"
+              data-feed-action="profile"
+              data-uid="${escapeHTML(ownerUid)}"
+            >${ownerName}</strong>
+
+            <span class="ip-feed-date">
+              ${escapeHTML(formatDate(post.createdAt || post.time))}
+            </span>
+
+          </div>
+
+          ${
+            !ownPost && ownerUid
+              ? `
+                <button
+                  type="button"
+                  class="ip-feed-follow ${isFollowing ? "following" : ""}"
+                  data-feed-action="follow"
+                  data-uid="${escapeHTML(ownerUid)}"
+                  aria-pressed="${isFollowing}"
+                >${isFollowing ? "Following" : "Follow"}</button>
+              `
+              : ""
+          }
+
+          ${
+            ownPost
+              ? `
+                <button
+                  type="button"
+                  class="ip-feed-more"
+                  data-feed-action="delete"
+                  data-id="${escapeHTML(post.id)}"
+                  aria-label="Post options"
+                >⋮</button>
+              `
+              : ""
+          }
+
+        </div>
+
+        ${mediaHTML}
+
+        <div style="padding:12px">
+
+          <div class="ip-feed-actions">
+
+            <button
+              type="button"
+              class="ip-feed-action"
+              data-feed-action="like"
+              data-id="${escapeHTML(post.id)}"
+              aria-pressed="${liked}"
+            >${liked ? "❤️" : "🤍"} ${likeCount}</button>
+
+            <button
+              type="button"
+              class="ip-feed-action"
+              data-feed-action="comments"
+              data-id="${escapeHTML(post.id)}"
+            >💬 ${commentCount}</button>
+
+            <button
+              type="button"
+              class="ip-feed-action"
+              data-feed-action="share"
+              data-id="${escapeHTML(post.id)}"
+            >↗️ Share ${shareCount || ""}</button>
+
+            <button
+              type="button"
+              class="ip-feed-action"
+              data-feed-action="save"
+              data-id="${escapeHTML(post.id)}"
+              aria-pressed="${saved}"
+            >${saved ? "🔖 Saved" : "🔖 Save"}</button>
+
+          </div>
+
+          ${
+            post.caption
+              ? `
+                <p class="ip-feed-caption">
+                  <strong>${ownerName}</strong>
+                  ${escapeHTML(post.caption)}
+                </p>
+              `
+              : ""
+          }
+
+          <button
+            type="button"
+            class="ip-feed-view-comments"
+            data-feed-action="comments"
+            data-id="${escapeHTML(post.id)}"
+          >View comments / Add comment</button>
+
+        </div>
+      `;
+
+      fragment.appendChild(card);
+    }
+
+    feed.replaceChildren(fragment);
+
+  } catch (error) {
+    console.error("Render feed error:", error);
+  } finally {
+    renderingFeed = false;
+  }
+}
+
+// ------------------------------------------------------
+// FOLLOW / UNFOLLOW
+// Uses users/{uid}.following and users/{uid}.followers
+// ------------------------------------------------------
+
+async function toggleFollow(targetUid, button) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    showMessage("Follow karne ke liye login karein.");
+    return;
+  }
+
+  if (!targetUid || targetUid === user.uid) {
+    return;
+  }
+
+  if (button) button.disabled = true;
+
+  try {
+    const currentRef = getUserRef(user.uid);
+    const targetRef = getUserRef(targetUid);
+
+    const [currentSnap, targetSnap] = await Promise.all([
+      getDoc(currentRef),
+      getDoc(targetRef)
+    ]);
+
+    if (!targetSnap.exists()) {
+      showMessage("Is user ki profile nahi mili.");
       return;
     }
 
-    const card = document.createElement("article");
-    card.className = "instapro-feed-post";
-    card.dataset.postId = post.id;
+    const currentData = currentSnap.exists()
+      ? currentSnap.data()
+      : {};
 
-    card.style.cssText = `
-      margin:12px 0;
-      overflow:hidden;
-      border-radius:14px;
-      background:var(--card-bg, rgba(255,255,255,.06));
-      border:1px solid rgba(128,128,128,.18);
-      color:inherit;
-    `;
+    const targetData = targetSnap.data();
 
-    const ownerName = escapeHTML(
-      post.username || "InstaPro User"
+    const following = Array.isArray(currentData.following)
+      ? currentData.following
+      : [];
+
+    const followers = Array.isArray(targetData.followers)
+      ? targetData.followers
+      : [];
+
+    const alreadyFollowing = following.includes(targetUid);
+
+    const batch = writeBatch(db);
+
+    if (alreadyFollowing) {
+      batch.set(
+        currentRef,
+        {
+          following: arrayRemove(targetUid)
+        },
+        { merge: true }
+      );
+
+      batch.set(
+        targetRef,
+        {
+          followers: arrayRemove(user.uid)
+        },
+        { merge: true }
+      );
+
+    } else {
+      batch.set(
+        currentRef,
+        {
+          following: arrayUnion(targetUid)
+        },
+        { merge: true }
+      );
+
+      batch.set(
+        targetRef,
+        {
+          followers: arrayUnion(user.uid)
+        },
+        { merge: true }
+      );
+    }
+
+    await batch.commit();
+
+    profileCache.delete(user.uid);
+    profileCache.delete(targetUid);
+
+    await renderFeed();
+
+  } catch (error) {
+    console.error("Follow error:", error);
+
+    showMessage(
+      "Follow update nahi hua. Firebase Rules aur users data check karein."
     );
 
-    const avatar = escapeHTML(
-      post.photo || post.photoURL || ""
-    );
-
-    const mediaType = getPostType(post);
-
-    const mediaHTML = mediaType === "video"
-      ? `
-        <video
-          class="feed-media"
-          src="${escapeHTML(mediaUrl)}"
-          controls
-          playsinline
-          preload="metadata"
-          style="display:block;width:100%;max-height:75vh;object-fit:contain;background:#000"
-        ></video>
-      `
-      : `
-        <img
-          class="feed-media"
-          src="${escapeHTML(mediaUrl)}"
-          alt="Post by ${ownerName}"
-          loading="lazy"
-          style="display:block;width:100%;height:auto;max-height:75vh;object-fit:contain;background:#111"
-        >
-      `;
-
-    const likes = Array.isArray(post.likes) ? post.likes : [];
-    const liked = likes.includes(getCurrentUser()?.uid);
-
-    const saved = Array.isArray(post.savedBy)
-      && post.savedBy.includes(getCurrentUser()?.uid);
-
-    const likeCount = getSafeCount(
-      post.likeCount ?? likes.length
-    );
-
-    const commentCount = getSafeCount(post.commentCount);
-
-    const shareCount = getSafeCount(post.shareCount);
-
-    card.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;padding:12px">
-        <img
-          src="${avatar || escapeHTML(getAvatar(null))}"
-          alt=""
-          style="width:40px;height:40px;border-radius:50%;object-fit:cover;background:#333"
-          onerror="this.style.display='none'"
-        >
-
-        <div style="flex:1;min-width:0">
-          <strong>${ownerName}</strong>
-          <div style="font-size:12px;opacity:.65">
-            ${escapeHTML(formatDate(post.createdAt))}
-          </div>
-        </div>
-
-        ${
-          isPostOwner(post)
-            ? `<button type="button" data-feed-action="delete" data-id="${escapeHTML(post.id)}" aria-label="Delete post">⋮</button>`
-            : ""
-        }
-      </div>
-
-      ${mediaHTML}
-
-      <div style="padding:12px">
-        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
-          <button
-            type="button"
-            data-feed-action="like"
-            data-id="${escapeHTML(post.id)}"
-            aria-pressed="${liked}"
-            style="border:0;background:transparent;color:inherit;font-size:16px;cursor:pointer"
-          >${liked ? "❤️" : "🤍"} ${likeCount}</button>
-
-          <button
-            type="button"
-            data-feed-action="comments"
-            data-id="${escapeHTML(post.id)}"
-            style="border:0;background:transparent;color:inherit;cursor:pointer"
-          >💬 ${commentCount}</button>
-
-          <button
-            type="button"
-            data-feed-action="share"
-            data-id="${escapeHTML(post.id)}"
-            style="border:0;background:transparent;color:inherit;cursor:pointer"
-          >↗️ Share ${shareCount || ""}</button>
-
-          <button
-            type="button"
-            data-feed-action="save"
-            data-id="${escapeHTML(post.id)}"
-            aria-pressed="${saved}"
-            style="border:0;background:transparent;color:inherit;cursor:pointer"
-          >${saved ? "🔖 Saved" : "🔖 Save"}</button>
-        </div>
-
-        ${
-          post.caption
-            ? `<p style="overflow-wrap:anywhere;margin:12px 0 4px"><strong>${ownerName}</strong> ${escapeHTML(post.caption)}</p>`
-            : ""
-        }
-
-        <button
-          type="button"
-          data-feed-action="comments"
-          data-id="${escapeHTML(post.id)}"
-          style="border:0;background:transparent;color:inherit;opacity:.7;padding:8px 0;cursor:pointer"
-        >View comments / Add comment</button>
-      </div>
-    `;
-
-    fragment.appendChild(card);
-  });
-
-  feed.replaceChildren(fragment);
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 // ------------------------------------------------------
-// Like / Unlike
-// Uses likes array in each post document
+// LIKE / UNLIKE
 // ------------------------------------------------------
 
 async function toggleLike(postId) {
-const user = getCurrentUser();
+  const user = getCurrentUser();
 
-if (!user) {
-showMessage("Like karne ke liye login karein.");
-return;
+  if (!user) {
+    showMessage("Like karne ke liye login karein.");
+    return;
+  }
+
+  try {
+    const postRef = getPostRef(postId);
+
+    const snapshot = await getDoc(postRef);
+
+    if (!snapshot.exists()) {
+      showMessage("Post available nahi hai.");
+      return;
+    }
+
+    const post = snapshot.data();
+
+    const likes = Array.isArray(post.likes)
+      ? post.likes
+      : [];
+
+    const alreadyLiked = likes.includes(user.uid);
+
+    const nextLikes = alreadyLiked
+      ? arrayRemove(user.uid)
+      : arrayUnion(user.uid);
+
+    const count = safeCount(
+      post.likesCount ??
+      post.likeCount ??
+      likes.length
+    );
+
+    await updateDoc(postRef, {
+      likes: nextLikes,
+
+      likesCount: alreadyLiked
+        ? Math.max(0, count - 1)
+        : count + 1,
+
+      likeCount: alreadyLiked
+        ? Math.max(0, count - 1)
+        : count + 1
+    });
+
+  } catch (error) {
+    console.error("Like error:", error);
+    showMessage("Like save nahi hua. Firebase Rules check karein.");
+  }
 }
 
-const postRef = getPostRef(postId);
+// ------------------------------------------------------
+// SAVE / UNSAVE
+// ------------------------------------------------------
 
-try {
-const snapshot = await getDoc(postRef);
+async function toggleSave(postId) {
+  const user = getCurrentUser();
 
-if (!snapshot.exists()) {
-  showMessage("Yeh post ab available nahi hai.");
-  return;
-}
+  if (!user) {
+    showMessage("Post save karne ke liye login karein.");
+    return;
+  }
 
-const post = snapshot.data();
-const likes = Array.isArray(post.likes) ? post.likes : [];
-const alreadyLiked = likes.includes(user.uid);
+  const post = currentPosts.find(item => item.id === postId);
 
-await updateDoc(postRef, {
-  likes: alreadyLiked
-    ? arrayRemove(user.uid)
-    : arrayUnion(user.uid),
-  likeCount: alreadyLiked
-    ? Math.max(0, getSafeCount(post.likeCount ?? likes.length) - 1)
-    : getSafeCount(post.likeCount ?? likes.length) + 1
-});
+  if (!post) return;
 
-if (!alreadyLiked) {
-  const ownerUid = post.uid || post.userId || post.authorId;
+  const savedRef = doc(
+    db,
+    SAVED_COLLECTION,
+    user.uid,
+    "posts",
+    postId
+  );
 
-  if (ownerUid && ownerUid !== user.uid) {
-    await addDoc(
-      collection(db, "users", ownerUid, "notifications"),
-      {
-        type: "like",
-        fromUid: user.uid,
-        fromUsername:
-          user.displayName ||
-          user.email?.split("@")[0] ||
-          "user",
-        fromPhoto: user.photoURL || "",
-        postId: postId,
-        message: "liked your post",
-        createdAt: serverTimestamp(),
-        read: false
-      }
+  try {
+    const snapshot = await getDoc(savedRef);
+
+    if (snapshot.exists()) {
+      await deleteDoc(savedRef);
+
+      await updateDoc(getPostRef(postId), {
+        savedBy: arrayRemove(user.uid)
+      });
+
+    } else {
+      await setDoc(savedRef, {
+        postId,
+        uid: user.uid,
+        createdAt: serverTimestamp()
+      });
+
+      await updateDoc(getPostRef(postId), {
+        savedBy: arrayUnion(user.uid)
+      });
+    }
+
+  } catch (error) {
+    console.error("Save error:", error);
+
+    showMessage(
+      "Post save nahi hui. Firebase Rules check karein."
     );
   }
 }
 
-} catch (error) {
-console.error("Like error:", error);
-showMessage("Like save nahi hua. Firestore Rules check karein.");
-}
+// ------------------------------------------------------
+// SHARE
+// ------------------------------------------------------
+
+async function sharePost(postId) {
+  const url =
+    window.location.origin +
+    window.location.pathname +
+    "#post-" +
+    encodeURIComponent(postId);
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "InstaPro",
+        text: "Yeh post dekhein!",
+        url
+      });
+
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+
+      showMessage("Post link copy ho gaya.");
+
+    } else {
+      prompt("Post link copy karein:", url);
+    }
+
+    await updateDoc(getPostRef(postId), {
+      shareCount: increment(1)
+    }).catch(error => {
+      console.warn("Share count update:", error);
+    });
+
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error("Share error:", error);
+    }
+  }
 }
 
 // ------------------------------------------------------
-// Instagram Style Real-Time Comments Panel
+// DELETE OWN POST
 // ------------------------------------------------------
 
-let activeCommentsPostId = null;
-let unsubscribeComments = null;
+async function deletePost(postId) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    showMessage("Pehle login karein.");
+    return;
+  }
+
+  const post = currentPosts.find(item => item.id === postId);
+
+  if (!post || !isOwnPost(post)) {
+    showMessage("Aap sirf apni post delete kar sakte hain.");
+    return;
+  }
+
+  if (!confirm("Kya aap is post ko delete karna chahte hain?")) {
+    return;
+  }
+
+  try {
+    await deleteDoc(getPostRef(postId));
+
+  } catch (error) {
+    console.error("Delete post error:", error);
+
+    showMessage(
+      "Post delete nahi hui. Firebase Rules check karein."
+    );
+  }
+  }
+// ======================================================
+// PART 3 OF 3
+// Comments + Click Handlers + Authentication + Startup
+// ======================================================
+
+// ------------------------------------------------------
+// COMMENTS PANEL
+// Existing index.html commentsPanel IDs are supported.
+// ------------------------------------------------------
 
 function closeCommentsPanel() {
-  const panel = document.getElementById("commentsPanel");
-
   if (unsubscribeComments) {
     unsubscribeComments();
     unsubscribeComments = null;
   }
+
+  const panel = $("commentsPanel");
 
   if (panel) {
     panel.style.display = "none";
@@ -465,27 +1085,15 @@ function openCommentsPanel(postId) {
     return;
   }
 
-  const panel = document.getElementById("commentsPanel");
-  const list = document.getElementById("commentsList");
-  const input = document.getElementById("commentInput");
-  const avatar = document.getElementById("commentCurrentUserAvatar");
-  const form = document.getElementById("commentForm");
+  const panel = $("commentsPanel");
+  const list = $("commentsList");
+  const input = $("commentInput");
+  const form = $("commentForm");
+  const avatar = $("commentCurrentUserAvatar");
 
-if (!panel || !list || !input || !form) {
-alert(
-"Panel: " + !!panel +
-"\nList: " + !!list +
-"\nInput: " + !!input +
-"\nForm: " + !!form
-);
-return;
-}
-
-  activeCommentsPostId = postId;
-  panel.style.display = "block";
-
-  if (avatar) {
-    avatar.src = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
+  if (!panel || !list || !input || !form) {
+    showMessage("Comments panel ke HTML IDs check karein.");
+    return;
   }
 
   if (unsubscribeComments) {
@@ -493,7 +1101,16 @@ return;
     unsubscribeComments = null;
   }
 
-  list.innerHTML = '<p class="comments-loading">Loading comments...</p>';
+  activeCommentsPostId = postId;
+
+  panel.style.display = "block";
+
+  if (avatar) {
+    avatar.src = getAvatar(user);
+  }
+
+  list.innerHTML =
+    '<p style="padding:15px;opacity:.7">Loading comments...</p>';
 
   const commentsQuery = query(
     getCommentRef(postId),
@@ -502,30 +1119,56 @@ return;
 
   unsubscribeComments = onSnapshot(
     commentsQuery,
-    (snapshot) => {
+
+    snapshot => {
       if (activeCommentsPostId !== postId) return;
 
       if (snapshot.empty) {
-        list.innerHTML = '<p class="comments-loading">Abhi koi comment nahi hai. Pehla comment karein!</p>';
+        list.innerHTML = `
+          <p style="padding:15px;opacity:.7">
+            Abhi koi comment nahi hai. Pehla comment karein!
+          </p>
+        `;
+
         return;
       }
 
-      list.innerHTML = snapshot.docs.map((item) => {
+      list.innerHTML = snapshot.docs.map(item => {
         const comment = item.data();
-        const username = escapeHTML(comment.username || "InstaPro User");
+
+        const username = escapeHTML(
+          comment.username || "InstaPro User"
+        );
+
         const text = escapeHTML(comment.text || "");
+
         const photo = escapeHTML(
-          comment.photo || "https://www.gravatar.com/avatar/?d=mp"
+          comment.photo ||
+          comment.photoURL ||
+          "https://www.gravatar.com/avatar/?d=mp"
         );
 
         return `
-          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:18px">
+          <div style="
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            margin:12px;
+            overflow-wrap:anywhere;
+          ">
             <img
               src="${photo}"
               alt=""
-              style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"
+              style="
+                width:36px;
+                height:36px;
+                min-width:36px;
+                border-radius:50%;
+                object-fit:cover;
+              "
             >
-            <div style="min-width:0;overflow-wrap:anywhere">
+
+            <div style="min-width:0">
               <strong>${username}</strong>
               <span>${text}</span>
             </div>
@@ -533,27 +1176,37 @@ return;
         `;
       }).join("");
     },
-    (error) => {
-      console.error("Comments loading error:", error);
-      list.innerHTML = '<p class="comments-loading">Comments load nahi hue. Firestore Rules check karein.</p>';
+
+    error => {
+      console.error("Comments error:", error);
+
+      list.innerHTML = `
+        <p style="padding:15px">
+          Comments load nahi hue. Firebase Rules check karein.
+        </p>
+      `;
     }
   );
 }
 
-document.getElementById("commentForm")?.addEventListener("submit", async (event) => {
+// ------------------------------------------------------
+// SEND COMMENT
+// ------------------------------------------------------
+
+async function sendComment(event) {
   event.preventDefault();
 
   const user = getCurrentUser();
-  const input = document.getElementById("commentInput");
-  const sendButton = document.getElementById("sendCommentBtn");
+
+  const input = $("commentInput");
+  const sendButton = $("sendCommentBtn");
+
   const postId = activeCommentsPostId;
 
-  if (!user) {
-    showMessage("Comment karne ke liye login karein.");
+  if (!user || !postId || !input) {
+    showMessage("Pehle login karein aur post select karein.");
     return;
   }
-
-  if (!postId || !input) return;
 
   const text = input.value.trim();
 
@@ -564,189 +1217,90 @@ document.getElementById("commentForm")?.addEventListener("submit", async (event)
     return;
   }
 
-  if (sendButton) sendButton.disabled = true;
+  if (sendButton) {
+    sendButton.disabled = true;
+  }
 
   try {
     await addDoc(getCommentRef(postId), {
       uid: user.uid,
       username: getUsername(user),
-      photo: user.photoURL || "",
+      photo: getAvatar(user),
       text,
       createdAt: serverTimestamp()
     });
-const postSnap = await getDoc(getPostRef(postId));
-if (postSnap.exists()) {
-const postData = postSnap.data();
-const ownerUid = postData.uid || postData.userId || postData.authorId;
 
-if (ownerUid && ownerUid !== user.uid) {
-await addDoc(collection(db, "users", ownerUid, "notifications"), {
-type: "comment",
-fromUid: user.uid,
-fromUsername: getUsername(user),
-fromPhoto: user.photoURL || "",
-postId: postId,
-message: "commented on your post",
-createdAt: serverTimestamp(),
-read: false
-});
-}
-}
     await updateDoc(getPostRef(postId), {
-      commentCount: increment(1)
+      commentCount: increment(1),
+      commentsCount: increment(1)
+    }).catch(error => {
+      console.warn("Comment count update:", error);
     });
 
     input.value = "";
+
   } catch (error) {
-    console.error("Comment post error:", error);
-    showMessage("Comment save nahi hua. Firestore Rules check karein.");
+    console.error("Send comment error:", error);
+
+    showMessage(
+      "Comment save nahi hua. Firebase Rules check karein."
+    );
+
   } finally {
-    if (sendButton) sendButton.disabled = false;
+    if (sendButton) {
+      sendButton.disabled = false;
+    }
   }
-});
-
-document.getElementById("closeCommentsBtn")?.addEventListener("click", closeCommentsPanel);
-
-document.querySelector("#commentsPanel .comments-backdrop")?.addEventListener("click", closeCommentsPanel);
+}
 
 // ------------------------------------------------------
-// Saved posts
-// Saves under savedPosts/{uid}/posts/{postId}
+// PROFILE OPEN
+// Uses the profile.js global function if available.
 // ------------------------------------------------------
 
-async function toggleSave(postId) {
+function openPostOwnerProfile(uid) {
+  if (!uid) return;
+
   const user = getCurrentUser();
 
-  if (!user) {
-    showMessage("Post save karne ke liye login karein.");
-    return;
-  }
-
-  const post = currentPosts.find((item) => item.id === postId);
-
-  if (!post) return;
-
-  const savedRef = doc(
-    db,
-    SAVED_COLLECTION,
-    user.uid,
-    "posts",
-    postId
-  );
-
-  try {
-    const savedSnapshot = await getDoc(savedRef);
-
-    if (savedSnapshot.exists()) {
-      await deleteDoc(savedRef);
-
-      if (Array.isArray(post.savedBy) && post.savedBy.includes(user.uid)) {
-        await updateDoc(getPostRef(postId), {
-          savedBy: arrayRemove(user.uid)
-        });
-      }
-
-      showMessage("Saved posts se hata diya.");
+  if (user && uid === user.uid) {
+    if (typeof window.openProfile === "function") {
+      window.openProfile(user.uid);
     } else {
-      await setDoc(savedRef, {
-        postId,
-        uid: user.uid,
-        createdAt: serverTimestamp()
-      });
+      const profileButton = document.querySelector(
+        '.bBtn[data-v="profile"]'
+      );
 
-      await updateDoc(getPostRef(postId), {
-        savedBy: arrayUnion(user.uid)
-      });
-
-      showMessage("Post save ho gayi.");
+      profileButton?.click();
     }
-  } catch (error) {
-    console.error("Save post error:", error);
-    showMessage("Post save nahi hui. Firestore Rules check karein.");
+
+    return;
+  }
+
+  if (typeof window.openProfile === "function") {
+    window.openProfile(uid);
+  } else {
+    showMessage(
+      "Profile page abhi load nahi hua. Thodi der baad try karein."
+    );
   }
 }
 
 // ------------------------------------------------------
-// Share
-// ------------------------------------------------------
-
-async function sharePost(postId) {
-  const postUrl = `${window.location.origin}${window.location.pathname}#post-${encodeURIComponent(postId)}`;
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: "InstaPro Post",
-        text: "Yeh post dekhein!",
-        url: postUrl
-      });
-    } else if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(postUrl);
-      showMessage("Post link copy ho gaya.");
-    } else {
-      prompt("Post link copy karein:", postUrl);
-    }
-
-    try {
-      await updateDoc(getPostRef(postId), {
-        shareCount: increment(1)
-      });
-    } catch (countError) {
-      console.warn("Share count update failed:", countError);
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") {
-      console.error("Share error:", error);
-      showMessage("Share nahi ho paya.");
-    }
-  }
-}
-
-// ------------------------------------------------------
-// Delete own post
-// Cloudinary media is not deleted by this operation.
-// ------------------------------------------------------
-
-async function deletePost(postId) {
-  const user = getCurrentUser();
-
-  if (!user) {
-    showMessage("Pehle login karein.");
-    return;
-  }
-
-  const post = currentPosts.find((item) => item.id === postId);
-
-  if (!post || post.uid !== user.uid) {
-    showMessage("Aap sirf apni post delete kar sakte hain.");
-    return;
-  }
-
-  if (!confirm("Kya aap is post ko delete karna chahte hain?")) {
-    return;
-  }
-
-  try {
-    await deleteDoc(getPostRef(postId));
-    showMessage("Post delete ho gayi.");
-  } catch (error) {
-    console.error("Delete post error:", error);
-    showMessage("Post delete nahi hui. Firestore Rules check karein.");
-  }
-}
-
-// ------------------------------------------------------
-// Feed event delegation
+// FEED CLICK HANDLER
 // ------------------------------------------------------
 
 if (feed) {
-  feed.addEventListener("click", async (event) => {
+  feed.addEventListener("click", async event => {
     const button = event.target.closest("[data-feed-action]");
 
     if (!button) return;
 
     const action = button.dataset.feedAction;
+
     const postId = button.dataset.id;
+
+    const uid = button.dataset.uid;
 
     if (action === "retry") {
       feedStarted = false;
@@ -754,16 +1308,30 @@ if (feed) {
       return;
     }
 
+    if (action === "profile") {
+      openPostOwnerProfile(uid);
+      return;
+    }
+
+    if (action === "follow") {
+      await toggleFollow(uid, button);
+      return;
+    }
+
     if (!postId) return;
 
     if (action === "like") {
       await toggleLike(postId);
+
     } else if (action === "comments") {
       openCommentsPanel(postId);
-    } else if (action === "save") {
-      await toggleSave(postId);
+
     } else if (action === "share") {
       await sharePost(postId);
+
+    } else if (action === "save") {
+      await toggleSave(postId);
+
     } else if (action === "delete") {
       await deletePost(postId);
     }
@@ -771,16 +1339,42 @@ if (feed) {
 }
 
 // ------------------------------------------------------
-// Authentication changes
+// COMMENTS FORM EVENTS
 // ------------------------------------------------------
 
-onAuthStateChanged(auth, (user) => {
+$("commentForm")?.addEventListener(
+  "submit",
+  sendComment
+);
+
+$("closeCommentsBtn")?.addEventListener(
+  "click",
+  closeCommentsPanel
+);
+
+document
+  .querySelector("#commentsPanel .comments-backdrop")
+  ?.addEventListener("click", closeCommentsPanel);
+
+// ------------------------------------------------------
+// AUTH STATE
+// ------------------------------------------------------
+
+onAuthStateChanged(auth, user => {
   if (!feed) return;
 
   if (user) {
     startFeed();
+
   } else {
+    if (unsubscribeFeed) {
+      unsubscribeFeed();
+      unsubscribeFeed = null;
+    }
+
+    feedStarted = false;
     currentPosts = [];
+
     feed.innerHTML = `
       <div style="padding:40px 20px;text-align:center">
         <h3>Login required</h3>
@@ -791,11 +1385,12 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ------------------------------------------------------
-// Optional global helper for other modules
+// PUBLIC API FOR OTHER MODULES
 // ------------------------------------------------------
 
 window.InstaProFeed = {
   refresh() {
+    profileCache.clear();
     renderFeed();
   },
 
@@ -805,7 +1400,15 @@ window.InstaProFeed = {
 
   async deletePost(postId) {
     return deletePost(postId);
+  },
+
+  async openComments(postId) {
+    openCommentsPanel(postId);
+  },
+
+  closeComments() {
+    closeCommentsPanel();
   }
 };
 
-console.log("InstaPro Feed System loaded.");
+console.log("InstaPro Professional Feed System loaded.");
