@@ -552,6 +552,10 @@ function showAt(index) {
   const addStoryButton = viewer.querySelector(".is-add-story");
   if (addStoryButton) addStoryButton.style.display = isOwnStory ? "" : "none";
   if (likeButton) likeButton.style.display = isOwnStory ? "none" : "";
+  const mentionButton=viewer.querySelector(".is-mention");
+  const moreButton=viewer.querySelector(".is-more");
+  if(mentionButton)mentionButton.style.display=isOwnStory?"":"none";
+  if(moreButton)moreButton.style.display=isOwnStory?"":"none";
   currentLiked = !!user && (Array.isArray(story.likedBy) ? story.likedBy : []).includes(user.uid);
   updateLikeButton();
   if (user && !user.isAnonymous) {
@@ -561,10 +565,15 @@ function showAt(index) {
       updateDoc(storyRef, { seenBy: arrayUnion(user.uid), viewsCount: increment(1) })
         .catch(error => console.warn("Story view save error:", error));
     }
+    if(stopCurrentStory)stopCurrentStory();
     stopCurrentStory = onSnapshot(storyRef, snap => {
       if (!snap.exists()) return;
       const data = snap.data();
-      currentLiked = (Array.isArray(data.likedBy) ? data.likedBy : []).includes(user.uid);
+      story.seenBy = Array.isArray(data.seenBy) ? data.seenBy : [];
+      story.likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
+      currentLiked = story.likedBy.includes(user.uid);
+      const count=viewer?.querySelector(".is-view-count");
+      if(count)count.textContent=String(story.seenBy.length);
       updateLikeButton();
     }, error => console.warn("Story stats listener error:", error));
   }
