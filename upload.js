@@ -292,7 +292,7 @@ const notice = window.InstaProUploadNotification;
     // The post stores musicUrl as a soundtrack reference; it is not re-encoded into the video.
     let soundtrackUrl = "";
     const soundtrackFile = window.__instaProPendingMusicFile || null;
-    if (soundtrackFile && postType !== "story") {
+    if (soundtrackFile) {
       status.textContent = "Editor music upload ho raha hai...";
       const soundtrackResult = await uploadToCloudinary(soundtrackFile);
       soundtrackUrl = soundtrackResult.secure_url;
