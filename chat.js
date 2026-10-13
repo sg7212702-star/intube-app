@@ -2,7 +2,7 @@
 import { auth, db } from "./firebase.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
-  getDocs, doc, setDoc, serverTimestamp
+  doc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -11,6 +11,8 @@ let selectedUser = null;
 let allUsers = [];
 let chatListener = null;
 let listListener = null;
+let usersListener = null;
+let currentChatMap = new Map();
 let messageCache = [];
 
 const $ = id => document.getElementById(id);
@@ -93,31 +95,33 @@ async function loadUsersAndChats() {
     showChatMessage("Please sign in with Google to send messages.");
     return;
   }
-  try {
-    const snap = await getDocs(collection(db, "users"));
-    allUsers = snap.docs
+  // Realtime users: new accounts and profile changes appear without refreshing.
+  if (usersListener) usersListener();
+  if (listListener) listListener();
+  usersListener = onSnapshot(collection(db, "users"), snapshot => {
+    allUsers = snapshot.docs
       .filter(item => item.id !== currentUser.uid)
       .map(item => ({ uid: item.id, ...item.data() }));
     renderStories();
-    renderList(allUsers);
-    if (listListener) listListener();
-    const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
-    listListener = onSnapshot(chatsQuery, snapshot => {
-      const byUid = new Map();
-      snapshot.docs.forEach(item => {
-        const data = item.data();
-        const otherUid = (data.participants || []).find(uid => uid !== currentUser.uid) || data.otherUid;
-        if (otherUid) byUid.set(otherUid, data);
-      });
-      renderList(allUsers, byUid);
-    }, error => {
-      console.error("Chat list error:", error);
-      renderList(allUsers);
-    });
-  } catch (error) {
-    console.error("Load chat users error:", error);
+    renderList(allUsers, currentChatMap);
+  }, error => {
+    console.error("Realtime users listener error:", error);
     showChatMessage("Users load nahi hue. Internet aur Firestore Rules check karein.");
-  }
+  });
+
+  const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+  listListener = onSnapshot(chatsQuery, snapshot => {
+    currentChatMap = new Map();
+    snapshot.docs.forEach(item => {
+      const data = item.data();
+      const otherUid = (data.participants || []).find(uid => uid !== currentUser.uid) || data.otherUid;
+      if (otherUid) currentChatMap.set(otherUid, data);
+    });
+    renderList(allUsers, currentChatMap);
+  }, error => {
+    console.error("Chat list error:", error);
+    renderList(allUsers, currentChatMap);
+  });
 }
 
 function renderStories() {
@@ -238,7 +242,12 @@ onAuthStateChanged(auth, user => {
   if (user) loadUsersAndChats();
   else {
     if (listListener) listListener();
+    if (usersListener) usersListener();
+    if (chatListener) chatListener();
     listListener = null;
+    usersListener = null;
+    chatListener = null;
+    currentChatMap = new Map();
     allUsers = [];
     renderList([]);
   }
@@ -246,4 +255,5 @@ onAuthStateChanged(auth, user => {
 window.addEventListener("pagehide", () => {
   if (chatListener) chatListener();
   if (listListener) listListener();
+  if (usersListener) usersListener();
 });
