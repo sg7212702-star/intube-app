@@ -244,8 +244,16 @@ import {
     if (action === "use") { await useTrack(track); }
   }
 
-  // The library is opened only from the Editor's "Add music" section.
-  // Do not add a separate Music Library option to the home (+) create sheet.
+  // Never leave a Music Library shortcut inside the home (+) create sheet.
+  // Music is selected from the Editor's "Add music" section only.
+  function removeCreateSheetShortcut() {
+    document.getElementById("optMusicLibrary")?.remove();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", removeCreateSheetShortcut, { once: true });
+  } else {
+    removeCreateSheetShortcut();
+  }
 
   window.InstaProMusic = { open, openPicker(onSelect) { open({onSelect}); }, close };
   console.log("InstaPro Music Library initialized");
