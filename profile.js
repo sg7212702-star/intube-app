@@ -622,12 +622,16 @@ function render(data = profileData, posts = profilePosts) {
 
           ${(Array.isArray(data.highlights) ? data.highlights : [])
             .slice(0, 12)
-            .map(h => `
-              <div class="ipp-highlightBubble">
-                <i>${esc(h.emoji || "✦")}</i>
-                ${esc(h.title || "Highlight")}
-              </div>
-            `).join("")}
+            .map(h => {
+              const story = profileStories.find(item => item.id === h.storyId);
+              const cover = h.mediaUrl || (story ? postUrl(story) : "");
+              return `
+                <button type="button" class="ipp-highlightBubble" data-story-id="${esc(h.storyId || "")}" aria-label="Open highlight ${esc(h.title || "Highlight")}" style="border:0;background:transparent;color:inherit;cursor:pointer;padding:0;">
+                  <i style="overflow:hidden;position:relative;">${cover ? `<img src="${esc(cover)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">` : esc(h.emoji || "✦")}</i>
+                  ${esc(h.title || "Highlight")}
+                </button>
+              `;
+            }).join("")
 
         </div>
 
@@ -676,6 +680,12 @@ function render(data = profileData, posts = profilePosts) {
       }
     };
   }
+
+  page.querySelectorAll(".ipp-highlightBubble[data-story-id]").forEach(button => {
+    button.onclick = () => document.dispatchEvent(new CustomEvent("open-highlight-story", {
+      detail: { storyId: button.dataset.storyId }
+    }));
+  });
 
   const grid = $("#ippGrid", page);
 
