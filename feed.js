@@ -643,10 +643,10 @@ async function renderFeed() {
       const musicUrl = typeof post.musicUrl === "string" ? post.musicUrl : "";
       const musicHTML = musicUrl
         ? `
-          <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="none"></audio>
-          <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Play post music"
-            style="position:absolute;right:12px;bottom:12px;z-index:5;border:0;border-radius:22px;padding:9px 12px;background:rgba(0,0,0,.72);color:#fff;font-size:13px">
-            🔇 Music
+          <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="auto"></audio>
+          <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Turn post music on"
+            style="position:absolute;right:12px;bottom:12px;z-index:20;display:flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 13px;background:rgba(0,0,0,.82);color:#fff;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.35)">
+            🔇 <span>Sound</span>
           </button>
         `
         : "";
@@ -796,37 +796,52 @@ async function renderFeed() {
 
     feed.replaceChildren(fragment);
 
-    // Music is stored separately from the uploaded media. Browsers may block
-    // autoplay with sound, so each post gets an explicit music mute/play toggle.
+    // The selected track is stored separately from the video. Start it when the
+    // viewer taps to play the post video; the corner button toggles soundtrack mute.
     feed.querySelectorAll(".instapro-feed-post").forEach(card => {
       const audio = card.querySelector(".ip-feed-music");
       const button = card.querySelector("[data-music-toggle]");
+      const video = card.querySelector("video.ip-feed-media");
       if (!audio || !button || button.dataset.bound === "1") return;
       button.dataset.bound = "1";
+      audio.volume = 1;
+      audio.muted = true;
+
+      const setSoundButton = () => {
+        const muted = audio.muted;
+        button.innerHTML = muted ? '🔇 <span>Sound</span>' : '🔊 <span>Mute</span>';
+        button.setAttribute("aria-label", muted ? "Turn post music on" : "Mute post music");
+      };
+
+      if (video) {
+        video.addEventListener("play", () => {
+          // Browsers permit playback more often when it follows the user's video-play tap.
+          audio.play().catch(error => console.warn("Post soundtrack needs a tap:", error));
+        });
+        video.addEventListener("pause", () => audio.pause());
+        video.addEventListener("ended", () => {
+          audio.pause();
+          audio.currentTime = 0;
+        });
+      }
 
       button.addEventListener("click", async event => {
         event.preventDefault();
         event.stopPropagation();
-
-        if (audio.paused) {
+        audio.muted = !audio.muted;
+        if (!audio.muted) {
           try {
-            // Keep the video's own audio muted while the added soundtrack plays.
-            const video = card.querySelector("video.ip-feed-media");
-            if (video) video.muted = true;
             await audio.play();
-            button.textContent = "🔊 Mute";
-            button.setAttribute("aria-label", "Mute post music");
+            if (video && video.paused) video.play().catch(() => {});
           } catch (error) {
+            audio.muted = true;
             console.warn("Post music playback failed:", error);
-            button.textContent = "⚠️ Tap to play";
           }
-        } else {
-          audio.pause();
-          audio.currentTime = 0;
-          button.textContent = "🔇 Music";
-          button.setAttribute("aria-label", "Play post music");
         }
+        setSoundButton();
       });
+
+      setSoundButton();
     });
 
   } catch (error) {
