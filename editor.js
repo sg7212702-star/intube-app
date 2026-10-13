@@ -1,248 +1,313 @@
-// ==========================================
-// InstaPro Professional Photo & Video Editor
-// File: editor.js
-// ==========================================
+// InstaPro Glass Media Editor — opens before Post/Story upload.
+(() => {
+  "use strict";
 
-const InstaProEditor = (() => {
-  let overlay = null;
-  let selectedFile = null;
-  let objectUrl = null;
-  let mediaType = "image";
-  let filterIndex = 0;
-
-  const filters = [
-    { name: "Original", value: "none" },
-    { name: "Bright", value: "brightness(1.15) contrast(1.05)" },
-    { name: "Vintage", value: "sepia(0.35) contrast(1.1)" },
-    { name: "B&W", value: "grayscale(1)" },
-    { name: "Warm", value: "sepia(0.2) saturate(1.3)" },
-    { name: "Cool", value: "saturate(0.9) hue-rotate(10deg)" },
-    { name: "Vivid", value: "saturate(1.5) contrast(1.1)" }
+  const FILTERS = [
+    ["Original", "none"],
+    ["Bright", "brightness(1.14) contrast(1.05)"],
+    ["Vintage", "sepia(.38) contrast(1.08)"],
+    ["B&W", "grayscale(1)"],
+    ["Warm", "sepia(.18) saturate(1.3)"],
+    ["Cool", "saturate(.9) hue-rotate(12deg)"],
+    ["Vivid", "saturate(1.55) contrast(1.08)"],
+    ["Fade", "contrast(.88) brightness(1.08) saturate(.82)"]
   ];
 
-  function open(file) {
-    if (!(file instanceof File)) {
-      alert("Pehle photo ya video select karein.");
-      return;
-    }
+  let root = null;
+  let sourceFile = null;
+  let sourceUrl = "";
+  let audioUrl = "";
+  let audioFile = null;
+  let sourceInput = null;
+  let uploadType = "post";
+  let filterIndex = 0;
+  let rotation = 0;
+  let mirrored = false;
+  let cropMode = false;
+  let audioElement = null;
 
-    if (!file.type.startsWith("image/") &&
-        !file.type.startsWith("video/")) {
+  function addStyles() {
+    if (document.getElementById("ipe-glass-styles")) return;
+    const style = document.createElement("style");
+    style.id = "ipe-glass-styles";
+    style.textContent = `
+      #instaproEditor{position:fixed;inset:0;z-index:1000000;background:#07070b;color:#fff;font-family:inherit;display:flex;flex-direction:column;overflow:hidden}
+      #instaproEditor *{box-sizing:border-box}
+      #instaproEditor .ipe-head{height:58px;display:flex;align-items:center;gap:12px;padding:0 14px;background:rgba(20,20,27,.62);border-bottom:1px solid rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);flex-shrink:0}
+      #instaproEditor .ipe-head strong{font-size:16px;flex:1;text-align:center;letter-spacing:.2px}
+      #instaproEditor button{color:#fff;cursor:pointer;font:inherit}
+      #instaproEditor .ipe-glass{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.105);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:15px;min-height:40px;padding:9px 13px;box-shadow:inset 0 1px rgba(255,255,255,.08)}
+      #instaproEditor .ipe-next{background:rgba(116,75,255,.45);border-color:rgba(176,154,255,.65);font-weight:700;white-space:nowrap}
+      #instaproEditor .ipe-main{overflow:auto;overscroll-behavior:contain;flex:1;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+      #instaproEditor .ipe-preview-wrap{position:relative;margin:12px auto 14px;width:calc(100% - 24px);max-width:540px;height:min(49vh,520px);min-height:230px;display:flex;align-items:center;justify-content:center;border-radius:22px;overflow:hidden;background:radial-gradient(ellipse at top,rgba(104,83,158,.22),transparent 65%),#111;border:1px solid rgba(255,255,255,.14);box-shadow:0 16px 50px rgba(0,0,0,.32)}
+      #instaproEditor #ipeMedia{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;transition:filter .12s,transform .12s}
+      #instaproEditor .ipe-preview-wrap.ipe-crop #ipeMedia{object-fit:cover}
+      #instaproEditor .ipe-preview-tag{position:absolute;left:10px;top:10px;padding:6px 10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.35);backdrop-filter:blur(12px);border-radius:99px;font-size:11px}
+      #instaproEditor .ipe-tools{display:flex;gap:8px;overflow-x:auto;padding:3px 12px 10px;scrollbar-width:none}
+      #instaproEditor .ipe-tools::-webkit-scrollbar,#instaproEditor .ipe-filter-list::-webkit-scrollbar{display:none}
+      #instaproEditor .ipe-tools button{flex:0 0 auto}
+      #instaproEditor .ipe-section{margin:7px 12px 13px;padding:13px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045)}
+      #instaproEditor .ipe-section-title{font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+      #instaproEditor .ipe-filter-list{display:flex;gap:8px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:none}
+      #instaproEditor .ipe-filter-list button{min-width:76px;border-radius:13px;padding:10px 8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);font-size:12px}
+      #instaproEditor .ipe-filter-list button.active{border-color:#b7a2ff;background:rgba(132,95,255,.25)}
+      #instaproEditor .ipe-range{display:grid;grid-template-columns:88px 1fr 35px;gap:10px;align-items:center;font-size:12px;margin:13px 0}
+      #instaproEditor .ipe-range input{width:100%;accent-color:#b7a2ff}
+      #instaproEditor .ipe-range output{text-align:right;opacity:.75;font-variant-numeric:tabular-nums}
+      #instaproEditor .ipe-music-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+      #instaproEditor .ipe-music-row .ipe-music-name{font-size:12px;opacity:.75;flex:1;min-width:100px;overflow-wrap:anywhere}
+      #instaproEditor .ipe-hidden{display:none!important}
+      #instaproEditor .ipe-hint{font-size:11px;line-height:1.5;opacity:.6;margin:9px 0 0}
+      #instaproEditor .ipe-footer{position:sticky;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;background:rgba(8,8,12,.82);border-top:1px solid rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+      #instaproEditor .ipe-footer button{flex:1;min-height:46px;border-radius:16px}
+      #instaproEditor .ipe-cancel{background:rgba(255,255,255,.07)}
+      #instaproEditor .ipe-publish{background:rgba(117,80,255,.5);border:1px solid rgba(187,166,255,.7);font-weight:750}
+      @media(min-width:700px){#instaproEditor .ipe-main{width:100%;max-width:760px;margin:auto}#instaproEditor .ipe-preview-wrap{height:420px}#instaproEditor .ipe-footer{justify-content:center}#instaproEditor .ipe-footer button{max-width:260px}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function open(file, type, input) {
+    if (!(file instanceof File) || (!file.type.startsWith("image/") && !file.type.startsWith("video/"))) {
       alert("Sirf photo ya video select karein.");
       return;
     }
-
     close();
-
-    selectedFile = file;
-    mediaType = file.type.startsWith("video/") ? "video" : "image";
+    addStyles();
+    sourceFile = file;
+    uploadType = type || "post";
+    sourceInput = input || null;
     filterIndex = 0;
-    objectUrl = URL.createObjectURL(file);
-
-    createEditor();
-  }
-
-  function createEditor() {
-    overlay = document.createElement("div");
-    overlay.id = "instaproEditor";
-
-    overlay.innerHTML = `
-      <header class="ipe-header">
-        <button type="button" data-action="close">✕</button>
-        <strong>InstaPro Editor</strong>
-        <button type="button" data-action="next">Next →</button>
+    rotation = 0;
+    mirrored = false;
+    cropMode = false;
+    sourceUrl = URL.createObjectURL(file);
+    root = document.createElement("section");
+    root.id = "instaproEditor";
+    root.innerHTML = `
+      <header class="ipe-head">
+        <button class="ipe-glass" data-action="close" aria-label="Close editor">✕</button>
+        <strong>InstaPro Studio</strong>
+        <button class="ipe-glass ipe-next" data-action="next">Next →</button>
       </header>
-
       <main class="ipe-main">
-        <div class="ipe-preview" id="ipePreview"></div>
-
-        <div class="ipe-tools">
-          <button type="button" data-action="filter">🎨 Filters</button>
-          <button type="button" data-action="rotate">↻ Rotate</button>
-          <button type="button" data-action="reset">Reset</button>
+        <div class="ipe-preview-wrap" id="ipePreviewWrap">
+          <span class="ipe-preview-tag">✦ STUDIO EDITOR</span>
+          <div id="ipePreview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div>
         </div>
-
-        <div class="ipe-filter-list" id="ipeFilters"></div>
-
-        <section class="ipe-adjustments">
-          <label>
-            Brightness
-            <input type="range" min="50" max="150"
-              value="100" data-adjust="brightness">
-          </label>
-
-          <label>
-            Contrast
-            <input type="range" min="50" max="150"
-              value="100" data-adjust="contrast">
-          </label>
-
-          <label>
-            Saturation
-            <input type="range" min="0" max="200"
-              value="100" data-adjust="saturation">
-          </label>
+        <div class="ipe-tools">
+          <button class="ipe-glass" data-action="filters">🎨 Filters</button>
+          <button class="ipe-glass" data-action="rotate">↻ Rotate</button>
+          <button class="ipe-glass" data-action="mirror">⇋ Mirror</button>
+          <button class="ipe-glass" data-action="crop">▣ Fit / Fill</button>
+          <button class="ipe-glass" data-action="reset">⟲ Reset</button>
+        </div>
+        <section class="ipe-section">
+          <div class="ipe-section-title"><span>✨ Filters</span><span style="opacity:.55;font-size:11px">Choose a look</span></div>
+          <div class="ipe-filter-list" id="ipeFilters"></div>
         </section>
-
-        <p class="ipe-note">
-          Photo/video preview • Edit settings apply to the preview.
-        </p>
+        <section class="ipe-section">
+          <div class="ipe-section-title"><span>🎚️ Adjust</span><span style="opacity:.55;font-size:11px">Live preview</span></div>
+          <label class="ipe-range">Brightness <input type="range" min="50" max="150" value="100" data-adjust="brightness"><output>100%</output></label>
+          <label class="ipe-range">Contrast <input type="range" min="50" max="150" value="100" data-adjust="contrast"><output>100%</output></label>
+          <label class="ipe-range">Saturation <input type="range" min="0" max="200" value="100" data-adjust="saturation"><output>100%</output></label>
+          <label class="ipe-range">Media volume <input type="range" min="0" max="100" value="100" data-adjust="volume"><output>100%</output></label>
+        </section>
+        <section class="ipe-section">
+          <div class="ipe-section-title"><span>🎵 Add music</span><span style="opacity:.55;font-size:11px">Choose audio</span></div>
+          <div class="ipe-music-row">
+            <button class="ipe-glass" data-action="chooseMusic">＋ Select music</button>
+            <button class="ipe-glass" data-action="musicPlay" id="ipeMusicPlay" disabled>▶ Preview</button>
+            <button class="ipe-glass" data-action="musicRemove" id="ipeMusicRemove" disabled>Remove</button>
+            <span class="ipe-music-name" id="ipeMusicName">No music selected</span>
+          </div>
+          <label class="ipe-range">Music volume <input type="range" min="0" max="100" value="70" data-adjust="musicVolume"><output>70%</output></label>
+          <p class="ipe-hint">Music selection and preview work in the editor. Publishing a mixed music/video track requires the media-processing connection; this preview alone does not merge audio into the uploaded file.</p>
+          <input id="ipeMusicInput" class="ipe-hidden" type="file" accept="audio/*">
+        </section>
       </main>
-    `;
+      <footer class="ipe-footer">
+        <button class="ipe-glass ipe-cancel" data-action="close">Cancel</button>
+        <button class="ipe-publish" data-action="next">Next: Continue →</button>
+      </footer>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = "hidden";
 
-    document.body.appendChild(overlay);
-    document.body.classList.add("ipe-open");
-
-    const preview = overlay.querySelector("#ipePreview");
-
-    if (mediaType === "video") {
-      preview.innerHTML = `
-        <video id="ipeMedia" src="${objectUrl}"
-          controls playsinline></video>
-      `;
+    const preview = root.querySelector("#ipePreview");
+    if (file.type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.id = "ipeMedia";
+      video.src = sourceUrl;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      preview.appendChild(video);
     } else {
-      preview.innerHTML = `
-        <img id="ipeMedia" src="${objectUrl}" alt="Photo preview">
-      `;
+      const img = document.createElement("img");
+      img.id = "ipeMedia";
+      img.src = sourceUrl;
+      img.alt = "Selected media preview";
+      preview.appendChild(img);
     }
 
-    overlay.addEventListener("click", handleClick);
-
-    overlay.querySelectorAll("[data-adjust]").forEach(input => {
-      input.addEventListener("input", applyAdjustments);
-    });
-
+    root.addEventListener("click", handleClick);
+    root.querySelectorAll("[data-adjust]").forEach(input => input.addEventListener("input", adjust));
     renderFilters();
-    applyAdjustments();
+    adjust();
   }
 
   function renderFilters() {
-    const list = overlay.querySelector("#ipeFilters");
-
-    list.innerHTML = filters.map((filter, index) => `
-      <button type="button"
-        class="${index === filterIndex ? "active" : ""}"
-        data-filter-index="${index}">
-        ${filter.name}
-      </button>
-    `).join("");
-
-    list.querySelectorAll("[data-filter-index]").forEach(button => {
-      button.addEventListener("click", () => {
-        filterIndex = Number(button.dataset.filterIndex);
-        renderFilters();
-        applyAdjustments();
-      });
-    });
+    if (!root) return;
+    const list = root.querySelector("#ipeFilters");
+    list.innerHTML = FILTERS.map((f, i) => `<button type="button" class="${i === filterIndex ? "active" : ""}" data-filter-index="${i}">${f[0]}</button>`).join("");
+    list.querySelectorAll("[data-filter-index]").forEach(button => button.addEventListener("click", () => {
+      filterIndex = Number(button.dataset.filterIndex);
+      renderFilters();
+      adjust();
+    }));
   }
 
-  function applyAdjustments() {
-    if (!overlay) return;
-
-    const media = overlay.querySelector("#ipeMedia");
+  function adjust() {
+    if (!root) return;
+    const media = root.querySelector("#ipeMedia");
     if (!media) return;
+    const val = key => Number(root.querySelector('[data-adjust="' + key + '"]').value);
+    media.style.filter = `${FILTERS[filterIndex][1]} brightness(${val("brightness")}%) contrast(${val("contrast")}%) saturate(${val("saturation")}%)`;
+    media.style.transform = `rotate(${rotation}deg) scaleX(${mirrored ? -1 : 1})`;
+    if (media.tagName === "VIDEO") media.volume = val("volume") / 100;
+    root.querySelectorAll("[data-adjust]").forEach(input => {
+      const out = input.parentElement.querySelector("output");
+      if (out) out.value = input.value + "%";
+    });
+    root.querySelector("#ipePreviewWrap").classList.toggle("ipe-crop", cropMode);
+    if (audioElement) audioElement.volume = val("musicVolume") / 100;
+  }
 
-    const brightness = overlay.querySelector(
-      '[data-adjust="brightness"]'
-    ).value;
+  function chooseMusic() {
+    root?.querySelector("#ipeMusicInput")?.click();
+  }
 
-    const contrast = overlay.querySelector(
-      '[data-adjust="contrast"]'
-    ).value;
+  function onMusicSelected(event) {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("audio/")) return;
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioFile = file;
+    audioUrl = URL.createObjectURL(file);
+    if (audioElement) audioElement.pause();
+    audioElement = new Audio(audioUrl);
+    audioElement.loop = true;
+    audioElement.volume = Number(root.querySelector('[data-adjust="musicVolume"]').value) / 100;
+    root.querySelector("#ipeMusicName").textContent = file.name;
+    root.querySelector("#ipeMusicPlay").disabled = false;
+    root.querySelector("#ipeMusicRemove").disabled = false;
+    event.target.value = "";
+  }
 
-    const saturation = overlay.querySelector(
-      '[data-adjust="saturation"]'
-    ).value;
+  async function toggleMusicPreview() {
+    if (!audioElement) return;
+    const button = root.querySelector("#ipeMusicPlay");
+    if (audioElement.paused) {
+      try {
+        await audioElement.play();
+        button.textContent = "⏸ Pause";
+      } catch (error) {
+        alert("Music preview nahi chal paya: " + error.message);
+      }
+    } else {
+      audioElement.pause();
+      button.textContent = "▶ Preview";
+    }
+  }
 
-    const selectedFilter = filters[filterIndex].value;
-
-    media.style.filter = `
-      ${selectedFilter}
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturation}%)
-    `;
-
-    media.style.transform = `rotate(${media.dataset.rotation || 0}deg)`;
+  function removeMusic() {
+    if (audioElement) audioElement.pause();
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioElement = null;
+    audioUrl = "";
+    audioFile = null;
+    if (!root) return;
+    root.querySelector("#ipeMusicName").textContent = "No music selected";
+    root.querySelector("#ipeMusicPlay").disabled = true;
+    root.querySelector("#ipeMusicPlay").textContent = "▶ Preview";
+    root.querySelector("#ipeMusicRemove").disabled = true;
+    root.querySelector("#ipeMusicInput").value = "";
   }
 
   function handleClick(event) {
+    const filterButton = event.target.closest("[data-filter-index]");
+    if (filterButton) return;
     const button = event.target.closest("[data-action]");
     if (!button) return;
-
     switch (button.dataset.action) {
-      case "close":
-        close();
-        break;
-
-      case "filter":
-        overlay.querySelector("#ipeFilters").scrollIntoView({
-          behavior: "smooth",
-          block: "nearest"
-        });
-        break;
-
-      case "rotate": {
-        const media = overlay.querySelector("#ipeMedia");
-        const rotation = Number(media.dataset.rotation || 0) + 90;
-        media.dataset.rotation = String(rotation % 360);
-        applyAdjustments();
-        break;
-      }
-
+      case "close": close(); break;
+      case "filters": root.querySelector("#ipeFilters").scrollIntoView({behavior: "smooth", block: "center"}); break;
+      case "rotate": rotation = (rotation + 90) % 360; adjust(); break;
+      case "mirror": mirrored = !mirrored; adjust(); break;
+      case "crop": cropMode = !cropMode; adjust(); break;
       case "reset":
-        filterIndex = 0;
-        overlay.querySelectorAll("[data-adjust]").forEach(input => {
-          input.value = 100;
+        filterIndex = 0; rotation = 0; mirrored = false; cropMode = false;
+        root.querySelectorAll('[data-adjust]').forEach(input => {
+          input.value = input.dataset.adjust === "musicVolume" ? 70 : 100;
         });
-        renderFilters();
-        applyAdjustments();
-        break;
+        renderFilters(); adjust(); break;
+      case "chooseMusic": chooseMusic(); break;
+      case "musicPlay": toggleMusicPreview(); break;
+      case "musicRemove": removeMusic(); break;
+      case "next": continueUpload(); break;
+    }
+  }
 
-      case "next":
-        if (typeof window.InstaProEditor.onNext === "function") {
-          window.InstaProEditor.onNext({
-            file: selectedFile,
-            mediaType,
-            previewUrl: objectUrl
-          });
-        } else {
-          alert(
-            "Editor preview taiyar hai. Abhi Upload System se connection baaki hai."
-          );
-        }
-        break;
+  function continueUpload() {
+    if (!sourceFile || !sourceInput) {
+      alert("Editor ka upload connection nahi mila. Gallery se dobara select karein.");
+      return;
+    }
+    const file = sourceFile;
+    const input = sourceInput;
+    close();
+    try {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      input.files = transfer.files;
+      input.dataset.ipeBypassEditor = "true";
+      input.dispatchEvent(new Event("change", {bubbles: true}));
+    } catch (error) {
+      alert("Upload continue nahi ho paya: " + error.message);
     }
   }
 
   function close() {
-    if (overlay) {
-      overlay.remove();
-      overlay = null;
-    }
-
-    document.body.classList.remove("ipe-open");
-
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-      objectUrl = null;
-    }
-
-    selectedFile = null;
+    if (root) root.remove();
+    root = null;
+    if (audioElement) audioElement.pause();
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    audioElement = null;
+    audioUrl = "";
+    audioFile = null;
+    sourceUrl = "";
+    sourceFile = null;
+    sourceInput = null;
+    document.body.style.overflow = "";
   }
 
-  function getSelectedFile() {
-    return selectedFile;
-  }
+  // Capture file selection before upload.js can upload it. Continue sends it
+  // back through the existing upload handler, preserving its Firebase flow.
+  document.addEventListener("change", event => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.id !== "postFile" && input.id !== "storyFile") return;
+    if (input.dataset.ipeBypassEditor === "true") {
+      delete input.dataset.ipeBypassEditor;
+      return;
+    }
+    const file = input.files?.[0];
+    if (!file) return;
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    open(file, input.id === "storyFile" ? "story" : "post", input);
+  }, true);
 
-  return {
-    open,
-    close,
-    getSelectedFile,
-    onNext: null
-  };
+  window.InstaProEditor = { open, close };
+  console.log("InstaPro Glass Editor initialized");
 })();
-
-window.InstaProEditor = InstaProEditor;
-
-console.log("InstaPro Editor initialized");
