@@ -1,0 +1,133 @@
+/* ==========================================
+   InstaPro Professional Editor
+========================================== */
+
+#instaproEditor {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  background: #09090d;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  overflow-y: auto;
+}
+
+body.ipe-open {
+  overflow: hidden !important;
+}
+
+.ipe-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  background: #101015;
+  border-bottom: 1px solid #303038;
+}
+
+.ipe-header strong {
+  font-size: 17px;
+}
+
+.ipe-header button,
+.ipe-tools button,
+.ipe-filter-list button {
+  padding: 10px 13px;
+  border: 1px solid #393943;
+  border-radius: 12px;
+  background: #202027;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ipe-header button:last-child {
+  background: linear-gradient(120deg, #d62976, #8a45ff);
+  border: 0;
+  font-weight: bold;
+}
+
+.ipe-main {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.ipe-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 280px;
+  max-height: 52vh;
+  overflow: hidden;
+  background: #000;
+  border-radius: 14px;
+}
+
+.ipe-preview img,
+.ipe-preview video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  transition: filter 0.15s ease;
+}
+
+.ipe-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0 12px;
+}
+
+.ipe-filter-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 5px 0 12px;
+}
+
+.ipe-filter-list button {
+  flex-shrink: 0;
+}
+
+.ipe-filter-list button.active {
+  border-color: #e1306c;
+  background: #452036;
+}
+
+.ipe-adjustments {
+  display: grid;
+  gap: 18px;
+  padding: 16px;
+  background: #17171e;
+  border: 1px solid #303038;
+  border-radius: 14px;
+}
+
+.ipe-adjustments label {
+  display: grid;
+  gap: 9px;
+  font-size: 14px;
+}
+
+.ipe-adjustments input {
+  width: 100%;
+  accent-color: #e1306c;
+}
+
+.ipe-note {
+  color: #aaa;
+  font-size: 12px;
+  line-height: 1.5;
+}
