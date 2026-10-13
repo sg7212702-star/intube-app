@@ -259,3 +259,74 @@ border-bottom: 1px solid rgba(255, 255, 255, 0.22);
 border-radius: 24px;
 }
 }
+/* ===== InstaPro Feed UI Fix ===== */
+
+.instapro-feed-post {
+  display: block !important;
+  width: 100%;
+  margin: 12px 0 !important;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 12px;
+}
+
+.instapro-feed-post .ip-feed-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.instapro-feed-post img.ip-feed-avatar {
+  display: block !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  object-fit: cover !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  flex: 0 0 42px !important;
+}
+
+.instapro-feed-post .ip-feed-user-info {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-width: 0;
+}
+
+.instapro-feed-post .ip-feed-username {
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.instapro-feed-post .ip-feed-date {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-top: 3px;
+}
+
+.instapro-feed-post .ip-feed-follow {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #3897f0;
+  font-weight: 700;
+}
+
+.instapro-feed-post img.ip-feed-media,
+.instapro-feed-post video.ip-feed-media {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 75vh;
+  height: auto;
+  object-fit: contain;
+  background: #111;
+}
