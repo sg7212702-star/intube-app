@@ -45,8 +45,57 @@ function showStory(story) {
 }
 function renderStories() {
   if (!box) return;
+
+  const user = auth.currentUser;
+  const myStories = user
+    ? storyItems.filter(story => (story.uid || story.userId || story.authorId) === user.uid)
+    : [];
+  const otherUsersStories = storyItems.filter(story => {
+    const ownerUid = story.uid || story.userId || story.authorId;
+    return !user || !ownerUid || ownerUid !== user.uid;
+  });
+
+  // Apni story ko alag ring banane ke bajay "Your story" ring mein dikhayein.
+  const addStoryRing = document.getElementById("addStoryBtn");
+  if (addStoryRing) {
+    const latestOwnStory = myStories[0];
+    const existingImage = addStoryRing.querySelector("img");
+    if (latestOwnStory && storyMedia(latestOwnStory)) {
+      if (!existingImage) {
+        const image = document.createElement("img");
+        image.alt = "Your latest story";
+        image.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;";
+        addStoryRing.style.position = "relative";
+        addStoryRing.style.overflow = "hidden";
+        addStoryRing.prepend(image);
+      }
+      const image = addStoryRing.querySelector("img");
+      image.src = storyMedia(latestOwnStory);
+      const plus = addStoryRing.querySelector("span");
+      if (plus) {
+        plus.style.cssText = "position:absolute;right:-1px;bottom:-1px;z-index:2;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
+      }
+      addStoryRing.title = "Tap to view your story; tap + to add another";
+      addStoryRing.onclick = event => {
+        if (event.target.closest("span")) {
+          const uploadButton = document.getElementById("optStory");
+          if (uploadButton) uploadButton.click();
+          return;
+        }
+        showStory(latestOwnStory);
+      };
+    } else {
+      existingImage?.remove();
+      addStoryRing.onclick = () => {
+        const uploadButton = document.getElementById("optStory");
+        if (uploadButton) uploadButton.click();
+        else alert("Story upload option nahi mila.");
+      };
+    }
+  }
+
   box.innerHTML = "";
-  storyItems.forEach(story => {
+  otherUsersStories.forEach(story => {
     const url = storyMedia(story);
     if (!url) return;
     const item = document.createElement("button");
@@ -68,9 +117,5 @@ if (box) {
     console.error("Stories load error:", error);
   });
 }
-document.getElementById("addStoryBtn")?.addEventListener("click", () => {
-  const button = document.getElementById("optStory");
-  if (button) button.click();
-  else alert("Story upload option nahi mila.");
-});
+// The Your story ring click behavior is configured inside renderStories().
 window.addEventListener("pagehide", () => { if (unsubscribeStories) unsubscribeStories(); });
