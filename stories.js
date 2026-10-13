@@ -1,121 +1,308 @@
-// InstaPro Stories — real-time Firestore stories with 24-hour expiry
+// InstaPro Stories — Instagram-style realtime stories
 import { db, auth } from "./firebase.js";
-import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  collection, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const box = document.getElementById("otherStories");
-// Make the stories container transparent to the parent story row so each story
-// appears beside "Your story" in the same horizontal strip, not inside a nested box.
-if (box) box.style.display = "contents";
-let storyItems = [];
-let unsubscribeStories = null;
+const otherStoriesBox = document.getElementById("otherStories");
+const yourRing = document.getElementById("addStoryBtn");
+let allStories = [];
+let stopStories = null;
+let signedInUser = auth.currentUser || null;
+let viewer = null;
+let viewerTimer = null;
+let currentGroup = [];
+let currentIndex = 0;
+let seenStoryIds = new Set();
 
-const storyEscape = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
+const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
   "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
 }[ch]));
 
-function storyMedia(story) {
+function mediaUrl(story) {
   return story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
 }
-function storyIsVideo(story) {
+function ownerId(story) {
+  return story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
+}
+function ownerName(story) {
+  return story.username || story.displayName || story.email?.split("@")[0] || "InstaPro User";
+}
+function isVideo(story) {
   const type = String(story.mediaType || story.contentType || story.type || "").toLowerCase();
-  return type.includes("video") || type.includes("reel") || /\.(mp4|webm|mov)(\?|$)/i.test(storyMedia(story));
+  return type.includes("video") || type.includes("reel") || /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl(story));
 }
-function storyExpiry(story) {
-  if (Number(story.expiresAt) > 0) return Number(story.expiresAt);
-  const created = story.createdAt?.toDate ? story.createdAt.toDate().getTime() : Number(story.createdAt) || 0;
-  return created ? created + 24 * 60 * 60 * 1000 : Date.now() + 24 * 60 * 60 * 1000;
+function timestamp(story) {
+  const value = story.createdAt;
+  if (value?.toMillis) return value.toMillis();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Date.parse(value) || 0;
+  return 0;
 }
-function showStory(story) {
-  const url = storyMedia(story);
-  if (!url) return;
-  const viewer = document.createElement("div");
-  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;";
-  const media = document.createElement(storyIsVideo(story) ? "video" : "img");
-  media.src = url;
-  media.style.cssText = "max-width:100%;max-height:88vh;object-fit:contain;";
-  if (storyIsVideo(story)) { media.controls = true; media.autoplay = true; media.playsInline = true; }
-  const close = document.createElement("button");
-  close.type = "button";
-  close.textContent = "✕";
-  close.style.cssText = "position:absolute;top:22px;right:18px;border:0;background:#222;color:#fff;border-radius:50%;width:42px;height:42px;font-size:20px;";
-  close.onclick = () => { media.pause?.(); viewer.remove(); };
-  viewer.addEventListener("click", event => { if (event.target === viewer) { media.pause?.(); viewer.remove(); } });
-  viewer.append(media, close);
-  document.body.appendChild(viewer);
+function expiry(story) {
+  const exp = Number(story.expiresAt);
+  return exp > 0 ? exp : (timestamp(story) || Date.now()) + 86400000;
+}
+function activeStories() {
+  const now = Date.now();
+  return allStories.filter(s => mediaUrl(s) && expiry(s) > now)
+    .sort((a, b) => timestamp(b) - timestamp(a));
+}
+function groupsByUser(stories) {
+  const groups = new Map();
+  for (const story of stories) {
+    const key = ownerId(story) || ("unknown:" + (story.email || ownerName(story)));
+    if (!groups.has(key)) groups.set(key, { key, uid: ownerId(story), name: ownerName(story), photo: story.photo || story.photoURL || "", stories: [] });
+    const group = groups.get(key);
+    group.stories.push(story);
+    if ((!group.photo || group.photo.length < 5) && (story.photo || story.photoURL)) group.photo = story.photo || story.photoURL;
+  }
+  return [...groups.values()].map(group => {
+    group.stories.sort((a, b) => timestamp(a) - timestamp(b));
+    group.latest = group.stories[group.stories.length - 1];
+    return group;
+  });
+}
+function setRingPreview(ring, story, label) {
+  if (!ring) return;
+  const url = story ? mediaUrl(story) : "";
+  let image = ring.querySelector(":scope > img.insta-story-preview");
+  if (url) {
+    if (!image) {
+      image = document.createElement("img");
+      image.className = "insta-story-preview";
+      image.alt = label;
+      image.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;z-index:0;";
+      ring.prepend(image);
+    }
+    image.src = url;
+    image.style.display = "block";
+    ring.style.position = "relative";
+    ring.style.overflow = "hidden";
+    const plus = ring.querySelector("span");
+    if (plus) plus.style.cssText = "position:absolute;right:-1px;bottom:-1px;z-index:3;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
+  } else {
+    image?.remove();
+    const plus = ring.querySelector("span");
+    if (plus) plus.removeAttribute("style");
+  }
+}
+function openUpload() {
+  const button = document.getElementById("optStory");
+  if (button) button.click();
+  else alert("Story upload option nahi mila.");
 }
 function renderStories() {
-  if (!box) return;
+  if (!otherStoriesBox) return;
 
-  const user = auth.currentUser;
-  const myStories = user
-    ? storyItems.filter(story => (story.uid || story.userId || story.authorId) === user.uid)
-    : [];
-  const otherUsersStories = storyItems.filter(story => {
-    const ownerUid = story.uid || story.userId || story.authorId;
-    return !user || !ownerUid || ownerUid !== user.uid;
-  });
+  // Auth can resolve after Firestore's first snapshot; always recalculate ownership.
+  const stories = activeStories();
+  const groups = groupsByUser(stories);
+  const myUid = signedInUser?.uid || auth.currentUser?.uid || "";
+  const ownGroup = myUid ? groups.find(g => g.uid === myUid) : null;
+  const otherGroups = groups.filter(g => !myUid || g.uid !== myUid);
 
-  // Apni story ko alag ring banane ke bajay "Your story" ring mein dikhayein.
-  const addStoryRing = document.getElementById("addStoryBtn");
-  if (addStoryRing) {
-    const latestOwnStory = myStories[0];
-    const existingImage = addStoryRing.querySelector("img");
-    if (latestOwnStory && storyMedia(latestOwnStory)) {
-      if (!existingImage) {
-        const image = document.createElement("img");
-        image.alt = "Your latest story";
-        image.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;";
-        addStoryRing.style.position = "relative";
-        addStoryRing.style.overflow = "hidden";
-        addStoryRing.prepend(image);
+  // Keep the user's uploaded story inside the existing "Your story" ring.
+  setRingPreview(yourRing, ownGroup?.latest || null, "Your latest story");
+  if (yourRing) {
+    yourRing.title = ownGroup ? "View your story · + to add another" : "Add to your story";
+    yourRing.onclick = event => {
+      if (event.target.closest("span")) {
+        event.preventDefault();
+        event.stopPropagation();
+        openUpload();
+        return;
       }
-      const image = addStoryRing.querySelector("img");
-      image.src = storyMedia(latestOwnStory);
-      const plus = addStoryRing.querySelector("span");
-      if (plus) {
-        plus.style.cssText = "position:absolute;right:-1px;bottom:-1px;z-index:2;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
-      }
-      addStoryRing.title = "Tap to view your story; tap + to add another";
-      addStoryRing.onclick = event => {
-        if (event.target.closest("span")) {
-          const uploadButton = document.getElementById("optStory");
-          if (uploadButton) uploadButton.click();
-          return;
-        }
-        showStory(latestOwnStory);
-      };
-    } else {
-      existingImage?.remove();
-      addStoryRing.onclick = () => {
-        const uploadButton = document.getElementById("optStory");
-        if (uploadButton) uploadButton.click();
-        else alert("Story upload option nahi mila.");
-      };
-    }
+      if (ownGroup) openStoryGroup(ownGroup);
+      else openUpload();
+    };
   }
 
-  box.innerHTML = "";
-  otherUsersStories.forEach(story => {
-    const url = storyMedia(story);
-    if (!url) return;
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "sItem";
-    item.style.cssText = "border:0;background:transparent;color:inherit;padding:0;cursor:pointer;flex:0 0 auto;";
-    item.innerHTML = `<div class="sRing"><img src="${storyEscape(url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div><p>${storyEscape(story.username || story.displayName || "user")}</p>`;
-    item.addEventListener("click", () => showStory(story));
-    box.appendChild(item);
-  });
+  // Make wrapper visually transparent; each account gets exactly one ring.
+  otherStoriesBox.style.display = "contents";
+  otherStoriesBox.style.border = "0";
+  otherStoriesBox.style.background = "transparent";
+  otherStoriesBox.style.padding = "0";
+  otherStoriesBox.style.margin = "0";
+  otherStoriesBox.innerHTML = "";
+
+  for (const group of otherGroups) {
+    const item = document.createElement("div");
+    item.className = "sItem insta-story-account";
+    item.style.cssText = "flex:0 0 auto;cursor:pointer;";
+    const ring = document.createElement("button");
+    ring.type = "button";
+    ring.className = "sRing";
+    ring.setAttribute("aria-label", "View " + group.name + "'s story");
+    ring.style.cssText = "position:relative;overflow:hidden;padding:0;cursor:pointer;";
+    const preview = document.createElement("img");
+    preview.src = mediaUrl(group.latest);
+    preview.alt = "";
+    preview.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;";
+    ring.appendChild(preview);
+    const caption = document.createElement("p");
+    caption.textContent = group.name;
+    caption.style.cssText = "margin:4px 0 0;text-align:center;";
+    ring.addEventListener("click", () => openStoryGroup(group));
+    caption.addEventListener("click", () => openStoryGroup(group));
+    item.append(ring, caption);
+    otherStoriesBox.appendChild(item);
+  }
 }
-if (box) {
-  unsubscribeStories = onSnapshot(query(collection(db, "stories"), orderBy("createdAt", "desc")), snapshot => {
+
+function closeViewer() {
+  if (viewerTimer) clearTimeout(viewerTimer);
+  viewerTimer = null;
+  if (viewer) {
+    const video = viewer.querySelector("video");
+    if (video) video.pause();
+    viewer.remove();
+  }
+  viewer = null;
+  currentGroup = [];
+}
+function openStoryGroup(group) {
+  if (!group?.stories?.length) return;
+  closeViewer();
+  currentGroup = group.stories.slice();
+  currentIndex = 0;
+  viewer = document.createElement("div");
+  viewer.className = "instapro-story-viewer";
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;";
+  viewer.innerHTML = `
+    <div class="is-progress" style="position:absolute;top:12px;left:10px;right:10px;display:flex;gap:4px;z-index:5;"></div>
+    <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
+      <img class="is-avatar" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;">
+      <span class="is-name" style="font-size:14px;font-weight:600;flex:1;"></span>
+      <button class="is-close" aria-label="Close story" style="background:transparent;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
+    </div>
+    <div class="is-media" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+    <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent;"></button>
+    <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent;"></button>
+    <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
+      <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
+      <button class="is-like" aria-label="Like story" style="background:transparent;border:0;color:#fff;font-size:27px;">♡</button>
+      <button class="is-share" aria-label="Share story" style="background:transparent;border:0;color:#fff;font-size:22px;">➤</button>
+    </div>`;
+  document.body.appendChild(viewer);
+  viewer.querySelector(".is-close").onclick = closeViewer;
+  viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
+  viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
+  viewer.querySelector(".is-like").onclick = event => {
+    const btn = event.currentTarget;
+    btn.textContent = btn.textContent === "♡" ? "♥" : "♡";
+    btn.style.color = btn.textContent === "♥" ? "#ff3040" : "#fff";
+  };
+  viewer.querySelector(".is-share").onclick = async () => {
+    const story = currentGroup[currentIndex];
+    const url = mediaUrl(story);
+    try {
+      if (navigator.share) await navigator.share({ title: "InstaPro Story", url });
+      else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(url); alert("Story link copied."); }
+      else window.prompt("Copy story link:", url);
+    } catch (e) { if (e?.name !== "AbortError") console.warn("Story share:", e); }
+  };
+  viewer.querySelector(".is-reply").addEventListener("keydown", event => {
+    if (event.key === "Enter" && event.currentTarget.value.trim()) {
+      const story = currentGroup[currentIndex];
+      const text = event.currentTarget.value.trim();
+      const url = mediaUrl(story);
+      const shareText = "Reply to " + group.name + "'s story: " + text + " " + url;
+      if (navigator.share) navigator.share({ text: shareText }).catch(() => {});
+      else if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shareText).then(() => alert("Reply text copied.")).catch(() => {});
+      event.currentTarget.value = "";
+    }
+  });
+  viewer.addEventListener("click", event => {
+    if (event.target === viewer) closeViewer();
+  });
+  showAt(0);
+}
+function showAt(index) {
+  if (!viewer) return;
+  if (viewerTimer) clearTimeout(viewerTimer);
+  viewerTimer = null;
+  if (index >= currentGroup.length) { closeViewer(); return; }
+  if (index < 0) { closeViewer(); return; }
+  currentIndex = index;
+  const story = currentGroup[currentIndex];
+  const mediaBox = viewer.querySelector(".is-media");
+  const oldMedia = mediaBox.querySelector("img,video");
+  if (oldMedia?.tagName === "VIDEO") oldMedia.pause();
+  mediaBox.innerHTML = "";
+  const url = mediaUrl(story);
+  const media = document.createElement(isVideo(story) ? "video" : "img");
+  media.src = url;
+  media.alt = "Story";
+  media.style.cssText = "max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;";
+  if (media.tagName === "VIDEO") {
+    media.autoplay = true;
+    media.playsInline = true;
+    media.controls = false;
+    media.onended = () => showAt(currentIndex + 1);
+    media.onerror = () => { viewerTimer = setTimeout(() => showAt(currentIndex + 1), 2500); };
+  }
+  mediaBox.appendChild(media);
+
+  const avatar = viewer.querySelector(".is-avatar");
+  const photo = currentGroup[0]?.photo || story.photo || story.photoURL || "";
+  if (photo) avatar.src = photo; else avatar.removeAttribute("src");
+  viewer.querySelector(".is-name").textContent = currentGroup[0]?.name || ownerName(story);
+
+  const progress = viewer.querySelector(".is-progress");
+  progress.innerHTML = "";
+  currentGroup.forEach((_, i) => {
+    const track = document.createElement("div");
+    track.style.cssText = "height:3px;flex:1;border-radius:3px;background:rgba(255,255,255,.4);overflow:hidden;";
+    const fill = document.createElement("div");
+    fill.style.cssText = "height:100%;width:" + (i < index ? "100%" : "0%") + ";background:#fff;";
+    track.appendChild(fill);
+    progress.appendChild(track);
+  });
+  seenStoryIds.add(story.id);
+  if (!isVideo(story)) {
+    let elapsed = 0;
+    const duration = 5000;
+    const start = Date.now();
+    const fill = progress.children[index]?.firstElementChild;
+    const animate = () => {
+      if (!viewer || currentIndex !== index) return;
+      elapsed = Date.now() - start;
+      if (fill) fill.style.width = Math.min(100, elapsed / duration * 100) + "%";
+      if (elapsed >= duration) showAt(index + 1);
+      else viewerTimer = setTimeout(animate, 60);
+    };
+    animate();
+  } else {
+    const fill = progress.children[index]?.firstElementChild;
+    media.ontimeupdate = () => {
+      if (fill && media.duration && Number.isFinite(media.duration)) fill.style.width = Math.min(100, media.currentTime / media.duration * 100) + "%";
+    };
+    media.onended = () => showAt(index + 1);
+    viewerTimer = setTimeout(() => { if (viewer && currentIndex === index) showAt(index + 1); }, 30000);
+  }
+}
+
+// Re-render when login state resolves, not only when the Firestore listener fires.
+onAuthStateChanged(auth, user => {
+  signedInUser = user || null;
+  renderStories();
+});
+
+if (otherStoriesBox) {
+  otherStoriesBox.style.display = "contents";
+  stopStories = onSnapshot(query(collection(db, "stories"), orderBy("createdAt", "desc")), snapshot => {
     const now = Date.now();
-    storyItems = snapshot.docs.map(item => ({ id: item.id, ...item.data() }))
-      .filter(story => storyExpiry(story) > now);
+    allStories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(story => expiry(story) > now && mediaUrl(story));
     renderStories();
   }, error => {
-    console.error("Stories load error:", error);
+    console.error("InstaPro stories load error:", error);
   });
 }
-// The Your story ring click behavior is configured inside renderStories().
-window.addEventListener("pagehide", () => { if (unsubscribeStories) unsubscribeStories(); });
+window.addEventListener("pagehide", () => {
+  if (stopStories) stopStories();
+  closeViewer();
+});
