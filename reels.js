@@ -699,3 +699,86 @@ window.addEventListener("pagehide", () => {
     reelsObserver.disconnect();
   }
 });
+
+
+// ------------------------------------------------------
+// START REALTIME REELS FEED
+// ------------------------------------------------------
+
+function startReelsSystem() {
+  if (!reelsPage) {
+    console.error("Reels page element #reelsPage nahi mila.");
+    return;
+  }
+
+  const { grid, viewer } = ensureReelsUI();
+
+  // Close controls ko sirf ek baar bind karein.
+  const closeButton = viewer.querySelector("#iprClose");
+  if (closeButton && closeButton.dataset.bound !== "true") {
+    closeButton.dataset.bound = "true";
+    closeButton.addEventListener("click", closeReelsViewer);
+  }
+
+  const commentClose = viewer.querySelector("#iprCommentClose");
+  if (commentClose && commentClose.dataset.bound !== "true") {
+    commentClose.dataset.bound = "true";
+    commentClose.addEventListener("click", () => {
+      viewer.querySelector("#iprCommentBox")?.classList.remove("ipr-comments-open");
+      if (unsubscribeActiveComments) {
+        unsubscribeActiveComments();
+        unsubscribeActiveComments = null;
+      }
+      activeCommentPostId = null;
+    });
+  }
+
+  if (unsubscribeReels) {
+    unsubscribeReels();
+    unsubscribeReels = null;
+  }
+
+  const postsQuery = query(
+    collection(db, "posts"),
+    orderBy("createdAt", "desc")
+  );
+
+  unsubscribeReels = onSnapshot(
+    postsQuery,
+    snapshot => {
+      reelsData = snapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      // Kuch purane posts mein createdAt nahi hai ya video type URL se hi pata chalta hai.
+      reelsData.sort((a, b) => {
+        const getTime = post => {
+          const value = post.createdAt || post.time || 0;
+          if (typeof value?.toMillis === "function") return value.toMillis();
+          if (typeof value?.toDate === "function") return value.toDate().getTime();
+          const parsed = Number(value) || Date.parse(value) || 0;
+          return Number.isFinite(parsed) ? parsed : 0;
+        };
+        return getTime(b) - getTime(a);
+      });
+
+      renderReelsGrid(grid);
+    },
+    error => {
+      console.error("Realtime Reels load error:", error);
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:white">
+          <p>Reels load nahi ho paayi.</p>
+          <small>Internet aur Firestore Rules check karein.</small>
+        </div>
+      `;
+    }
+  );
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startReelsSystem, { once: true });
+} else {
+  startReelsSystem();
+}
