@@ -796,8 +796,11 @@ async function renderFeed() {
 
     feed.replaceChildren(fragment);
 
-    // The selected track is stored separately from the video. Start it when the
-    // viewer taps to play the post video; the corner button toggles soundtrack mute.
+    // Clean up observers from the previous feed render.
+    (window.__instaProFeedMusicObservers || []).forEach(observer => observer.disconnect());
+    window.__instaProFeedMusicObservers = [];
+
+    // Each visible post should try to play its own soundtrack automatically.
     feed.querySelectorAll(".instapro-feed-post").forEach(card => {
       const audio = card.querySelector(".ip-feed-music");
       const button = card.querySelector("[data-music-toggle]");
@@ -873,6 +876,36 @@ async function renderFeed() {
       });
 
       setSoundButton();
+
+      if ("IntersectionObserver" in window) {
+        const musicObserver = new IntersectionObserver(async entries => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting || entry.intersectionRatio < 0.6) {
+              if (audio && !audio.paused) audio.pause();
+              continue;
+            }
+
+            stopOtherPostMusic();
+            audio.currentTime = 0;
+            audio.muted = false;
+            setSoundButton();
+
+            try {
+              await audio.play();
+            } catch (error) {
+              // Mobile browsers may block autoplay with sound. Start muted if allowed;
+              // the Sound button remains available to enable audible playback.
+              audio.muted = true;
+              setSoundButton();
+              audio.play().catch(() => {});
+              console.warn("Autoplay with sound was blocked by the browser; tap Sound.", error);
+            }
+          }
+        }, { threshold: [0, 0.6, 0.85] });
+
+        musicObserver.observe(card);
+        window.__instaProFeedMusicObservers.push(musicObserver);
+      }
     });
 
   } catch (error) {
