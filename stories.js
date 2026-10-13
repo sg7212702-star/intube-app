@@ -58,12 +58,14 @@ async function toggleStoryLike() {
   const btn = viewer?.querySelector(".is-like");
   if (btn) btn.disabled = true;
   try {
-    const likes = Array.isArray(story.likedBy) ? story.likedBy : [];
-    currentLiked = likes.includes(user.uid);
+    const wasLiked = currentLiked;
     await updateDoc(doc(db, "stories", story.id), {
-      likedBy: currentLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+      likedBy: wasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
-    currentLiked = !currentLiked;
+    currentLiked = !wasLiked;
+    story.likedBy = currentLiked
+      ? [...new Set([...(Array.isArray(story.likedBy) ? story.likedBy : []), user.uid])]
+      : (Array.isArray(story.likedBy) ? story.likedBy.filter(uid => uid !== user.uid) : []);
     updateLikeButton();
   } catch (error) {
     console.error("Story like save error:", error);
