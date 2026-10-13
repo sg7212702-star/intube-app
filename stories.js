@@ -2,7 +2,7 @@
 import { db, auth } from "./firebase.js";
 import {
   collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
-  setDoc, addDoc, serverTimestamp, increment
+  setDoc, addDoc, deleteDoc, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -126,8 +126,20 @@ function expiry(story) {
 function activeStories() {
   const now = Date.now();
   const uid=(signedInUser||auth.currentUser)?.uid||"";
-  return allStories.filter(s => mediaUrl(s) && expiry(s) > now && ((s.privacy?.audience||s.audience||"everyone")!=="onlyMe" || ownerId(s)===uid))
-    .sort((a, b) => timestamp(b) - timestamp(a));
+  return allStories.filter(s => {
+    if (!mediaUrl(s) || expiry(s) <= now) return false;
+    const privacy = s.privacy || {};
+    const audience = privacy.audience || s.audience || "everyone";
+    if (ownerId(s) === uid) return true;
+    if (audience === "onlyMe") return false;
+    if (Array.isArray(privacy.hiddenFromUids) && privacy.hiddenFromUids.includes(uid)) return false;
+    if (audience === "closeFriends") {
+      const owner = allStories.find(item => ownerId(item) === ownerId(s));
+      // Close-friends membership is stored on the story owner's user document.
+      return Array.isArray(s.closeFriendsUids) && s.closeFriendsUids.includes(uid);
+    }
+    return true;
+  }).sort((a, b) => timestamp(b) - timestamp(a));
 }
 function groupsByUser(stories) {
   const groups = new Map();
@@ -317,14 +329,90 @@ async function openStoryPrivacy(){
   const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
   if(!story||!user||ownerId(story)!==user.uid){alert("Privacy sirf apni story ki badal sakte hain.");return;}
   const privacy=story.privacy||{};
-  const panel=openStoryPanel("Story privacy",'<p style="font-size:13px;color:#666;">Changes Firebase mein save honge.</p><label style="display:block;margin:14px 0 6px;font-weight:600;">Who can see this story?</label><select class="isp-audience" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;"><option value="everyone">Everyone</option><option value="onlyMe">Only me (hide from everyone)</option></select><label style="display:block;margin:14px 0 6px;font-weight:600;">Story replies</label><select class="isp-replies" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;"><option value="everyone">Allow replies</option><option value="off">Turn off replies</option></select><button class="isp-save" style="width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;">Save privacy</button>');
-  panel.querySelector(".isp-audience").value=privacy.audience||story.audience||"everyone";panel.querySelector(".isp-replies").value=privacy.replies||"everyone";
+  const panel=openStoryPanel("Story settings",`
+    <p style="font-size:13px;color:#666;">Settings Firebase mein save hongi aur dusre devices par bhi update hongi.</p>
+    <label style="display:block;margin:14px 0 6px;font-weight:600;">Who can see this story?</label>
+    <select class="isp-audience" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;">
+      <option value="everyone">Everyone</option><option value="closeFriends">Close friends</option><option value="onlyMe">Only me</option>
+    </select>
+    <label style="display:block;margin:14px 0 6px;font-weight:600;">Story replies</label>
+    <select class="isp-replies" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;">
+      <option value="everyone">Everyone</option><option value="following">People I follow</option><option value="off">Turn off replies</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:10px;margin:14px 0;"><input class="isp-sharing" type="checkbox"> Allow story sharing in DM</label>
+    <label style="display:block;margin:14px 0 6px;font-weight:600;">Hide story from</label>
+    <input class="isp-hide-search" placeholder="Search people…" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid #ddd;border-radius:10px;color:#111;background:#fff;">
+    <div class="isp-hide-list" style="max-height:150px;overflow:auto;margin-top:8px;"><p style="color:#777;font-size:12px;">Loading people…</p></div>
+    <button class="isp-save" style="width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;">Save settings</button>
+    <button class="isp-delete" style="width:100%;margin-top:8px;padding:12px;border:1px solid #e44;border-radius:12px;background:transparent;color:#e44;font-weight:700;">Delete story</button>`);
+  panel.querySelector(".isp-audience").value=privacy.audience||story.audience||"everyone";
+  panel.querySelector(".isp-replies").value=privacy.replies||"everyone";
+  panel.querySelector(".isp-sharing").checked=privacy.allowSharing!==false;
+  let people=[];
+  try {
+    people=await getOtherUsers();
+    const list=panel.querySelector(".isp-hide-list");
+    const draw=()=>{
+      const term=panel.querySelector(".isp-hide-search").value.trim().toLowerCase();
+      const hidden=Array.isArray(privacy.hiddenFromUids)?privacy.hiddenFromUids:[];
+      const matches=people.filter(p=>(userLabel(p)+" "+(p.email||"")).toLowerCase().includes(term)).slice(0,100);
+      list.innerHTML=matches.length?matches.map(p=>'<label style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #eee;color:#222;"><input type="checkbox" data-hide-uid="'+escapeHtml(p.uid)+'" '+(hidden.includes(p.uid)?"checked":"")+'><span>'+escapeHtml(userLabel(p))+'</span></label>').join(""):'<p style="color:#777;">No users found.</p>';
+    };
+    panel.querySelector(".isp-hide-search").addEventListener("input",draw);draw();
+  } catch(e) {
+    console.warn("Hide-from list could not load:",e);
+    panel.querySelector(".isp-hide-list").textContent="People list load nahi hui.";
+  }
   panel.querySelector(".isp-save").onclick=async()=>{
     const save=panel.querySelector(".isp-save");save.disabled=true;
-    const next={audience:panel.querySelector(".isp-audience").value,replies:panel.querySelector(".isp-replies").value,updatedAt:Date.now()};
-    try{await updateDoc(doc(db,"stories",story.id),{privacy:next,audience:next.audience});story.privacy=next;story.audience=next.audience;panel.remove();renderStories();alert("Story privacy Firebase mein save ho gayi.");}
-    catch(e){console.error(e);alert("Privacy save nahi hui. Firestore Rules check karein.");save.disabled=false;}
+    const next={
+      audience:panel.querySelector(".isp-audience").value,
+      replies:panel.querySelector(".isp-replies").value,
+      allowSharing:panel.querySelector(".isp-sharing").checked,
+      hiddenFromUids:[...panel.querySelectorAll("[data-hide-uid]:checked")].map(input=>input.dataset.hideUid),
+      updatedAt:Date.now()
+    };
+    try{
+      await updateDoc(doc(db,"stories",story.id),{privacy:next,audience:next.audience});
+      story.privacy=next;story.audience=next.audience;
+      panel.remove();renderStories();alert("Story settings Firebase mein save ho gayi.");
+    }catch(e){console.error(e);alert("Settings save nahi hui. Firestore Rules check karein.");save.disabled=false;}
   };
+  panel.querySelector(".isp-delete").onclick=async()=>{
+    if(!confirm("Kya aap is story ko permanently delete karna chahte hain?"))return;
+    const button=panel.querySelector(".isp-delete");button.disabled=true;
+    try{
+      await deleteDoc(doc(db,"stories",story.id));
+      const userRef=doc(db,"users",user.uid);
+      const userSnap=await getDoc(userRef);
+      if(userSnap.exists()){
+        const highlights=Array.isArray(userSnap.data().highlights)?userSnap.data().highlights:[];
+        await updateDoc(userRef,{highlights:highlights.filter(h=>h?.storyId!==story.id)});
+      }
+      allStories=allStories.filter(item=>item.id!==story.id);
+      panel.remove();renderStories();alert("Story delete ho gayi.");
+      if(currentGroup.length<=1)closeViewer();else showAt(Math.min(currentIndex,currentGroup.length-1));
+    }catch(e){console.error(e);alert("Story delete nahi hui. Firestore Rules check karein.");button.disabled=false;}
+  };
+}
+
+async function addStoryToHighlights(){
+  const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
+  if(!story||!user||ownerId(story)!==user.uid){alert("Sirf apni story ko highlight kar sakte hain.");return;}
+  const userRef=doc(db,"users",user.uid);
+  const snap=await getDoc(userRef);
+  const old=snap.exists()&&Array.isArray(snap.data().highlights)?snap.data().highlights:[];
+  if(old.some(item=>item?.storyId===story.id)){alert("Yeh story pehle se highlight mein hai.");return;}
+  const title=(prompt("Highlight ka naam likhein:","Highlight")||"").trim().slice(0,40);
+  if(!title)return;
+  const highlight={storyId:story.id,title,emoji:"✦",mediaUrl:mediaUrl(story),createdAt:Date.now()};
+  try{
+    await updateDoc(userRef,{highlights:arrayUnion(highlight)});
+    alert("Story profile Highlights mein add ho gayi.");
+  }catch(e){
+    console.error("Story highlight save error:",e);
+    alert("Highlight save nahi hui. Firestore Rules check karein.");
+  }
 }
 
 function openStoryComments() {
@@ -463,7 +551,7 @@ function openStoryGroup(group, startIndex = 0) {
         <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
         <button class="is-send" aria-label="Send reply" title="Reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
         <button class="is-like" aria-label="Like story" title="Like" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
-        <button class="is-comments" aria-label="Comment on story" title="Comments" style="background:transparent!important;border:0;color:#fff;font-size:22px;">💬</button>
+        <button class="is-highlight" aria-label="Add story to highlights" title="Highlight" style="background:transparent!important;border:0;color:#fff;font-size:22px;">✦</button>
         <button class="is-share" aria-label="Send story in DM" title="Send in DM" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
         <button class="is-mention" aria-label="Mention someone" title="Mention" style="background:transparent!important;border:0;color:#fff;font-size:20px;">@</button>
         <button class="is-more" aria-label="Story privacy settings" title="More / Privacy" style="background:transparent!important;border:0;color:#fff;font-size:24px;">⋮</button>
@@ -475,7 +563,7 @@ function openStoryGroup(group, startIndex = 0) {
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
   viewer.querySelector(".is-like").onclick = toggleStoryLike;
-  viewer.querySelector(".is-comments").onclick = openStoryComments;
+  viewer.querySelector(".is-highlight").onclick = addStoryToHighlights;
   viewer.querySelector(".is-viewers").onclick = openStoryViewers;
   viewer.querySelector(".is-share").onclick = openStoryDmShare;
   viewer.querySelector(".is-mention").onclick = openStoryMention;
@@ -563,6 +651,8 @@ function showAt(index) {
   if (likeButton) likeButton.style.display = isOwnStory ? "none" : "";
   const mentionButton=viewer.querySelector(".is-mention");
   const moreButton=viewer.querySelector(".is-more");
+  const highlightButton=viewer.querySelector(".is-highlight");
+  if(highlightButton)highlightButton.style.display=isOwnStory?"":"none";
   if(mentionButton)mentionButton.style.display=isOwnStory?"":"none";
   if(moreButton)moreButton.style.display=isOwnStory?"":"none";
   currentLiked = !!user && (Array.isArray(story.likedBy) ? story.likedBy : []).includes(user.uid);
@@ -613,6 +703,18 @@ function showAt(index) {
 onAuthStateChanged(auth, user => {
   signedInUser = user || null;
   renderStories();
+});
+
+document.addEventListener("open-highlight-story", async event => {
+  const storyId=event.detail?.storyId;
+  if(!storyId)return;
+  try{
+    const snap=await getDoc(doc(db,"stories",storyId));
+    if(!snap.exists()){alert("Highlighted story available nahi hai.");return;}
+    const story={id:snap.id,...snap.data()};
+    const uid=ownerId(story);
+    openStoryGroup({uid,name:ownerName(story),photo:story.photo||story.photoURL||"",stories:[story]});
+  }catch(error){console.error("Open highlighted story error:",error);alert("Highlight open nahi hua.");}
 });
 
 document.addEventListener("open-notification-story", event => {
