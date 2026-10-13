@@ -250,9 +250,14 @@ async function handleFile(file, postType) {
 
   uploadInProgress = true;
 
-  const status = showUploadStatus("Upload shuru ho raha hai...");
-  const notice = window.InstaProUploadNotification;
+  const status = {
+  set textContent(message) {
+    console.log("Upload:", message);
+  },
+  remove() {}
+};
 
+const notice = window.InstaProUploadNotification;
   try {
     // Notification start
     if (notice) {
