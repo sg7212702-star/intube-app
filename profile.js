@@ -490,6 +490,9 @@ function render(data = profileData, posts = profilePosts) {
   ).length;
 
   const isFollowing = viewerFollowing.includes(uid);
+  const myUid = myId();
+  const targetFollowers = Array.isArray(data.followers) ? data.followers : [];
+  const isMutualFollow = Boolean(myUid && myUid !== uid && isFollowing && targetFollowers.includes(myUid));
 
   page.innerHTML = `
     <div class="ipp-wrap">
@@ -600,7 +603,15 @@ function render(data = profileData, posts = profilePosts) {
               style="flex:1"
             >
               ${isFollowing ? "Following ✓" : "Follow +"}
-            </button>
+            </button>            ${isMutualFollow ? `
+              <button
+                id="ippMessage"
+                class="ipp-btn"
+                style="flex:1"
+              >
+                ✉ Message
+              </button>
+            ` : ""}
           `}
 
           <button
@@ -1052,6 +1063,21 @@ postTiles.forEach(tile => {
     "click",
     toggleFollow
   );
+
+  $("#ippMessage", page)?.addEventListener("click", async () => {
+    const target = viewingUid;
+    try {
+      closeProfile();
+      if (typeof window.openChatWithUser === "function") {
+        await window.openChatWithUser(target);
+      } else {
+        alert("Chat system load nahi hua. Chat page ek baar open karke phir try karein.");
+      }
+    } catch (error) {
+      console.error("Open profile chat error:", error);
+      alert("Chat open nahi hui. Internet aur Firestore Rules check karein.");
+    }
+  });
 
   // Keep the post viewer click handler installed above; do not overwrite tile.onclick.
 
