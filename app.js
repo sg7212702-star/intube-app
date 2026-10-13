@@ -53,6 +53,16 @@ function openPage(name){
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
+  // HOME ADD (+) BUTTON: open the create sheet.
+  const addButton = $("addBtn");
+  if (addButton) {
+    addButton.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openSheet();
+    });
+  }
+
   // TOP BUTTONS - FINAL
   $("menuBtn")?.addEventListener("click", openMenu);
   $("notifBtn")?.addEventListener("click", async () => {
