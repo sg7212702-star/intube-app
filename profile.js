@@ -653,27 +653,119 @@ function render(data = profileData, posts = profilePosts) {
       if (!url) return "";
 
       return `
-        <div class="ipp-tile" data-post-id="${esc(post.id)}">
+  <div
+    class="ipp-tile"
+    data-post-id="${esc(post.id)}"
+    role="button"
+    tabindex="0"
+    aria-label="Open post"
+    style="cursor:pointer"
+  >
+    ${isVideo(post) ? `
+      <video
+        src="${esc(url)}"
+        muted
+        playsinline
+        preload="metadata"
+      ></video>
+      <span class="ipp-reelTag">▷</span>
+    ` : `
+      <img
+        src="${esc(url)}"
+        loading="lazy"
+        alt="Post"
+      >
+    `}
+  </div>
+`;
+}).join("");
 
-          ${isVideo(post) ? `
-            <video
-              src="${esc(url)}"
-              muted
-              playsinline
-              preload="metadata"
-            ></video>
-            <span class="ipp-reelTag">▷</span>
-          ` : `
-            <img
-              src="${esc(url)}"
-              loading="lazy"
-              alt="Post"
-            >
-          `}
+// Open selected post in Instagram-style viewer
+const postTiles = grid.querySelectorAll(".ipp-tile");
 
-        </div>
-      `;
-    }).join("");
+postTiles.forEach((tile, index) => {
+  function openSelectedPost() {
+    const post = filtered[index];
+
+    if (!post) return;
+
+    const url = postUrl(post);
+
+    if (!url) return;
+
+    const viewer = document.createElement("div");
+
+    viewer.className = "ipp-post-viewer";
+
+    viewer.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:1000000;
+      background:rgba(0,0,0,.96);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      box-sizing:border-box;
+      color:white;
+    `;
+
+    const media = isVideo(post)
+      ? document.createElement("video")
+      : document.createElement("img");
+
+    media.src = url;
+
+    if (isVideo(post)) {
+      media.controls = true;
+      media.autoplay = true;
+      media.playsInline = true;
+    } else {
+      media.alt = "Post";
+    }
+
+    media.style.cssText = `
+      display:block;
+      max-width:100%;
+      max-height:78vh;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+    `;
+
+    const closeButton = document.createElement("button");
+
+    closeButton.type = "button";
+    closeButton.textContent = "✕ Close";
+
+    closeButton.style.cssText = `
+      position:absolute;
+      top:18px;
+      left:16px;
+      padding:10px 16px;
+      border:1px solid #555;
+      border-radius:10px;
+      background:#222;
+      color:white;
+      font-size:15px;
+    `;
+
+    closeButton.onclick = () => viewer.remove();
+
+    viewer.append(closeButton, media);
+    document.body.appendChild(viewer);
+  }
+
+  tile.addEventListener("click", openSelectedPost);
+
+  tile.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openSelectedPost();
+    }
+  });
+});
   }
 
   $("#ippBack", page).onclick = closeProfile;
