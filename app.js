@@ -266,10 +266,7 @@ function openMenu(){
   const m=$("sideMenu"); if(!m) return;
   m.classList.add("show");
   const sov=$("sideOverlay"); if(sov){ sov.style.display="block"; sov.classList.add("show"); }
-  import("./settings.js").then(module => module.initSettingsMenu()).catch(error => {
-    console.error("Settings menu load error:", error);
-    alert("Menu load nahi hua: " + error.message);
-  });
+  // Settings panel and menu actions are implemented in this file; do not import a missing settings.js.
 }
 
 function openPage(name){
