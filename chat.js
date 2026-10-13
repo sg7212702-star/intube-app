@@ -51,19 +51,19 @@ function setupUI() {
     <div id="usersList" style="padding-bottom:80px;"></div>
   </div>
   <div id="chatBoxView" style="display:none; min-height:100vh; flex-direction:column; background:#000; position:fixed; inset:0; z-index:10002;">
-    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); background:rgba(0,0,0,0.9); backdrop-filter:blur(20px);">
+    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); background:rgba(15,15,18,.78);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 8px 24px rgba(0,0,0,.18);">
       <div class="backBtn" id="backToList" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
       <div style="width:34px; height:34px; border-radius:50%; padding:2px; background:linear-gradient(45deg,#feda75,#d62976,#962fbf);"><img id="chatWithAvatar" src="https://www.gravatar.com/avatar/?d=mp" style="width:100%; height:100%; border-radius:50%; border:2px solid #000; object-fit:cover;"></div>
       <div style="flex:1;"><b id="chatWithName" style="font-size:14px; display:block;">username</b><span style="font-size:11px; opacity:.6;">InstaPro messages</span></div>
       <div style="display:flex; gap:16px; font-size:20px;">📞 🎥 ℹ️</div>
     </div>
     <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
-    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#000; border-top:1px solid rgba(255,255,255,.08); box-sizing:border-box;">
-      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.12); color:#fff; outline:none;">
-      <button id="chatAttach" type="button" aria-label="Photo or video" style="border:0;background:transparent;color:#fff;font-size:22px;padding:4px;">＋</button>
+    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
+      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.085);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);color:#fff;outline:none;">
+      <button id="chatAttach" type="button" aria-label="Photo or video" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:22px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">＋</button>
       <input id="chatMediaInput" type="file" accept="image/*,video/*" hidden>
-      <button id="chatVoice" type="button" aria-label="Record voice message" style="border:0;background:transparent;color:#fff;font-size:21px;padding:4px;">🎙️</button>
-      <button id="chatSend" type="submit" style="padding:8px 14px; border-radius:20px; border:0; background:transparent; color:#0095f6; font-weight:700; font-size:15px;">Send</button>
+      <button id="chatVoice" type="button" aria-label="Record voice message" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:18px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">🎙️</button>
+      <button id="chatSend" type="submit" style="padding:10px 16px;border-radius:22px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,rgba(0,149,246,.95),rgba(121,72,255,.88));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 18px rgba(0,149,246,.22);cursor:pointer;">Send</button>
     </form>
   </div>`;
 
@@ -203,11 +203,13 @@ function openChat(user) {
       const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
       const when = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "";
       const body = msg.deleted ? '<i style="opacity:.65;">This message was deleted</i>' : (msg.mediaUrl ? (msg.mediaType === "video" ? `<video controls playsinline src="${escapeHTML(msg.mediaUrl)}" style="max-width:100%;max-height:260px;border-radius:10px;"></video>` : msg.mediaType === "audio" ? `<audio controls src="${escapeHTML(msg.mediaUrl)}" style="max-width:220px;"></audio>` : `<img src="${escapeHTML(msg.mediaUrl)}" alt="Photo" style="max-width:100%;max-height:260px;border-radius:10px;object-fit:contain;">`) : escapeHTML(msg.text || msg.message || ""));
-      const reactions = msg.reactions && typeof msg.reactions === "object" ? Object.values(msg.reactions) : [];
+      const reactions = msg.reactions && typeof msg.reactions === "object" ? Object.values(msg.reactions).filter(Boolean) : [];
+      const myReaction = msg.reactions && msg.reactions[currentUser.uid];
       const receipt = mine ? (msg.read ? "Seen ✓✓" : msg.delivered ? "Delivered ✓✓" : "Sent ✓") : "";
-      return `<div style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="margin-top:5px;font-size:15px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="border:0;background:transparent;color:#fff;padding:0;font-size:14px;" aria-label="React">☺</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="border:0;background:transparent;color:#fff;padding:0;font-size:12px;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
+      return `<div style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="display:inline-flex;gap:4px;margin-top:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:15px;background:rgba(0,0,0,.18);font-size:14px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;padding:0;font-size:14px;cursor:pointer;" aria-label="React">${myReaction || "☺"}</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;padding:0;font-size:12px;cursor:pointer;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
     }).join("");
     box.querySelectorAll("[data-react]").forEach(button => button.addEventListener("click", () => reactToMessage(button.dataset.react)));
+    box.querySelectorAll("[data-message-id]").forEach(bubble => { let lastTap = 0; bubble.addEventListener("click", event => { if (event.target.closest("button,video,audio")) return; const now = Date.now(); if (now - lastTap < 320) { lastTap = 0; quickHeart(bubble.dataset.messageId); } else lastTap = now; }); });
     box.querySelectorAll("[data-delete]").forEach(button => button.addEventListener("click", () => removeMessage(button.dataset.delete)));
     box.scrollTop = box.scrollHeight;
   }, error => {
@@ -264,6 +266,12 @@ async function toggleVoiceRecording() {
     voiceRecorder.start(); if (button) button.textContent = "⏹️";
   } catch (error) { console.error("Voice recording error:", error); alert("Microphone permission dein, phir voice message record karein."); }
 }
+async function quickHeart(messageId) {
+  if (!currentUser || !selectedUser) return;
+  try { const chatId = chatIdFor(currentUser.uid, selectedUser.uid); const ref = doc(db, "chats", chatId, "messages", messageId); const snap = await getDoc(ref); if (!snap.exists()) return; const current = snap.data().reactions?.[currentUser.uid]; await updateDoc(ref, { [`reactions.${currentUser.uid}`]: current === "❤️" ? "" : "❤️" }); }
+  catch (error) { console.error("Double-tap reaction error:", error); }
+}
+
 async function reactToMessage(messageId) {
   if (!currentUser || !selectedUser) return;
   const choice = prompt("Reaction choose karein: ❤️ 😂 😮 😢 👍 🔥", "❤️");
