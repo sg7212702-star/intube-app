@@ -769,6 +769,22 @@ async function openSelectedPost(post) {
         likesCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1)),
         likeCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1))
       });
+      if (!already && postOwner(post) && postOwner(post) !== user.uid) {
+        try {
+          await addDoc(collection(db, "users", postOwner(post), "notifications"), {
+            type: "like",
+            message: "liked your post",
+            fromUid: user.uid,
+            fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+            fromPhoto: user.photoURL || "",
+            postId: post.id,
+            createdAt: serverTimestamp(),
+            read: false
+          });
+        } catch (notificationError) {
+          console.warn("Profile post Like notification could not be saved:", notificationError);
+        }
+      }
     } catch (error) {
       console.error("Profile post like error:", error);
       alert("Like save nahi hua. Firebase Rules check karein.");
@@ -816,6 +832,23 @@ async function openSelectedPost(post) {
         createdAt: serverTimestamp()
       });
       await updateDoc(doc(db, "posts", post.id), { commentCount: increment(1), commentsCount: increment(1) }).catch(() => {});
+      const ownerUid = postOwner(post);
+      if (ownerUid && ownerUid !== user.uid) {
+        try {
+          await addDoc(collection(db, "users", ownerUid, "notifications"), {
+            type: "comment",
+            message: "commented on your post",
+            fromUid: user.uid,
+            fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+            fromPhoto: user.photoURL || "",
+            postId: post.id,
+            createdAt: serverTimestamp(),
+            read: false
+          });
+        } catch (notificationError) {
+          console.warn("Profile comment notification could not be saved:", notificationError);
+        }
+      }
       input.value = "";
     } catch (error) {
       console.error("Profile post comment error:", error);
