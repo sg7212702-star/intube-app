@@ -105,6 +105,26 @@ function getAvatar(user) {
   );
 }
 
+// Store activity in the same per-user collection read by notifications.js.
+async function createActivityNotification(targetUid, details) {
+  const actor = getCurrentUser();
+  if (!actor || !targetUid || targetUid === actor.uid) return;
+
+  try {
+    await addDoc(collection(db, "users", targetUid, "notifications"), {
+      ...details,
+      fromUid: actor.uid,
+      fromUsername: getUsername(actor),
+      fromPhoto: getAvatar(actor),
+      createdAt: serverTimestamp(),
+      read: false
+    });
+  } catch (error) {
+    // A notification failure must not undo a successful Like/Follow/Comment.
+    console.warn("Activity notification could not be saved:", error);
+  }
+}
+
 function getOwnerUid(post) {
   return (
     post?.uid ||
@@ -858,6 +878,13 @@ async function toggleFollow(targetUid, button) {
 
     await batch.commit();
 
+    if (!alreadyFollowing) {
+      await createActivityNotification(targetUid, {
+        type: "follow",
+        message: "started following you"
+      });
+    }
+
     profileCache.delete(user.uid);
     profileCache.delete(targetUid);
 
@@ -926,6 +953,14 @@ async function toggleLike(postId) {
         ? Math.max(0, count - 1)
         : count + 1
     });
+
+    if (!alreadyLiked) {
+      await createActivityNotification(getOwnerUid(post), {
+        type: "like",
+        message: "liked your post",
+        postId
+      });
+    }
 
   } catch (error) {
     console.error("Like error:", error);
@@ -1240,6 +1275,15 @@ async function sendComment(event) {
       text,
       createdAt: serverTimestamp()
     });
+
+    const commentedPost = currentPosts.find(item => item.id === postId);
+    if (commentedPost) {
+      await createActivityNotification(getOwnerUid(commentedPost), {
+        type: "comment",
+        message: "commented on your post",
+        postId
+      });
+    }
 
     await updateDoc(getPostRef(postId), {
       commentCount: increment(1),
