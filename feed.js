@@ -813,10 +813,37 @@ async function renderFeed() {
         button.setAttribute("aria-label", muted ? "Turn post music on" : "Mute post music");
       };
 
+      const stopOtherPostMusic = () => {
+        feed.querySelectorAll(".instapro-feed-post").forEach(otherCard => {
+          if (otherCard === card) return;
+          const otherAudio = otherCard.querySelector(".ip-feed-music");
+          const otherVideo = otherCard.querySelector("video.ip-feed-media");
+          if (otherAudio) {
+            otherAudio.pause();
+            otherAudio.muted = true;
+            const otherButton = otherCard.querySelector("[data-music-toggle]");
+            if (otherButton) {
+              otherButton.innerHTML = '🔇 <span>Sound</span>';
+              otherButton.setAttribute("aria-label", "Turn post music on");
+            }
+          }
+          if (otherVideo && !otherVideo.paused) otherVideo.pause();
+        });
+      };
+
       if (video) {
-        video.addEventListener("play", () => {
-          // Browsers permit playback more often when it follows the user's video-play tap.
-          audio.play().catch(error => console.warn("Post soundtrack needs a tap:", error));
+        video.addEventListener("play", async () => {
+          // Each playing post uses its own soundtrack; stop the previous post's audio.
+          stopOtherPostMusic();
+          audio.muted = false;
+          setSoundButton();
+          try {
+            await audio.play();
+          } catch (error) {
+            audio.muted = true;
+            setSoundButton();
+            console.warn("Tap Sound to play this post's soundtrack:", error);
+          }
         });
         video.addEventListener("pause", () => audio.pause());
         video.addEventListener("ended", () => {
@@ -828,8 +855,9 @@ async function renderFeed() {
       button.addEventListener("click", async event => {
         event.preventDefault();
         event.stopPropagation();
-        audio.muted = !audio.muted;
-        if (!audio.muted) {
+        if (audio.muted) {
+          stopOtherPostMusic();
+          audio.muted = false;
           try {
             await audio.play();
             if (video && video.paused) video.play().catch(() => {});
@@ -837,6 +865,9 @@ async function renderFeed() {
             audio.muted = true;
             console.warn("Post music playback failed:", error);
           }
+        } else {
+          audio.muted = true;
+          audio.pause();
         }
         setSoundButton();
       });
