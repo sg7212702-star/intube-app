@@ -1580,8 +1580,15 @@ postsUnsub = onSnapshot(
           const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
           const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
           const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
-          const audience = story.privacy?.audience || story.audience || "everyone";
-          return owner === targetUid && !!url && expires > now && (audience !== "onlyMe" || targetUid === myId());
+          const privacy = story.privacy || {};
+          const audience = privacy.audience || story.audience || "everyone";
+          const viewerUid = myId();
+          const visibleToViewer = owner === viewerUid || (
+            audience !== "onlyMe" &&
+            !(Array.isArray(privacy.hiddenFromUids) && privacy.hiddenFromUids.includes(viewerUid)) &&
+            (audience !== "closeFriends" || (Array.isArray(privacy.closeFriendsUids) && privacy.closeFriendsUids.includes(viewerUid)))
+          );
+          return owner === targetUid && !!url && expires > now && visibleToViewer;
         });
       render(profileData, profilePosts);
     },
