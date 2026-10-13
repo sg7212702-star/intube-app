@@ -213,6 +213,7 @@ export function openNotif() {
           <div
             data-notif-id="${escapeHTML(item.id)}"
             data-post-id="${escapeHTML(n.postId || "")}"
+            data-story-id="${escapeHTML(n.storyId || "")}"
             data-from-uid="${escapeHTML(n.fromUid || "")}"
             style="
               display:flex;
@@ -286,6 +287,7 @@ export function openNotif() {
         row.onclick = async () => {
           const notificationId = row.dataset.notifId;
           const postId = row.dataset.postId;
+          const storyId = row.dataset.storyId;
           const fromUid = row.dataset.fromUid;
 
           try {
@@ -306,7 +308,13 @@ export function openNotif() {
             );
           }
 
-          if (postId) {
+          if (storyId) {
+            document.dispatchEvent(
+              new CustomEvent("open-notification-story", {
+                detail: { storyId, fromUid }
+              })
+            );
+          } else if (postId) {
             document.dispatchEvent(
               new CustomEvent("open-notification-post", {
                 detail: { postId, fromUid }
