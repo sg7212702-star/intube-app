@@ -1374,7 +1374,22 @@ document
 onAuthStateChanged(auth, user => {
   if (!feed) return;
 
+  if (unsubscribeCurrentProfile) {
+    unsubscribeCurrentProfile();
+    unsubscribeCurrentProfile = null;
+  }
+  currentFollowing = new Set();
+
   if (user) {
+    unsubscribeCurrentProfile = onSnapshot(
+      getUserRef(user.uid),
+      snapshot => {
+        const data = snapshot.exists() ? snapshot.data() : {};
+        currentFollowing = new Set(Array.isArray(data.following) ? data.following : []);
+        renderFeed();
+      },
+      error => console.error("Current profile listener error:", error)
+    );
     startFeed();
 
   } else {
@@ -1382,9 +1397,14 @@ onAuthStateChanged(auth, user => {
       unsubscribeFeed();
       unsubscribeFeed = null;
     }
+    if (unsubscribeComments) {
+      unsubscribeComments();
+      unsubscribeComments = null;
+    }
 
     feedStarted = false;
     currentPosts = [];
+    currentFollowing = new Set();
 
     feed.innerHTML = `
       <div style="padding:40px 20px;text-align:center">
