@@ -165,6 +165,10 @@ function renderStories() {
     yourRing.onclick = event => {
       event.preventDefault();
       event.stopPropagation();
+      if (event.target.closest("span")) {
+        openUpload();
+        return;
+      }
       if (ownGroup) openStoryGroup(ownGroup);
     };
   }
@@ -227,13 +231,13 @@ function openStoryGroup(group) {
     <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
       <img class="is-avatar" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;">
       <span class="is-name" style="font-size:14px;font-weight:600;flex:1;"></span>
-      <button class="is-close" aria-label="Close story" style="background:transparent;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
+      <button class="is-close" aria-label="Close story" style="background:transparent!important;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
     </div>
     <div class="is-media" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
-    <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent;"></button>
-    <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent;"></button>
+    <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
+    <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
     <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
-      <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
+      <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
       <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
       <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
       <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
@@ -270,17 +274,6 @@ function openStoryGroup(group) {
       else window.prompt("Copy story link:", url);
     } catch (e) { if (e?.name !== "AbortError") console.warn("Story share:", e); }
   };
-  viewer.querySelector(".is-reply").addEventListener("keydown", event => {
-    if (event.key === "Enter" && event.currentTarget.value.trim()) {
-      const story = currentGroup[currentIndex];
-      const text = event.currentTarget.value.trim();
-      const url = mediaUrl(story);
-      const shareText = "Reply to " + group.name + "'s story: " + text + " " + url;
-      if (navigator.share) navigator.share({ text: shareText }).catch(() => {});
-      else if (navigator.clipboard?.writeText) navigator.clipboard.writeText(shareText).then(() => alert("Reply text copied.")).catch(() => {});
-      event.currentTarget.value = "";
-    }
-  });
   viewer.addEventListener("click", event => {
     if (event.target === viewer) closeViewer();
   });
