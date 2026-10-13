@@ -38,7 +38,7 @@ function openSheet(){
 
 
 let settingsUnsubscribe = null;
-let currentAppSettings = { theme: "dark", browserNotifications: false };
+let currentAppSettings = { theme: "dark", browserNotifications: false, dataSaver: false, reduceMotion: false };
 
 function installSettingsStyles() {
   if (document.getElementById("instapro-settings-style")) return;
@@ -66,6 +66,7 @@ function installSettingsStyles() {
     body.instapro-light-mode #homePage,body.instapro-light-mode .page{color:#161616}
     body.instapro-light-mode .topGlass,body.instapro-light-mode .bottomGlass,body.instapro-light-mode .sideGlass,body.instapro-light-mode .sheetGlass{background:rgba(250,250,252,.96)!important;color:#161616!important}
     body.instapro-light-mode .mItem,body.instapro-light-mode .sOpt{color:#161616!important}
+    body.instapro-reduce-motion *,body.instapro-reduce-motion *::before,body.instapro-reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
     @media(min-width:600px){#instaproSettingsPanel{align-items:center;padding:16px}#instaproSettingsPanel .isp-card{border-radius:24px;max-height:85dvh}}
   `;
   document.head.appendChild(style);
@@ -83,6 +84,8 @@ function settingsPanelMarkup(user) {
       <div class="isp-subtitle" style="margin-top:18px">How you use InstaPro</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Light appearance</div><div class="isp-desc">Change the app's appearance on this device and save your choice.</div></div><button class="isp-switch ${theme ? "on" : ""}" id="ispTheme" role="switch" aria-checked="${theme}" aria-label="Light appearance"></button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Browser notifications</div><div class="isp-desc">Allow this browser to show notifications, if supported.</div></div><button class="isp-switch ${notifications ? "on" : ""}" id="ispNotifications" role="switch" aria-checked="${notifications}" aria-label="Browser notifications"></button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Data saver</div><div class="isp-desc">Use lazy-loaded images and lighter video preloading on this device.</div></div><button class="isp-switch ${currentAppSettings.dataSaver ? "on" : ""}" id="ispDataSaver" role="switch" aria-checked="${!!currentAppSettings.dataSaver}" aria-label="Data saver"></button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Reduce motion</div><div class="isp-desc">Reduce app animations and transitions on this device.</div></div><button class="isp-switch ${currentAppSettings.reduceMotion ? "on" : ""}" id="ispReduceMotion" role="switch" aria-checked="${!!currentAppSettings.reduceMotion}" aria-label="Reduce motion"></button></div>
       <div class="isp-subtitle" style="margin-top:18px">More information</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Help and support</div><div class="isp-desc">For a problem, note the screen and error message.</div></div><button class="isp-action" id="ispHelp">Help</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Log out</div><div class="isp-desc">Sign out of the current Google account on this app.</div></div><button class="isp-action" id="ispLogout">Log out</button></div>
@@ -98,6 +101,24 @@ function applyAppTheme(theme) {
   currentAppSettings.theme = theme === "light" ? "light" : "dark";
   document.body.classList.toggle("instapro-light-mode", currentAppSettings.theme === "light");
   try { localStorage.setItem("instapro-theme", currentAppSettings.theme); } catch (_) {}
+}
+
+function applyDataSaver(enabled) {
+  currentAppSettings.dataSaver = !!enabled;
+  document.documentElement.classList.toggle("instapro-data-saver", !!enabled);
+  document.querySelectorAll("img").forEach(img => {
+    if (enabled && !img.hasAttribute("loading")) img.loading = "lazy";
+  });
+  document.querySelectorAll("video").forEach(video => {
+    if (enabled) video.preload = "metadata";
+  });
+  try { localStorage.setItem("instapro-data-saver", enabled ? "1" : "0"); } catch (_) {}
+}
+
+function applyReduceMotion(enabled) {
+  currentAppSettings.reduceMotion = !!enabled;
+  document.body.classList.toggle("instapro-reduce-motion", !!enabled);
+  try { localStorage.setItem("instapro-reduce-motion", enabled ? "1" : "0"); } catch (_) {}
 }
 
 async function saveAppSetting(key, value) {
@@ -168,6 +189,26 @@ async function openSettingsPanel() {
       status().textContent = enabled ? "Browser notifications allowed." : "Browser notification permission not granted.";
     } catch (error) { status().textContent = "Notification setting save nahi hui."; console.error(error); }
   };
+  panel.querySelector("#ispDataSaver").onclick = async event => {
+    const button = event.currentTarget;
+    const next = !currentAppSettings.dataSaver;
+    applyDataSaver(next);
+    button.classList.toggle("on", next);
+    button.setAttribute("aria-checked", String(next));
+    status().textContent = "Saving data saver setting…";
+    try { await saveAppSetting("dataSaver", next); status().textContent = "Data saver saved."; }
+    catch (error) { status().textContent = "Device par apply hua, Firebase save nahi hua."; console.error("Data saver save error:", error); }
+  };
+  panel.querySelector("#ispReduceMotion").onclick = async event => {
+    const button = event.currentTarget;
+    const next = !currentAppSettings.reduceMotion;
+    applyReduceMotion(next);
+    button.classList.toggle("on", next);
+    button.setAttribute("aria-checked", String(next));
+    status().textContent = "Saving motion setting…";
+    try { await saveAppSetting("reduceMotion", next); status().textContent = "Reduce motion saved."; }
+    catch (error) { status().textContent = "Device par apply hua, Firebase save nahi hua."; console.error("Reduce motion save error:", error); }
+  };
   panel.querySelector("#ispHelp").onclick = () => { status().textContent = "Help: app ka screenshot aur Console error share karein."; };
   panel.querySelector("#ispLogout").onclick = async () => {
     if (!confirm("Kya aap InstaPro se log out karna chahte hain?")) return;
@@ -191,8 +232,14 @@ async function openSettingsPanel() {
       applyAppTheme(currentAppSettings.theme);
       const themeButton = panel.querySelector("#ispTheme");
       const notifButton = panel.querySelector("#ispNotifications");
+      const dataSaverButton = panel.querySelector("#ispDataSaver");
+      const reduceMotionButton = panel.querySelector("#ispReduceMotion");
       if (themeButton) { themeButton.classList.toggle("on", currentAppSettings.theme === "light"); themeButton.setAttribute("aria-checked", String(currentAppSettings.theme === "light")); }
       if (notifButton) { notifButton.classList.toggle("on", currentAppSettings.browserNotifications === true); notifButton.setAttribute("aria-checked", String(currentAppSettings.browserNotifications === true)); }
+      if (dataSaverButton) { dataSaverButton.classList.toggle("on", !!currentAppSettings.dataSaver); dataSaverButton.setAttribute("aria-checked", String(!!currentAppSettings.dataSaver)); }
+      if (reduceMotionButton) { reduceMotionButton.classList.toggle("on", !!currentAppSettings.reduceMotion); reduceMotionButton.setAttribute("aria-checked", String(!!currentAppSettings.reduceMotion)); }
+      applyDataSaver(currentAppSettings.dataSaver);
+      applyReduceMotion(currentAppSettings.reduceMotion);
     }, error => { console.error("Settings realtime listener error:", error); if (status()) status().textContent = "Firebase settings load nahi hui."; });
   } catch (error) { console.error("Settings initialize error:", error); }
 }
@@ -245,7 +292,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   // TOP BUTTONS - FINAL
   $("menuBtn")?.addEventListener("click", openMenu);
   bindSideMenuItems();
-  try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); } catch (_) {}
+  try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); applyDataSaver(localStorage.getItem("instapro-data-saver") === "1"); applyReduceMotion(localStorage.getItem("instapro-reduce-motion") === "1"); } catch (_) {}
   $("notifBtn")?.addEventListener("click", async () => {
   try {
     const m = await import("./notifications.js");
