@@ -546,6 +546,43 @@ function startFeed() {
   );
 }
 
+// Creator analytics: count one view per signed-in viewer per post per day.
+const creatorViewObserverCards = new WeakSet();
+function trackCreatorPostView(card, post) {
+  if (!card || !post?.id || creatorViewObserverCards.has(card) || !("IntersectionObserver" in window)) return;
+  creatorViewObserverCards.add(card);
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.6) continue;
+      observer.unobserve(card);
+      const viewer = getCurrentUser();
+      const ownerUid = getOwnerUid(post);
+      if (!viewer || viewer.isAnonymous || !ownerUid || viewer.uid === ownerUid) return;
+      const day = new Date().toISOString().slice(0, 10);
+      const viewId = viewer.uid + "_" + day;
+      (async () => {
+        try {
+          const { runTransaction } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          const postRef = getPostRef(post.id);
+          const viewRef = doc(db, FEED_COLLECTION, post.id, "views", viewId);
+          await runTransaction(db, async transaction => {
+            const viewSnap = await transaction.get(viewRef);
+            if (viewSnap.exists()) return;
+            transaction.set(viewRef, { uid: viewer.uid, day, viewedAt: serverTimestamp() });
+            transaction.update(postRef, {
+              viewCount: increment(1),
+              ["viewsByDay." + day]: increment(1)
+            });
+          });
+        } catch (error) {
+          console.warn("Creator post view count could not be saved:", error);
+        }
+      })();
+    }
+  }, { threshold: [0.6] });
+  observer.observe(card);
+}
+
 // ------------------------------------------------------
 // RENDER FEED
 // ------------------------------------------------------
@@ -639,6 +676,7 @@ async function renderFeed() {
       card.className = "instapro-feed-post";
 
       card.dataset.postId = post.id;
+      trackCreatorPostView(card, post);
 
       const musicUrl = typeof post.musicUrl === "string" ? post.musicUrl : "";
       const musicHTML = musicUrl
@@ -969,6 +1007,7 @@ async function toggleFollow(targetUid, button) {
     const alreadyFollowing = following.includes(targetUid);
 
     const batch = writeBatch(db);
+    const followDay = new Date().toISOString().slice(0, 10);
 
     if (alreadyFollowing) {
       batch.set(
@@ -986,6 +1025,7 @@ async function toggleFollow(targetUid, button) {
         },
         { merge: true }
       );
+      batch.update(targetRef, { ["followsByDay." + followDay]: increment(-1) });
 
     } else {
       batch.set(
@@ -1003,6 +1043,7 @@ async function toggleFollow(targetUid, button) {
         },
         { merge: true }
       );
+      batch.set(targetRef, { ["followsByDay." + followDay]: increment(1) }, { merge: true });
     }
 
     await batch.commit();
