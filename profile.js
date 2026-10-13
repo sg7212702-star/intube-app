@@ -679,6 +679,7 @@ function render(data = profileData, posts = profilePosts) {
   </div>
 `;
 }).join("");
+  }
 
 // Open selected post in Instagram-style viewer
 const postTiles = grid.querySelectorAll(".ipp-tile");
