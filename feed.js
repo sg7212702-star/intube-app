@@ -54,6 +54,7 @@ let profileCache = new Map();
 let feedStarted = false;
 let activeCommentsPostId = null;
 let renderingFeed = false;
+let feedRenderPending = false;
 
 // ------------------------------------------------------
 // AUTH
@@ -528,7 +529,13 @@ function startFeed() {
 // ------------------------------------------------------
 
 async function renderFeed() {
-  if (!feed || renderingFeed) return;
+  if (!feed) return;
+  // If Firestore emits another snapshot while profile lookups are awaiting,
+  // schedule one fresh render after the current render finishes.
+  if (renderingFeed) {
+    feedRenderPending = true;
+    return;
+  }
 
   const user = getCurrentUser();
 
@@ -756,6 +763,10 @@ async function renderFeed() {
     console.error("Render feed error:", error);
   } finally {
     renderingFeed = false;
+    if (feedRenderPending) {
+      feedRenderPending = false;
+      queueMicrotask(() => renderFeed());
+    }
   }
 }
 
