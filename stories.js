@@ -167,22 +167,31 @@ function setRingPreview(ring, story, label) {
   if (!ring) return;
   const url = story ? mediaUrl(story) : "";
   let image = ring.querySelector(":scope > img.insta-story-preview");
+  ring.style.position = "relative";
+  ring.style.overflow = "visible";
+
   if (url) {
+    // Keep the gradient visible as an outer ring; the story image sits inside it.
+    ring.style.background = "conic-gradient(#ffb347,#ff3d9a,#a855f7,#ff3d9a,#ffb347)";
+    ring.style.padding = "3px";
+    ring.style.boxSizing = "border-box";
+    ring.style.border = "0";
     if (!image) {
       image = document.createElement("img");
       image.className = "insta-story-preview";
       image.alt = label;
-      image.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;z-index:0;";
       ring.prepend(image);
     }
     image.src = url;
-    image.style.display = "block";
-    ring.style.position = "relative";
-    ring.style.overflow = "hidden";
+    image.style.cssText = "position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);object-fit:cover;border-radius:50%;z-index:0;display:block;";
     const plus = ring.querySelector("span");
-    if (plus) plus.style.cssText = "position:absolute;right:-1px;bottom:-1px;z-index:3;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
+    if (plus) plus.style.cssText = "position:absolute;right:-3px;bottom:-3px;z-index:3;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
   } else {
     image?.remove();
+    ring.style.background = "";
+    ring.style.padding = "";
+    ring.style.boxSizing = "";
+    ring.style.border = "";
     const plus = ring.querySelector("span");
     if (plus) plus.removeAttribute("style");
   }
@@ -205,8 +214,17 @@ function renderStories() {
   // Keep the "Your story" slot visible so users can always add a story.
   if (yourStoryItem) {
     yourStoryItem.style.display = "flex";
-    yourStoryItem.style.flex = "0 0 auto";
+    yourStoryItem.style.flex = "0 0 64px";
     yourStoryItem.style.minWidth = "64px";
+    yourStoryItem.style.width = "64px";
+    yourStoryItem.style.flexDirection = "column";
+    yourStoryItem.style.alignItems = "center";
+    yourStoryItem.style.textAlign = "center";
+    const caption = yourStoryItem.querySelector("p");
+    if (caption) {
+      caption.textContent = "Your story";
+      caption.style.cssText = "display:block;visibility:visible;opacity:1;width:100%;margin:5px 0 0;padding:0;text-align:center;white-space:nowrap;font-size:12px;line-height:16px;color:inherit;position:relative;z-index:2;";
+    }
   }
   // Show the latest own story in the existing ring; the plus control still opens upload.
   setRingPreview(yourRing, ownGroup?.latest || null, "Your latest story");
