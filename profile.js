@@ -765,8 +765,6 @@ postTiles.forEach((tile, index) => {
       openSelectedPost();
     }
   });
-});
-  }
 
   $("#ippBack", page).onclick = closeProfile;
 
