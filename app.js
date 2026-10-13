@@ -59,12 +59,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("closeMenu")?.addEventListener("click", closeAll);
   $("cancelSheet")?.addEventListener("click", closeAll);
 
-  // ADD BUTTONS - Story + Post
-  $("addBtn")?.addEventListener("click", openSheet);
-  $("addStoryBtn")?.addEventListener("click", openSheet);
-  document.querySelector(".storyGlass")?.addEventListener("click", openSheet);
-
-  // BOTTOM NAV - PROFILE FIREBASE FIX
+  // BOTTOM NAV - GLASS PROFILE FIX
   document.querySelectorAll(".bBtn").forEach(btn => {
     btn.addEventListener("click", async () => {
       if (btn.id === "addBtn") return;
@@ -80,34 +75,42 @@ document.addEventListener("DOMContentLoaded",()=>{
 
       if (v === "home") {
         openPage("home");
+        return;
+      }
 
-      } else if (v === "search") {
+      if (v === "search") {
         openPage("explore");
+        return;
+      }
 
-      } else if (v === "reels") {
+      if (v === "reels") {
         openPage("reels");
+        return;
+      }
 
-      } else if (v === "profile") {
-        openPage("profile");
-
+      if (v === "profile") {
         try {
           const { auth } = await import("./firebase.js");
           const user = auth.currentUser;
 
           if (!user || user.isAnonymous) {
             console.error("Login user nahi mila");
+            alert("Pehle Google se login karein.");
             return;
           }
 
           if (typeof window.openProfile === "function") {
-            window.openProfile(user.uid);
+            await window.openProfile(user.uid);
           } else {
             console.error("Profile function nahi mila");
+            alert("Glass Profile load nahi hua. profile.js check karein.");
           }
-
         } catch (error) {
           console.error("Profile open error:", error);
+          alert("Profile error: " + error.message);
         }
+
+        return;
       }
     });
   });
