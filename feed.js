@@ -1071,33 +1071,38 @@ async function sharePost(postId) {
 async function deletePost(postId) {
   const user = getCurrentUser();
 
-  if (!user) {
+  if (!user || user.isAnonymous) {
     showMessage("Pehle login karein.");
     return;
   }
 
-  const post = currentPosts.find(item => item.id === postId);
-
-  if (!post || !isOwnPost(post)) {
-    showMessage("Aap sirf apni post delete kar sakte hain.");
-    return;
-  }
-
-  if (!confirm("Kya aap is post ko delete karna chahte hain?")) {
-    return;
-  }
-
   try {
-    await deleteDoc(getPostRef(postId));
+    // Firestore se owner dobara verify karein; sirf UI data par bharosa nahi.
+    const postRef = getPostRef(postId);
+    const snapshot = await getDoc(postRef);
 
+    if (!snapshot.exists()) {
+      showMessage("Yeh post pehle hi delete ho chuki hai.");
+      return;
+    }
+
+    const post = { id: snapshot.id, ...snapshot.data() };
+    if (!isOwnPost(post)) {
+      showMessage("Aap sirf apni post delete kar sakte hain.");
+      return;
+    }
+
+    if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) {
+      return;
+    }
+
+    await deleteDoc(postRef);
+    showMessage("Post delete ho gayi.");
   } catch (error) {
     console.error("Delete post error:", error);
-
-    showMessage(
-      "Post delete nahi hui. Firebase Rules check karein."
-    );
+    showMessage("Post delete nahi hui. Firebase Rules mein owner-delete permission check karein.");
   }
-  }
+}
 // ======================================================
 // PART 3 OF 3
 // Comments + Click Handlers + Authentication + Startup
