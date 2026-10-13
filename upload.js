@@ -127,7 +127,9 @@ function connectFileInput(inputId, type) {
     if (!file) return;
 
     try {
-      await handleFile(file, type);
+      const chosenType = input.dataset.instaProUploadType || type;
+      delete input.dataset.instaProUploadType;
+      await handleFile(file, chosenType);
     } finally {
       input.value = "";
     }
@@ -140,7 +142,7 @@ function connectFileInput(inputId, type) {
 
 async function uploadToCloudinary(file, onProgress) {
   const isVideo = file.type.startsWith("video/");
-  const resourceType = isVideo ? "video" : "image";
+  const resourceType = (isVideo || file.type.startsWith("audio/")) ? "video" : "image";
 
   const endpoint =
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
@@ -286,6 +288,17 @@ const notice = window.InstaProUploadNotification;
       throw new Error("Cloudinary se media URL nahi mila.");
     }
 
+    // If music was selected in the editor, upload its audio file separately.
+    // The post stores musicUrl as a soundtrack reference; it is not re-encoded into the video.
+    let soundtrackUrl = "";
+    const soundtrackFile = window.__instaProPendingMusicFile || null;
+    if (soundtrackFile && postType !== "story") {
+      status.textContent = "Editor music upload ho raha hai...";
+      const soundtrackResult = await uploadToCloudinary(soundtrackFile);
+      soundtrackUrl = soundtrackResult.secure_url;
+    }
+    window.__instaProPendingMusicFile = null;
+
     // Firestore save starts
     status.textContent =
       "Firebase Firestore mein data save ho raha hai...";
@@ -310,6 +323,9 @@ const notice = window.InstaProUploadNotification;
       contentType: isVideo ? "video" : "image",
       mediaType: isVideo ? "video" : "image",
       caption: "",
+      postType: postType === "reel" ? "reel" : postType,
+      isReel: postType === "reel",
+      ...(soundtrackUrl ? { musicUrl: soundtrackUrl, musicName: soundtrackFile?.name || "Soundtrack" } : {}),
       likes: [],
       likesCount: 0,
       comments: [],
