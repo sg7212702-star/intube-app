@@ -183,7 +183,10 @@ import {
     const callback = pickerCallback;
     close();
     if (callback) callback(selected);
-    else alert("Audio selected. Reel Editor में media चुनें और Browse Music से यह Audio चुनें।");
+    else {
+      window.__instaProSelectedMusicTrack = selected;
+      alert("Audio select हो गया। अब Reel चुनकर video select करें; Editor में यह Music अपने-आप चुना जाएगा।");
+    }
   }
 
   async function uploadTrack() {
