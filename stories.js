@@ -1,7 +1,7 @@
 // InstaPro Stories — Instagram-style realtime stories
 import { db, auth } from "./firebase.js";
 import {
-  collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove,
+  collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
   setDoc, addDoc, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -125,7 +125,8 @@ function expiry(story) {
 }
 function activeStories() {
   const now = Date.now();
-  return allStories.filter(s => mediaUrl(s) && expiry(s) > now)
+  const uid=(signedInUser||auth.currentUser)?.uid||"";
+  return allStories.filter(s => mediaUrl(s) && expiry(s) > now && ((s.privacy?.audience||s.audience||"everyone")!=="onlyMe" || ownerId(s)===uid))
     .sort((a, b) => timestamp(b) - timestamp(a));
 }
 function groupsByUser(stories) {
@@ -229,6 +230,93 @@ function renderStories() {
     item.append(ring, caption);
     otherStoriesBox.appendChild(item);
   }
+}
+
+
+function openStoryPanel(title, bodyHtml) {
+  document.getElementById("instapro-story-panel")?.remove();
+  const panel=document.createElement("section"); panel.id="instapro-story-panel";
+  panel.style.cssText="position:absolute;left:0;right:0;bottom:0;z-index:30;background:#fff;color:#161616;border-radius:22px 22px 0 0;max-height:75%;display:flex;flex-direction:column;box-shadow:0 -12px 40px #0008;font-family:Arial,sans-serif;";
+  panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid #eee;"><strong>'+escapeHtml(title)+'</strong><button class="isp-close" style="border:0;background:transparent;font-size:25px;color:#222;">×</button></div><div class="isp-body" style="overflow:auto;padding:12px 16px;">'+bodyHtml+'</div>';
+  viewer.appendChild(panel); panel.querySelector(".isp-close").onclick=()=>panel.remove(); return panel;
+}
+async function getOtherUsers() {
+  const user=signedInUser||auth.currentUser; if(!user) throw new Error("Pehle Google login karein.");
+  const snap=await getDocs(collection(db,"users"));
+  return snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>u.uid!==user.uid);
+}
+function userLabel(u){return u.username||u.displayName||u.name||u.email?.split("@")[0]||"InstaPro User";}
+async function openStoryViewers(){
+  const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
+  if(!story||!user||ownerId(story)!==user.uid){alert("Viewer list sirf apni story par dikhegi.");return;}
+  const panel=openStoryPanel("Story viewers","<p>Viewers load ho rahe hain…</p>");
+  try{
+    const ids=Array.isArray(story.seenBy)?story.seenBy:[];
+    if(!ids.length){panel.querySelector(".isp-body").innerHTML='<p style="text-align:center;color:#777;padding:20px 0;">Abhi kisi ne story nahi dekhi.</p>';return;}
+    const people=await Promise.all(ids.map(async uid=>{try{const s=await getDoc(doc(db,"users",uid));return s.exists()?{uid,...s.data()}:{uid,username:"InstaPro User"};}catch{return {uid,username:"InstaPro User"};}}));
+    panel.querySelector(".isp-body").innerHTML='<p style="font-size:13px;color:#777;">'+people.length+' views</p>'+people.map(p=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;"><img src="'+escapeHtml(p.photoURL||p.photo||"https://www.gravatar.com/avatar/?d=mp")+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;"><strong>'+escapeHtml(userLabel(p))+'</strong></div>').join("");
+  }catch(e){console.error(e);panel.querySelector(".isp-body").textContent="Viewer list load nahi hui. Firestore Rules check karein.";}
+}
+async function openStoryDmShare(){
+  const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
+  if(!story||!user||user.isAnonymous){alert("Story DM mein send karne ke liye Google login karein.");return;}
+  const panel=openStoryPanel("Send story in DM","<p>Users load ho rahe hain…</p>");
+  try{
+    const users=await getOtherUsers(),body=panel.querySelector(".isp-body");
+    body.innerHTML='<input class="isd-search" placeholder="Search username…" style="width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:12px;padding:11px;color:#111;background:#fff;"><div class="isd-users" style="margin-top:8px;"></div>';
+    const draw=()=>{
+      const term=body.querySelector(".isd-search").value.trim().toLowerCase();
+      const matches=users.filter(u=>(userLabel(u)+" "+(u.email||"")).toLowerCase().includes(term)).slice(0,80);
+      body.querySelector(".isd-users").innerHTML=matches.length?matches.map(u=>'<button data-uid="'+escapeHtml(u.uid)+'" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 0;border:0;border-bottom:1px solid #eee;background:#fff;text-align:left;color:#111;"><img src="'+escapeHtml(u.photoURL||u.photo||"https://www.gravatar.com/avatar/?d=mp")+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;"><span style="flex:1;">'+escapeHtml(userLabel(u))+'</span><b style="color:#0095f6;">Send</b></button>').join(""):"<p>No users found.</p>";
+      body.querySelectorAll("[data-uid]").forEach(btn=>btn.onclick=async()=>{
+        btn.disabled=true;const target=users.find(u=>u.uid===btn.dataset.uid);
+        try{
+          const cid=chatIdFor(user.uid,target.uid);
+          await setDoc(doc(db,"chats",cid),{participants:[user.uid,target.uid],lastMessage:"Shared a story",lastSenderUid:user.uid,updatedAt:serverTimestamp()},{merge:true});
+          await addDoc(collection(db,"chats",cid,"messages"),{text:"Shared a story",message:"Shared a story",senderUid:user.uid,receiverUid:target.uid,uid:user.uid,createdAt:serverTimestamp(),read:false,messageType:"story_share",storyId:story.id,storyMediaUrl:mediaUrl(story),storyOwnerUid:ownerId(story)});
+          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_share",message:"shared a story with you",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"InstaPro User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
+          panel.remove();alert("Story DM mein send ho gayi.");
+        }catch(e){console.error(e);alert("DM mein story send nahi hui. Firestore Rules check karein.");btn.disabled=false;}
+      });
+    };
+    body.querySelector(".isd-search").addEventListener("input",draw);draw();
+  }catch(e){console.error(e);panel.querySelector(".isp-body").textContent="Users load nahi hue. Firestore Rules check karein.";}
+}
+async function openStoryMention(){
+  const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
+  if(!story||!user||user.isAnonymous){alert("Mention ke liye Google login karein.");return;}
+  const panel=openStoryPanel("Mention someone","<p>Users load ho rahe hain…</p>");
+  try{
+    const users=await getOtherUsers(),body=panel.querySelector(".isp-body");
+    body.innerHTML='<input class="ism-search" placeholder="Search username…" style="width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:12px;padding:11px;color:#111;background:#fff;"><div class="ism-users" style="margin-top:8px;"></div>';
+    const draw=()=>{
+      const term=body.querySelector(".ism-search").value.trim().toLowerCase();
+      const matches=users.filter(u=>(userLabel(u)+" "+(u.email||"")).toLowerCase().includes(term)).slice(0,80);
+      body.querySelector(".ism-users").innerHTML=matches.length?matches.map(u=>'<button data-uid="'+escapeHtml(u.uid)+'" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 0;border:0;border-bottom:1px solid #eee;background:#fff;text-align:left;color:#111;"><img src="'+escapeHtml(u.photoURL||u.photo||"https://www.gravatar.com/avatar/?d=mp")+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;"><span style="flex:1;">'+escapeHtml(userLabel(u))+'</span><b style="color:#0095f6;">@ Mention</b></button>').join(""):"<p>No users found.</p>";
+      body.querySelectorAll("[data-uid]").forEach(btn=>btn.onclick=async()=>{
+        btn.disabled=true;const target=users.find(u=>u.uid===btn.dataset.uid);
+        try{
+          await updateDoc(doc(db,"stories",story.id),{mentionedUids:arrayUnion(target.uid),mentionedUsernames:arrayUnion(userLabel(target))});
+          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_mention",message:"mentioned you in a story",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"InstaPro User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
+          story.mentionedUids=[...new Set([...(story.mentionedUids||[]),target.uid])];panel.remove();alert("@"+userLabel(target)+" ko story mein mention kar diya.");
+        }catch(e){console.error(e);alert("Mention save nahi hua. Firestore Rules check karein.");btn.disabled=false;}
+      });
+    };
+    body.querySelector(".ism-search").addEventListener("input",draw);draw();
+  }catch(e){console.error(e);panel.querySelector(".isp-body").textContent="Users load nahi hue. Firestore Rules check karein.";}
+}
+async function openStoryPrivacy(){
+  const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
+  if(!story||!user||ownerId(story)!==user.uid){alert("Privacy sirf apni story ki badal sakte hain.");return;}
+  const privacy=story.privacy||{};
+  const panel=openStoryPanel("Story privacy",'<p style="font-size:13px;color:#666;">Changes Firebase mein save honge.</p><label style="display:block;margin:14px 0 6px;font-weight:600;">Who can see this story?</label><select class="isp-audience" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;"><option value="everyone">Everyone</option><option value="onlyMe">Only me (hide from everyone)</option></select><label style="display:block;margin:14px 0 6px;font-weight:600;">Story replies</label><select class="isp-replies" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111;"><option value="everyone">Allow replies</option><option value="off">Turn off replies</option></select><button class="isp-save" style="width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;">Save privacy</button>');
+  panel.querySelector(".isp-audience").value=privacy.audience||story.audience||"everyone";panel.querySelector(".isp-replies").value=privacy.replies||"everyone";
+  panel.querySelector(".isp-save").onclick=async()=>{
+    const save=panel.querySelector(".isp-save");save.disabled=true;
+    const next={audience:panel.querySelector(".isp-audience").value,replies:panel.querySelector(".isp-replies").value,updatedAt:Date.now()};
+    try{await updateDoc(doc(db,"stories",story.id),{privacy:next,audience:next.audience});story.privacy=next;story.audience=next.audience;panel.remove();renderStories();alert("Story privacy Firebase mein save ho gayi.");}
+    catch(e){console.error(e);alert("Privacy save nahi hui. Firestore Rules check karein.");save.disabled=false;}
+  };
 }
 
 function openStoryComments() {
@@ -362,11 +450,14 @@ function openStoryGroup(group, startIndex = 0) {
       <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
+        <button class="is-viewers" aria-label="View story viewers" title="Viewers" style="display:none;background:transparent!important;border:0;color:#fff;font-size:18px;white-space:nowrap;">◉ <span class="is-view-count">0</span></button>
         <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
-        <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
-        <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
+        <button class="is-send" aria-label="Send reply" title="Reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
+        <button class="is-like" aria-label="Like story" title="Like" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
         <button class="is-comments" aria-label="Comment on story" title="Comments" style="background:transparent!important;border:0;color:#fff;font-size:22px;">💬</button>
-        <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
+        <button class="is-share" aria-label="Send story in DM" title="Send in DM" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
+        <button class="is-mention" aria-label="Mention someone" title="Mention" style="background:transparent!important;border:0;color:#fff;font-size:20px;">@</button>
+        <button class="is-more" aria-label="Story privacy settings" title="More / Privacy" style="background:transparent!important;border:0;color:#fff;font-size:24px;">⋮</button>
       </div>
     </div>`
   document.body.appendChild(viewer);
@@ -376,6 +467,10 @@ function openStoryGroup(group, startIndex = 0) {
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
   viewer.querySelector(".is-like").onclick = toggleStoryLike;
   viewer.querySelector(".is-comments").onclick = openStoryComments;
+  viewer.querySelector(".is-viewers").onclick = openStoryViewers;
+  viewer.querySelector(".is-share").onclick = openStoryDmShare;
+  viewer.querySelector(".is-mention").onclick = openStoryMention;
+  viewer.querySelector(".is-more").onclick = openStoryPrivacy;
   viewer.querySelector(".is-send").onclick = async () => {
     const input = viewer?.querySelector(".is-reply");
     const value = input?.value.trim();
@@ -394,15 +489,6 @@ function openStoryGroup(group, startIndex = 0) {
   viewer.querySelector(".is-reply").addEventListener("keydown", event => {
     if (event.key === "Enter") { event.preventDefault(); viewer.querySelector(".is-send").click(); }
   });
-  viewer.querySelector(".is-share").onclick = async () => {
-    const story = currentGroup[currentIndex];
-    const url = mediaUrl(story);
-    try {
-      if (navigator.share) await navigator.share({ title: "InstaPro Story", url });
-      else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(url); alert("Story link copied."); }
-      else window.prompt("Copy story link:", url);
-    } catch (e) { if (e?.name !== "AbortError") console.warn("Story share:", e); }
-  };
   viewer.addEventListener("click", event => {
     if (event.target === viewer) closeViewer();
   });
@@ -457,6 +543,12 @@ function showAt(index) {
   const likeButton = viewer.querySelector(".is-like");
   if (replyInput) replyInput.style.display = isOwnStory ? "none" : "";
   if (sendButton) sendButton.style.display = isOwnStory ? "none" : "";
+  const viewersButton=viewer.querySelector(".is-viewers");
+  if(viewersButton){viewersButton.style.display=isOwnStory?"":"none";viewersButton.querySelector(".is-view-count").textContent=String(Array.isArray(story.seenBy)?story.seenBy.length:0);}
+  const repliesAllowed=(story.privacy?.replies||"everyone")!=="off";
+  if(replyInput&&!isOwnStory)replyInput.disabled=!repliesAllowed;
+  if(sendButton&&!isOwnStory)sendButton.disabled=!repliesAllowed;
+  if(replyInput&&!isOwnStory&&!repliesAllowed)replyInput.placeholder="Replies turned off";
   const addStoryButton = viewer.querySelector(".is-add-story");
   if (addStoryButton) addStoryButton.style.display = isOwnStory ? "" : "none";
   if (likeButton) likeButton.style.display = isOwnStory ? "none" : "";
