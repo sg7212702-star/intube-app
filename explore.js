@@ -1,20 +1,81 @@
-import { db } from "./firebase.js"; import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-const explorePage=document.getElementById("explorePage");
-if(explorePage){
-  // Search bar banao agar nahi hai
-  if(!document.getElementById("searchInput")){
-    const sBar=document.createElement("div");
-    sBar.innerHTML=`<div style="margin:10px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;gap:8px"><span>🔍</span><input id="searchInput" placeholder="Search..." style="flex:1;background:transparent;border:0;color:#fff;outline:none"></div><div id="exploreGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:6px"></div>`;
-    explorePage.prepend(sBar);
-  }
-  const grid=document.getElementById("exploreGrid");
-  onSnapshot(query(collection(db,"posts"),orderBy("createdAt","desc")),snap=>{
-    if(!grid) return;
-    if(snap.empty){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;opacity:.5;padding:40px">No posts yet</div>`; return; }
-    grid.innerHTML=""; snap.forEach(d=>{ grid.innerHTML+=`<img src="${d.data().url}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px">`; });
+// InstaPro Explore — real-time searchable posts grid
+import { db } from "./firebase.js";
+import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const explorePage = document.getElementById("explorePage");
+const searchInput = document.getElementById("searchInput");
+const grid = document.getElementById("exploreGrid");
+const empty = document.getElementById("exploreEmpty");
+let explorePosts = [];
+let unsubscribeExplore = null;
+
+const escapeExplore = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
+  "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+}[ch]));
+const mediaOf = post => post.mediaUrl || post.imageUrl || post.url || post.videoUrl || post.image || "";
+const videoOf = post => {
+  const type = String(post.type || post.mediaType || post.contentType || "").toLowerCase();
+  return type.includes("video") || type.includes("reel") || /\.(mp4|webm|mov)(\?|$)/i.test(mediaOf(post));
+};
+function openExplorePost(post) {
+  const url = mediaOf(post);
+  if (!url) return;
+  const viewer = document.createElement("div");
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;color:white;";
+  const media = document.createElement(videoOf(post) ? "video" : "img");
+  media.src = url;
+  media.style.cssText = "max-width:100%;max-height:78vh;object-fit:contain;";
+  if (videoOf(post)) { media.controls = true; media.autoplay = true; media.playsInline = true; }
+  const caption = document.createElement("p");
+  caption.textContent = post.caption || "";
+  caption.style.cssText = "max-width:100%;overflow-wrap:anywhere;";
+  const close = document.createElement("button");
+  close.type = "button"; close.textContent = "✕ Close";
+  close.style.cssText = "position:absolute;top:18px;left:16px;padding:10px 16px;border:1px solid #555;border-radius:10px;background:#222;color:white;";
+  close.onclick = () => { media.pause?.(); viewer.remove(); };
+  viewer.addEventListener("click", event => { if (event.target === viewer) { media.pause?.(); viewer.remove(); } });
+  viewer.append(close, media, caption);
+  document.body.appendChild(viewer);
+}
+function renderExplore() {
+  if (!grid) return;
+  const term = (searchInput?.value || "").trim().toLowerCase();
+  const filtered = explorePosts.filter(post => {
+    const haystack = [post.caption, post.username, post.displayName, post.name, post.email].join(" ").toLowerCase();
+    return haystack.includes(term);
   });
-  document.getElementById("searchInput")?.addEventListener("input",e=>{
-    const q=e.target.value.toLowerCase();
-    document.querySelectorAll("#exploreGrid img").forEach(img=>{ img.style.display = q===""? "block":"block"; });
+  grid.innerHTML = "";
+  if (empty) empty.style.display = filtered.length ? "none" : "block";
+  filtered.forEach(post => {
+    const url = mediaOf(post);
+    if (!url) return;
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.style.cssText = "position:relative;display:block;width:100%;aspect-ratio:1;border:0;padding:0;background:#151515;overflow:hidden;cursor:pointer;";
+    const media = document.createElement(videoOf(post) ? "video" : "img");
+    media.src = url;
+    media.alt = post.caption || "Post";
+    media.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+    if (videoOf(post)) { media.muted = true; media.playsInline = true; media.preload = "metadata"; }
+    tile.appendChild(media);
+    if (videoOf(post)) {
+      const badge = document.createElement("span");
+      badge.textContent = "▶";
+      badge.style.cssText = "position:absolute;top:6px;right:7px;color:white;text-shadow:0 1px 4px #000;";
+      tile.appendChild(badge);
+    }
+    tile.addEventListener("click", () => openExplorePost(post));
+    grid.appendChild(tile);
   });
 }
+if (explorePage && grid) {
+  searchInput?.addEventListener("input", renderExplore);
+  unsubscribeExplore = onSnapshot(query(collection(db, "posts"), orderBy("createdAt", "desc")), snapshot => {
+    explorePosts = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+    renderExplore();
+  }, error => {
+    console.error("Explore load error:", error);
+    if (empty) { empty.textContent = "Posts load nahi hue. Firestore Rules check karein."; empty.style.display = "block"; }
+  });
+}
+window.addEventListener("pagehide", () => { if (unsubscribeExplore) unsubscribeExplore(); });
