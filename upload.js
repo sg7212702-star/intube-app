@@ -313,13 +313,15 @@ const notice = window.InstaProUploadNotification;
       likes: [],
       likesCount: 0,
       comments: [],
-      // Story privacy defaults; owner can change them from the viewer's more menu.
-      privacy: postType === "story" ? { audience: "everyone", replies: "everyone" } : undefined,
-      audience: postType === "story" ? "everyone" : undefined,
-      mentionedUids: [],
-      mentionedUsernames: [],
-      seenBy: [],
-      likedBy: [],
+      // Story-only metadata is omitted from regular posts.
+      ...(postType === "story" ? {
+        privacy: { audience: "everyone", replies: "everyone" },
+        audience: "everyone",
+        mentionedUids: [],
+        mentionedUsernames: [],
+        seenBy: [],
+        likedBy: []
+      } : {}),
       createdAt: serverTimestamp()
     };
 
