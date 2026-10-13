@@ -188,6 +188,11 @@
     root.querySelectorAll("[data-adjust]").forEach(input => input.addEventListener("input", adjust));
     renderFilters();
     adjust();
+    if (window.__instaProSelectedMusicTrack) {
+      const pickedTrack = window.__instaProSelectedMusicTrack;
+      window.__instaProSelectedMusicTrack = null;
+      selectLibraryMusic(pickedTrack);
+    }
   }
 
   function renderFilters() {
