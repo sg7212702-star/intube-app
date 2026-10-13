@@ -20,6 +20,7 @@ let viewerTimer = null;
 let currentGroup = [];
 let currentIndex = 0;
 let seenStoryIds = new Set();
+let stopStoryComments = null;
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
   "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
@@ -230,8 +231,99 @@ function renderStories() {
   }
 }
 
+function openStoryComments() {
+  const user = signedInUser || auth.currentUser;
+  const story = currentGroup[currentIndex];
+  if (!story || !viewer) return;
+  if (!user || user.isAnonymous) { alert("Story comment karne ke liye Google login karein."); return; }
+  if (stopStoryComments) stopStoryComments();
+  stopStoryComments = null;
+  document.getElementById("instapro-story-comments")?.remove();
+  if (viewerTimer) clearTimeout(viewerTimer);
+  viewerTimer = null;
+  const activeMedia = viewer.querySelector(".is-media video");
+  if (activeMedia) activeMedia.pause();
+
+  const drawer = document.createElement("section");
+  drawer.id = "instapro-story-comments";
+  drawer.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:20;background:#fff;color:#171717;border-radius:20px 20px 0 0;max-height:68%;min-height:42%;display:flex;flex-direction:column;box-shadow:0 -12px 40px #0008;animation:instaStorySheetIn .24s ease-out;font-family:Arial,sans-serif;";
+  drawer.innerHTML = `
+    <style>
+      @keyframes instaStorySheetIn { from { transform:translateY(35px);opacity:.5 } to { transform:translateY(0);opacity:1 } }
+      @keyframes instaStoryCommentIn { from { transform:translateY(8px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+      .isc-row { display:flex;gap:9px;align-items:flex-start;padding:10px 0;animation:instaStoryCommentIn .18s ease-out;overflow-wrap:anywhere; }
+      .isc-row img { width:30px;height:30px;border-radius:50%;object-fit:cover;background:#ddd;flex-shrink:0; }
+    </style>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid #eee;">
+      <strong style="font-size:15px;">Story comments</strong>
+      <button type="button" class="isc-close" aria-label="Close comments" style="border:0;background:transparent;font-size:25px;color:#222;">×</button>
+    </div>
+    <div class="isc-list" style="overflow:auto;flex:1;padding:6px 16px;"><p style="font-size:13px;color:#777;">Loading comments…</p></div>
+    <form class="isc-form" style="display:flex;gap:8px;padding:12px;border-top:1px solid #eee;">
+      <input class="isc-input" maxlength="500" placeholder="Add a comment…" style="flex:1;min-width:0;border:1px solid #ddd;border-radius:22px;padding:11px 14px;outline:none;color:#111;background:#fff;">
+      <button type="submit" style="border:0;background:#0095f6;color:#fff;border-radius:22px;padding:0 16px;font-weight:600;">Post</button>
+    </form>`;
+  viewer.appendChild(drawer);
+
+  const close = () => {
+    if (stopStoryComments) stopStoryComments();
+    stopStoryComments = null;
+    drawer.remove();
+    showAt(currentIndex);
+  };
+  drawer.querySelector(".isc-close").onclick = close;
+  drawer.querySelector(".isc-form").onsubmit = async event => {
+    event.preventDefault();
+    const input = drawer.querySelector(".isc-input");
+    const value = input.value.trim();
+    if (!value) return;
+    const submit = drawer.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await addDoc(collection(db, "stories", story.id, "comments"), {
+        uid: user.uid,
+        username: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+        photo: user.photoURL || "",
+        text: value,
+        createdAt: serverTimestamp()
+      });
+      input.value = "";
+      await notifyStoryOwner(ownerId(story), "story_comment", "commented on your story", story);
+    } catch (error) {
+      console.error("Story comment save error:", error);
+      alert("Comment save nahi hua. Firestore Rules check karein.");
+    } finally { if (submit.isConnected) submit.disabled = false; }
+  };
+
+  stopStoryComments = onSnapshot(
+    query(collection(db, "stories", story.id, "comments"), orderBy("createdAt", "asc")),
+    snapshot => {
+      const list = drawer.querySelector(".isc-list");
+      if (!list) return;
+      if (snapshot.empty) {
+        list.innerHTML = '<p style="font-size:13px;color:#777;text-align:center;padding:25px 0;">No comments yet. Be the first!</p>';
+        return;
+      }
+      list.innerHTML = snapshot.docs.map(item => {
+        const comment = item.data();
+        const photo = comment.photo || "https://www.gravatar.com/avatar/?d=mp";
+        return '<div class="isc-row"><img src="' + escapeHtml(photo) + '" alt=""><div style="font-size:13px;line-height:1.45;"><strong>' + escapeHtml(comment.username || "InstaPro User") + '</strong><div style="margin-top:2px;">' + escapeHtml(comment.text || "") + '</div></div></div>';
+      }).join("");
+      list.scrollTop = list.scrollHeight;
+    },
+    error => {
+      console.error("Story comments listener error:", error);
+      const list = drawer.querySelector(".isc-list");
+      if (list) list.innerHTML = '<p style="font-size:13px;color:#b00;">Comments load nahi hue. Firestore Rules check karein.</p>';
+    }
+  );
+}
+
 function closeViewer() {
   if (viewerTimer) clearTimeout(viewerTimer);
+  if (stopStoryComments) stopStoryComments();
+  stopStoryComments = null;
+  document.getElementById("instapro-story-comments")?.remove();
   viewerTimer = null;
   if (stopCurrentStory) stopCurrentStory();
   stopCurrentStory = null;
@@ -250,7 +342,13 @@ function openStoryGroup(group, startIndex = 0) {
   currentIndex = 0;
   viewer = document.createElement("div");
   viewer.className = "instapro-story-viewer";
-  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;";
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;animation:instaStoryViewerIn .18s ease-out;";
+  if (!document.getElementById("instapro-story-animations")) {
+    const style = document.createElement("style");
+    style.id = "instapro-story-animations";
+    style.textContent = "@keyframes instaStoryViewerIn{from{opacity:.4;transform:scale(.985)}to{opacity:1;transform:scale(1)}} .insta-story-account .sRing{transition:transform .18s ease,filter .18s ease} .insta-story-account .sRing:active{transform:scale(.94);filter:brightness(1.15)} .is-like{transition:transform .15s ease} .is-like:active{transform:scale(1.25)}";
+    document.head.appendChild(style);
+  }
   viewer.innerHTML = `
     <div class="is-progress" style="position:absolute;top:12px;left:10px;right:10px;display:flex;gap:4px;z-index:5;"></div>
     <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
@@ -265,6 +363,7 @@ function openStoryGroup(group, startIndex = 0) {
       <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
       <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
       <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
+      <button class="is-comments" aria-label="Comment on story" title="Comments" style="background:transparent!important;border:0;color:#fff;font-size:22px;">💬</button>
       <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
     </div>`;
   document.body.appendChild(viewer);
@@ -272,6 +371,7 @@ function openStoryGroup(group, startIndex = 0) {
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
   viewer.querySelector(".is-like").onclick = toggleStoryLike;
+  viewer.querySelector(".is-comments").onclick = openStoryComments;
   viewer.querySelector(".is-send").onclick = async () => {
     const input = viewer?.querySelector(".is-reply");
     const value = input?.value.trim();
