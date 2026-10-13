@@ -2,7 +2,7 @@
 import { auth, db } from "./firebase.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
-  doc, setDoc, serverTimestamp
+  doc, setDoc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -234,7 +234,24 @@ async function sendMsg(event) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", setupUI);
+// Open a direct chat from another profile.
+window.openChatWithUser = async function(uid) {
+  if (!currentUser || currentUser.isAnonymous) { alert('Pehle Google se login karein.'); return; }
+  if (!uid || uid === currentUser.uid) return;
+  let user = allUsers.find(item => item.uid === uid);
+  if (!user) {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { alert('Is user ki profile nahi mili.'); return; }
+    user = { uid: snap.id, ...snap.data() };
+  }
+  document.querySelectorAll('.page').forEach(page => { page.style.display = 'none'; });
+  const chatPage = $('chatPage');
+  if (chatPage) chatPage.style.display = 'block';
+  setupUI();
+  openChat(user);
+};
+
+document.addEventListener('DOMContentLoaded', setupUI);
 onAuthStateChanged(auth, user => {
   currentUser = user;
   if ($("chatOwnName")) $("chatOwnName").textContent = nameOf(user || {});
