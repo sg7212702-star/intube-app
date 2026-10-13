@@ -342,32 +342,36 @@ function openStoryGroup(group, startIndex = 0) {
   currentIndex = 0;
   viewer = document.createElement("div");
   viewer.className = "instapro-story-viewer";
-  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.96);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;animation:instaStoryViewerIn .18s ease-out;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);";
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.92);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;animation:instaStoryViewerIn .18s ease-out;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);";
   if (!document.getElementById("instapro-story-animations")) {
     const style = document.createElement("style");
     style.id = "instapro-story-animations";
-    style.textContent = "@keyframes instaStoryViewerIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}} @keyframes instaStoryBarGlow{0%{opacity:.65}50%{opacity:1}100%{opacity:.65}} .instapro-story-viewer .is-head,.instapro-story-viewer .is-progress,.instapro-story-viewer .is-footer{background:transparent!important} .instapro-story-viewer .is-progress>div{box-shadow:0 1px 4px #0008} .instapro-story-viewer .is-head{padding-top:4px} .instapro-story-viewer .is-footer{padding-bottom:calc(18px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.22))!important} .insta-story-account .sRing{transition:transform .18s ease,filter .18s ease} .insta-story-account .sRing:active{transform:scale(.94);filter:brightness(1.15)} .is-like{transition:transform .15s ease} .is-like:active{transform:scale(1.25)}";
+    style.textContent = "@keyframes instaStoryViewerIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}} @keyframes instaStoryBarGlow{0%{opacity:.65}50%{opacity:1}100%{opacity:.65}} .instapro-story-viewer .is-stage{position:relative;width:min(100vw,450px);height:min(100dvh,800px);aspect-ratio:9/16;max-height:100dvh;overflow:hidden;background:#080808;border-radius:0;box-shadow:0 8px 40px #0008} .instapro-story-viewer .is-media{position:absolute!important;inset:0;width:100%!important;height:100%!important;z-index:1} .instapro-story-viewer .is-media img,.instapro-story-viewer .is-media video{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:transparent!important} .instapro-story-viewer .is-head,.instapro-story-viewer .is-progress,.instapro-story-viewer .is-footer{background:transparent!important;left:10px!important;right:10px!important} .instapro-story-viewer .is-progress{top:10px!important;z-index:7!important} .instapro-story-viewer .is-head{top:23px!important;z-index:7!important;padding-top:4px} .instapro-story-viewer .is-footer{bottom:calc(8px + env(safe-area-inset-bottom))!important;z-index:8!important;padding-bottom:8px;background:linear-gradient(transparent,rgba(0,0,0,.35))!important} .instapro-story-viewer .is-prev,.instapro-story-viewer .is-next{z-index:2!important;top:12%!important;bottom:14%!important} .instapro-story-viewer .is-close,.instapro-story-viewer .is-add-story,.instapro-story-viewer .is-send,.instapro-story-viewer .is-like,.instapro-story-viewer .is-comments,.instapro-story-viewer .is-share{cursor:pointer;flex-shrink:0;touch-action:manipulation} .insta-story-account .sRing{transition:transform .18s ease,filter .18s ease} .insta-story-account .sRing:active{transform:scale(.94);filter:brightness(1.15)} .is-like{transition:transform .15s ease} .is-like:active{transform:scale(1.25)} @media(min-width:500px){.instapro-story-viewer .is-stage{border-radius:12px;height:min(90dvh,800px);width:min(calc(90dvh * 9 / 16),450px)} .instapro-story-viewer .is-head{top:24px!important}} @media(max-width:499px){.instapro-story-viewer .is-stage{width:100vw;height:100dvh;aspect-ratio:auto;border-radius:0}}";
     document.head.appendChild(style);
   }
   viewer.innerHTML = `
-    <div class="is-progress" style="position:absolute;top:12px;left:10px;right:10px;display:flex;gap:4px;z-index:5;"></div>
-    <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
-      <img class="is-avatar" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;">
-      <span class="is-name" style="font-size:14px;font-weight:600;flex:1;"></span>
-      <button class="is-close" aria-label="Close story" style="background:transparent!important;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
-    </div>
-    <div class="is-media" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
-    <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
-    <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
-    <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
-      <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
-      <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
-      <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
-      <button class="is-comments" aria-label="Comment on story" title="Comments" style="background:transparent!important;border:0;color:#fff;font-size:22px;">💬</button>
-      <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
-    </div>`;
+    <div class="is-stage">
+      <div class="is-progress" style="position:absolute;top:12px;left:10px;right:10px;display:flex;gap:4px;z-index:5;"></div>
+      <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
+        <img class="is-avatar" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;">
+        <span class="is-name" style="font-size:14px;font-weight:600;flex:1;"></span>
+        <button class="is-add-story" aria-label="Add another story" title="Add another story" style="display:none;background:transparent!important;border:0;color:#fff;font-size:25px;padding:0 5px;">＋</button>
+        <button class="is-close" aria-label="Close story" style="background:transparent!important;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
+      </div>
+      <div class="is-media" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+      <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
+      <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
+      <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
+        <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent!important;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
+        <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
+        <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
+        <button class="is-comments" aria-label="Comment on story" title="Comments" style="background:transparent!important;border:0;color:#fff;font-size:22px;">💬</button>
+        <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
+      </div>
+    </div>`
   document.body.appendChild(viewer);
   viewer.querySelector(".is-close").onclick = closeViewer;
+  viewer.querySelector(".is-add-story").onclick = openUpload;
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
   viewer.querySelector(".is-like").onclick = toggleStoryLike;
@@ -453,6 +457,8 @@ function showAt(index) {
   const likeButton = viewer.querySelector(".is-like");
   if (replyInput) replyInput.style.display = isOwnStory ? "none" : "";
   if (sendButton) sendButton.style.display = isOwnStory ? "none" : "";
+  const addStoryButton = viewer.querySelector(".is-add-story");
+  if (addStoryButton) addStoryButton.style.display = isOwnStory ? "" : "none";
   if (likeButton) likeButton.style.display = isOwnStory ? "none" : "";
   currentLiked = !!user && (Array.isArray(story.likedBy) ? story.likedBy : []).includes(user.uid);
   updateLikeButton();
