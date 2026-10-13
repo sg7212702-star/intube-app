@@ -631,7 +631,7 @@ function render(data = profileData, posts = profilePosts) {
                   ${esc(h.title || "Highlight")}
                 </button>
               `;
-            }).join("")
+            }).join("")}
 
         </div>
 
