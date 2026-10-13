@@ -4,10 +4,17 @@ import {
   doc,
   getDoc,
   setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  arrayUnion,
+  arrayRemove,
+  increment,
   onSnapshot,
   collection,
   query,
   where,
+  orderBy,
   limit,
   writeBatch,
   serverTimestamp
@@ -19,6 +26,8 @@ const UPLOAD_PRESET = "intube_free";
 let profileUnsub = null;
 let viewerUnsub = null;
 let postsUnsub = null;
+let postViewerUnsub = null;
+let commentsViewerUnsub = null;
 
 let viewingUid = null;
 let profileData = {};
@@ -108,10 +117,14 @@ function stopListeners() {
   if (profileUnsub) profileUnsub();
   if (viewerUnsub) viewerUnsub();
   if (postsUnsub) postsUnsub();
+  if (postViewerUnsub) postViewerUnsub();
+  if (commentsViewerUnsub) commentsViewerUnsub();
 
   profileUnsub = null;
   viewerUnsub = null;
   postsUnsub = null;
+  postViewerUnsub = null;
+  commentsViewerUnsub = null;
 }
 
 function addStyles() {
@@ -681,90 +694,209 @@ function render(data = profileData, posts = profilePosts) {
 }).join("");
   }
 
-// Open selected post in Instagram-style viewer
-const postTiles = grid.querySelectorAll(".ipp-tile");
+// Instagram-style post/reel viewer with likes, comments, save, share and delete.
+async function openSelectedPost(post) {
+  if (!post) return;
+  closePostViewer();
 
-postTiles.forEach((tile, index) => {
-  function openSelectedPost() {
-    const post = filtered.find(item => item.id === tile.dataset.postId);
+  const user = auth.currentUser;
+  const own = Boolean(user && postOwner(post) === user.uid);
+  const viewer = document.createElement("div");
+  viewer.id = "ippActivePostViewer";
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:#000;overflow-y:auto;color:#fff;font-family:inherit;";
+  const url = postUrl(post);
+  const video = isVideo(post);
+  const likes = Array.isArray(post.likes) ? post.likes : [];
+  const liked = Boolean(user && likes.includes(user.uid));
+  const caption = post.caption || post.description || "";
+  viewer.innerHTML = `
+    <div style="position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:14px;padding:14px 16px;background:#111;border-bottom:1px solid #333;">
+      <button type="button" id="ippViewerClose" aria-label="Close" style="border:0;background:transparent;color:white;font-size:27px;">‹</button>
+      <strong style="font-size:16px;">Post</strong>
+      <span style="flex:1"></span>
+      <button type="button" id="ippPostMore" style="border:0;background:transparent;color:white;font-size:24px;" aria-label="Post options">⋯</button>
+    </div>
+    <div style="max-width:650px;margin:0 auto;padding-bottom:30px;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px;">
+        <img src="${esc(post.photo || post.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
+        <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "InstaPro User")}</strong><div style="font-size:11px;opacity:.6;">InstaPro</div></div>
+        ${own ? '<button id="ippDeletePostTop" type="button" style="border:0;background:transparent;color:#ff6b8a;font-weight:700;">Delete</button>' : ""}
+      </div>
+      <div style="background:#080808;display:flex;align-items:center;justify-content:center;min-height:180px;max-height:72vh;">
+        ${video ? `<video id="ippViewerMedia" src="${esc(url)}" controls autoplay playsinline style="display:block;max-width:100%;max-height:72vh;object-fit:contain;"></video>` : `<img id="ippViewerMedia" src="${esc(url)}" alt="Post" style="display:block;max-width:100%;max-height:72vh;object-fit:contain;">`}
+      </div>
+      <div style="padding:12px 14px;">
+        <div style="display:flex;align-items:center;gap:18px;font-size:27px;">
+          <button id="ippPostLike" type="button" aria-label="Like" style="border:0;background:transparent;color:${liked ? "#ff3158" : "#fff"};font-size:28px;padding:0;">${liked ? "♥" : "♡"}</button>
+          <button id="ippPostCommentFocus" type="button" aria-label="Comment" style="border:0;background:transparent;color:#fff;font-size:25px;padding:0;">♧</button>
+          <button id="ippPostShare" type="button" aria-label="Share" style="border:0;background:transparent;color:#fff;font-size:25px;padding:0;">➤</button>
+          <span style="flex:1"></span>
+          <button id="ippPostSave" type="button" aria-label="Save post" style="border:0;background:transparent;color:#fff;font-size:25px;padding:0;">▱</button>
+        </div>
+        <div id="ippLikeCount" style="font-weight:800;margin-top:9px;">${likes.length} likes</div>
+        <div style="margin-top:8px;line-height:1.5;overflow-wrap:anywhere;">${caption ? `<strong>${esc(post.username || post.displayName || "user")}</strong> ${esc(caption)}` : '<span style="opacity:.6">No caption</span>'}</div>
+        <button id="ippShowComments" type="button" style="border:0;background:transparent;color:#aaa;padding:10px 0 6px;">View all comments</button>
+        <div id="ippPostComments" style="max-height:240px;overflow:auto;border-top:1px solid #252525;padding-top:4px;"></div>
+        <form id="ippPostCommentForm" style="display:flex;gap:8px;align-items:center;border-top:1px solid #252525;padding-top:12px;margin-top:8px;">
+          <input id="ippPostCommentInput" maxlength="2000" placeholder="Add a comment..." style="flex:1;min-width:0;border:0;outline:none;background:transparent;color:#fff;font:inherit;padding:10px 0;">
+          <button type="submit" style="border:0;background:transparent;color:#4aa8ff;font-weight:800;">Post</button>
+        </form>
+      </div>
+    </div>`;
+  document.body.appendChild(viewer);
 
-    if (!post) return;
+  const close = () => closePostViewer();
+  $("#ippViewerClose", viewer).onclick = close;
+  viewer.addEventListener("click", event => { if (event.target === viewer) close(); });
+  $("#ippPostMore", viewer).onclick = () => {
+    const options = own ? "Choose: OK = Delete post, Cancel = Keep post" : "Choose OK to copy/share this post";
+    if (own && confirm(options)) deleteProfilePost(post.id, viewer);
+    else if (!own) shareProfilePost(post);
+  };
+  $("#ippDeletePostTop", viewer)?.addEventListener("click", () => deleteProfilePost(post.id, viewer));
 
-    const url = postUrl(post);
+  $("#ippPostLike", viewer).onclick = async () => {
+    if (!user || user.isAnonymous) { alert("Like karne ke liye login karein."); return; }
+    const button = $("#ippPostLike", viewer);
+    button.disabled = true;
+    try {
+      const ref = doc(db, "posts", post.id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error("Post ab available nahi hai.");
+      const currentLikes = Array.isArray(snap.data().likes) ? snap.data().likes : [];
+      const already = currentLikes.includes(user.uid);
+      await updateDoc(ref, {
+        likes: already ? arrayRemove(user.uid) : arrayUnion(user.uid),
+        likesCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1)),
+        likeCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1))
+      });
+    } catch (error) {
+      console.error("Profile post like error:", error);
+      alert("Like save nahi hua. Firebase Rules check karein.");
+    } finally { button.disabled = false; }
+  };
 
-    if (!url) return;
-
-    const viewer = document.createElement("div");
-
-    viewer.className = "ipp-post-viewer";
-
-    viewer.style.cssText = `
-      position:fixed;
-      inset:0;
-      z-index:1000000;
-      background:rgba(0,0,0,.96);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      box-sizing:border-box;
-      color:white;
-    `;
-
-    const media = isVideo(post)
-      ? document.createElement("video")
-      : document.createElement("img");
-
-    media.src = url;
-
-    if (isVideo(post)) {
-      media.controls = true;
-      media.autoplay = true;
-      media.playsInline = true;
-    } else {
-      media.alt = "Post";
+  $("#ippPostSave", viewer).onclick = async () => {
+    if (!user || user.isAnonymous) { alert("Post save karne ke liye login karein."); return; }
+    const savedRef = doc(db, "savedPosts", user.uid, "posts", post.id);
+    try {
+      const saved = await getDoc(savedRef);
+      if (saved.exists()) {
+        await deleteDoc(savedRef);
+        await updateDoc(doc(db, "posts", post.id), { savedBy: arrayRemove(user.uid) }).catch(() => {});
+        $("#ippPostSave", viewer).textContent = "▱";
+        alert("Saved posts se hata diya.");
+      } else {
+        await setDoc(savedRef, { postId: post.id, uid: user.uid, createdAt: serverTimestamp() });
+        await updateDoc(doc(db, "posts", post.id), { savedBy: arrayUnion(user.uid) }).catch(() => {});
+        $("#ippPostSave", viewer).textContent = "▣";
+        alert("Post save ho gayi.");
+      }
+    } catch (error) {
+      console.error("Profile post save error:", error);
+      alert("Post save nahi hui. Firebase Rules check karein.");
     }
+  };
 
-    media.style.cssText = `
-      display:block;
-      max-width:100%;
-      max-height:78vh;
-      width:auto;
-      height:auto;
-      object-fit:contain;
-    `;
+  $("#ippPostShare", viewer).onclick = () => shareProfilePost(post);
+  $("#ippPostCommentFocus", viewer).onclick = () => $("#ippPostCommentInput", viewer)?.focus();
+  $("#ippShowComments", viewer).onclick = () => $("#ippPostCommentInput", viewer)?.focus();
 
-    const closeButton = document.createElement("button");
+  $("#ippPostCommentForm", viewer).onsubmit = async event => {
+    event.preventDefault();
+    const input = $("#ippPostCommentInput", viewer);
+    const text = input.value.trim();
+    if (!user || user.isAnonymous) { alert("Comment karne ke liye login karein."); return; }
+    if (!text) return;
+    try {
+      await addDoc(collection(db, "posts", post.id, "comments"), {
+        uid: user.uid,
+        username: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+        photo: user.photoURL || "",
+        text,
+        createdAt: serverTimestamp()
+      });
+      await updateDoc(doc(db, "posts", post.id), { commentCount: increment(1), commentsCount: increment(1) }).catch(() => {});
+      input.value = "";
+    } catch (error) {
+      console.error("Profile post comment error:", error);
+      alert("Comment save nahi hua. Firebase Rules check karein.");
+    }
+  };
 
-    closeButton.type = "button";
-    closeButton.textContent = "✕ Close";
+  postViewerUnsub = onSnapshot(doc(db, "posts", post.id), snapshot => {
+    if (!snapshot.exists()) { closePostViewer(); return; }
+    const latest = snapshot.data();
+    const latestLikes = Array.isArray(latest.likes) ? latest.likes : [];
+    const isLiked = Boolean(auth.currentUser && latestLikes.includes(auth.currentUser.uid));
+    const likeButton = $("#ippPostLike", viewer);
+    const likeCount = $("#ippLikeCount", viewer);
+    if (likeButton) { likeButton.textContent = isLiked ? "♥" : "♡"; likeButton.style.color = isLiked ? "#ff3158" : "#fff"; }
+    if (likeCount) likeCount.textContent = `${Number(latest.likesCount ?? latestLikes.length)} likes`;
+  }, error => console.error("Profile post realtime listener:", error));
 
-    closeButton.style.cssText = `
-      position:absolute;
-      top:18px;
-      left:16px;
-      padding:10px 16px;
-      border:1px solid #555;
-      border-radius:10px;
-      background:#222;
-      color:white;
-      font-size:15px;
-    `;
+  commentsViewerUnsub = onSnapshot(query(collection(db, "posts", post.id, "comments"), orderBy("createdAt", "asc")), snapshot => {
+    const list = $("#ippPostComments", viewer);
+    if (!list) return;
+    if (snapshot.empty) { list.innerHTML = '<p style="font-size:13px;opacity:.6;padding:8px 0;">No comments yet. Be the first to comment.</p>'; return; }
+    list.innerHTML = snapshot.docs.map(item => {
+      const comment = item.data();
+      return `<div style="display:flex;gap:8px;padding:8px 0;overflow-wrap:anywhere;"><img src="${esc(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><div style="font-size:13px;line-height:1.45;"><strong>${esc(comment.username || "user")}</strong> ${esc(comment.text || "")}</div></div>`;
+    }).join("");
+  }, error => {
+    console.error("Profile comments listener:", error);
+    const list = $("#ippPostComments", viewer);
+    if (list) list.innerHTML = '<p style="font-size:13px;opacity:.6;">Comments load nahi hue. Firebase Rules check karein.</p>';
+  });
+}
 
-    closeButton.onclick = () => viewer.remove();
+function closePostViewer() {
+  if (postViewerUnsub) postViewerUnsub();
+  if (commentsViewerUnsub) commentsViewerUnsub();
+  postViewerUnsub = null;
+  commentsViewerUnsub = null;
+  const viewer = $("#ippActivePostViewer");
+  viewer?.querySelector("video")?.pause();
+  viewer?.remove();
+}
 
-    viewer.append(closeButton, media);
-    document.body.appendChild(viewer);
+async function deleteProfilePost(postId, viewer) {
+  const user = auth.currentUser;
+  const post = profilePosts.find(item => item.id === postId);
+  if (!user || !post || postOwner(post) !== user.uid) {
+    alert("Aap sirf apni post delete kar sakte hain.");
+    return;
   }
+  if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) return;
+  try {
+    await deleteDoc(doc(db, "posts", postId));
+    closePostViewer();
+  } catch (error) {
+    console.error("Profile post delete error:", error);
+    alert("Post delete nahi hui. Firebase Rules check karein.");
+  }
+}
 
-  tile.addEventListener("click", openSelectedPost);
+async function shareProfilePost(post) {
+  const url = new URL(location.href);
+  url.hash = "post-" + encodeURIComponent(post.id);
+  try {
+    if (navigator.share) await navigator.share({ title: "InstaPro post", text: post.caption || "Check out this post", url: url.href });
+    else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(url.href); alert("Post link copied."); }
+    else prompt("Copy post link:", url.href);
+    await updateDoc(doc(db, "posts", post.id), { shareCount: increment(1) }).catch(() => {});
+  } catch (error) { if (error.name !== "AbortError") console.error("Post share error:", error); }
+}
 
+const postTiles = grid.querySelectorAll(".ipp-tile");
+postTiles.forEach(tile => {
+  function openFromTile() {
+    const post = filtered.find(item => item.id === tile.dataset.postId);
+    openSelectedPost(post);
+  }
+  tile.addEventListener("click", openFromTile);
   tile.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openSelectedPost();
-    }
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openFromTile(); }
   });
 });
   $("#ippBack", page).onclick = closeProfile;
