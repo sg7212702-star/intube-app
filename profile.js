@@ -26,12 +26,14 @@ const UPLOAD_PRESET = "intube_free";
 let profileUnsub = null;
 let viewerUnsub = null;
 let postsUnsub = null;
+let storiesUnsub = null;
 let postViewerUnsub = null;
 let commentsViewerUnsub = null;
 
 let viewingUid = null;
 let profileData = {};
 let profilePosts = [];
+let profileStories = [];
 let viewerFollowing = [];
 let activeTab = "posts";
 
@@ -116,12 +118,15 @@ function stopListeners() {
   if (profileUnsub) profileUnsub();
   if (viewerUnsub) viewerUnsub();
   if (postsUnsub) postsUnsub();
+  if (storiesUnsub) storiesUnsub();
   if (postViewerUnsub) postViewerUnsub();
   if (commentsViewerUnsub) commentsViewerUnsub();
 
   profileUnsub = null;
   viewerUnsub = null;
   postsUnsub = null;
+  storiesUnsub = null;
+  profileStories = [];
   postViewerUnsub = null;
   commentsViewerUnsub = null;
 }
@@ -231,14 +236,24 @@ function addStyles() {
       flex:0 0 98px;
       padding:3px;
       border-radius:50%;
-      background:linear-gradient(
-        135deg,
-        #ff3d9a,
-        #8b5cf6,
-        #16d9ff,
-        #ffcc70
-      );
-      box-shadow:0 0 28px rgba(190,75,255,.22);
+      background:transparent;
+      box-shadow:none;
+    }
+
+    #ipProfileOverlay .ipp-avatar.has-story {
+      background:conic-gradient(#ffb347,#ff3d9a,#a855f7,#ff3d9a,#ffb347);
+      box-shadow:0 0 18px rgba(236,72,153,.25);
+      cursor:pointer;
+      animation:ippStoryRingPulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes ippStoryRingPulse {
+      0%,100% { filter:brightness(1); }
+      50% { filter:brightness(1.16); }
+    }
+
+    #ipProfileOverlay .ipp-avatar:not(.has-story) img {
+      border-color:transparent;
     }
 
     #ipProfileOverlay .ipp-avatar img {
@@ -435,6 +450,19 @@ function render(data = profileData, posts = profilePosts) {
     .replace(/^@/, "");
 
   const photo = photoFor(data);
+  const now = Date.now();
+  const activeProfileStories = profileStories
+    .filter(story => {
+      const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
+      const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
+      const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
+      return !!url && expires > now;
+    })
+    .sort((a, b) => {
+      const time = story => story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
+      return time(b) - time(a);
+    });
+  const latestProfileStory = activeProfileStories[0] || null;
 
   const bio =
     data.bio ||
@@ -475,7 +503,7 @@ function render(data = profileData, posts = profilePosts) {
       <main>
         <div class="ipp-head">
 
-          <div class="ipp-avatar">
+          <div class="ipp-avatar ${latestProfileStory ? "has-story" : ""}" id="ippStoryAvatar" title="${latestProfileStory ? "View story" : "Profile photo"}">
             <img
               id="ippPhoto"
               src="${esc(photo)}"
@@ -633,6 +661,21 @@ function render(data = profileData, posts = profilePosts) {
       </main>
     </div>
   `;
+
+  const storyAvatar = $("#ippStoryAvatar", page);
+  if (storyAvatar && latestProfileStory) {
+    storyAvatar.setAttribute("role", "button");
+    storyAvatar.setAttribute("tabindex", "0");
+    storyAvatar.setAttribute("aria-label", "View profile story");
+    const openLatestStory = () => document.dispatchEvent(new CustomEvent("open-notification-story", { detail: { storyId: latestProfileStory.id } }));
+    storyAvatar.onclick = openLatestStory;
+    storyAvatar.onkeydown = event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openLatestStory();
+      }
+    };
+  }
 
   const grid = $("#ippGrid", page);
 
@@ -1512,6 +1555,27 @@ postsUnsub = onSnapshot(
         `;
       }
     }
+  );
+
+  // Realtime story ring: no active story means no ring. Story viewer is handled by stories.js.
+  storiesUnsub = onSnapshot(
+    collection(db, "stories"),
+    snapshot => {
+      if (!$("#ipProfileOverlay") || viewingUid !== targetUid) return;
+      const now = Date.now();
+      profileStories = snapshot.docs
+        .map(item => ({ id: item.id, ...item.data() }))
+        .filter(story => {
+          const owner = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
+          const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
+          const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
+          const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
+          const audience = story.privacy?.audience || story.audience || "everyone";
+          return owner === targetUid && !!url && expires > now && (audience !== "onlyMe" || targetUid === myId());
+        });
+      render(profileData, profilePosts);
+    },
+    error => console.error("Profile story ring listener error:", error)
   );
 
   // Profile photo picker.
