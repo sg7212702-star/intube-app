@@ -894,18 +894,35 @@ function closePostViewer() {
 
 async function deleteProfilePost(postId, viewer) {
   const user = auth.currentUser;
-  const post = profilePosts.find(item => item.id === postId);
-  if (!user || !post || postOwner(post) !== user.uid) {
-    alert("Aap sirf apni post delete kar sakte hain.");
+  if (!user || user.isAnonymous) {
+    alert("Pehle login karein.");
     return;
   }
-  if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) return;
+
   try {
-    await deleteDoc(doc(db, "posts", postId));
+    // Latest Firestore document se ownership verify karein.
+    const postRef = doc(db, "posts", postId);
+    const snap = await getDoc(postRef);
+    if (!snap.exists()) {
+      alert("Yeh post pehle hi delete ho chuki hai.");
+      closePostViewer();
+      return;
+    }
+
+    const post = { id: snap.id, ...snap.data() };
+    if (postOwner(post) !== user.uid) {
+      alert("Aap sirf apni post delete kar sakte hain.");
+      return;
+    }
+
+    if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) return;
+
+    await deleteDoc(postRef);
     closePostViewer();
+    alert("Post delete ho gayi.");
   } catch (error) {
     console.error("Profile post delete error:", error);
-    alert("Post delete nahi hui. Firebase Rules check karein.");
+    alert("Post delete nahi hui. Firebase Rules mein owner-delete permission check karein.");
   }
 }
 
