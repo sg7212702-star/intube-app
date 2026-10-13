@@ -50,6 +50,7 @@ async function sendReplyToDM(text) {
     createdAt: serverTimestamp(), read: false, messageType: "story_reply",
     storyId: story.id, storyMediaUrl: mediaUrl(story), storyOwnerUid: receiverUid
   });
+  await notifyStoryOwner(receiverUid, "story_reply", "replied to your story", story);
 }
 async function toggleStoryLike() {
   const user = signedInUser || auth.currentUser;
@@ -63,6 +64,9 @@ async function toggleStoryLike() {
       likedBy: wasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
     currentLiked = !wasLiked;
+    if (!wasLiked) {
+      await notifyStoryOwner(ownerId(story), "story_like", "liked your story", story);
+    }
     story.likedBy = currentLiked
       ? [...new Set([...(Array.isArray(story.likedBy) ? story.likedBy : []), user.uid])]
       : (Array.isArray(story.likedBy) ? story.likedBy.filter(uid => uid !== user.uid) : []);
@@ -82,6 +86,25 @@ function updateLikeButton() {
 }
 function ownerName(story) {
   return story.username || story.displayName || story.email?.split("@")[0] || "InstaPro User";
+}
+async function notifyStoryOwner(targetUid, type, message, story) {
+  const user = signedInUser || auth.currentUser;
+  if (!user || !targetUid || targetUid === user.uid) return;
+  try {
+    await addDoc(collection(db, "users", targetUid, "notifications"), {
+      type,
+      message,
+      fromUid: user.uid,
+      fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+      fromPhoto: user.photoURL || "",
+      storyId: story?.id || "",
+      storyMediaUrl: mediaUrl(story || {}),
+      createdAt: serverTimestamp(),
+      read: false
+    });
+  } catch (error) {
+    console.warn("Story notification could not be saved:", error);
+  }
 }
 function isVideo(story) {
   const type = String(story.mediaType || story.contentType || story.type || "").toLowerCase();
