@@ -39,6 +39,13 @@ async function sendReplyToDM(text) {
   const receiverUid = ownerId(story);
   if (!user || user.isAnonymous) throw new Error("DM bhejne ke liye Google login karein.");
   if (!receiverUid || receiverUid === user.uid) throw new Error("Apni story par DM reply nahi bhej sakte.");
+  const replyMode=story.privacy?.replies||"everyone";
+  if(replyMode==="off")throw new Error("Is story par replies band hain.");
+  if(replyMode==="following"){
+    const ownerSnap=await getDoc(doc(db,"users",receiverUid));
+    const following=ownerSnap.exists()&&Array.isArray(ownerSnap.data().following)?ownerSnap.data().following:[];
+    if(!following.includes(user.uid))throw new Error("Is story par sirf owner jinhe follow karta hai wahi reply kar sakte hain.");
+  }
   const chatId = chatIdFor(user.uid, receiverUid);
   await setDoc(doc(db, "chats", chatId), {
     participants: [user.uid, receiverUid],
@@ -280,6 +287,7 @@ async function openStoryViewers(){
 async function openStoryDmShare(){
   const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
   if(!story||!user||user.isAnonymous){alert("Story DM mein send karne ke liye Google login karein.");return;}
+  if(story.privacy?.allowSharing===false){alert("Owner ne story sharing band ki hui hai.");return;}
   const panel=openStoryPanel("Send story in DM","<p>Users load ho rahe hain…</p>");
   try{
     const users=await getOtherUsers(),body=panel.querySelector(".isp-body");
@@ -373,6 +381,11 @@ async function openStoryPrivacy(){
       updatedAt:Date.now()
     };
     try{
+      if(next.audience==="closeFriends"){
+        const ownerSnap=await getDoc(doc(db,"users",user.uid));
+        const friends=ownerSnap.exists()&&Array.isArray(ownerSnap.data().closeFriends)?ownerSnap.data().closeFriends:[];
+        next.closeFriendsUids=friends.map(item=>typeof item==="string"?item:item?.uid).filter(Boolean);
+      }
       await updateDoc(doc(db,"stories",story.id),{privacy:next,audience:next.audience});
       story.privacy=next;story.audience=next.audience;
       panel.remove();renderStories();alert("Story settings Firebase mein save ho gayi.");
