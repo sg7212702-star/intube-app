@@ -640,25 +640,42 @@ async function renderFeed() {
 
       card.dataset.postId = post.id;
 
-      const mediaHTML = mediaType === "video"
+      const musicUrl = typeof post.musicUrl === "string" ? post.musicUrl : "";
+      const musicHTML = musicUrl
         ? `
-          <video
-            class="ip-feed-media"
-            src="${escapeHTML(mediaUrl)}"
-            controls
-            playsinline
-            preload="metadata"
-          ></video>
+          <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="none"></audio>
+          <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Play post music"
+            style="position:absolute;right:12px;bottom:12px;z-index:5;border:0;border-radius:22px;padding:9px 12px;background:rgba(0,0,0,.72);color:#fff;font-size:13px">
+            🔇 Music
+          </button>
         `
-        : `
-          <img
-            class="ip-feed-media"
-            src="${escapeHTML(mediaUrl)}"
-            alt="Post by ${ownerName}"
-            loading="lazy"
-            onerror="this.style.background='#222'"
-          >
-        `;
+        : "";
+
+      const mediaHTML = `
+        <div class="ip-feed-media-wrap" style="position:relative;line-height:0">
+          ${mediaType === "video"
+            ? `
+              <video
+                class="ip-feed-media"
+                src="${escapeHTML(mediaUrl)}"
+                controls
+                playsinline
+                preload="metadata"
+                ${musicUrl ? "muted" : ""}
+              ></video>
+            `
+            : `
+              <img
+                class="ip-feed-media"
+                src="${escapeHTML(mediaUrl)}"
+                alt="Post by ${ownerName}"
+                loading="lazy"
+                onerror="this.style.background='#222'"
+              >
+            `}
+          ${musicHTML}
+        </div>
+      `;
 
       card.innerHTML = `
         <div class="ip-feed-header">
@@ -778,6 +795,39 @@ async function renderFeed() {
     }
 
     feed.replaceChildren(fragment);
+
+    // Music is stored separately from the uploaded media. Browsers may block
+    // autoplay with sound, so each post gets an explicit music mute/play toggle.
+    feed.querySelectorAll(".instapro-feed-post").forEach(card => {
+      const audio = card.querySelector(".ip-feed-music");
+      const button = card.querySelector("[data-music-toggle]");
+      if (!audio || !button || button.dataset.bound === "1") return;
+      button.dataset.bound = "1";
+
+      button.addEventListener("click", async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (audio.paused) {
+          try {
+            // Keep the video's own audio muted while the added soundtrack plays.
+            const video = card.querySelector("video.ip-feed-media");
+            if (video) video.muted = true;
+            await audio.play();
+            button.textContent = "🔊 Mute";
+            button.setAttribute("aria-label", "Mute post music");
+          } catch (error) {
+            console.warn("Post music playback failed:", error);
+            button.textContent = "⚠️ Tap to play";
+          }
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          button.textContent = "🔇 Music";
+          button.setAttribute("aria-label", "Play post music");
+        }
+      });
+    });
 
   } catch (error) {
     console.error("Render feed error:", error);
