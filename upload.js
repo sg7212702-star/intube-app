@@ -98,7 +98,7 @@ input.value = "";
 console.log("Gallery input:", input);
 console.log("Gallery input ID:", input.id);
 
-input.click();;
+input.click();
 }
 
 // -------------------------------------
