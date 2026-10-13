@@ -1,12 +1,17 @@
 // InstaPro Stories — Instagram-style realtime stories
 import { db, auth } from "./firebase.js";
 import {
-  collection, onSnapshot, query, orderBy
+  collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove,
+  setDoc, addDoc, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const otherStoriesBox = document.getElementById("otherStories");
 const yourRing = document.getElementById("addStoryBtn");
+const yourStoryItem = yourRing?.closest(".sItem");
+let expiryTimer = null;
+let stopCurrentStory = null;
+let currentLiked = false;
 let allStories = [];
 let stopStories = null;
 let signedInUser = auth.currentUser || null;
@@ -25,6 +30,53 @@ function mediaUrl(story) {
 }
 function ownerId(story) {
   return story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
+}
+function chatIdFor(a, b) { return [a, b].sort().join("_"); }
+async function sendReplyToDM(text) {
+  const user = signedInUser || auth.currentUser;
+  const story = currentGroup[currentIndex];
+  const receiverUid = ownerId(story);
+  if (!user || user.isAnonymous) throw new Error("DM bhejne ke liye Google login karein.");
+  if (!receiverUid || receiverUid === user.uid) throw new Error("Apni story par DM reply nahi bhej sakte.");
+  const chatId = chatIdFor(user.uid, receiverUid);
+  await setDoc(doc(db, "chats", chatId), {
+    participants: [user.uid, receiverUid],
+    lastMessage: "Story reply: " + text,
+    lastSenderUid: user.uid,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+  await addDoc(collection(db, "chats", chatId, "messages"), {
+    text, message: text, senderUid: user.uid, receiverUid, uid: user.uid,
+    createdAt: serverTimestamp(), read: false, messageType: "story_reply",
+    storyId: story.id, storyMediaUrl: mediaUrl(story), storyOwnerUid: receiverUid
+  });
+}
+async function toggleStoryLike() {
+  const user = signedInUser || auth.currentUser;
+  const story = currentGroup[currentIndex];
+  if (!user || user.isAnonymous) { alert("Story like karne ke liye Google login karein."); return; }
+  const btn = viewer?.querySelector(".is-like");
+  if (btn) btn.disabled = true;
+  try {
+    const likes = Array.isArray(story.likedBy) ? story.likedBy : [];
+    currentLiked = likes.includes(user.uid);
+    await updateDoc(doc(db, "stories", story.id), {
+      likedBy: currentLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+    });
+    currentLiked = !currentLiked;
+    updateLikeButton();
+  } catch (error) {
+    console.error("Story like save error:", error);
+    alert("Like Firebase mein save nahi hua. Firestore Rules check karein.");
+  } finally { if (btn) btn.disabled = false; }
+}
+function updateLikeButton() {
+  const btn = viewer?.querySelector(".is-like");
+  if (btn) {
+    btn.textContent = currentLiked ? "♥" : "♡";
+    btn.style.background = "transparent";
+    btn.style.color = currentLiked ? "#ff3040" : "#fff";
+  }
 }
 function ownerName(story) {
   return story.username || story.displayName || story.email?.split("@")[0] || "InstaPro User";
@@ -102,21 +154,18 @@ function renderStories() {
   const groups = groupsByUser(stories);
   const myUid = signedInUser?.uid || auth.currentUser?.uid || "";
   const ownGroup = myUid ? groups.find(g => g.uid === myUid) : null;
-  const otherGroups = groups.filter(g => !myUid || g.uid !== myUid);
+  const otherGroups = groups.filter(g => g.uid !== myUid);
 
-  // Keep the user's uploaded story inside the existing "Your story" ring.
+  // Hide "Your story" entirely when this account has no unexpired story.
+  if (yourStoryItem) yourStoryItem.style.display = ownGroup ? "" : "none";
+  // Keep active own stories in the existing ring only; upload via the create menu.
   setRingPreview(yourRing, ownGroup?.latest || null, "Your latest story");
   if (yourRing) {
     yourRing.title = ownGroup ? "View your story · + to add another" : "Add to your story";
     yourRing.onclick = event => {
-      if (event.target.closest("span")) {
-        event.preventDefault();
-        event.stopPropagation();
-        openUpload();
-        return;
-      }
+      event.preventDefault();
+      event.stopPropagation();
       if (ownGroup) openStoryGroup(ownGroup);
-      else openUpload();
     };
   }
 
@@ -155,6 +204,8 @@ function renderStories() {
 function closeViewer() {
   if (viewerTimer) clearTimeout(viewerTimer);
   viewerTimer = null;
+  if (stopCurrentStory) stopCurrentStory();
+  stopCurrentStory = null;
   if (viewer) {
     const video = viewer.querySelector("video");
     if (video) video.pause();
@@ -183,18 +234,33 @@ function openStoryGroup(group) {
     <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent;"></button>
     <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:8px;align-items:center;">
       <input class="is-reply" placeholder="Reply to story..." style="min-width:0;flex:1;background:transparent;border:1px solid #aaa;border-radius:22px;padding:12px;color:#fff;outline:none;">
-      <button class="is-like" aria-label="Like story" style="background:transparent;border:0;color:#fff;font-size:27px;">♡</button>
-      <button class="is-share" aria-label="Share story" style="background:transparent;border:0;color:#fff;font-size:22px;">➤</button>
+      <button class="is-send" aria-label="Send reply" style="background:transparent!important;border:0;color:#fff;font-size:22px;">➤</button>
+      <button class="is-like" aria-label="Like story" style="background:transparent!important;border:0;color:#fff;font-size:27px;">♡</button>
+      <button class="is-share" aria-label="Share story" style="background:transparent!important;border:0;color:#fff;font-size:22px;">↗</button>
     </div>`;
   document.body.appendChild(viewer);
   viewer.querySelector(".is-close").onclick = closeViewer;
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
-  viewer.querySelector(".is-like").onclick = event => {
-    const btn = event.currentTarget;
-    btn.textContent = btn.textContent === "♡" ? "♥" : "♡";
-    btn.style.color = btn.textContent === "♥" ? "#ff3040" : "#fff";
+  viewer.querySelector(".is-like").onclick = toggleStoryLike;
+  viewer.querySelector(".is-send").onclick = async () => {
+    const input = viewer?.querySelector(".is-reply");
+    const value = input?.value.trim();
+    if (!value) return;
+    const btn = viewer.querySelector(".is-send");
+    btn.disabled = true;
+    try {
+      await sendReplyToDM(value);
+      input.value = "";
+      alert("Story reply DM mein send ho gaya.");
+    } catch (error) {
+      console.error("Story DM reply error:", error);
+      alert(error.message || "DM reply send nahi hua. Firestore Rules check karein.");
+    } finally { if (btn?.isConnected) btn.disabled = false; }
   };
+  viewer.querySelector(".is-reply").addEventListener("keydown", event => {
+    if (event.key === "Enter") { event.preventDefault(); viewer.querySelector(".is-send").click(); }
+  });
   viewer.querySelector(".is-share").onclick = async () => {
     const story = currentGroup[currentIndex];
     const url = mediaUrl(story);
@@ -262,6 +328,30 @@ function showAt(index) {
     progress.appendChild(track);
   });
   seenStoryIds.add(story.id);
+  const user = signedInUser || auth.currentUser;
+  const isOwnStory = !!user && ownerId(story) === user.uid;
+  const replyInput = viewer.querySelector(".is-reply");
+  const sendButton = viewer.querySelector(".is-send");
+  const likeButton = viewer.querySelector(".is-like");
+  if (replyInput) replyInput.style.display = isOwnStory ? "none" : "";
+  if (sendButton) sendButton.style.display = isOwnStory ? "none" : "";
+  if (likeButton) likeButton.style.display = isOwnStory ? "none" : "";
+  currentLiked = !!user && (Array.isArray(story.likedBy) ? story.likedBy : []).includes(user.uid);
+  updateLikeButton();
+  if (user && !user.isAnonymous) {
+    const storyRef = doc(db, "stories", story.id);
+    const seenBy = Array.isArray(story.seenBy) ? story.seenBy : [];
+    if (!seenBy.includes(user.uid)) {
+      updateDoc(storyRef, { seenBy: arrayUnion(user.uid), viewsCount: increment(1) })
+        .catch(error => console.warn("Story view save error:", error));
+    }
+    stopCurrentStory = onSnapshot(storyRef, snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      currentLiked = (Array.isArray(data.likedBy) ? data.likedBy : []).includes(user.uid);
+      updateLikeButton();
+    }, error => console.warn("Story stats listener error:", error));
+  }
   if (!isVideo(story)) {
     let elapsed = 0;
     const duration = 5000;
@@ -291,6 +381,17 @@ onAuthStateChanged(auth, user => {
   renderStories();
 });
 
+function refreshExpiry() {
+  if (expiryTimer) clearTimeout(expiryTimer);
+  expiryTimer = null;
+  const active = allStories.filter(s => expiry(s) > Date.now());
+  if (!active.length) return;
+  const next = Math.min(...active.map(expiry));
+  expiryTimer = setTimeout(() => {
+    allStories = allStories.filter(s => expiry(s) > Date.now());
+    renderStories();
+  }, Math.max(100, next - Date.now() + 100));
+}
 if (otherStoriesBox) {
   otherStoriesBox.style.display = "contents";
   stopStories = onSnapshot(query(collection(db, "stories"), orderBy("createdAt", "desc")), snapshot => {
@@ -298,11 +399,13 @@ if (otherStoriesBox) {
     allStories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(story => expiry(story) > now && mediaUrl(story));
     renderStories();
+    refreshExpiry();
   }, error => {
     console.error("InstaPro stories load error:", error);
   });
 }
 window.addEventListener("pagehide", () => {
   if (stopStories) stopStories();
+  if (expiryTimer) clearTimeout(expiryTimer);
   closeViewer();
 });
