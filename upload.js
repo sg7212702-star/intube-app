@@ -217,101 +217,6 @@ async function uploadToCloudinary(file, onProgress) {
 }
 
 // -------------------------------------
-// CLOUDINARY PHOTO UPLOAD
-// -------------------------------------
-
-async function uploadPhotoToCloudinary(file, onProgress) {
-  const endpoint =
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-  const result = await new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-
-    xhr.open("POST", endpoint, true);
-
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable && typeof onProgress === "function") {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    });
-
-    xhr.addEventListener("load", () => {
-      let response;
-
-      try {
-        response = JSON.parse(xhr.responseText);
-      } catch {
-        reject(new Error("Cloudinary response read nahi ho paya."));
-        return;
-      }
-
-      if (xhr.status < 200 || xhr.status >= 300) {
-        reject(
-          new Error(
-            response.error?.message ||
-            `Photo upload fail: HTTP ${xhr.status}`
-          )
-        );
-        return;
-      }
-
-      resolve(response);
-    });
-
-    xhr.addEventListener("error", () => {
-      reject(new Error("Cloudinary network connection fail."));
-    });
-
-    xhr.send(formData);
-  });
-
-  if (!result.secure_url) {
-    throw new Error("Cloudinary se photo URL nahi mila.");
-  }
-
-  return result.secure_url;
-}
-// -------------------------------------
-// UPLOAD STATUS
-// -------------------------------------
-
-function showUploadStatus(message) {
-  let status = $("instaProUploadStatus");
-
-  if (!status) {
-    status = document.createElement("div");
-    status.id = "instaProUploadStatus";
-
-    status.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 999999;
-      width: max-content;
-      max-width: 85%;
-      padding: 18px 24px;
-      border-radius: 14px;
-      background: rgba(0, 0, 0, 0.92);
-      color: white;
-      font: 15px Arial, sans-serif;
-      text-align: center;
-      overflow-wrap: anywhere;
-      box-shadow: 0 5px 25px rgba(0,0,0,.35);
-    `;
-
-    document.body.appendChild(status);
-  }
-
-  status.textContent = message;
-  return status;
-}
-
-// -------------------------------------
 // MAIN UPLOAD HANDLER
 // -------------------------------------
 
@@ -344,16 +249,29 @@ async function handleFile(file, postType) {
   }
 
   uploadInProgress = true;
+
   const status = showUploadStatus("Upload shuru ho raha hai...");
+  const notice = window.InstaProUploadNotification;
 
   try {
+    // Notification start
+    if (notice) {
+      notice.show();
+      notice.progress(0);
+    }
+
     status.textContent = isVideo
       ? "Cloudinary par video upload ho raha hai..."
       : "Cloudinary par photo upload ho rahi hai...";
 
+    // Upload media and show real progress
     const result = await uploadToCloudinary(file, (progress) => {
       status.textContent =
         `${isVideo ? "Video" : "Photo"} upload ho rahi hai: ${progress}%`;
+
+      if (notice) {
+        notice.progress(progress);
+      }
     });
 
     const mediaUrl =
@@ -363,10 +281,17 @@ async function handleFile(file, postType) {
       throw new Error("Cloudinary se media URL nahi mila.");
     }
 
-    status.textContent = "Firebase Firestore mein data save ho raha hai...";
+    // Firestore save starts
+    status.textContent =
+      "Firebase Firestore mein data save ho raha hai...";
+
+    if (notice) {
+      notice.progress(100);
+    }
 
     const data = {
       uid: user.uid,
+      userId: user.uid,
       email: user.email || "",
       username:
         user.displayName ||
@@ -374,10 +299,15 @@ async function handleFile(file, postType) {
         "InstaPro User",
       photo: user.photoURL || "",
       imageUrl: mediaUrl,
-      mediaUrl,
+      mediaUrl: mediaUrl,
+      url: mediaUrl,
       type: isVideo ? "video" : "image",
       contentType: isVideo ? "video" : "image",
+      mediaType: isVideo ? "video" : "image",
       caption: "",
+      likes: [],
+      likesCount: 0,
+      comments: [],
       createdAt: serverTimestamp()
     };
 
@@ -397,10 +327,15 @@ async function handleFile(file, postType) {
       );
     }
 
+    // Success only after Firestore save
     status.textContent =
       postType === "story"
         ? "Story successfully upload ho gayi! ✅"
         : "Post successfully share ho gayi! ✅";
+
+    if (notice) {
+      notice.success();
+    }
 
     window.dispatchEvent(
       new CustomEvent("instapro-upload-success", {
@@ -408,31 +343,39 @@ async function handleFile(file, postType) {
           id: savedDocument.id,
           type: postType,
           mediaType: isVideo ? "video" : "image",
-          mediaUrl
+          mediaUrl: mediaUrl
         }
       })
     );
 
-    console.log("InstaPro upload successful:", savedDocument.id);
+    console.log(
+      "InstaPro upload successful:",
+      savedDocument.id
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
   } catch (error) {
     console.error("InstaPro upload error:", error);
 
+    const errorMessage =
+      error.message || "Unknown error";
+
     status.textContent =
-      "Upload fail ho gaya: " +
-      (error.message || "Unknown error");
+      "Upload fail ho gaya: " + errorMessage;
+
+    if (notice) {
+      notice.error(errorMessage);
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     alert(
-      "Upload fail ho gaya.\n\n" +
-      (error.message || "Unknown error")
+      "Upload fail ho gaya.\n\n" + errorMessage
     );
 
   } finally {
     status.remove();
     uploadInProgress = false;
   }
-                   }
+}
