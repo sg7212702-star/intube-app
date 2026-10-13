@@ -2,7 +2,7 @@
 import { auth, db } from "./firebase.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
-  doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -158,7 +158,8 @@ function renderList(users, chatMap = new Map()) {
     list.innerHTML = '<div style="text-align:center;opacity:.55;padding:40px;">No other users yet<br><small>Invite friends to join InstaPro</small></div>';
     return;
   }
-  const sorted = [...users].sort((a, b) => {
+  const visibleUsers = users.filter(user => !chatMap.get(user.uid)?.hiddenFor?.map(String).includes(String(currentUser.uid)));
+  const sorted = [...visibleUsers].sort((a, b) => {
     const aTime = chatMap.get(a.uid)?.updatedAt?.toMillis?.() || 0;
     const bTime = chatMap.get(b.uid)?.updatedAt?.toMillis?.() || 0;
     return bTime - aTime;
@@ -170,6 +171,14 @@ function renderList(users, chatMap = new Map()) {
     row.type = "button";
     row.style.cssText = "width:100%;display:flex;align-items:center;gap:12px;padding:10px 16px;border:0;background:transparent;color:white;text-align:left;cursor:pointer;";
     row.innerHTML = `<img src="${escapeHTML(photoOf(user))}" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:#222;"><span style="flex:1;min-width:0;"><b style="display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(nameOf(user))}</b><small style="display:block;margin-top:5px;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(chat.lastMessage || "Tap to message")}</small></span><span style="opacity:.55;">›</span>`;
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.textContent = "🗑";
+    deleteButton.title = "Delete chat";
+    deleteButton.setAttribute("aria-label", "Delete chat");
+    deleteButton.style.cssText = "flex:0 0 36px;width:36px;height:36px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.08);backdrop-filter:blur(14px);color:#fff;cursor:pointer;";
+    deleteButton.addEventListener("click", event => { event.stopPropagation(); deleteChatForMe(user.uid); });
+    row.appendChild(deleteButton);
     row.addEventListener("click", () => openChat(user));
     list.appendChild(row);
   });
@@ -206,7 +215,7 @@ function openChat(user) {
       const reactions = msg.reactions && typeof msg.reactions === "object" ? Object.values(msg.reactions).filter(Boolean) : [];
       const myReaction = msg.reactions && msg.reactions[currentUser.uid];
       const receipt = mine ? (msg.read ? "Seen ✓✓" : msg.delivered ? "Delivered ✓✓" : "Sent ✓") : "";
-      return `<div style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="display:inline-flex;gap:4px;margin-top:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:15px;background:rgba(0,0,0,.18);font-size:14px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;padding:0;font-size:14px;cursor:pointer;" aria-label="React">${myReaction || "☺"}</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;padding:0;font-size:12px;cursor:pointer;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
+      return `<div data-message-id="${escapeHTML(item.id)}" style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="display:inline-flex;gap:4px;margin-top:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:15px;background:rgba(0,0,0,.18);font-size:14px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;padding:0;font-size:14px;cursor:pointer;" aria-label="React">${myReaction || "☺"}</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;padding:0;font-size:12px;cursor:pointer;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
     }).join("");
     box.querySelectorAll("[data-react]").forEach(button => button.addEventListener("click", () => reactToMessage(button.dataset.react)));
     box.querySelectorAll("[data-message-id]").forEach(bubble => { let lastTap = 0; bubble.addEventListener("click", event => { if (event.target.closest("button,video,audio")) return; const now = Date.now(); if (now - lastTap < 320) { lastTap = 0; quickHeart(bubble.dataset.messageId); } else lastTap = now; }); });
@@ -221,7 +230,7 @@ function openChat(user) {
 async function saveMessage(payload, previewText) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) throw new Error("Please sign in first.");
   const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
-  await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selectedUser.uid], lastMessage: previewText, lastSenderUid: currentUser.uid, updatedAt: serverTimestamp() }, { merge: true });
+  await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selectedUser.uid], lastMessage: previewText, lastSenderUid: currentUser.uid, updatedAt: serverTimestamp(), hiddenFor: arrayRemove(currentUser.uid) }, { merge: true });
   const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), { ...payload, senderUid: currentUser.uid, receiverUid: selectedUser.uid, uid: currentUser.uid, createdAt: serverTimestamp(), delivered: false, read: false });
   try { await addDoc(collection(db, "users", selectedUser.uid, "notifications"), { type: "message", fromUid: currentUser.uid, fromName: nameOf(currentUser), fromPhoto: photoOf(currentUser), chatId, messageId: messageRef.id, text: previewText, read: false, createdAt: serverTimestamp() }); }
   catch (e) { console.warn("Chat notification not saved; check Firestore Rules:", e); }
@@ -266,6 +275,22 @@ async function toggleVoiceRecording() {
     voiceRecorder.start(); if (button) button.textContent = "⏹️";
   } catch (error) { console.error("Voice recording error:", error); alert("Microphone permission dein, phir voice message record karein."); }
 }
+async function deleteChatForMe(otherUid) {
+  if (!currentUser || !otherUid) return;
+  if (!confirm("Is chat ko apni Messages list se delete karein? Doosre user ki chat delete nahi hogi.")) return;
+  try {
+    const chatId = chatIdFor(currentUser.uid, otherUid);
+    const ref = doc(db, "chats", chatId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const hiddenFor = [...new Set([...(snap.data().hiddenFor || []).map(String), String(currentUser.uid)])];
+    await updateDoc(ref, { hiddenFor });
+  } catch (error) {
+    console.error("Delete chat error:", error);
+    alert("Chat delete nahi hui. Firestore Rules check karein.");
+  }
+}
+
 async function quickHeart(messageId) {
   if (!currentUser || !selectedUser) return;
   try { const chatId = chatIdFor(currentUser.uid, selectedUser.uid); const ref = doc(db, "chats", chatId, "messages", messageId); const snap = await getDoc(ref); if (!snap.exists()) return; const current = snap.data().reactions?.[currentUser.uid]; await updateDoc(ref, { [`reactions.${currentUser.uid}`]: current === "❤️" ? "" : "❤️" }); }
