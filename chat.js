@@ -2,7 +2,7 @@
 import { auth, db } from "./firebase.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
-  doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, arrayRemove
+  doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, arrayRemove, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -205,7 +205,8 @@ function openChat(user) {
       box.innerHTML = '<p style="text-align:center;opacity:.5;padding:24px;">Say hello 👋</p>';
       return;
     }
-    const docs = snapshot.docs;
+    const docs = snapshot.docs.filter(item => !(item.data().hiddenFor || []).map(String).includes(String(currentUser.uid)));
+    if (!docs.length) { box.innerHTML = '<p style="text-align:center;opacity:.5;padding:24px;">Say hello 👋</p>'; return; }
     docs.forEach(item => { const msg = item.data(); if (msg.senderUid !== currentUser.uid && msg.receiverUid === currentUser.uid && !msg.read) updateDoc(item.ref, { delivered: true, read: true, readAt: serverTimestamp() }).catch(err => console.warn("Read receipt:", err)); });
     box.innerHTML = docs.map(item => {
       const msg = item.data();
@@ -305,9 +306,26 @@ async function reactToMessage(messageId) {
   catch (error) { console.error("Message reaction error:", error); alert("Reaction save nahi hui. Firestore Rules check karein."); }
 }
 async function removeMessage(messageId) {
-  if (!currentUser || !selectedUser || !confirm("Is message ko sabhi ke liye delete karein?")) return;
-  try { const chatId = chatIdFor(currentUser.uid, selectedUser.uid); await updateDoc(doc(db, "chats", chatId, "messages", messageId), { deleted: true, text: "", mediaUrl: "", deletedAt: serverTimestamp() }); }
-  catch (error) { console.error("Delete message error:", error); alert("Message delete nahi hua. Firestore Rules check karein."); }
+  if (!currentUser || !selectedUser) return;
+  const choice = prompt('Choose: 1 = only me, 2 = both users', '1');
+  if (!choice || !['1', '2'].includes(choice.trim())) return;
+  const ref = doc(db, 'chats', chatIdFor(currentUser.uid, selectedUser.uid), 'messages', messageId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const msg = snap.data();
+    const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
+    if (choice.trim() === '2') {
+      if (!mine) { alert('You can remove for both users only messages you sent.'); return; }
+      if (!confirm('Remove this sent message for both users?')) return;
+      await updateDoc(ref, { deleted: true, text: '', mediaUrl: '', fileName: '', deletedAt: serverTimestamp() });
+    } else {
+      await updateDoc(ref, { hiddenFor: arrayUnion(currentUser.uid) });
+    }
+  } catch (error) {
+    console.error('Message removal error:', error);
+    alert('Could not remove message. Check Firestore Rules.');
+  }
 }
 
 // Open a direct chat from another profile.
