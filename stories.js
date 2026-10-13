@@ -561,7 +561,7 @@ function showAt(index) {
   if (user && !user.isAnonymous) {
     const storyRef = doc(db, "stories", story.id);
     const seenBy = Array.isArray(story.seenBy) ? story.seenBy : [];
-    if (!seenBy.includes(user.uid)) {
+    if (ownerId(story) !== user.uid && !seenBy.includes(user.uid)) {
       updateDoc(storyRef, { seenBy: arrayUnion(user.uid), viewsCount: increment(1) })
         .catch(error => console.warn("Story view save error:", error));
     }
