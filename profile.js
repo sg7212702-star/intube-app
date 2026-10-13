@@ -48,9 +48,8 @@ const esc = value =>
   })[c]);
 
 function myId() {
-  return localStorage.getItem("my_user_id") ||
-    auth.currentUser?.uid ||
-    null;
+  // Firebase Auth is the source of truth; localStorage may contain a stale UID.
+  return auth.currentUser?.uid || localStorage.getItem("my_user_id") || null;
 }
 
 function usernameFor(data, uid) {
@@ -1414,11 +1413,15 @@ postsUnsub = onSnapshot(
         ...item.data()
       }));
 
-      profilePosts.sort(
-        (a, b) =>
-          Number(b.time || 0) -
-          Number(a.time || 0)
-      );
+      profilePosts.sort((a, b) => {
+        const timeValue = value => {
+          if (value?.toMillis) return value.toMillis();
+          if (value?.toDate) return value.toDate().getTime();
+          const numeric = Number(value || 0);
+          return Number.isFinite(numeric) ? numeric : 0;
+        };
+        return timeValue(b.createdAt || b.time) - timeValue(a.createdAt || a.time);
+      });
 
       render(profileData, profilePosts);
     },
