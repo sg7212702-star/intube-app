@@ -183,9 +183,13 @@ function renderStories() {
   const ownGroup = myUid ? groups.find(g => g.uid === myUid) : null;
   const otherGroups = groups.filter(g => g.uid !== myUid);
 
-  // Hide "Your story" entirely when this account has no unexpired story.
-  if (yourStoryItem) yourStoryItem.style.display = ownGroup ? "" : "none";
-  // Keep active own stories in the existing ring only; upload via the create menu.
+  // Keep the "Your story" slot visible so users can always add a story.
+  if (yourStoryItem) {
+    yourStoryItem.style.display = "flex";
+    yourStoryItem.style.flex = "0 0 auto";
+    yourStoryItem.style.minWidth = "64px";
+  }
+  // Show the latest own story in the existing ring; the plus control still opens upload.
   setRingPreview(yourRing, ownGroup?.latest || null, "Your latest story");
   if (yourRing) {
     yourRing.title = ownGroup ? "View your story · + to add another" : "Add to your story";
@@ -200,8 +204,12 @@ function renderStories() {
     };
   }
 
-  // Make wrapper visually transparent; each account gets exactly one ring.
-  otherStoriesBox.style.display = "contents";
+  // Use a real flex row instead of display:contents for reliable mobile rendering.
+  otherStoriesBox.style.display = "flex";
+  otherStoriesBox.style.flex = "0 0 auto";
+  otherStoriesBox.style.alignItems = "flex-start";
+  otherStoriesBox.style.gap = "12px";
+  otherStoriesBox.style.width = "max-content";
   otherStoriesBox.style.border = "0";
   otherStoriesBox.style.background = "transparent";
   otherStoriesBox.style.padding = "0";
@@ -632,8 +640,8 @@ function refreshExpiry() {
   }, Math.max(100, next - Date.now() + 100));
 }
 if (otherStoriesBox) {
-  otherStoriesBox.style.display = "contents";
-  stopStories = onSnapshot(query(collection(db, "stories"), orderBy("createdAt", "desc")), snapshot => {
+  otherStoriesBox.style.display = "flex";
+  stopStories = onSnapshot(collection(db, "stories"), snapshot => {
     const now = Date.now();
     allStories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(story => expiry(story) > now && mediaUrl(story));
