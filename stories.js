@@ -351,25 +351,34 @@ async function openStoryPrivacy(){
     <label style="display:block;margin:14px 0 6px;font-weight:600;">Hide story from</label>
     <input class="isp-hide-search" placeholder="Search people…" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid #ddd;border-radius:10px;color:#111;background:#fff;">
     <div class="isp-hide-list" style="max-height:150px;overflow:auto;margin-top:8px;"><p style="color:#777;font-size:12px;">Loading people…</p></div>
+    <label style="display:block;margin:14px 0 6px;font-weight:600;">Manage close friends</label>
+    <div class="isp-close-friends-list" style="max-height:150px;overflow:auto;margin-top:8px;"><p style="color:#777;font-size:12px;">Loading people…</p></div>
     <button class="isp-save" style="width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;">Save settings</button>
     <button class="isp-delete" style="width:100%;margin-top:8px;padding:12px;border:1px solid #e44;border-radius:12px;background:transparent;color:#e44;font-weight:700;">Delete story</button>`);
   panel.querySelector(".isp-audience").value=privacy.audience||story.audience||"everyone";
   panel.querySelector(".isp-replies").value=privacy.replies||"everyone";
   panel.querySelector(".isp-sharing").checked=privacy.allowSharing!==false;
   let people=[];
+  let savedCloseFriends=[];
   try {
     people=await getOtherUsers();
+    const ownerSnap=await getDoc(doc(db,"users",user.uid));
+    const rawFriends=ownerSnap.exists()&&Array.isArray(ownerSnap.data().closeFriends)?ownerSnap.data().closeFriends:[];
+    savedCloseFriends=rawFriends.map(item=>typeof item==="string"?item:item?.uid).filter(Boolean);
     const list=panel.querySelector(".isp-hide-list");
+    const friendsList=panel.querySelector(".isp-close-friends-list");
     const draw=()=>{
       const term=panel.querySelector(".isp-hide-search").value.trim().toLowerCase();
       const hidden=Array.isArray(privacy.hiddenFromUids)?privacy.hiddenFromUids:[];
       const matches=people.filter(p=>(userLabel(p)+" "+(p.email||"")).toLowerCase().includes(term)).slice(0,100);
       list.innerHTML=matches.length?matches.map(p=>'<label style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #eee;color:#222;"><input type="checkbox" data-hide-uid="'+escapeHtml(p.uid)+'" '+(hidden.includes(p.uid)?"checked":"")+'><span>'+escapeHtml(userLabel(p))+'</span></label>').join(""):'<p style="color:#777;">No users found.</p>';
+      friendsList.innerHTML=matches.length?matches.map(p=>'<label style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #eee;color:#222;"><input type="checkbox" data-close-friend-uid="'+escapeHtml(p.uid)+'" '+(savedCloseFriends.includes(p.uid)?"checked":"")+'><span>'+escapeHtml(userLabel(p))+'</span></label>').join(""):'<p style="color:#777;">No users found.</p>';
     };
     panel.querySelector(".isp-hide-search").addEventListener("input",draw);draw();
   } catch(e) {
     console.warn("Hide-from list could not load:",e);
     panel.querySelector(".isp-hide-list").textContent="People list load nahi hui.";
+    panel.querySelector(".isp-close-friends-list").textContent="People list load nahi hui.";
   }
   panel.querySelector(".isp-save").onclick=async()=>{
     const save=panel.querySelector(".isp-save");save.disabled=true;
@@ -378,14 +387,11 @@ async function openStoryPrivacy(){
       replies:panel.querySelector(".isp-replies").value,
       allowSharing:panel.querySelector(".isp-sharing").checked,
       hiddenFromUids:[...panel.querySelectorAll("[data-hide-uid]:checked")].map(input=>input.dataset.hideUid),
+      closeFriendsUids:[...panel.querySelectorAll("[data-close-friend-uid]:checked")].map(input=>input.dataset.closeFriendUid),
       updatedAt:Date.now()
     };
     try{
-      if(next.audience==="closeFriends"){
-        const ownerSnap=await getDoc(doc(db,"users",user.uid));
-        const friends=ownerSnap.exists()&&Array.isArray(ownerSnap.data().closeFriends)?ownerSnap.data().closeFriends:[];
-        next.closeFriendsUids=friends.map(item=>typeof item==="string"?item:item?.uid).filter(Boolean);
-      }
+      await setDoc(doc(db,"users",user.uid),{closeFriends:next.closeFriendsUids}, {merge:true});
       await updateDoc(doc(db,"stories",story.id),{privacy:next,audience:next.audience});
       story.privacy=next;story.audience=next.audience;
       panel.remove();renderStories();alert("Story settings Firebase mein save ho gayi.");
