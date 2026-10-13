@@ -36,6 +36,185 @@ function openSheet(){
   const sov=$("sheetOverlay"); if(sov) sov.style.display="block";
 }
 
+
+let settingsUnsubscribe = null;
+let currentAppSettings = { theme: "dark", browserNotifications: false };
+
+function installSettingsStyles() {
+  if (document.getElementById("instapro-settings-style")) return;
+  const style = document.createElement("style");
+  style.id = "instapro-settings-style";
+  style.textContent = `
+    #instaproSettingsPanel{position:fixed;inset:0;z-index:1000001;display:none;background:rgba(0,0,0,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);align-items:flex-end;justify-content:center;color:#fff;font-family:inherit}
+    #instaproSettingsPanel.open{display:flex}
+    #instaproSettingsPanel .isp-card{width:100%;max-width:520px;max-height:88dvh;overflow:auto;background:rgba(18,18,22,.98);border:1px solid rgba(255,255,255,.14);border-radius:24px 24px 0 0;padding:18px 16px calc(22px + env(safe-area-inset-bottom));box-sizing:border-box}
+    #instaproSettingsPanel .isp-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    #instaproSettingsPanel .isp-head button{border:0;background:transparent;color:inherit;font-size:25px;padding:4px 8px}
+    #instaproSettingsPanel .isp-title{font-size:21px;font-weight:700;flex:1}
+    #instaproSettingsPanel .isp-subtitle{font-size:12px;opacity:.65;margin:0 0 8px 4px;text-transform:uppercase;letter-spacing:.8px}
+    #instaproSettingsPanel .isp-row{display:flex;align-items:center;gap:12px;padding:14px 12px;margin:7px 0;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.045)}
+    #instaproSettingsPanel .isp-copy{flex:1;min-width:0}
+    #instaproSettingsPanel .isp-label{font-size:15px;font-weight:600}
+    #instaproSettingsPanel .isp-desc{font-size:12px;opacity:.65;margin-top:4px;line-height:1.4}
+    #instaproSettingsPanel .isp-action{border:1px solid rgba(255,255,255,.2);border-radius:20px;background:rgba(255,255,255,.08);color:inherit;padding:8px 12px}
+    #instaproSettingsPanel .isp-switch{width:44px;height:26px;border-radius:20px;border:0;background:#555;position:relative;flex-shrink:0}
+    #instaproSettingsPanel .isp-switch:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:.18s}
+    #instaproSettingsPanel .isp-switch.on{background:#1688ff}
+    #instaproSettingsPanel .isp-switch.on:after{left:21px}
+    #instaproSettingsPanel .isp-status{font-size:12px;opacity:.65;text-align:center;padding-top:10px;min-height:16px}
+    body.instapro-light-mode{background:#f4f4f7!important;color:#161616!important}
+    body.instapro-light-mode #homePage,body.instapro-light-mode .page{color:#161616}
+    body.instapro-light-mode .topGlass,body.instapro-light-mode .bottomGlass,body.instapro-light-mode .sideGlass,body.instapro-light-mode .sheetGlass{background:rgba(250,250,252,.96)!important;color:#161616!important}
+    body.instapro-light-mode .mItem,body.instapro-light-mode .sOpt{color:#161616!important}
+    @media(min-width:600px){#instaproSettingsPanel{align-items:center;padding:16px}#instaproSettingsPanel .isp-card{border-radius:24px;max-height:85dvh}}
+  `;
+  document.head.appendChild(style);
+}
+
+function settingsPanelMarkup(user) {
+  const theme = currentAppSettings.theme === "light";
+  const notifications = currentAppSettings.browserNotifications === true;
+  return `
+    <div class="isp-card" role="dialog" aria-modal="true" aria-label="Settings and activity">
+      <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">Settings and activity</div><button id="ispClose" aria-label="Close">×</button></div>
+      <div class="isp-subtitle">Your account</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in account</div><div class="isp-desc">${escapeSettingsText(user?.email || user?.displayName || "Google account")}</div></div><button class="isp-action" id="ispProfile">Profile</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts</div><div class="isp-desc">Open your profile to view posts you saved.</div></div><button class="isp-action" id="ispSaved">Open</button></div>
+      <div class="isp-subtitle" style="margin-top:18px">How you use InstaPro</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Light appearance</div><div class="isp-desc">Change the app's appearance on this device and save your choice.</div></div><button class="isp-switch ${theme ? "on" : ""}" id="ispTheme" role="switch" aria-checked="${theme}" aria-label="Light appearance"></button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Browser notifications</div><div class="isp-desc">Allow this browser to show notifications, if supported.</div></div><button class="isp-switch ${notifications ? "on" : ""}" id="ispNotifications" role="switch" aria-checked="${notifications}" aria-label="Browser notifications"></button></div>
+      <div class="isp-subtitle" style="margin-top:18px">More information</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Help and support</div><div class="isp-desc">For a problem, note the screen and error message.</div></div><button class="isp-action" id="ispHelp">Help</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Log out</div><div class="isp-desc">Sign out of the current Google account on this app.</div></div><button class="isp-action" id="ispLogout">Log out</button></div>
+      <div class="isp-status" id="ispStatus" aria-live="polite"></div>
+    </div>`;
+}
+
+function escapeSettingsText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+function applyAppTheme(theme) {
+  currentAppSettings.theme = theme === "light" ? "light" : "dark";
+  document.body.classList.toggle("instapro-light-mode", currentAppSettings.theme === "light");
+  try { localStorage.setItem("instapro-theme", currentAppSettings.theme); } catch (_) {}
+}
+
+async function saveAppSetting(key, value) {
+  const user = (await import("./firebase.js")).auth.currentUser;
+  if (!user || user.isAnonymous) throw new Error("Settings save karne ke liye Google login karein.");
+  const { db } = await import("./firebase.js");
+  const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  await setDoc(doc(db, "users", user.uid), {
+    appSettings: { ...currentAppSettings, [key]: value },
+    appSettingsUpdatedAt: serverTimestamp()
+  }, { merge: true });
+  currentAppSettings[key] = value;
+}
+
+async function openSettingsPanel() {
+  installSettingsStyles();
+  const { auth, db } = await import("./firebase.js");
+  const user = auth.currentUser;
+  if (!user || user.isAnonymous) { alert("Settings ke liye pehle Google se login karein."); return; }
+  document.getElementById("sideMenu")?.classList.remove("show");
+  const overlay = document.getElementById("sideOverlay");
+  if (overlay) { overlay.classList.remove("show"); overlay.style.display = "none"; }
+  let panel = document.getElementById("instaproSettingsPanel");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "instaproSettingsPanel";
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML = settingsPanelMarkup(user);
+  panel.classList.add("open");
+  const status = () => panel.querySelector("#ispStatus");
+  const close = () => panel.classList.remove("open");
+  panel.querySelector("#ispClose").onclick = close;
+  panel.querySelector("#ispBack").onclick = close;
+  panel.onclick = event => { if (event.target === panel) close(); };
+  panel.querySelector("#ispProfile").onclick = async () => {
+    close();
+    try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); }
+    catch (error) { alert("Profile open nahi hua: " + error.message); }
+  };
+  panel.querySelector("#ispSaved").onclick = async () => {
+    close();
+    try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); }
+    catch (error) { alert("Profile open nahi hua: " + error.message); }
+    alert("Saved posts ka section profile mein kholen.");
+  };
+  panel.querySelector("#ispTheme").onclick = async event => {
+    const button = event.currentTarget;
+    const next = currentAppSettings.theme === "light" ? "dark" : "light";
+    applyAppTheme(next);
+    button.classList.toggle("on", next === "light");
+    button.setAttribute("aria-checked", String(next === "light"));
+    status().textContent = "Saving appearance…";
+    try { await saveAppSetting("theme", next); status().textContent = "Appearance saved."; }
+    catch (error) { status().textContent = "Device par apply hua, Firebase save nahi hua."; console.error("Theme setting save error:", error); }
+  };
+  panel.querySelector("#ispNotifications").onclick = async event => {
+    const button = event.currentTarget;
+    if (!("Notification" in window)) { status().textContent = "Is browser mein notifications supported nahi hain."; return; }
+    try {
+      let permission = Notification.permission;
+      if (permission === "default") permission = await Notification.requestPermission();
+      const enabled = permission === "granted";
+      currentAppSettings.browserNotifications = enabled;
+      button.classList.toggle("on", enabled);
+      button.setAttribute("aria-checked", String(enabled));
+      await saveAppSetting("browserNotifications", enabled);
+      status().textContent = enabled ? "Browser notifications allowed." : "Browser notification permission not granted.";
+    } catch (error) { status().textContent = "Notification setting save nahi hui."; console.error(error); }
+  };
+  panel.querySelector("#ispHelp").onclick = () => { status().textContent = "Help: app ka screenshot aur Console error share karein."; };
+  panel.querySelector("#ispLogout").onclick = async () => {
+    if (!confirm("Kya aap InstaPro se log out karna chahte hain?")) return;
+    try {
+      const { auth } = await import("./firebase.js");
+      const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+      if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; }
+      await signOut(auth);
+      close();
+      location.reload();
+    } catch (error) { status().textContent = "Logout nahi hua: " + error.message; }
+  };
+
+  try {
+    if (settingsUnsubscribe) settingsUnsubscribe();
+    const { onSnapshot, doc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    settingsUnsubscribe = onSnapshot(doc(db, "users", user.uid), snapshot => {
+      const saved = snapshot.exists() ? snapshot.data().appSettings : null;
+      if (!saved) return;
+      currentAppSettings = { ...currentAppSettings, ...saved };
+      applyAppTheme(currentAppSettings.theme);
+      const themeButton = panel.querySelector("#ispTheme");
+      const notifButton = panel.querySelector("#ispNotifications");
+      if (themeButton) { themeButton.classList.toggle("on", currentAppSettings.theme === "light"); themeButton.setAttribute("aria-checked", String(currentAppSettings.theme === "light")); }
+      if (notifButton) { notifButton.classList.toggle("on", currentAppSettings.browserNotifications === true); notifButton.setAttribute("aria-checked", String(currentAppSettings.browserNotifications === true)); }
+    }, error => { console.error("Settings realtime listener error:", error); if (status()) status().textContent = "Firebase settings load nahi hui."; });
+  } catch (error) { console.error("Settings initialize error:", error); }
+}
+
+function bindSideMenuItems() {
+  const items = document.querySelectorAll("#sideMenu .mItem");
+  if (items[0]) items[0].onclick = openSettingsPanel;
+  if (items[1]) items[1].onclick = () => {
+    openSettingsPanel();
+  };
+  if (items[2]) items[2].onclick = async () => {
+    const next = currentAppSettings.theme === "light" ? "dark" : "light";
+    applyAppTheme(next);
+    try { await saveAppSetting("theme", next); } catch (error) { console.error("Theme save error:", error); }
+  };
+  if (items[3]) items[3].onclick = async () => {
+    if (!confirm("Kya aap InstaPro se log out karna chahte hain?")) return;
+    try { const { auth } = await import("./firebase.js"); const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); await signOut(auth); location.reload(); }
+    catch (error) { alert("Logout nahi hua: " + error.message); }
+  };
+}
+
 function openMenu(){
   const m=$("sideMenu"); if(!m) return;
   m.classList.add("show");
@@ -65,6 +244,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   // TOP BUTTONS - FINAL
   $("menuBtn")?.addEventListener("click", openMenu);
+  bindSideMenuItems();
+  try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); } catch (_) {}
   $("notifBtn")?.addEventListener("click", async () => {
   try {
     const m = await import("./notifications.js");
