@@ -1,6 +1,23 @@
 // app.js - ALL BUTTON WORKING - FINAL FIX - NO OVERLAP
 const $ = id => document.getElementById(id);
 
+// Keep every video in InstaPro at its original 1x playback speed.
+// This also applies to videos inserted later by Feed, Reels, Explore and Profile.
+function setInstaProNormalVideoSpeed(event) {
+  const video = event.target;
+  if (!(video instanceof HTMLVideoElement)) return;
+
+  try {
+    video.defaultPlaybackRate = 1;
+    video.playbackRate = 1;
+  } catch (error) {
+    console.warn("Could not normalize video playback speed:", error);
+  }
+}
+
+document.addEventListener("loadedmetadata", setInstaProNormalVideoSpeed, true);
+document.addEventListener("play", setInstaProNormalVideoSpeed, true);
+
 function closeAll(){
   const s=$("createSheet"); if(s){ s.classList.remove("show"); s.style.bottom="-100%"; }
   const ps=$("profileSheet"); if(ps){ ps.classList.remove("show","open"); ps.style.bottom="-100%"; }
