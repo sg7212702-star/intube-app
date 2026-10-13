@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded",()=>{
             alert("Pehle Google se login karein.");
             return;
           }
-await import("./profile.js");
+          await import("./profile.js");
           if (typeof window.openProfile === "function") {
             await window.openProfile(user.uid);
           } else {
