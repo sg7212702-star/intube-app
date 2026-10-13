@@ -18,30 +18,58 @@ const $ = (id) => document.getElementById(id);
 
 let authInitialized = false;
 
-// Firebase user profile create/update
+// Firebase user profile create/update.
+// Preserve user-edited profile fields while normalizing fields used by Feed,
+// Follow, Profile, Stories and Chat.
 async function saveUserProfile(user) {
+  if (!user?.uid) return;
+
   const userRef = doc(db, "users", user.uid);
   const userSnap = await getDoc(userRef);
+  const existing = userSnap.exists() ? userSnap.data() : {};
+  const fallbackName =
+    user.displayName ||
+    user.email?.split("@")[0] ||
+    "InstaPro User";
+  const fallbackUsername = (
+    user.email?.split("@")[0] ||
+    user.uid
+  ).toLowerCase().replace(/[^a-z0-9._]/g, "");
 
   const profile = {
     uid: user.uid,
-    name: user.displayName || user.email?.split("@")[0] || "Insta Pro User",
-    email: user.email || "",
-    avatar: user.photoURL || "",
+    email: user.email || existing.email || "",
+    username: existing.username || fallbackUsername,
+    name: existing.name || existing.displayName || fallbackName,
+    displayName: existing.displayName || existing.name || fallbackName,
+    photoURL: existing.photoURL || existing.photo || existing.avatar || user.photoURL || "",
+    photo: existing.photo || existing.photoURL || existing.avatar || user.photoURL || "",
+    avatar: existing.avatar || existing.photoURL || existing.photo || user.photoURL || "",
+    bio: typeof existing.bio === "string" ? existing.bio : "",
+    // Follow logic requires arrays of UIDs, not numeric counters.
+    followers: Array.isArray(existing.followers) ? existing.followers : [],
+    following: Array.isArray(existing.following) ? existing.following : [],
+    posts: Number.isFinite(Number(existing.posts)) ? Number(existing.posts) : 0,
     updatedAt: serverTimestamp()
   };
 
   if (!userSnap.exists()) {
-    profile.bio = "";
-    profile.posts = 0;
-    profile.followers = 0;
-    profile.following = 0;
     profile.createdAt = serverTimestamp();
-
-    await setDoc(userRef, profile);
-  } else {
-    await setDoc(userRef, profile, { merge: true });
   }
+
+  // Keep legacy counters if an older version stored numbers instead of UID arrays.
+  if (typeof existing.followers === "number") {
+    profile.followersCount = existing.followers;
+  } else if (Array.isArray(existing.followers)) {
+    profile.followersCount = existing.followers.length;
+  }
+  if (typeof existing.following === "number") {
+    profile.followingCount = existing.following;
+  } else if (Array.isArray(existing.following)) {
+    profile.followingCount = existing.following.length;
+  }
+
+  await setDoc(userRef, profile, { merge: true });
 }
 
 // Email/password registration
