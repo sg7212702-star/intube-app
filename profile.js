@@ -1188,13 +1188,13 @@ export async function openProfile(uid = null) {
     }
   );
 
-  // Current upload.js ke userId schema se posts load.
-  postsUnsub = onSnapshot(
-    query(
-      collection(db, "posts"),
-      where("userId", "==", targetUid),
-      limit(200)
-    ),
+// Realtime profile posts listener
+postsUnsub = onSnapshot(
+  query(
+    collection(db, "posts"),
+    where("uid", "==", targetUid),
+    limit(200)
+  ),
 
     snapshot => {
       profilePosts = snapshot.docs.map(item => ({
