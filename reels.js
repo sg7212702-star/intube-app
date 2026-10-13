@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   arrayRemove,
   addDoc,
@@ -161,6 +162,7 @@ function installReelsStyles() {
       text-shadow:0 1px 5px #000;
     }
     .ipr-action small {display:block;font-size:12px;margin-top:4px}
+    .ipr-delete-reel {color:#ff6b8a}
     .ipr-bottom {
       position:absolute;left:15px;right:80px;bottom:28px;
       z-index:3;text-shadow:0 1px 5px #000;
@@ -270,6 +272,35 @@ function getCommentRef(postId) {
 
 function currentUser() {
   return auth.currentUser;
+}
+
+async function deleteOwnReel(postId) {
+  const user = currentUser();
+  if (!user || user.isAnonymous) {
+    showReelsMessage("Apni Reel delete karne ke liye login karein.");
+    return;
+  }
+  try {
+    const ref = getPostRef(postId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showReelsMessage("Yeh Reel pehle hi delete ho chuki hai.");
+      return;
+    }
+    const post = snap.data();
+    const ownerUid = post.uid || post.userId || post.authorId || post.ownerUid;
+    if (ownerUid !== user.uid) {
+      showReelsMessage("Aap sirf apni Reel delete kar sakte hain.");
+      return;
+    }
+    if (!confirm("Kya aap is Reel ko hamesha ke liye delete karna chahte hain?")) return;
+    await deleteDoc(ref);
+    closeReelsViewer();
+    showReelsMessage("Aapki Reel delete ho gayi.");
+  } catch (error) {
+    console.error("Reel delete error:", error);
+    showReelsMessage("Reel delete nahi hui. Firestore Rules mein owner delete permission check karein.");
+  }
 }
 
 function setLikeCount(post) {
@@ -402,6 +433,7 @@ function renderReelsSlides(track) {
           <button class="ipr-action" data-comment="${id}">💬<small>${Number(post.commentCount) || 0}</small></button>
           <button class="ipr-action" data-share="${id}">↗<small>Share</small></button>
           <button class="ipr-action" data-mute="${id}">🔇<small>Sound</small></button>
+          ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button class="ipr-action ipr-delete-reel" data-delete-reel="${id}" aria-label="Delete your Reel">🗑️<small>Delete</small></button>' : ""}
         </div>
 
         <div class="ipr-bottom">
@@ -476,6 +508,10 @@ function renderReelsSlides(track) {
       video.muted = !video.muted;
       button.innerHTML = `${video.muted ? "🔇" : "🔊"}<small>Sound</small>`;
     });
+  });
+
+  track.querySelectorAll("[data-delete-reel]").forEach(button => {
+    button.addEventListener("click", () => deleteOwnReel(button.dataset.deleteReel));
   });
 
   track.querySelectorAll("[data-share]").forEach(button => {
