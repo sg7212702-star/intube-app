@@ -25,6 +25,7 @@
   let mirrored = false;
   let cropMode = false;
   let audioElement = null;
+  let selectedMusicTrack = null;
 
   function addStyles() {
     if (document.getElementById("ipe-glass-styles")) return;
@@ -148,13 +149,14 @@
         <section class="ipe-section">
           <div class="ipe-section-title"><span>🎵 Add music</span><span style="opacity:.55;font-size:11px">Choose audio</span></div>
           <div class="ipe-music-row">
-            <button class="ipe-glass" data-action="chooseMusic">＋ Select music</button>
+            <button class="ipe-glass" data-action="browseMusic">🔎 Browse Library</button>
+            <button class="ipe-glass" data-action="chooseMusic">＋ From device</button>
             <button class="ipe-glass" data-action="musicPlay" id="ipeMusicPlay" disabled>▶ Preview</button>
             <button class="ipe-glass" data-action="musicRemove" id="ipeMusicRemove" disabled>Remove</button>
             <span class="ipe-music-name" id="ipeMusicName">No music selected</span>
           </div>
           <label class="ipe-range">Music volume <input type="range" min="0" max="100" value="70" data-adjust="musicVolume"><output>70%</output></label>
-          <p class="ipe-hint">Music selection and preview work in the editor. Publishing a mixed music/video track requires the media-processing connection; this preview alone does not merge audio into the uploaded file.</p>
+          <p class="ipe-hint">Library audio can be previewed and saved with the post as a soundtrack reference. Important: this current flow does not mix the music into the actual video file yet.</p>
           <input id="ipeMusicInput" class="ipe-hidden" type="file" accept="audio/*">
         </section>
       </main>
@@ -224,6 +226,7 @@
     if (!file || !file.type.startsWith("audio/")) return;
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     audioFile = file;
+    selectedMusicTrack = null;
     audioUrl = URL.createObjectURL(file);
     if (audioElement) audioElement.pause();
     audioElement = new Audio(audioUrl);
@@ -233,6 +236,22 @@
     root.querySelector("#ipeMusicPlay").disabled = false;
     root.querySelector("#ipeMusicRemove").disabled = false;
     event.target.value = "";
+  }
+
+  function selectLibraryMusic(track) {
+    if (!root || !track?.audioUrl) return;
+    if (audioElement) audioElement.pause();
+    if (audioUrl && !selectedMusicTrack) URL.revokeObjectURL(audioUrl);
+    audioFile = null;
+    selectedMusicTrack = track;
+    audioUrl = track.audioUrl;
+    audioElement = new Audio(audioUrl);
+    audioElement.loop = true;
+    audioElement.volume = Number(root.querySelector('[data-adjust="musicVolume"]').value) / 100;
+    root.querySelector("#ipeMusicName").textContent = `${track.title || "Music"}${track.artistName ? " — " + track.artistName : ""}`;
+    root.querySelector("#ipeMusicPlay").disabled = false;
+    root.querySelector("#ipeMusicRemove").disabled = false;
+    root.querySelector("#ipeMusicPlay").textContent = "▶ Preview";
   }
 
   async function toggleMusicPreview() {
@@ -257,6 +276,7 @@
     audioElement = null;
     audioUrl = "";
     audioFile = null;
+    selectedMusicTrack = null;
     if (!root) return;
     root.querySelector("#ipeMusicName").textContent = "No music selected";
     root.querySelector("#ipeMusicPlay").disabled = true;
@@ -283,6 +303,10 @@
         });
         renderFilters(); adjust(); break;
       case "chooseMusic": chooseMusic(); break;
+      case "browseMusic":
+        if (window.InstaProMusic?.openPicker) window.InstaProMusic.openPicker(selectLibraryMusic);
+        else alert("Music Library load ho rahi hai. Thodi der baad dobara try karein.");
+        break;
       case "musicPlay": toggleMusicPreview(); break;
       case "musicRemove": removeMusic(); break;
       case "next": continueUpload(); break;
@@ -327,6 +351,7 @@
     try {
       if (file.type.startsWith("image/")) file = await renderEditedImage(file);
       window.__instaProPendingMusicFile = audioFile || null;
+      window.__instaProPendingMusicTrack = selectedMusicTrack ? {...selectedMusicTrack} : null;
       close();
       if (desiredType === "reel") input.dataset.instaProUploadType = "reel";
       const transfer = new DataTransfer();
@@ -349,6 +374,7 @@
     audioElement = null;
     audioUrl = "";
     audioFile = null;
+    selectedMusicTrack = null;
     sourceUrl = "";
     sourceFile = null;
     sourceInput = null;
