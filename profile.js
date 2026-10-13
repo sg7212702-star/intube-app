@@ -686,7 +686,7 @@ const postTiles = grid.querySelectorAll(".ipp-tile");
 
 postTiles.forEach((tile, index) => {
   function openSelectedPost() {
-    const post = filtered[index];
+    const post = filtered.find(item => item.id === tile.dataset.postId);
 
     if (!post) return;
 
