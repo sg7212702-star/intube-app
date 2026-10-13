@@ -143,7 +143,7 @@ function activeStories() {
     if (audience === "closeFriends") {
       const owner = allStories.find(item => ownerId(item) === ownerId(s));
       // Close-friends membership is stored on the story owner's user document.
-      return Array.isArray(s.closeFriendsUids) && s.closeFriendsUids.includes(uid);
+      return Array.isArray(privacy.closeFriendsUids) && privacy.closeFriendsUids.includes(uid);
     }
     return true;
   }).sort((a, b) => timestamp(b) - timestamp(a));
