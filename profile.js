@@ -1593,29 +1593,49 @@ postsUnsub = onSnapshot(
     }
   );
 
-  // Realtime story ring: no active story means no ring. Story viewer is handled by stories.js.
+  // Realtime profile story ring. Normalize Firebase timestamps and UID types
+  // so stories uploaded by one account are recognized when viewed by another.
   storiesUnsub = onSnapshot(
     collection(db, "stories"),
     snapshot => {
-      if (!$("#ipProfileOverlay") || viewingUid !== targetUid) return;
+      if (!$("#ipProfileOverlay") || String(viewingUid) !== String(targetUid)) return;
+
       const now = Date.now();
+      const toMillis = value => {
+        if (value?.toMillis) return value.toMillis();
+        if (value?.toDate) return value.toDate().getTime();
+        if (value instanceof Date) return value.getTime();
+        if (typeof value === "string") return Date.parse(value) || Number(value) || 0;
+        const numeric = Number(value || 0);
+        return Number.isFinite(numeric) ? numeric : 0;
+      };
+
       profileStories = snapshot.docs
         .map(item => ({ id: item.id, ...item.data() }))
         .filter(story => {
-          const owner = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
-          const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
-          const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
-          const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
+          const owner = String(
+            story.uid || story.userId || story.authorId ||
+            story.ownerUid || story.userUID || ""
+          );
+          const url = story.mediaUrl || story.imageUrl || story.url ||
+            story.videoUrl || story.image || "";
+          const created = toMillis(story.createdAt) || toMillis(story.time);
+          const expires = toMillis(story.expiresAt) || ((created || now) + 86400000);
           const privacy = story.privacy || {};
           const audience = privacy.audience || story.audience || "everyone";
-          const viewerUid = myId();
+          const viewerUid = String(myId() || "");
           const visibleToViewer = owner === viewerUid || (
             audience !== "onlyMe" &&
-            !(Array.isArray(privacy.hiddenFromUids) && privacy.hiddenFromUids.includes(viewerUid)) &&
-            (audience !== "closeFriends" || (Array.isArray(privacy.closeFriendsUids) && privacy.closeFriendsUids.includes(viewerUid)))
+            !(Array.isArray(privacy.hiddenFromUids) &&
+              privacy.hiddenFromUids.map(String).includes(viewerUid)) &&
+            (audience !== "closeFriends" ||
+              (Array.isArray(privacy.closeFriendsUids) &&
+                privacy.closeFriendsUids.map(String).includes(viewerUid)))
           );
-          return owner === targetUid && !!url && expires > now && visibleToViewer;
+
+          return owner === String(targetUid) && !!url && expires > now && visibleToViewer;
         });
+
       render(profileData, profilePosts);
     },
     error => console.error("Profile story ring listener error:", error)
