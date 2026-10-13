@@ -3,6 +3,9 @@ import { db, auth } from "./firebase.js";
 import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const box = document.getElementById("otherStories");
+// Make the stories container transparent to the parent story row so each story
+// appears beside "Your story" in the same horizontal strip, not inside a nested box.
+if (box) box.style.display = "contents";
 let storyItems = [];
 let unsubscribeStories = null;
 
