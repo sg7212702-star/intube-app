@@ -47,6 +47,8 @@ const $ = id => document.getElementById(id);
 
 let unsubscribeFeed = null;
 let unsubscribeComments = null;
+let unsubscribeCurrentProfile = null;
+let currentFollowing = new Set();
 
 let currentPosts = [];
 let profileCache = new Map();
@@ -585,9 +587,7 @@ async function renderFeed() {
 
       const ownPost = !!user && ownerUid === user.uid;
 
-      const isFollowing =
-        Array.isArray(profile.followers) &&
-        profile.followers.includes(user.uid);
+      const isFollowing = currentFollowing.has(ownerUid);
 
       const mediaType = getPostType(post);
 
