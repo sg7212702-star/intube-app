@@ -398,8 +398,14 @@ function closeProfile() {
   $("#ipProfileOverlay")?.remove();
 
   document.body.style.overflow = "";
-}
 
+  // Main InstaPro profile ko automatically open na karein.
+  document.querySelectorAll(".page").forEach(page => {
+    if (page.id === "homePage") {
+      page.style.display = "block";
+    }
+  });
+}
 function render(data = profileData, posts = profilePosts) {
   const page = $("#ipProfileOverlay");
 
