@@ -2,9 +2,12 @@
 import { auth, db } from "./firebase.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
-  doc, setDoc, getDoc, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const CHAT_CLOUDINARY_NAME = "kujnbe0a";
+const CHAT_CLOUDINARY_PRESET = "intube_free";
 
 let currentUser = null;
 let selectedUser = null;
@@ -57,6 +60,9 @@ function setupUI() {
     <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
     <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#000; border-top:1px solid rgba(255,255,255,.08); box-sizing:border-box;">
       <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.12); color:#fff; outline:none;">
+      <button id="chatAttach" type="button" aria-label="Photo or video" style="border:0;background:transparent;color:#fff;font-size:22px;padding:4px;">＋</button>
+      <input id="chatMediaInput" type="file" accept="image/*,video/*" hidden>
+      <button id="chatVoice" type="button" aria-label="Record voice message" style="border:0;background:transparent;color:#fff;font-size:21px;padding:4px;">🎙️</button>
       <button id="chatSend" type="submit" style="padding:8px 14px; border-radius:20px; border:0; background:transparent; color:#0095f6; font-weight:700; font-size:15px;">Send</button>
     </form>
   </div>`;
@@ -66,6 +72,9 @@ function setupUI() {
   });
   $("backToList")?.addEventListener("click", closeChat);
   $("chatForm")?.addEventListener("submit", sendMsg);
+  $("chatAttach")?.addEventListener("click", () => $("chatMediaInput")?.click());
+  $("chatMediaInput")?.addEventListener("change", async event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) await sendMedia(file, file.type.startsWith("video/") ? "video" : "image"); });
+  $("chatVoice")?.addEventListener("click", toggleVoiceRecording);
   $("userSearch")?.addEventListener("input", event => {
     const q = event.target.value.trim().toLowerCase();
     renderList(allUsers.filter(user =>
@@ -187,12 +196,19 @@ function openChat(user) {
       box.innerHTML = '<p style="text-align:center;opacity:.5;padding:24px;">Say hello 👋</p>';
       return;
     }
-    box.innerHTML = snapshot.docs.map(item => {
+    const docs = snapshot.docs;
+    docs.forEach(item => { const msg = item.data(); if (msg.senderUid !== currentUser.uid && msg.receiverUid === currentUser.uid && !msg.read) updateDoc(item.ref, { delivered: true, read: true, readAt: serverTimestamp() }).catch(err => console.warn("Read receipt:", err)); });
+    box.innerHTML = docs.map(item => {
       const msg = item.data();
       const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
       const when = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "";
-      return `<div style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${escapeHTML(msg.text || msg.message || "")}</div><small style="display:block;text-align:right;opacity:.65;margin-top:4px;font-size:10px;">${escapeHTML(when)}</small></div>`;
+      const body = msg.deleted ? '<i style="opacity:.65;">This message was deleted</i>' : (msg.mediaUrl ? (msg.mediaType === "video" ? `<video controls playsinline src="${escapeHTML(msg.mediaUrl)}" style="max-width:100%;max-height:260px;border-radius:10px;"></video>` : msg.mediaType === "audio" ? `<audio controls src="${escapeHTML(msg.mediaUrl)}" style="max-width:220px;"></audio>` : `<img src="${escapeHTML(msg.mediaUrl)}" alt="Photo" style="max-width:100%;max-height:260px;border-radius:10px;object-fit:contain;">`) : escapeHTML(msg.text || msg.message || ""));
+      const reactions = msg.reactions && typeof msg.reactions === "object" ? Object.values(msg.reactions) : [];
+      const receipt = mine ? (msg.read ? "Seen ✓✓" : msg.delivered ? "Delivered ✓✓" : "Sent ✓") : "";
+      return `<div style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="margin-top:5px;font-size:15px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="border:0;background:transparent;color:#fff;padding:0;font-size:14px;" aria-label="React">☺</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="border:0;background:transparent;color:#fff;padding:0;font-size:12px;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
     }).join("");
+    box.querySelectorAll("[data-react]").forEach(button => button.addEventListener("click", () => reactToMessage(button.dataset.react)));
+    box.querySelectorAll("[data-delete]").forEach(button => button.addEventListener("click", () => removeMessage(button.dataset.delete)));
     box.scrollTop = box.scrollHeight;
   }, error => {
     console.error("Messages listener error:", error);
@@ -200,38 +216,65 @@ function openChat(user) {
   });
 }
 
+async function saveMessage(payload, previewText) {
+  if (!currentUser || !selectedUser || currentUser.isAnonymous) throw new Error("Please sign in first.");
+  const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
+  await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selectedUser.uid], lastMessage: previewText, lastSenderUid: currentUser.uid, updatedAt: serverTimestamp() }, { merge: true });
+  const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), { ...payload, senderUid: currentUser.uid, receiverUid: selectedUser.uid, uid: currentUser.uid, createdAt: serverTimestamp(), delivered: false, read: false });
+  try { await addDoc(collection(db, "users", selectedUser.uid, "notifications"), { type: "message", fromUid: currentUser.uid, fromName: nameOf(currentUser), fromPhoto: photoOf(currentUser), chatId, messageId: messageRef.id, text: previewText, read: false, createdAt: serverTimestamp() }); }
+  catch (e) { console.warn("Chat notification not saved; check Firestore Rules:", e); }
+  return messageRef;
+}
 async function sendMsg(event) {
   event?.preventDefault();
-  const input = $("chatInput");
-  const text = input?.value.trim();
+  const input = $("chatInput"), text = input?.value.trim();
   if (!text || !currentUser || !selectedUser || currentUser.isAnonymous) return;
-  const button = $("chatSend");
-  if (button) button.disabled = true;
-  const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
-  const chatRef = doc(db, "chats", chatId);
+  const button = $("chatSend"); if (button) button.disabled = true;
+  try { await saveMessage({ text }, text); input.value = ""; input.focus(); }
+  catch (error) { console.error("Send message error:", error); alert("Message send nahi hua. Firestore Rules check karein."); }
+  finally { if (button) button.disabled = false; }
+}
+async function uploadChatMedia(file) {
+  const isAudio = file.type.startsWith("audio/"), isVideo = file.type.startsWith("video/") || isAudio;
+  const endpoint = `https://api.cloudinary.com/v1_1/${CHAT_CLOUDINARY_NAME}/${isVideo ? "video" : "image"}/upload`;
+  const data = new FormData(); data.append("file", file); data.append("upload_preset", CHAT_CLOUDINARY_PRESET);
+  const response = await fetch(endpoint, { method: "POST", body: data }), result = await response.json();
+  if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "Media upload fail hua.");
+  return result.secure_url;
+}
+async function sendMedia(file, mediaType) {
+  if (!currentUser || !selectedUser || currentUser.isAnonymous) { alert("Pehle Google se login karein."); return; }
+  if (file.size > 100 * 1024 * 1024) { alert("File 100 MB se chhoti honi chahiye."); return; }
+  const attach = $("chatAttach"); if (attach) { attach.disabled = true; attach.textContent = "…"; }
+  try { const url = await uploadChatMedia(file); await saveMessage({ mediaUrl: url, mediaType, fileName: file.name || mediaType }, mediaType === "video" ? "🎬 Video" : mediaType === "audio" ? "🎙️ Voice message" : "📷 Photo"); }
+  catch (error) { console.error("Chat media upload error:", error); alert("Media send nahi hua: " + (error.message || "Upload error")); }
+  finally { if (attach) { attach.disabled = false; attach.textContent = "＋"; } }
+}
+let voiceRecorder = null, voiceChunks = [];
+async function toggleVoiceRecording() {
+  const button = $("chatVoice");
+  if (voiceRecorder && voiceRecorder.state === "recording") { voiceRecorder.stop(); if (button) button.textContent = "🎙️"; return; }
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") { alert("Is browser mein voice recording supported nahi hai."); return; }
   try {
-    await setDoc(chatRef, {
-      participants: [currentUser.uid, selectedUser.uid],
-      lastMessage: text,
-      lastSenderUid: currentUser.uid,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-    await addDoc(collection(db, "chats", chatId, "messages"), {
-      text,
-      senderUid: currentUser.uid,
-      receiverUid: selectedUser.uid,
-      uid: currentUser.uid,
-      createdAt: serverTimestamp(),
-      read: false
-    });
-    input.value = "";
-    input.focus();
-  } catch (error) {
-    console.error("Send message error:", error);
-    alert("Message send nahi hua. Firestore Rules check karein.");
-  } finally {
-    if (button) button.disabled = false;
-  }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(type => MediaRecorder.isTypeSupported(type));
+    voiceChunks = []; voiceRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    voiceRecorder.addEventListener("dataavailable", event => { if (event.data.size) voiceChunks.push(event.data); });
+    voiceRecorder.addEventListener("stop", async () => { stream.getTracks().forEach(track => track.stop()); const blob = new Blob(voiceChunks, { type: voiceRecorder.mimeType || "audio/webm" }); if (blob.size) await sendMedia(new File([blob], "voice-message.webm", { type: blob.type }), "audio"); });
+    voiceRecorder.start(); if (button) button.textContent = "⏹️";
+  } catch (error) { console.error("Voice recording error:", error); alert("Microphone permission dein, phir voice message record karein."); }
+}
+async function reactToMessage(messageId) {
+  if (!currentUser || !selectedUser) return;
+  const choice = prompt("Reaction choose karein: ❤️ 😂 😮 😢 👍 🔥", "❤️");
+  if (!choice || !["❤️","😂","😮","😢","👍","🔥"].includes(choice.trim())) return;
+  try { const chatId = chatIdFor(currentUser.uid, selectedUser.uid); await updateDoc(doc(db, "chats", chatId, "messages", messageId), { [`reactions.${currentUser.uid}`]: choice.trim() }); }
+  catch (error) { console.error("Message reaction error:", error); alert("Reaction save nahi hui. Firestore Rules check karein."); }
+}
+async function removeMessage(messageId) {
+  if (!currentUser || !selectedUser || !confirm("Is message ko sabhi ke liye delete karein?")) return;
+  try { const chatId = chatIdFor(currentUser.uid, selectedUser.uid); await updateDoc(doc(db, "chats", chatId, "messages", messageId), { deleted: true, text: "", mediaUrl: "", deletedAt: serverTimestamp() }); }
+  catch (error) { console.error("Delete message error:", error); alert("Message delete nahi hua. Firestore Rules check karein."); }
 }
 
 // Open a direct chat from another profile.
