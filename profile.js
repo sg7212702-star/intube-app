@@ -1118,7 +1118,7 @@ async function toggleFollow() {
   }
 }
 
-export async function openProfile(uid = null) {
+async function openProfile(uid = null) {
   const currentId = myId();
   const targetUid = uid || currentId;
 
