@@ -67,6 +67,38 @@
     document.head.appendChild(style);
   }
 
+  function setupReelOption() {
+    const sheet = document.getElementById("createSheet");
+    if (!sheet || document.getElementById("optReel")) return;
+    const cancel = document.getElementById("cancelSheet");
+    const option = document.createElement("div");
+    option.className = "sOpt";
+    option.id = "optReel";
+    option.textContent = "🎬 Reel";
+    sheet.insertBefore(option, cancel || null);
+    option.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const input = document.getElementById("postFile");
+      if (!input) { alert("Reel upload input nahi mila."); return; }
+      const createSheet = document.getElementById("createSheet");
+      if (createSheet) { createSheet.classList.remove("show"); createSheet.style.bottom = "-100%"; }
+      ["overlay", "sheetOverlay"].forEach(id => {
+        const layer = document.getElementById(id);
+        if (layer) { layer.classList.remove("show"); layer.style.display = "none"; }
+      });
+      input.dataset.instaProUploadType = "reel";
+      input.value = "";
+      input.click();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupReelOption, { once: true });
+  } else {
+    setupReelOption();
+  }
+
   function open(file, type, input) {
     if (!(file instanceof File) || (!file.type.startsWith("image/") && !file.type.startsWith("video/"))) {
       alert("Sirf photo ya video select karein.");
@@ -264,7 +296,10 @@
     }
     const file = sourceFile;
     const input = sourceInput;
+    const desiredType = uploadType;
+    window.__instaProPendingMusicFile = audioFile || null;
     close();
+    if (desiredType === "reel") input.dataset.instaProUploadType = "reel";
     try {
       const transfer = new DataTransfer();
       transfer.items.add(file);
@@ -277,6 +312,7 @@
   }
 
   function close() {
+    if (sourceInput && sourceFile) delete sourceInput.dataset.instaProUploadType;
     if (root) root.remove();
     root = null;
     if (audioElement) audioElement.pause();
@@ -305,7 +341,7 @@
     if (!file) return;
     event.stopImmediatePropagation();
     event.preventDefault();
-    open(file, input.id === "storyFile" ? "story" : "post", input);
+    open(file, input.dataset.instaProUploadType || (input.id === "storyFile" ? "story" : "post"), input);
   }, true);
 
   window.InstaProEditor = { open, close };
