@@ -1,6 +1,9 @@
 // app.js - ALL BUTTON WORKING - FINAL FIX - NO OVERLAP
 const $ = id => document.getElementById(id);
 
+// Load the standalone Music Library without changing index.html or style.css.
+import("./music.js").catch(error => console.error("Music Library failed to load:", error));
+
 // Keep every video in InstaPro at its original 1x playback speed.
 // This also applies to videos inserted later by Feed, Reels, Explore and Profile.
 function setInstaProNormalVideoSpeed(event) {
