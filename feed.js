@@ -1620,4 +1620,26 @@ window.InstaProFeed = {
   }
 };
 
+// Stop feed sound/video when the app or browser tab goes into the background.
+function instaProStopFeedMediaOnExit() {
+  document.querySelectorAll(".ip-feed-music, video.ip-feed-media").forEach(media => {
+    try {
+      media.pause();
+      if (media.matches(".ip-feed-music")) media.muted = true;
+    } catch (error) {
+      console.warn("Could not stop background feed media:", error);
+    }
+  });
+  document.querySelectorAll("[data-music-toggle]").forEach(button => {
+    button.innerHTML = '🔇 <span>Sound</span>';
+    button.setAttribute("aria-label", "Turn post music on");
+  });
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") instaProStopFeedMediaOnExit();
+});
+window.addEventListener("pagehide", instaProStopFeedMediaOnExit);
+window.addEventListener("beforeunload", instaProStopFeedMediaOnExit);
+
 console.log("InstaPro Professional Feed System loaded.");
