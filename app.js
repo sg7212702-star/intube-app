@@ -84,6 +84,8 @@ function settingsPanelMarkup(user) {
       <div class="isp-subtitle">Your account</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in account</div><div class="isp-desc">${escapeSettingsText(user?.email || user?.displayName || "Google account")}</div></div><button class="isp-action" id="ispProfile">Profile</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts</div><div class="isp-desc">Open your profile to view posts you saved.</div></div><button class="isp-action" id="ispSaved">Open</button></div>
+      <div class="isp-subtitle" style="margin-top:18px">Creator tools</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Creator analytics</div><div class="isp-desc">Views, likes, followers and the last 28 days.</div></div><button class="isp-action" id="ispCreatorAnalytics">View</button></div>
       <div class="isp-subtitle" style="margin-top:18px">How you use InstaPro</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Light appearance</div><div class="isp-desc">Change the app's appearance on this device and save your choice.</div></div><button class="isp-switch ${theme ? "on" : ""}" id="ispTheme" role="switch" aria-checked="${theme}" aria-label="Light appearance"></button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Browser notifications</div><div class="isp-desc">Allow this browser to show notifications, if supported.</div></div><button class="isp-switch ${notifications ? "on" : ""}" id="ispNotifications" role="switch" aria-checked="${notifications}" aria-label="Browser notifications"></button></div>
@@ -157,6 +159,7 @@ async function openSettingsPanel() {
   panel.querySelector("#ispClose").onclick = close;
   panel.querySelector("#ispBack").onclick = close;
   panel.onclick = event => { if (event.target === panel) close(); };
+  panel.querySelector("#ispCreatorAnalytics").onclick = () => openCreatorAnalytics(user, panel);
   panel.querySelector("#ispProfile").onclick = async () => {
     close();
     try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); }
@@ -245,6 +248,88 @@ async function openSettingsPanel() {
       applyReduceMotion(currentAppSettings.reduceMotion);
     }, error => { console.error("Settings realtime listener error:", error); if (status()) status().textContent = "Firebase settings load nahi hui."; });
   } catch (error) { console.error("Settings initialize error:", error); }
+}
+
+
+// Creator dashboard: live Firestore totals and a 28-day daily trend.
+async function openCreatorAnalytics(user, panel) {
+  if (!user || user.isAnonymous) { alert("Creator analytics ke liye Google login karein."); return; }
+  if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; }
+  const { db } = await import("./firebase.js");
+  const { collection, doc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  panel.innerHTML = `
+    <div class="isp-card" role="dialog" aria-modal="true" aria-label="Creator analytics" style="max-height:92dvh">
+      <div class="isp-head"><button id="ipaBack" aria-label="Back">‹</button><div class="isp-title">Creator analytics</div><button id="ipaClose" aria-label="Close">×</button></div>
+      <div style="font-size:12px;opacity:.7;margin:-8px 0 14px">Last 28 days · Updates live from Firebase</div>
+      <div id="ipaStats" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
+        <div class="isp-row">Loading analytics…</div>
+      </div>
+      <div class="isp-row" style="display:block;margin-top:14px">
+        <div class="isp-label">Views & net follows · 28 days</div>
+        <div id="ipaChart" style="width:100%;overflow:hidden;padding-top:10px">Loading chart…</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-top:8px"><span>🔵 Views</span><span>🟣 Net follows</span></div>
+      </div>
+      <div class="isp-row" style="display:block">
+        <div class="isp-label">Your posts</div>
+        <div id="ipaPosts" style="font-size:13px;line-height:1.8;overflow-wrap:anywhere">Loading…</div>
+      </div>
+      <div class="isp-status" id="ipaStatus" aria-live="polite"></div>
+    </div>`;
+  panel.classList.add("open");
+  const close = () => { if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; } panel.classList.remove("open"); };
+  panel.querySelector("#ipaClose").onclick = close;
+  panel.querySelector("#ipaBack").onclick = () => { if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; } openSettingsPanel(); };
+  panel.onclick = event => { if (event.target === panel) close(); };
+  let userData = {};
+  let allPosts = [];
+  let userReady = false, postsReady = false;
+  const stamp = value => value?.toMillis ? value.toMillis() : value?.toDate ? value.toDate().getTime() : Number(value || 0);
+  const count = value => Math.max(0, Number(value || 0));
+  const dayKey = date => date.toISOString().slice(0,10);
+  const dayLabels = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let n=27;n>=0;n--) { const d=new Date(today); d.setDate(d.getDate()-n); dayLabels.push(dayKey(d)); }
+  const owner = post => post.uid || post.userId || post.authorId || post.ownerUid || "";
+  const draw = () => {
+    if (!userReady || !postsReady || !panel.classList.contains("open")) return;
+    const posts = allPosts.filter(post => owner(post) === user.uid);
+    const totals = { views:0, likes:0, comments:0, shares:0 };
+    const viewsByDay = Object.fromEntries(dayLabels.map(day=>[day,0]));
+    posts.forEach(post => {
+      const daily = post.viewsByDay && typeof post.viewsByDay === "object" ? post.viewsByDay : {};
+      totals.views += count(post.viewCount ?? post.views ?? Object.values(daily).reduce((sum,v)=>sum+count(v),0));
+      totals.likes += count(post.likesCount ?? post.likeCount ?? (Array.isArray(post.likes)?post.likes.length:0));
+      totals.comments += count(post.commentsCount ?? post.commentCount);
+      totals.shares += count(post.shareCount);
+      dayLabels.forEach(day => { viewsByDay[day] += count(daily[day]); });
+    });
+    const followers = Array.isArray(userData.followers) ? userData.followers.length : count(userData.followersCount ?? userData.followers);
+    const followsByDay = userData.followsByDay && typeof userData.followsByDay === "object" ? userData.followsByDay : {};
+    const followSeries = dayLabels.map(day=>Number(followsByDay[day]||0));
+    const metrics = [
+      ["Views",totals.views.toLocaleString("en-IN"),"Total post views"],
+      ["Followers",followers.toLocaleString("en-IN"),"Current followers"],
+      ["Likes",totals.likes.toLocaleString("en-IN"),"Across your posts"],
+      ["Comments",totals.comments.toLocaleString("en-IN"),"Across your posts"],
+      ["Shares",totals.shares.toLocaleString("en-IN"),"Recorded shares"],
+      ["Posts",posts.length.toLocaleString("en-IN"),"Published posts"]
+    ];
+    panel.querySelector("#ipaStats").innerHTML = metrics.map(([label,value,sub])=>'<div class="isp-row" style="display:block;margin:0"><div style="font-size:12px;opacity:.7">'+label+'</div><div style="font-size:25px;font-weight:800;margin:4px 0">'+value+'</div><div style="font-size:11px;opacity:.65">'+sub+'</div></div>').join("");
+    const W=320,H=125, pad=8;
+    const max=Math.max(1,...Object.values(viewsByDay),...followSeries.map(Math.abs));
+    const x=i=>pad+i*(W-2*pad)/(dayLabels.length-1);
+    const y=v=>H-pad-(Math.max(0,v)/max)*(H-2*pad);
+    const path=arr=>arr.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+    const viewPath=path(dayLabels.map(day=>viewsByDay[day]));
+    const followPath=path(followSeries.map(v=>Math.max(0,v)));
+    panel.querySelector("#ipaChart").innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Daily views and net follows chart" style="width:100%;height:auto;display:block"><path d="M8 '+(H-8)+' H'+(W-8)+'" stroke="currentColor" opacity=".2" fill="none"/><path d="'+viewPath+'" stroke="#3698ff" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="'+followPath+'" stroke="#c084fc" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg><div style="display:flex;justify-content:space-between;font-size:10px;opacity:.65"><span>'+dayLabels[0]+'</span><span>'+dayLabels[13]+'</span><span>'+dayLabels[27]+'</span></div><p style="font-size:12px;opacity:.7;margin-bottom:0">28-day views: '+dayLabels.reduce((sum,day)=>sum+viewsByDay[day],0).toLocaleString("en-IN")+' · Net follows: '+followSeries.reduce((sum,v)=>sum+v,0).toLocaleString("en-IN")+'</p>';
+    const sorted=[...posts].sort((a,b)=>stamp(b.createdAt||b.time)-stamp(a.createdAt||a.time));
+    panel.querySelector("#ipaPosts").innerHTML=sorted.length?sorted.slice(0,20).map(post=>'<div style="padding:8px 0;border-bottom:1px solid #8884"><b>'+(String(post.caption||"Untitled post").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])))+'</b><div style="opacity:.72;font-size:12px">👁 '+count(post.viewCount??post.views).toLocaleString("en-IN")+' views · ♥ '+count(post.likesCount??post.likeCount??(Array.isArray(post.likes)?post.likes.length:0)).toLocaleString("en-IN")+' likes · ↗ '+count(post.shareCount).toLocaleString("en-IN")+' shares</div></div>').join(""):'No posts yet.';
+    panel.querySelector("#ipaStatus").textContent="Live Firebase data · daily chart starts collecting from when tracking is enabled.";
+  };
+  const stopUser=onSnapshot(doc(db,"users",user.uid),snap=>{userData=snap.exists()?snap.data():{};userReady=true;draw();},error=>{console.error("Analytics user listener:",error);panel.querySelector("#ipaStatus").textContent="Follower analytics load nahi hui. Firestore Rules check karein.";});
+  const stopPosts=onSnapshot(collection(db,"posts"),snap=>{allPosts=snap.docs.map(d=>({id:d.id,...d.data()}));postsReady=true;draw();},error=>{console.error("Analytics posts listener:",error);panel.querySelector("#ipaStatus").textContent="Post analytics load nahi hui. Firestore Rules check karein.";});
+  settingsUnsubscribe=()=>{stopUser();stopPosts();};
 }
 
 function bindSideMenuItems() {
