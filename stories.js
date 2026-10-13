@@ -243,7 +243,7 @@ function closeViewer() {
   viewer = null;
   currentGroup = [];
 }
-function openStoryGroup(group) {
+function openStoryGroup(group, startIndex = 0) {
   if (!group?.stories?.length) return;
   closeViewer();
   currentGroup = group.stories.slice();
@@ -302,7 +302,7 @@ function openStoryGroup(group) {
   viewer.addEventListener("click", event => {
     if (event.target === viewer) closeViewer();
   });
-  showAt(0);
+  showAt(Math.max(0, Math.min(startIndex, currentGroup.length - 1)));
 }
 function showAt(index) {
   if (!viewer) return;
@@ -397,6 +397,19 @@ function showAt(index) {
 onAuthStateChanged(auth, user => {
   signedInUser = user || null;
   renderStories();
+});
+
+document.addEventListener("open-notification-story", event => {
+  const storyId = event.detail?.storyId;
+  if (!storyId) return;
+  const groups = groupsByUser(activeStories());
+  const group = groups.find(item => item.stories.some(story => story.id === storyId));
+  if (!group) {
+    alert("Yeh Story ab expire ho chuki hai.");
+    return;
+  }
+  const index = group.stories.findIndex(story => story.id === storyId);
+  openStoryGroup(group, Math.max(0, index));
 });
 
 function refreshExpiry() {
