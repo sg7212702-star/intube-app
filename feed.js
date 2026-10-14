@@ -701,8 +701,8 @@ async function renderFeed() {
         ? `
           <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="auto"></audio>
           <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Turn post music on"
-            style="position:absolute;right:12px;bottom:12px;z-index:20;display:flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:10px 13px;background:rgba(0,0,0,.82);color:#fff;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.35)">
-            🔇 <span>Sound</span>
+            style="position:absolute;right:10px;bottom:10px;z-index:20;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.24);border-radius:50%;padding:0;background:rgba(20,20,20,.34);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:15px;line-height:1;box-shadow:0 1px 5px rgba(0,0,0,.14);cursor:pointer;transition:transform .16s ease,background .16s ease">
+            🔇
           </button>
         `
         : "";
@@ -859,7 +859,7 @@ async function renderFeed() {
 
       const setSoundButton = () => {
         const muted = audio.muted;
-        button.innerHTML = muted ? '🔇 <span>Sound</span>' : '🔊 <span>Mute</span>';
+        button.innerHTML = muted ? '🔇' : '🔊';
         button.setAttribute("aria-label", muted ? "Turn post music on" : "Mute post music");
       };
 
