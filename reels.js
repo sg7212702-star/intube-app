@@ -148,20 +148,39 @@ function installReelsStyles() {
     }
     .ipr-close {
       position:absolute;top:18px;left:15px;z-index:5;
-      border:0;border-radius:50%;width:40px;height:40px;
-      color:white;background:rgba(20,20,20,.55);font-size:25px;
+      border:1px solid rgba(255,255,255,.24);border-radius:50%;width:42px;height:42px;
+      color:white;background:rgba(255,255,255,.09);font-size:25px;
+      backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 18px rgba(0,0,0,.14);
     }
     .ipr-actions {
       position:absolute;right:12px;bottom:110px;
-      display:flex;flex-direction:column;gap:22px;
+      display:flex;flex-direction:column;gap:17px;
       align-items:center;z-index:4;
     }
     .ipr-action {
-      border:0;background:transparent;color:white;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-width:44px;min-height:48px;padding:5px 7px;
+      border:1px solid rgba(255,255,255,.19);border-radius:18px;
+      background:rgba(255,255,255,.075);color:white;
       text-align:center;font-size:25px;cursor:pointer;
       text-shadow:0 1px 5px #000;
+      backdrop-filter:blur(18px) saturate(165%);-webkit-backdrop-filter:blur(18px) saturate(165%);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 16px rgba(0,0,0,.12);
+      transition:transform .16s ease,background .16s ease,border-color .16s ease;
+      touch-action:manipulation;
     }
-    .ipr-action small {display:block;font-size:12px;margin-top:4px}
+    .ipr-action:active,.ipr-close:active {
+      transform:scale(.92);background:rgba(255,255,255,.19);border-color:rgba(255,255,255,.35);
+    }
+    .ipr-action small {display:block;font-size:11px;margin-top:3px;color:rgba(255,255,255,.94)}
+    .ipr-action.ipr-liked {color:#ff3b78}
+    .ipr-action.ipr-delete-reel {color:#ff6b8a}
+    .ipr-bottom {
+      padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:20px;
+      background:rgba(12,12,16,.18);backdrop-filter:blur(16px) saturate(145%);
+      -webkit-backdrop-filter:blur(16px) saturate(145%);
+    }
     .ipr-delete-reel {color:#ff6b8a}
     .ipr-bottom {
       position:absolute;left:15px;right:80px;bottom:28px;
