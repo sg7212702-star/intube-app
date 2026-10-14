@@ -689,9 +689,13 @@ onAuthStateChanged(auth, user => {
   currentUser = user;
   if ($("chatOwnName")) $("chatOwnName").textContent = nameOf(user || {});
   if (document.readyState !== "loading") setupUI();
-  if (user) { loadUsersAndChats(); listenForIncomingCalls(); }
-  else { if (incomingCallUnsubscribe) incomingCallUnsubscribe(); incomingCallUnsubscribe = null; if (activeCall) endDirectCall(false); }
-  else {
+  if (user) {
+    loadUsersAndChats();
+    listenForIncomingCalls();
+  } else {
+    if (incomingCallUnsubscribe) incomingCallUnsubscribe();
+    incomingCallUnsubscribe = null;
+    if (activeCall) endDirectCall(false);
     if (listListener) listListener();
     if (usersListener) usersListener();
     if (chatListener) chatListener();
