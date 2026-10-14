@@ -17,6 +17,7 @@ let listListener = null;
 let usersListener = null;
 let currentChatMap = new Map();
 let messageCache = [];
+let replyTarget = null;
 
 const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
@@ -58,7 +59,7 @@ function setupUI() {
       <div style="display:flex; gap:16px; font-size:20px;">📞 🎥 ℹ️</div>
     </div>
     <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
-    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
+    <div id="chatReplyPreview" style="display:none;position:fixed;bottom:62px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 14px;background:rgba(30,30,34,.96);border-top:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;z-index:2;"><span id="chatReplyText" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:30px;"></span><button id="chatCancelReply" type="button" style="position:absolute;right:12px;top:6px;border:0;background:transparent;color:#fff;font-size:18px;">×</button></div>\n    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
       <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.085);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);color:#fff;outline:none;">
       <button id="chatAttach" type="button" aria-label="Photo or video" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:22px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">＋</button>
       <input id="chatMediaInput" type="file" accept="image/*,video/*" hidden>
@@ -71,7 +72,7 @@ function setupUI() {
     document.querySelector('.bBtn[data-v="home"]')?.click();
   });
   $("backToList")?.addEventListener("click", closeChat);
-  $("chatForm")?.addEventListener("submit", sendMsg);
+  $("chatForm")?.addEventListener("submit", sendMsg);\n  $("chatCancelReply")?.addEventListener("click", clearReply);
   $("chatAttach")?.addEventListener("click", () => $("chatMediaInput")?.click());
   $("chatMediaInput")?.addEventListener("change", async event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) await sendMedia(file, file.type.startsWith("video/") ? "video" : "image"); });
   $("chatVoice")?.addEventListener("click", toggleVoiceRecording);
@@ -212,14 +213,20 @@ function openChat(user) {
       const msg = item.data();
       const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
       const when = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "";
-      const body = msg.deleted ? '<i style="opacity:.65;">This message was deleted</i>' : (msg.mediaUrl ? (msg.mediaType === "video" ? `<video controls playsinline src="${escapeHTML(msg.mediaUrl)}" style="max-width:100%;max-height:260px;border-radius:10px;"></video>` : msg.mediaType === "audio" ? `<audio controls src="${escapeHTML(msg.mediaUrl)}" style="max-width:220px;"></audio>` : `<img src="${escapeHTML(msg.mediaUrl)}" alt="Photo" style="max-width:100%;max-height:260px;border-radius:10px;object-fit:contain;">`) : escapeHTML(msg.text || msg.message || ""));
+      const replyPreview = msg.replyTo ? `<div style="padding:5px 8px;margin-bottom:6px;border-left:3px solid rgba(255,255,255,.7);background:rgba(0,0,0,.16);border-radius:4px;font-size:11px;opacity:.85;">↪ ${escapeHTML(msg.replyTo.text || "Media message")}</div>` : "";\n      const body = msg.deleted ? '<i style="opacity:.65;">This message was deleted</i>' : (msg.mediaUrl ? (msg.mediaType === "video" ? `<video controls playsinline src="${escapeHTML(msg.mediaUrl)}" style="max-width:100%;max-height:260px;border-radius:10px;"></video>` : msg.mediaType === "audio" ? `<audio controls src="${escapeHTML(msg.mediaUrl)}" style="max-width:220px;"></audio>` : `<img src="${escapeHTML(msg.mediaUrl)}" alt="Photo" style="max-width:100%;max-height:260px;border-radius:10px;object-fit:contain;">`) : escapeHTML(msg.text || msg.message || ""));
       const reactions = msg.reactions && typeof msg.reactions === "object" ? Object.values(msg.reactions).filter(Boolean) : [];
       const myReaction = msg.reactions && msg.reactions[currentUser.uid];
       const receipt = mine ? (msg.read ? "Seen ✓✓" : msg.delivered ? "Delivered ✓✓" : "Sent ✓") : "";
-      return `<div data-message-id="${escapeHTML(item.id)}" style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${body}</div>${reactions.length ? `<div style="display:inline-flex;gap:4px;margin-top:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:15px;background:rgba(0,0,0,.18);font-size:14px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;padding:0;font-size:14px;cursor:pointer;" aria-label="React">${myReaction || "☺"}</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;padding:0;font-size:12px;cursor:pointer;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
+      return `<div data-message-id="${escapeHTML(item.id)}" style="align-self:${mine ? "flex-end" : "flex-start"};max-width:82%;padding:10px 13px;border-radius:${mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};background:${mine ? "#3797f0" : "#262626"};color:#fff;overflow-wrap:anywhere;"><div>${replyPreview}${body}</div>${reactions.length ? `<div style="display:inline-flex;gap:4px;margin-top:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:15px;background:rgba(0,0,0,.18);font-size:14px;">${reactions.map(escapeHTML).join(" ")}</div>` : ""}<div style="display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:5px;"><small style="opacity:.7;font-size:10px;">${escapeHTML(when)} ${escapeHTML(receipt)}</small><button type="button" data-react="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;padding:0;font-size:14px;cursor:pointer;" aria-label="React">${myReaction || "☺"}</button>${mine && !msg.deleted ? `<button type="button" data-delete="${escapeHTML(item.id)}" style="width:27px;height:27px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;padding:0;font-size:12px;cursor:pointer;" aria-label="Delete message">🗑</button>` : ""}</div></div>`;
     }).join("");
     box.querySelectorAll("[data-react]").forEach(button => button.addEventListener("click", () => reactToMessage(button.dataset.react)));
-    box.querySelectorAll("[data-message-id]").forEach(bubble => { let lastTap = 0; bubble.addEventListener("click", event => { if (event.target.closest("button,video,audio")) return; const now = Date.now(); if (now - lastTap < 320) { lastTap = 0; quickHeart(bubble.dataset.messageId); } else lastTap = now; }); });
+    box.querySelectorAll("[data-message-id]").forEach(bubble => {
+      let lastTap = 0, holdTimer = null, didHold = false;
+      bubble.addEventListener("contextmenu", event => { event.preventDefault(); showMessageActions(bubble.dataset.messageId); });
+      bubble.addEventListener("touchstart", () => { didHold = false; holdTimer = setTimeout(() => { didHold = true; showMessageActions(bubble.dataset.messageId); }, 550); }, { passive: true });
+      ["touchend","touchmove","touchcancel"].forEach(name => bubble.addEventListener(name, () => clearTimeout(holdTimer), { passive: true }));
+      bubble.addEventListener("click", event => { if (event.target.closest("button,video,audio") || didHold) { didHold = false; return; } const now = Date.now(); if (now - lastTap < 320) { lastTap = 0; quickHeart(bubble.dataset.messageId); } else lastTap = now; });
+    });
     box.querySelectorAll("[data-delete]").forEach(button => button.addEventListener("click", () => removeMessage(button.dataset.delete)));
     box.scrollTop = box.scrollHeight;
   }, error => {
@@ -242,7 +249,7 @@ async function sendMsg(event) {
   const input = $("chatInput"), text = input?.value.trim();
   if (!text || !currentUser || !selectedUser || currentUser.isAnonymous) return;
   const button = $("chatSend"); if (button) button.disabled = true;
-  try { await saveMessage({ text }, text); input.value = ""; input.focus(); }
+  try { await saveMessage({ text, ...(replyTarget ? { replyTo: { messageId: replyTarget.id, text: replyTarget.text } } : {}) }, text); input.value = ""; clearReply(); input.focus(); }
   catch (error) { console.error("Send message error:", error); alert("Message send nahi hua. Firestore Rules check karein."); }
   finally { if (button) button.disabled = false; }
 }
@@ -328,7 +335,59 @@ async function removeMessage(messageId) {
   }
 }
 
-// Open a direct chat from another profile.
+
+function clearReply() {
+  replyTarget = null;
+  const preview = $("chatReplyPreview");
+  if (preview) preview.style.display = "none";
+}
+async function showMessageActions(messageId) {
+  if (!currentUser || !selectedUser) return;
+  const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
+  const ref = doc(db, "chats", chatId, "messages", messageId);
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const msg = snap.data();
+    const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
+    const options = ["Reply", "Copy text", "React", ...(mine && !msg.deleted ? ["Edit message"] : []), "Forward", "Delete for me", ...(mine && !msg.deleted ? ["Unsend for everyone"] : [])];
+    const choice = prompt("Message actions:\n" + options.map((v,i)=>`${i+1}. ${v}`).join("\n") + "\nNumber choose karein:");
+    const action = options[Number(choice)-1];
+    if (!action) return;
+    if (action === "Reply") {
+      replyTarget = { id: messageId, text: msg.text || (msg.mediaType === "video" ? "🎬 Video" : msg.mediaType === "audio" ? "🎙️ Voice message" : msg.mediaUrl ? "📷 Photo" : "") };
+      $("chatReplyText").textContent = "Replying to: " + replyTarget.text;
+      $("chatReplyPreview").style.display = "block";
+      $("chatInput")?.focus();
+    } else if (action === "Copy text") {
+      if (!msg.text) { alert("Is message mein copy karne ke liye text nahi hai."); return; }
+      await navigator.clipboard.writeText(msg.text);
+    } else if (action === "React") {
+      await reactToMessage(messageId);
+    } else if (action === "Edit message") {
+      const next = prompt("Message edit karein:", msg.text || "");
+      if (next === null || !next.trim()) return;
+      await updateDoc(ref, { text: next.trim(), edited: true, editedAt: serverTimestamp() });
+    } else if (action === "Forward") {
+      const targetName = prompt("Forward karne ke liye user ka exact username/name likhein:");
+      const target = allUsers.find(u => nameOf(u).toLowerCase() === String(targetName || "").trim().toLowerCase() || String(u.username || "").toLowerCase() === String(targetName || "").trim().toLowerCase());
+      if (!target) { alert("User nahi mila."); return; }
+      const previous = selectedUser;
+      selectedUser = target;
+      try { await saveMessage({ text: msg.text || "", ...(msg.mediaUrl ? { mediaUrl: msg.mediaUrl, mediaType: msg.mediaType, fileName: msg.fileName || "" } : {}), forwarded: true }, msg.text || (msg.mediaType === "video" ? "🎬 Video" : "📷 Photo")); }
+      finally { selectedUser = previous; }
+    } else if (action === "Delete for me") {
+      await updateDoc(ref, { hiddenFor: arrayUnion(currentUser.uid) });
+    } else if (action === "Unsend for everyone") {
+      if (!confirm("Is message ko dono taraf se unsend karein?")) return;
+      await updateDoc(ref, { deleted: true, text: "", mediaUrl: "", fileName: "", deletedAt: serverTimestamp() });
+    }
+  } catch (error) {
+    console.error("Message action error:", error);
+    alert("Action poora nahi hua. Firestore Rules/clipboard permission check karein.");
+  }
+}
+\n// Open a direct chat from another profile.
 window.openChatWithUser = async function(uid) {
   if (!currentUser || currentUser.isAnonymous) { alert('Pehle Google se login karein.'); return; }
   if (!uid || uid === currentUser.uid) return;
