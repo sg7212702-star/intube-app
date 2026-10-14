@@ -513,49 +513,69 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("closeMenu")?.addEventListener("click", closeAll);
   $("cancelSheet")?.addEventListener("click", closeAll);
 
-  // Keep the bottom profile tab in sync with the user's actual profile photo.
+  // Show the signed-in user's real profile photo in the bottom Profile tab.
+  let bottomAvatarUnsubscribe = null;
+  let bottomAvatarBoundUid = null;
+  let bottomAvatarRequest = 0;
+
   async function syncBottomProfileAvatar() {
     const avatar = document.getElementById("myAvatar");
     const largeAvatar = document.getElementById("myAvatarLarge");
     if (!avatar) return;
+
     const fallback = "https://www.gravatar.com/avatar/?d=mp";
+    const requestId = ++bottomAvatarRequest;
+
     try {
       const { auth, db } = await import("./firebase.js");
       const user = auth.currentUser;
+
       if (!user || user.isAnonymous) {
-        avatar.src = fallback;
-        if (largeAvatar) largeAvatar.src = fallback;
+        if (bottomAvatarUnsubscribe) bottomAvatarUnsubscribe();
+        bottomAvatarUnsubscribe = null;
+        bottomAvatarBoundUid = null;
+        [avatar, largeAvatar].filter(Boolean).forEach(img => {
+          img.src = fallback;
+          img.alt = "Your profile";
+          img.style.objectFit = "cover";
+        });
         return;
       }
+
       const { doc, getDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      if (requestId !== bottomAvatarRequest || auth.currentUser?.uid !== user.uid) return;
+
+      const userRef = doc(db, "users", user.uid);
       const applyPhoto = data => {
-        const photo = data?.photoURL || data?.photoUrl || data?.profilePic || data?.avatar || user.photoURL || fallback;
+        const photo = data?.photoURL || data?.photoUrl || data?.profilePic || data?.photo || data?.avatar || auth.currentUser?.photoURL || fallback;
         [avatar, largeAvatar].filter(Boolean).forEach(img => {
-          if (img.src !== photo) img.src = photo;
+          if (img.getAttribute("src") !== photo) img.src = photo;
           img.alt = "Your profile";
           img.style.objectFit = "cover";
         });
       };
-      const snap = await getDoc(doc(db, "users", user.uid));
+
+      const snap = await getDoc(userRef);
+      if (requestId !== bottomAvatarRequest || auth.currentUser?.uid !== user.uid) return;
       applyPhoto(snap.exists() ? snap.data() : {});
-      // Subscribe once, so profile-photo changes update the bottom tab in realtime.
-      if (!avatar.dataset.photoListenerAttached) {
-        avatar.dataset.photoListenerAttached = "1";
-        onSnapshot(doc(db, "users", user.uid), latest => {
+
+      if (bottomAvatarBoundUid !== user.uid) {
+        if (bottomAvatarUnsubscribe) bottomAvatarUnsubscribe();
+        bottomAvatarBoundUid = user.uid;
+        bottomAvatarUnsubscribe = onSnapshot(userRef, latest => {
           if (auth.currentUser?.uid !== user.uid) return;
           applyPhoto(latest.exists() ? latest.data() : {});
-        }, error => console.warn("Bottom profile avatar listener:", error));
+        }, error => console.warn("Bottom profile photo listener:", error));
       }
-      if (user.photoURL && !snap.exists()) applyPhoto({ photoURL: user.photoURL });
     } catch (error) {
-      console.warn("Could not sync bottom profile avatar:", error);
-      if (!avatar.getAttribute("src")) avatar.src = fallback;
+      console.warn("Could not sync bottom profile photo:", error);
     }
   }
+
   syncBottomProfileAvatar();
   import("./firebase.js").then(({ auth }) => {
     auth.onAuthStateChanged?.(() => syncBottomProfileAvatar());
-  }).catch(error => console.warn("Profile avatar auth sync:", error));
+  }).catch(error => console.warn("Profile photo auth sync:", error));
 
   // BOTTOM NAV - GLASS PROFILE FIX
   document.querySelectorAll(".bBtn").forEach(btn => {
