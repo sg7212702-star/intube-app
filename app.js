@@ -225,10 +225,22 @@ async function openSettingsCategory(category, user, panel) {
     return;
   }
   const saved = currentAppSettings[category] || {};
-  rows.innerHTML = options.map(([key,label,description,defaultValue]) => {
-    const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
-    return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
-  }).join("");
+  if (category === "Privacy") {
+    const privateOn = typeof saved.privateAccount === "boolean" ? saved.privateAccount : false;
+    const privacyOptions = [
+      ["privateAccount","Private account","Only approved followers should be able to see your private content.",privateOn],
+      ...options.filter(option => option[0] !== "privateAccount")
+    ];
+    rows.innerHTML = privacyOptions.map(([key,label,description,defaultValue]) => {
+      const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
+      return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
+    }).join("");
+  } else {
+    rows.innerHTML = options.map(([key,label,description,defaultValue]) => {
+      const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
+      return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
+    }).join("");
+  }
   rows.querySelectorAll("[data-setting-key]").forEach(button => {
     button.onclick = async () => {
       const key = button.dataset.settingKey;
@@ -237,8 +249,21 @@ async function openSettingsCategory(category, user, panel) {
       button.setAttribute("aria-checked", String(next));
       currentAppSettings[category] = { ...(currentAppSettings[category] || {}), [key]: next };
       status.textContent = "Saving…";
-      try { await saveAppSetting(category, currentAppSettings[category]); status.textContent = "Saved."; }
-      catch (error) { status.textContent = "Save failed: " + error.message; console.error("Category setting save failed", error); }
+      try {
+        await saveAppSetting(category, currentAppSettings[category]);
+        if (category === "Privacy" && key === "privateAccount") {
+          const { auth, db } = await import("./firebase.js");
+          const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          await setDoc(doc(db, "users", auth.currentUser.uid), { privateAccount: next, isPrivate: next, privacyUpdatedAt: serverTimestamp() }, { merge: true });
+          status.textContent = next ? "Private account enabled and saved. Content access enforcement depends on feed/profile privacy rules." : "Private account disabled and saved.";
+        } else status.textContent = "Saved.";
+      } catch (error) {
+        button.classList.toggle("on", !next);
+        button.setAttribute("aria-checked", String(!next));
+        currentAppSettings[category][key] = !next;
+        status.textContent = "Save failed: " + error.message;
+        console.error("Category setting save failed", error);
+      }
     };
   });
 }
@@ -460,7 +485,24 @@ function bindSideMenuItems() {
 
 function openMenu(){
   const m=$("sideMenu"); if(!m) return;
-  // Add creator analytics directly to the existing hamburger menu without editing index.html.
+  // Keep the hamburger menu focused on one professional Settings and activity entry.
+  const menuHead = m.querySelector(".sideHead");
+  m.querySelectorAll(".mItem").forEach(item => item.remove());
+  let settingsEntry = document.getElementById("instaproSettingsMenuEntry");
+  if (!settingsEntry) {
+    settingsEntry = document.createElement("div");
+    settingsEntry.id = "instaproSettingsMenuEntry";
+    settingsEntry.className = "mItem";
+    settingsEntry.setAttribute("role", "button");
+    settingsEntry.setAttribute("tabindex", "0");
+    settingsEntry.innerHTML = '<span style="font-size:20px;margin-right:12px">⚙️</span><span>Settings and activity</span><span style="margin-left:auto;opacity:.65">›</span>';
+    settingsEntry.style.cssText = "display:flex;align-items:center;padding:16px;border-radius:14px;cursor:pointer";
+    const openSettings = () => openSettingsPanel();
+    settingsEntry.addEventListener("click", openSettings);
+    settingsEntry.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openSettings(); } });
+    if (menuHead?.nextSibling) m.insertBefore(settingsEntry, menuHead.nextSibling); else m.appendChild(settingsEntry);
+  }
+  // Creator analytics stays available inside Settings and activity.
   let analyticsItem=document.getElementById("creatorAnalyticsMenuItem");
   if(!analyticsItem){
     analyticsItem=document.createElement("div");
