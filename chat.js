@@ -135,7 +135,7 @@ function setupUI() {
       <div class="backBtn" id="backToList" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
       <div style="width:34px; height:34px; border-radius:50%; padding:2px; background:linear-gradient(45deg,#feda75,#d62976,#962fbf);"><img id="chatWithAvatar" src="https://www.gravatar.com/avatar/?d=mp" style="width:100%; height:100%; border-radius:50%; border:2px solid #000; object-fit:cover;"></div>
       <div style="flex:1;"><b id="chatWithName" style="font-size:14px; display:block;">username</b><span style="font-size:11px; opacity:.6;">InstaPro messages</span></div>
-      <div style="display:flex; gap:12px; font-size:20px;"><button id="chatSearchToggle" type="button" aria-label="Search in chat" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">⌕</button><button id="chatInfoToggle" type="button" aria-label="Chat details" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">ℹ️</button></div>
+      <div style="display:flex; gap:8px; font-size:20px; align-items:center;"><button id="chatAudioCall" type="button" aria-label="Start audio call" title="Audio call" style="border:0;background:transparent;color:#fff;font-size:21px;cursor:pointer;padding:5px;">☎</button><button id="chatVideoCall" type="button" aria-label="Start video call" title="Video call" style="border:0;background:transparent;color:#fff;font-size:21px;cursor:pointer;padding:5px;">▣</button><button id="chatSearchToggle" type="button" aria-label="Search in chat" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">⌕</button><button id="chatInfoToggle" type="button" aria-label="Chat details" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">ℹ️</button></div>
     </div>
     <div id="chatSearchBar" style="display:none;position:fixed;top:56px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 12px;background:rgba(20,20,24,.96);z-index:3;"><input id="chatMessageSearch" placeholder="Search in conversation" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;background:#29292d;border:1px solid #555;color:#fff;outline:none;"></div>
     <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
@@ -155,6 +155,8 @@ function setupUI() {
     document.querySelector('.bBtn[data-v="home"]')?.click();
   });
   $("backToList")?.addEventListener("click", closeChat);
+  $("chatAudioCall")?.addEventListener("click", () => startDirectCall("audio"));
+  $("chatVideoCall")?.addEventListener("click", () => startDirectCall("video"));
   $("chatForm")?.addEventListener("submit", sendMsg);
   $("chatInput")?.addEventListener("focus", () => setTimeout(syncChatKeyboardLayout, 80));
   $("chatInput")?.addEventListener("input", syncChatKeyboardLayout);
@@ -288,6 +290,16 @@ function renderList(users, chatMap = new Map()) {
     row.addEventListener("click", () => openChat(user));
     list.appendChild(row);
   });
+}
+
+async function startDirectCall(mode) {
+  if (!currentUser || !selectedUser) return alert("Pehle chat open karein.");
+  const audioOnly = mode === "audio";
+  const callWindow = window.open("", "_blank");
+  if (!callWindow) return alert("Call start karne ke liye browser pop-up allow karein.");
+  callWindow.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro ${audioOnly ? "Audio" : "Video"} Call</title><style>body{margin:0;background:#111;color:white;font:16px Arial;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}.box{padding:24px}button{padding:12px 18px;border:0;border-radius:24px;background:#e1306c;color:#fff;font-size:16px}p{opacity:.75;max-width:300px;line-height:1.5}</style></head><body><div class="box"><h2>${audioOnly ? "☎ Audio Call" : "▣ Video Call"}</h2><p>Calling ${escapeHTML(nameOf(selectedUser))}…</p><p>Call UI is ready, but live calling needs WebRTC signaling and a receiver-side answer flow.</p><button onclick="window.close()">End call</button></div></body></html>`);
+  callWindow.document.close();
+  alert("Call screen khul gaya, lekin live audio/video connect karne ke liye WebRTC signaling setup abhi required hai.");
 }
 
 function openChat(user) {
