@@ -234,6 +234,10 @@ export function openNotif() {
             "
           >
             <img
+              data-notif-profile="${escapeHTML(n.fromUid || "")}"
+              role="button"
+              tabindex="0"
+              title="View profile"
               src="${photo}"
               alt=""
               onerror="this.onerror=null;this.src='https://www.gravatar.com/avatar/?d=mp'"
@@ -244,6 +248,7 @@ export function openNotif() {
                 border-radius:50%;
                 object-fit:cover;
                 border:1px solid rgba(255,255,255,.25);
+                cursor:pointer;
               "
             >
 
@@ -253,7 +258,7 @@ export function openNotif() {
                 line-height:1.5;
                 overflow-wrap:anywhere;
               ">
-                <strong>${username}</strong> ${message}
+                <strong data-notif-profile="${escapeHTML(n.fromUid || "")}" style="cursor:pointer">${username}</strong> ${message}
               </div>
 
               <div style="
@@ -282,6 +287,31 @@ export function openNotif() {
           </div>
         `;
       }).join("");
+
+      list.querySelectorAll("[data-notif-profile]").forEach((person) => {
+        const openPersonProfile = async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const uid = person.dataset.notifProfile;
+          if (!uid) return;
+          try {
+            await import("./profile.js");
+            if (typeof window.openProfile === "function") {
+              await window.openProfile(uid);
+            } else {
+              document.dispatchEvent(new CustomEvent("open-notification-profile", { detail: { uid } }));
+            }
+          } catch (error) {
+            console.error("Notification profile open error:", error);
+          }
+        };
+        person.addEventListener("click", openPersonProfile);
+        if (person.tagName === "IMG") {
+          person.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") openPersonProfile(event);
+          });
+        }
+      });
 
       list.querySelectorAll("[data-notif-id]").forEach((row) => {
         row.onclick = async () => {
