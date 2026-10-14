@@ -56,10 +56,10 @@ function setupUI() {
       <div class="backBtn" id="backToList" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
       <div style="width:34px; height:34px; border-radius:50%; padding:2px; background:linear-gradient(45deg,#feda75,#d62976,#962fbf);"><img id="chatWithAvatar" src="https://www.gravatar.com/avatar/?d=mp" style="width:100%; height:100%; border-radius:50%; border:2px solid #000; object-fit:cover;"></div>
       <div style="flex:1;"><b id="chatWithName" style="font-size:14px; display:block;">username</b><span style="font-size:11px; opacity:.6;">InstaPro messages</span></div>
-      <div style="display:flex; gap:16px; font-size:20px;">📞 🎥 ℹ️</div>
+      <div style="display:flex; gap:12px; font-size:20px;"><button id="chatSearchToggle" type="button" aria-label="Search in chat" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">⌕</button><button id="chatInfoToggle" type="button" aria-label="Chat details" style="border:0;background:transparent;color:#fff;font-size:20px;cursor:pointer;">ℹ️</button></div>
     </div>
-    <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
-    <div id="chatReplyPreview" style="display:none;position:fixed;bottom:62px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 14px;background:rgba(30,30,34,.96);border-top:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;z-index:2;"><span id="chatReplyText" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:30px;"></span><button id="chatCancelReply" type="button" style="position:absolute;right:12px;top:6px;border:0;background:transparent;color:#fff;font-size:18px;">×</button></div>\n    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
+    <div id="chatSearchBar" style="display:none;position:fixed;top:56px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 12px;background:rgba(20,20,24,.96);z-index:3;"><input id="chatMessageSearch" placeholder="Search in conversation" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;background:#29292d;border:1px solid #555;color:#fff;outline:none;"></div>\n    <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
+    <div id="chatInfoPanel" style="display:none;position:fixed;inset:0;z-index:10004;background:rgba(0,0,0,.72);backdrop-filter:blur(12px);padding:24px;box-sizing:border-box;align-items:center;justify-content:center;"><div style="width:100%;max-width:360px;border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:22px;background:rgba(28,28,32,.97);text-align:center;color:#fff;"><img id="chatInfoAvatar" alt="" style="width:76px;height:76px;border-radius:50%;object-fit:cover;"><h3 id="chatInfoName" style="margin:12px 0 4px;"></h3><p id="chatInfoUsername" style="opacity:.65;font-size:13px;"></p><button id="chatInfoProfile" type="button" style="padding:10px 16px;border-radius:18px;border:1px solid #555;background:#333;color:#fff;">View Profile</button><button id="chatInfoClose" type="button" style="display:block;width:100%;margin-top:16px;padding:10px;border:0;border-radius:16px;background:#444;color:#fff;">Close</button></div></div>\n    <div id="chatReplyPreview" style="display:none;position:fixed;bottom:62px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 14px;background:rgba(30,30,34,.96);border-top:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;z-index:2;"><span id="chatReplyText" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:30px;"></span><button id="chatCancelReply" type="button" style="position:absolute;right:12px;top:6px;border:0;background:transparent;color:#fff;font-size:18px;">×</button></div>\n    <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
       <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.085);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);color:#fff;outline:none;">
       <button id="chatAttach" type="button" aria-label="Photo or video" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:22px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">＋</button>
       <input id="chatMediaInput" type="file" accept="image/*,video/*" hidden>
@@ -73,6 +73,11 @@ function setupUI() {
   });
   $("backToList")?.addEventListener("click", closeChat);
   $("chatForm")?.addEventListener("submit", sendMsg);\n  $("chatCancelReply")?.addEventListener("click", clearReply);
+  $("chatSearchToggle")?.addEventListener("click", () => { const bar = $("chatSearchBar"); if (bar) { bar.style.display = bar.style.display === "none" ? "block" : "none"; if (bar.style.display === "block") $("chatMessageSearch")?.focus(); else { $("chatMessageSearch").value = ""; filterChatMessages(""); } } });
+  $("chatMessageSearch")?.addEventListener("input", event => filterChatMessages(event.target.value));
+  $("chatInfoToggle")?.addEventListener("click", openChatInfo);
+  $("chatInfoClose")?.addEventListener("click", () => { $("chatInfoPanel").style.display = "none"; });
+  $("chatInfoPanel")?.addEventListener("click", event => { if (event.target.id === "chatInfoPanel") event.currentTarget.style.display = "none"; });
   $("chatAttach")?.addEventListener("click", () => $("chatMediaInput")?.click());
   $("chatMediaInput")?.addEventListener("change", async event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) await sendMedia(file, file.type.startsWith("video/") ? "video" : "image"); });
   $("chatVoice")?.addEventListener("click", toggleVoiceRecording);
@@ -336,6 +341,25 @@ async function removeMessage(messageId) {
 }
 
 
+function filterChatMessages(value) {
+  const q = String(value || "").trim().toLowerCase();
+  $("chatMsgs")?.querySelectorAll("[data-message-id]").forEach(el => {
+    el.style.display = !q || el.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+function openChatInfo() {
+  if (!selectedUser) return;
+  $("chatInfoAvatar").src = photoOf(selectedUser);
+  $("chatInfoName").textContent = nameOf(selectedUser);
+  $("chatInfoUsername").textContent = selectedUser.username ? "@" + selectedUser.username : (selectedUser.email || "");
+  $("chatInfoPanel").style.display = "flex";
+  $("chatInfoProfile").onclick = () => {
+    $("chatInfoPanel").style.display = "none";
+    if (typeof window.openProfile === "function") window.openProfile(selectedUser.uid);
+    else if (typeof window.showProfile === "function") window.showProfile(selectedUser.uid);
+    else alert("Profile open karne ke liye app ke existing profile button ka use karein.");
+  };
+}
 function clearReply() {
   replyTarget = null;
   const preview = $("chatReplyPreview");
