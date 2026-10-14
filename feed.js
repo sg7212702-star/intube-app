@@ -794,6 +794,14 @@ async function renderFeed() {
             <button
               type="button"
               class="ip-feed-action"
+              data-feed-action="repost"
+              data-id="${escapeHTML(post.id)}"
+              aria-pressed="${Array.isArray(post.repostedBy) && post.repostedBy.includes(user.uid)}"
+            >🔁 Repost ${safeCount(post.repostCount)}</button>
+
+            <button
+              type="button"
+              class="ip-feed-action"
               data-feed-action="share"
               data-id="${escapeHTML(post.id)}"
             >↗️ Share ${shareCount || ""}</button>
@@ -1135,6 +1143,37 @@ async function toggleLike(postId) {
   } catch (error) {
     console.error("Like error:", error);
     showMessage("Like save nahi hua. Firebase Rules check karein.");
+  }
+}
+
+// ------------------------------------------------------
+// REPOST / UNREPOST
+// ------------------------------------------------------
+async function toggleRepost(postId) {
+  const user = getCurrentUser();
+  if (!user || user.isAnonymous) {
+    showMessage("Repost karne ke liye login karein.");
+    return;
+  }
+  try {
+    const ref = getPostRef(postId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showMessage("Post available nahi hai.");
+      return;
+    }
+    const post = snap.data();
+    const repostedBy = Array.isArray(post.repostedBy) ? post.repostedBy : [];
+    const alreadyReposted = repostedBy.includes(user.uid);
+    const count = safeCount(post.repostCount);
+    await updateDoc(ref, {
+      repostedBy: alreadyReposted ? arrayRemove(user.uid) : arrayUnion(user.uid),
+      repostCount: alreadyReposted ? Math.max(0, count - 1) : count + 1
+    });
+    showMessage(alreadyReposted ? "Repost hata diya." : "Post repost ho gayi.");
+  } catch (error) {
+    console.error("Repost error:", error);
+    showMessage("Repost save nahi hua. Firebase Rules check karein.");
   }
 }
 
@@ -1555,6 +1594,9 @@ if (feed) {
 
     } else if (action === "comments") {
       openCommentsPanel(postId);
+
+    } else if (action === "repost") {
+      await toggleRepost(postId);
 
     } else if (action === "share") {
       await sharePost(postId);
