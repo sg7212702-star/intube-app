@@ -86,6 +86,14 @@ function settingsPanelMarkup(user) {
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts</div><div class="isp-desc">Open your profile to view posts you saved.</div></div><button class="isp-action" id="ispSaved">Open</button></div>
       <div class="isp-subtitle" style="margin-top:18px">Creator tools</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Creator analytics</div><div class="isp-desc">Views, likes, followers and the last 28 days.</div></div><button class="isp-action" id="ispCreatorAnalytics">View</button></div>
+      <div class="isp-subtitle" style="margin-top:18px">Instagram-style settings</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Notifications</div><div class="isp-desc">Manage push, likes, comments, follows and message alerts.</div></div><button class="isp-action isp-category" data-category="Notifications">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Privacy</div><div class="isp-desc">Private account, activity status and interaction controls.</div></div><button class="isp-action isp-category" data-category="Privacy">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Messages and replies</div><div class="isp-desc">Message requests, story replies and comment controls.</div></div><button class="isp-action isp-category" data-category="Messages and replies">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Content preferences</div><div class="isp-desc">Suggested posts, sensitive content and muted words.</div></div><button class="isp-action isp-category" data-category="Content preferences">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">Review account restrictions and blocked users.</div></div><button class="isp-action isp-category" data-category="Blocked accounts">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Your activity</div><div class="isp-desc">Review activity tools and account information.</div></div><button class="isp-action isp-category" data-category="Your activity">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Account security</div><div class="isp-desc">Signed-in account, session and account actions.</div></div><button class="isp-action isp-category" data-category="Account security">Open</button></div>
       <div class="isp-subtitle" style="margin-top:18px">How you use InstaPro</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Light appearance</div><div class="isp-desc">Change the app's appearance on this device and save your choice.</div></div><button class="isp-switch ${theme ? "on" : ""}" id="ispTheme" role="switch" aria-checked="${theme}" aria-label="Light appearance"></button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Browser notifications</div><div class="isp-desc">Allow this browser to show notifications, if supported.</div></div><button class="isp-switch ${notifications ? "on" : ""}" id="ispNotifications" role="switch" aria-checked="${notifications}" aria-label="Browser notifications"></button></div>
@@ -138,6 +146,81 @@ async function saveAppSetting(key, value) {
   currentAppSettings[key] = value;
 }
 
+const SETTINGS_CATEGORY_OPTIONS = {
+  "Notifications": [
+    ["likeNotifications","Likes", "Notify me about likes", true],
+    ["commentNotifications","Comments", "Notify me about comments", true],
+    ["followNotifications","New followers", "Notify me about new followers", true],
+    ["messageNotifications","Messages", "Notify me about messages", true]
+  ],
+  "Privacy": [
+    ["privateAccount","Private account", "Limit profile visibility to approved followers. Enforcement requires privacy-aware feed and profile queries.", false],
+    ["activityStatus","Activity status", "Allow others to see when you are active.", true],
+    ["storyReplies","Story replies", "Allow replies to stories.", true],
+    ["mentions","Mentions", "Allow other users to mention you.", true]
+  ],
+  "Messages and replies": [
+    ["messageRequests","Message requests", "Allow message requests from other users.", true],
+    ["commentControls","Comments", "Allow comments on your posts.", true],
+    ["storyReplies","Story replies", "Allow replies to stories.", true]
+  ],
+  "Content preferences": [
+    ["suggestedContent","Suggested content", "Show suggested posts and reels.", true],
+    ["sensitiveContent","Sensitive content filter", "Prefer less potentially sensitive suggested content.", true],
+    ["autoplayVideos","Autoplay videos", "Allow videos to autoplay when available.", true]
+  ],
+  "Blocked accounts": [],
+  "Your activity": [],
+  "Account security": []
+};
+
+async function openSettingsCategory(category, user, panel) {
+  const options = SETTINGS_CATEGORY_OPTIONS[category] || [];
+  const original = settingsPanelMarkup(user);
+  panel.innerHTML = `<div class="isp-card" role="dialog" aria-modal="true">
+    <div class="isp-head"><button id="ispCategoryBack" aria-label="Back">‹</button><div class="isp-title">${escapeSettingsText(category)}</div><button id="ispCategoryClose" aria-label="Close">×</button></div>
+    <p class="isp-desc" style="margin:0 0 14px">Settings are saved to your InstaPro account.</p>
+    <div id="ispCategoryRows"></div><div class="isp-status" id="ispCategoryStatus" aria-live="polite"></div>
+  </div>`;
+  const close = () => panel.classList.remove("open");
+  panel.querySelector("#ispCategoryClose").onclick = close;
+  panel.querySelector("#ispCategoryBack").onclick = () => openSettingsPanel();
+  panel.onclick = event => { if (event.target === panel) close(); };
+  const rows = panel.querySelector("#ispCategoryRows");
+  const status = panel.querySelector("#ispCategoryStatus");
+  if (category === "Blocked accounts") {
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">The block-list screen is not yet connected to a dedicated block-list collection.</div></div></div>';
+    return;
+  }
+  if (category === "Your activity") {
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Activity overview</div><div class="isp-desc">Open your profile to review your posts and saved content. A complete like/comment history needs dedicated activity records.</div></div><button class="isp-action" id="ispActivityProfile">Profile</button></div>';
+    panel.querySelector("#ispActivityProfile").onclick = async () => { close(); try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); } catch (e) { status.textContent = e.message; } };
+    return;
+  }
+  if (category === "Account security") {
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in</div><div class="isp-desc">' + escapeSettingsText(user.email || user.displayName || "Google account") + '</div></div></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Log out</div><div class="isp-desc">Sign out of this device.</div></div><button class="isp-action" id="ispCategoryLogout">Log out</button></div>';
+    panel.querySelector("#ispCategoryLogout").onclick = async () => { if (!confirm("Log out of InstaPro?")) return; try { const {auth}=await import("./firebase.js"); const {signOut}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); await signOut(auth); location.reload(); } catch(e) { status.textContent = e.message; } };
+    return;
+  }
+  const saved = currentAppSettings[category] || {};
+  rows.innerHTML = options.map(([key,label,description,defaultValue]) => {
+    const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
+    return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
+  }).join("");
+  rows.querySelectorAll("[data-setting-key]").forEach(button => {
+    button.onclick = async () => {
+      const key = button.dataset.settingKey;
+      const next = !button.classList.contains("on");
+      button.classList.toggle("on", next);
+      button.setAttribute("aria-checked", String(next));
+      currentAppSettings[category] = { ...(currentAppSettings[category] || {}), [key]: next };
+      status.textContent = "Saving…";
+      try { await saveAppSetting(category, currentAppSettings[category]); status.textContent = "Saved."; }
+      catch (error) { status.textContent = "Save failed: " + error.message; console.error("Category setting save failed", error); }
+    };
+  });
+}
+
 async function openSettingsPanel() {
   installSettingsStyles();
   const { auth, db } = await import("./firebase.js");
@@ -159,6 +242,9 @@ async function openSettingsPanel() {
   panel.querySelector("#ispClose").onclick = close;
   panel.querySelector("#ispBack").onclick = close;
   panel.onclick = event => { if (event.target === panel) close(); };
+  panel.querySelectorAll(".isp-category").forEach(button => {
+    button.onclick = () => openSettingsCategory(button.dataset.category, user, panel);
+  });
   panel.querySelector("#ispCreatorAnalytics").onclick = () => openCreatorAnalytics(user, panel);
   panel.querySelector("#ispProfile").onclick = async () => {
     close();
