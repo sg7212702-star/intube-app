@@ -66,6 +66,41 @@ function photoURL(post) {
     "https://www.gravatar.com/avatar/?d=mp";
 }
 
+// Additive recommendation ranking: uses only signals already available on posts.
+// It does not remove posts, change the database schema, or replace Firestore realtime sync.
+function reelCreatedAt(post) {
+  const value = post.createdAt || post.time || 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const parsed = Number(value) || Date.parse(value) || 0;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+function rankReelsForViewer(posts) {
+  const now = Date.now();
+  const uid = currentUser()?.uid || "";
+  return [...posts].sort((a, b) => {
+    const score = post => {
+      const ageHours = Math.max(0, (now - reelCreatedAt(post)) / 3600000);
+      const likes = Array.isArray(post.likes) ? post.likes.length : Number(post.likesCount || 0);
+      const comments = Array.isArray(post.comments) ? post.comments.length : Number(post.commentsCount || 0);
+      const views = Number(post.viewsCount || post.playCount || post.views || 0);
+      const saves = Array.isArray(post.savedBy) ? post.savedBy.length : Number(post.savesCount || 0);
+      const author = post.uid || post.userId || post.authorId || post.ownerUid || "";
+      const alreadyLiked = uid && Array.isArray(post.likes) && post.likes.includes(uid);
+      // Recent posts get a freshness boost; meaningful interactions help quality signals.
+      return (Math.log1p(Math.max(0, likes)) * 2.4) +
+        (Math.log1p(Math.max(0, comments)) * 3.2) +
+        (Math.log1p(Math.max(0, saves)) * 3.5) +
+        (Math.log1p(Math.max(0, views)) * 0.45) +
+        (ageHours < 24 ? 3.5 : ageHours < 72 ? 1.5 : 0) +
+        (alreadyLiked ? -0.35 : 0) +
+        (author && uid && author === uid ? -0.2 : 0);
+    };
+    const delta = score(b) - score(a);
+    return delta || reelCreatedAt(b) - reelCreatedAt(a);
+  });
+}
+
 function showReelsMessage(message) {
   let toast = document.getElementById("ipReelsToast");
 
@@ -806,17 +841,9 @@ function startReelsSystem() {
         ...item.data()
       }));
 
-      // Kuch purane posts mein createdAt nahi hai ya video type URL se hi pata chalta hai.
-      reelsData.sort((a, b) => {
-        const getTime = post => {
-          const value = post.createdAt || post.time || 0;
-          if (typeof value?.toMillis === "function") return value.toMillis();
-          if (typeof value?.toDate === "function") return value.toDate().getTime();
-          const parsed = Number(value) || Date.parse(value) || 0;
-          return Number.isFinite(parsed) ? parsed : 0;
-        };
-        return getTime(b) - getTime(a);
-      });
+      // Rank available Reels using freshness and existing engagement signals.
+      // Firestore onSnapshot remains the source of truth and refreshes this ranking live.
+      reelsData = rankReelsForViewer(reelsData);
 
       renderReelsGrid(grid);
     },
