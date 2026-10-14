@@ -21,6 +21,28 @@ function setInstaProNormalVideoSpeed(event) {
 document.addEventListener("loadedmetadata", setInstaProNormalVideoSpeed, true);
 document.addEventListener("play", setInstaProNormalVideoSpeed, true);
 
+// Shared transparent-glass layer for all InstaPro pages and in-app sheets.
+function installGlobalGlassStyles() {
+  if (document.getElementById("instapro-global-glass-style")) return;
+  const style = document.createElement("style");
+  style.id = "instapro-global-glass-style";
+  style.textContent = `
+    :root{--ip-glass-bg:rgba(18,20,30,.36);--ip-glass-border:rgba(255,255,255,.17);--ip-glass-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 10px 32px rgba(0,0,0,.14)}
+    .topGlass,.bottomGlass,.sideGlass,.sheetGlass,#sideMenu,#createSheet,#profileSheet,#overlay,#sideOverlay,#sheetOverlay,#profileOverlay{background:rgba(12,14,22,.38)!important;backdrop-filter:blur(24px) saturate(165%)!important;-webkit-backdrop-filter:blur(24px) saturate(165%)!important;border-color:var(--ip-glass-border)!important}
+    .page{background:transparent}
+    .page [class*="card"],.page [class*="Card"],.page [class*="panel"],.page [class*="Panel"],.page [class*="modal"],.page [class*="Modal"],.page [class*="sheet"],.page [class*="Sheet"],.page [class*="glass"],.page [class*="Glass"]{background-color:var(--ip-glass-bg);border-color:var(--ip-glass-border);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:var(--ip-glass-shadow)}
+    #createSheet,#profileSheet,#sideMenu{border:1px solid var(--ip-glass-border)!important;box-shadow:0 18px 48px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)!important}
+    #createSheet button,#profileSheet button,#sideMenu button,.page button:not([data-no-glass]){transition:background .18s ease,border-color .18s ease,transform .18s ease}
+    #createSheet button,#profileSheet button,#sideMenu button{border-color:rgba(255,255,255,.18)}
+    #createSheet button:active,#profileSheet button:active,#sideMenu button:active,.page button:not([data-no-glass]):active{transform:scale(.98)}
+    #instaproSettingsPanel{background:rgba(0,0,0,.34)!important;backdrop-filter:blur(20px) saturate(150%)!important;-webkit-backdrop-filter:blur(20px) saturate(150%)!important}
+    #instaproSettingsPanel .isp-card{background:rgba(20,22,31,.62)!important;border:1px solid rgba(255,255,255,.2)!important;backdrop-filter:blur(28px) saturate(170%)!important;-webkit-backdrop-filter:blur(28px) saturate(170%)!important;box-shadow:0 18px 55px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14)!important}
+    body.instapro-light-mode .topGlass,body.instapro-light-mode .bottomGlass,body.instapro-light-mode .sideGlass,body.instapro-light-mode .sheetGlass{background:rgba(250,250,252,.62)!important;backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important}
+    @media(prefers-reduced-motion:reduce){#createSheet button,#profileSheet button,#sideMenu button,.page button{transition:none!important}}
+  `;
+  document.head.appendChild(style);
+}
+
 function closeAll(){
   const s=$("createSheet"); if(s){ s.classList.remove("show"); s.style.bottom="-100%"; }
   const ps=$("profileSheet"); if(ps){ ps.classList.remove("show","open"); ps.style.bottom="-100%"; }
@@ -478,6 +500,7 @@ function openPage(name){
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
+  installGlobalGlassStyles();
   // HOME ADD (+) BUTTON: open the create sheet.
   const addButton = $("addBtn");
   if (addButton) {
