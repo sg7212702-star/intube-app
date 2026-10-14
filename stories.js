@@ -689,6 +689,34 @@ function showAt(index) {
     media.onerror = () => { viewerTimer = setTimeout(() => showAt(currentIndex + 1), 2500); };
   }
   mediaBox.appendChild(media);
+  // Instagram-style double-tap on the story media toggles the Firebase-backed like.
+  let lastStoryTap = 0;
+  let storyTapTimer = null;
+  media.addEventListener("click", event => {
+    const now = Date.now();
+    if (now - lastStoryTap < 320) {
+      event.preventDefault();
+      clearTimeout(storyTapTimer);
+      lastStoryTap = 0;
+      const userNow = signedInUser || auth.currentUser;
+      if (!userNow || userNow.isAnonymous) {
+        alert("Story like karne ke liye Google login karein.");
+        return;
+      }
+      if (!currentLiked) {
+        const heart = viewer?.querySelector(".is-heart-pop");
+        if (heart) {
+          heart.style.display = "block";
+          heart.animate([{transform:"scale(.4)",opacity:0},{transform:"scale(1.15)",opacity:1},{transform:"scale(1)",opacity:0}], {duration:650});
+          setTimeout(() => { if (heart.isConnected) heart.style.display = "none"; }, 700);
+        }
+        toggleStoryLike();
+      }
+    } else {
+      lastStoryTap = now;
+      storyTapTimer = setTimeout(() => { lastStoryTap = 0; }, 340);
+    }
+  });
 
   const avatar = viewer.querySelector(".is-avatar");
   const photo = currentGroup[0]?.photo || story.photo || story.photoURL || "";
