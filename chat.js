@@ -429,6 +429,30 @@ function openChat(user) {
   $("chatBoxView").style.display = "flex";
   $("chatWithName").textContent = nameOf(user);
   $("chatWithAvatar").src = photoOf(user);
+  const openSelectedProfile = async () => {
+    const uid = user.uid || user.id;
+    if (!uid) return;
+    try {
+      if (typeof window.openProfile !== "function") await import("./profile.js");
+      if (typeof window.openProfile === "function") await window.openProfile(uid);
+      else alert("Profile abhi open nahi ho pa raha. Dobara try karein.");
+    } catch (error) {
+      console.error("Open chat profile error:", error);
+      alert("Profile open nahi hua. Dobara try karein.");
+    }
+  };
+  ["chatWithName", "chatWithAvatar"].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.style.cursor = "pointer";
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("title", "View profile");
+    el.onclick = openSelectedProfile;
+    el.onkeydown = event => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openSelectedProfile(); }
+    };
+  });
   $("chatMsgs").innerHTML = '<p style="text-align:center;opacity:.6;">Loading messages…</p>';
   if (chatListener) chatListener();
   const chatId = chatIdFor(currentUser.uid, user.uid);
