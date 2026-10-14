@@ -77,7 +77,11 @@ function injectChatStyles() {
     #chatPage #usersList > button:nth-child(5) { animation-delay:.1s; }
     #chatPage #usersList > button:hover { background:rgba(255,255,255,.055)!important; }
     #chatPage #chatMsgs [data-message-id] { animation: ipChatBubbleIn .24s cubic-bezier(.2,.8,.25,1) both; transform-origin:bottom; }
-    #chatPage #chatForm { z-index:10006!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
+    #chatPage #chatForm { gap:8px!important; background:rgba(255,255,255,.94)!important; border:1px solid rgba(255,255,255,.85)!important; border-radius:34px!important; margin:0 auto 8px!important; width:calc(100% - 28px)!important; max-width:470px!important; padding:8px 10px!important; box-shadow:0 5px 24px rgba(0,0,0,.2)!important; }
+    #chatPage .ip-composer-icon { width:38px;height:38px;flex:0 0 38px;border:0;border-radius:50%;background:transparent;color:#d62976;font-size:23px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .16s ease,background .16s ease; }
+    #chatPage .ip-composer-icon:active { transform:scale(.9);background:rgba(214,41,118,.12); }
+    #chatPage #chatInput::placeholder { color:#777;opacity:1; }
+    #chatPage #chatForm { z-index:10020!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; } padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
     #chatPage #chatBoxView { height:100dvh; height:100vh; }
     #chatPage #chatMsgs { min-height:0; overscroll-behavior:contain; scroll-behavior:smooth; }
     #chatPage #chatForm button { flex-shrink:0; }
@@ -142,12 +146,17 @@ function setupUI() {
     <div id="chatInfoPanel" style="display:none;position:fixed;inset:0;z-index:10004;background:rgba(0,0,0,.72);backdrop-filter:blur(12px);padding:24px;box-sizing:border-box;align-items:center;justify-content:center;"><div style="width:100%;max-width:360px;border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:22px;background:rgba(28,28,32,.97);text-align:center;color:#fff;"><img id="chatInfoAvatar" alt="" style="width:76px;height:76px;border-radius:50%;object-fit:cover;"><h3 id="chatInfoName" style="margin:12px 0 4px;"></h3><p id="chatInfoUsername" style="opacity:.65;font-size:13px;"></p><button id="chatInfoProfile" type="button" style="padding:10px 16px;border-radius:18px;border:1px solid #555;background:#333;color:#fff;">View Profile</button><button id="chatInfoClose" type="button" style="display:block;width:100%;margin-top:16px;padding:10px;border:0;border-radius:16px;background:#444;color:#fff;">Close</button></div></div>
     <div id="chatReplyPreview" style="display:none;position:fixed;bottom:62px;left:50%;transform:translateX(-50%);width:100%;max-width:470px;box-sizing:border-box;padding:8px 14px;background:rgba(30,30,34,.96);border-top:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;z-index:2;"><span id="chatReplyText" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:30px;"></span><button id="chatCancelReply" type="button" style="position:absolute;right:12px;top:6px;border:0;background:transparent;color:#fff;font-size:18px;">×</button></div>
     <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
-      <button id="chatEmoji" type="button" aria-label="Insert emoji" style="width:36px;height:36px;flex:0 0 36px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:19px;cursor:pointer;">☺</button>
-      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 16px; border-radius:22px; border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.085);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07);color:#fff;outline:none;">
-      <button id="chatAttach" type="button" aria-label="Photo or video" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:22px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">＋</button>
+      <button id="chatCamera" type="button" aria-label="Take photo" title="Camera" class="ip-composer-icon" style="background:#6854f7;color:white;border-radius:50%;width:44px;height:44px;flex:0 0 44px;">📷</button>
+      <input id="chatCameraInput" type="file" accept="image/*" capture="environment" hidden>
+      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 8px; border:0;background:transparent;color:#222;outline:none;font-style:italic;font-family:Georgia,serif;font-size:16px;">
+      <button id="chatClearDraft" type="button" aria-label="Clear message" title="Clear message" class="ip-composer-icon">▣</button>
+      <button id="chatVoice" type="button" aria-label="Record voice message" title="Voice message" class="ip-composer-icon">♩</button>
+      <button id="chatAttach" type="button" aria-label="Photo or video" title="Gallery" class="ip-composer-icon">▧</button>
       <input id="chatMediaInput" type="file" accept="image/*,video/*" hidden>
-      <button id="chatVoice" type="button" aria-label="Record voice message" style="width:38px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.09);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-size:18px;padding:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;">🎙️</button>
-      <button id="chatSend" type="submit" style="padding:10px 16px;border-radius:22px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,rgba(0,149,246,.95),rgba(121,72,255,.88));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 18px rgba(0,149,246,.22);cursor:pointer;">Send</button>
+      <button id="chatSticker" type="button" aria-label="Stickers and emoji" title="Stickers and emoji" class="ip-composer-icon">☻</button>
+      <button id="chatMore" type="button" aria-label="More attachments" title="More" class="ip-composer-icon">＋</button>
+      <button id="chatEmoji" type="button" aria-label="Insert emoji" style="display:none;">☺</button>
+      <button id="chatSend" type="submit" style="display:none;">Send</button>
     </form>
   </div>`;
 
@@ -180,6 +189,11 @@ function setupUI() {
   $("chatInfoToggle")?.addEventListener("click", openChatInfo);
   $("chatInfoClose")?.addEventListener("click", () => { $("chatInfoPanel").style.display = "none"; });
   $("chatInfoPanel")?.addEventListener("click", event => { if (event.target.id === "chatInfoPanel") event.currentTarget.style.display = "none"; });
+  $("chatCamera")?.addEventListener("click", () => $("chatCameraInput")?.click());
+  $("chatCameraInput")?.addEventListener("change", async event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) await sendMedia(file, "image"); });
+  $("chatClearDraft")?.addEventListener("click", () => { const input = $("chatInput"); if (input) { input.value = ""; input.focus(); } });
+  $("chatSticker")?.addEventListener("click", () => { const input = $("chatInput"); if (!input) return; const choice = prompt("Emoji / sticker type karein:", "❤️ 😊 😂 🔥"); if (choice) { input.value += choice; input.focus(); input.dispatchEvent(new Event("input",{bubbles:true})); } });
+  $("chatMore")?.addEventListener("click", () => { const choice = prompt("Attachment: 1 Photo/Video, 2 Voice message, 3 Emoji", "1"); if (choice === "1") $("chatMediaInput")?.click(); else if (choice === "2") toggleVoiceRecording(); else if (choice === "3") $("chatSticker")?.click(); });
   $("chatAttach")?.addEventListener("click", () => $("chatMediaInput")?.click());
   $("chatMediaInput")?.addEventListener("change", async event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) await sendMedia(file, file.type.startsWith("video/") ? "video" : "image"); });
   $("chatVoice")?.addEventListener("click", toggleVoiceRecording);
