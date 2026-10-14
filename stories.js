@@ -296,8 +296,18 @@ async function openStoryViewers(){
   if(!story||!user||ownerId(story)!==user.uid){alert("Viewer list sirf apni story par dikhegi.");return;}
   const panel=openStoryPanel("Story viewers","<p>Viewers load ho rahe hain…</p>");
   try{
-    const viewIds=Array.isArray(story.seenBy)?story.seenBy:[];
-    const likedIds=Array.isArray(story.likedBy)?story.likedBy:[];
+    // Always read the latest Firestore document so a previously opened story
+    // object cannot hide likes added from another profile/device.
+    const latestSnap=await getDoc(doc(db,"stories",story.id));
+    if(!latestSnap.exists()){
+      panel.querySelector(".isp-body").innerHTML='<p style="text-align:center;color:#777;padding:20px 0;">Yeh story ab available nahi hai.</p>';
+      return;
+    }
+    const latest=latestSnap.data();
+    const viewIds=Array.isArray(latest.seenBy)?latest.seenBy:[];
+    const likedIds=Array.isArray(latest.likedBy)?latest.likedBy:[];
+    story.seenBy=viewIds;
+    story.likedBy=likedIds;
     const ids=[...new Set([...viewIds,...likedIds])];
     if(!ids.length){
       panel.querySelector(".isp-body").innerHTML='<p style="text-align:center;color:#777;padding:20px 0;">Abhi kisi ne story nahi dekhi ya like nahi ki.</p>';
@@ -325,7 +335,7 @@ async function openStoryViewers(){
         else alert("Profile system abhi load nahi hua. Dobara try karein.");
       });
     });
-  }catch(e){console.error(e);panel.querySelector(".isp-body").textContent="Viewer list load nahi hui. Firestore Rules check karein.";}
+  }catch(e){console.error("Story viewer list refresh error:",e);panel.querySelector(".isp-body").textContent="Viewer list load nahi hui. Firestore Rules check karein.";}
 }
 async function openStoryDmShare(){
   const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
