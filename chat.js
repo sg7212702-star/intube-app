@@ -313,14 +313,109 @@ function renderList(users, chatMap = new Map()) {
   });
 }
 
+let activeCall = null;
+let incomingCallUnsubscribe = null;
+let callStatusUnsubscribe = null;
+let localStream = null;
+let remoteStream = null;
+let callCandidatesUnsubscribers = [];
+
+const rtcConfig = { iceServers: [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" }
+] };
+
+function ensureCallUI() {
+  if ($("ipCallOverlay")) return;
+  const el = document.createElement("div");
+  el.id = "ipCallOverlay";
+  el.style.cssText = "position:fixed;inset:0;z-index:200000;background:#101014;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif";
+  el.innerHTML = '<div id="ipCallTitle" style="font-size:24px;font-weight:700;margin:12px"></div><div id="ipCallStatus" style="opacity:.75;margin:8px 0 20px">Connecting…</div><video id="ipRemoteVideo" autoplay playsinline style="display:none;width:100%;max-height:58vh;object-fit:cover;border-radius:20px;background:#222"></video><video id="ipLocalVideo" autoplay muted playsinline style="display:none;position:absolute;right:18px;top:18px;width:100px;height:145px;object-fit:cover;border-radius:14px;background:#222"></video><div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:24px"><button id="ipAcceptCall" style="display:none;border:0;border-radius:30px;padding:14px 22px;background:#21b45b;color:#fff;font-weight:700">Answer</button><button id="ipMuteCall" style="border:0;border-radius:30px;padding:14px 22px;background:#333;color:#fff">Mute mic</button><button id="ipCameraCall" style="border:0;border-radius:30px;padding:14px 22px;background:#333;color:#fff">Camera off</button><button id="ipEndCall" style="border:0;border-radius:30px;padding:14px 22px;background:#e1306c;color:#fff;font-weight:700">End call</button></div>';
+  document.body.appendChild(el);
+  $("ipEndCall").onclick = () => endDirectCall(true);
+  $("ipMuteCall").onclick = () => { if (!localStream) return; const track=localStream.getAudioTracks()[0]; if(track){track.enabled=!track.enabled;$("ipMuteCall").textContent=track.enabled?"Mute mic":"Unmute mic";} };
+  $("ipCameraCall").onclick = () => { if (!localStream) return; const track=localStream.getVideoTracks()[0]; if(track){track.enabled=!track.enabled;$("ipCameraCall").textContent=track.enabled?"Camera off":"Camera on";} };
+  $("ipAcceptCall").onclick = answerDirectCall;
+}
+function showCallUI(mode, status, incoming=false) {
+  ensureCallUI();
+  $("ipCallOverlay").style.display="flex";
+  $("ipCallTitle").textContent=(mode==="video"?"Video":"Audio")+" call";
+  $("ipCallStatus").textContent=status;
+  $("ipAcceptCall").style.display=incoming?"inline-block":"none";
+  $("ipCameraCall").style.display=mode==="video"?"inline-block":"none";
+  $("ipRemoteVideo").style.display=mode==="video"?"block":"none";
+  $("ipLocalVideo").style.display=mode==="video"?"block":"none";
+}
 async function startDirectCall(mode) {
   if (!currentUser || !selectedUser) return alert("Pehle chat open karein.");
-  const audioOnly = mode === "audio";
-  const callWindow = window.open("", "_blank");
-  if (!callWindow) return alert("Call start karne ke liye browser pop-up allow karein.");
-  callWindow.document.write(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>InstaPro ${audioOnly ? "Audio" : "Video"} Call</title><style>body{margin:0;background:#111;color:white;font:16px Arial;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}.box{padding:24px}button{padding:12px 18px;border:0;border-radius:24px;background:#e1306c;color:#fff;font-size:16px}p{opacity:.75;max-width:300px;line-height:1.5}</style></head><body><div class="box"><h2>${audioOnly ? "☎ Audio Call" : "▣ Video Call"}</h2><p>Calling ${escapeHTML(nameOf(selectedUser))}…</p><p>Call UI is ready, but live calling needs WebRTC signaling and a receiver-side answer flow.</p><button onclick="window.close()">End call</button></div></body></html>`);
-  callWindow.document.close();
-  alert("Call screen khul gaya, lekin live audio/video connect karne ke liye WebRTC signaling setup abhi required hai.");
+  if (!selectedUser.uid && !selectedUser.id) return alert("Is user ki ID nahi mili; call nahi lag sakti.");
+  if (activeCall) return alert("Pehle chal rahi call end karein.");
+  const targetId=selectedUser.uid || selectedUser.id;
+  try {
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:mode==="video"});
+    remoteStream=new MediaStream();
+    activeCall={id:doc(collection(db,"calls")).id,mode,from:currentUser.uid,to:targetId,initiator:true,pc:new RTCPeerConnection(rtcConfig)};
+    showCallUI(mode,"Calling "+nameOf(selectedUser)+"…");
+    $("ipLocalVideo").srcObject=localStream;
+    $("ipRemoteVideo").srcObject=remoteStream;
+    localStream.getTracks().forEach(track=>activeCall.pc.addTrack(track,localStream));
+    activeCall.pc.ontrack=e=>{e.streams[0]?.getTracks().forEach(t=>remoteStream.addTrack(t));$("ipCallStatus").textContent="Connected";};
+    activeCall.pc.onicecandidate=async e=>{if(e.candidate&&activeCall) await addDoc(collection(db,"calls",activeCall.id,"callerCandidates"),e.candidate.toJSON());};
+    await setDoc(doc(db,"calls",activeCall.id),{from:currentUser.uid,to:targetId,fromName:nameOf(currentUser),fromPhoto:photoOf(currentUser),toName:nameOf(selectedUser),mode,status:"ringing",createdAt:serverTimestamp()});
+    const offer=await activeCall.pc.createOffer();
+    await activeCall.pc.setLocalDescription(offer);
+    await updateDoc(doc(db,"calls",activeCall.id),{offer:{type:offer.type,sdp:offer.sdp}});
+    callStatusUnsubscribe=onSnapshot(doc(db,"calls",activeCall.id),async snap=>{
+      const data=snap.data(); if(!data||!activeCall)return;
+      if(data.status==="ended"){await endDirectCall(false);return;}
+      if(data.answer&&!activeCall.pc.currentRemoteDescription) { await activeCall.pc.setRemoteDescription(new RTCSessionDescription(data.answer)); $("ipCallStatus").textContent="Connecting…"; }
+    });
+    callCandidatesUnsubscribers.push(onSnapshot(collection(db,"calls",activeCall.id,"calleeCandidates"),s=>s.docChanges().forEach(ch=>{if(ch.type==="added"&&activeCall) activeCall.pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())).catch(()=>{});})));
+  } catch(err) { await endDirectCall(false); alert("Call start nahi hui: "+(err?.message||"Microphone/camera permission ya secure connection check karein.")); }
+}
+async function answerDirectCall() {
+  if(!activeCall||activeCall.initiator)return;
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:activeCall.mode==="video"});
+    remoteStream=new MediaStream();
+    $("ipLocalVideo").srcObject=localStream;$("ipRemoteVideo").srcObject=remoteStream;
+    localStream.getTracks().forEach(t=>activeCall.pc.addTrack(t,localStream));
+    activeCall.pc.ontrack=e=>{e.streams[0]?.getTracks().forEach(t=>remoteStream.addTrack(t));$("ipCallStatus").textContent="Connected";};
+    activeCall.pc.onicecandidate=async e=>{if(e.candidate&&activeCall) await addDoc(collection(db,"calls",activeCall.id,"calleeCandidates"),e.candidate.toJSON());};
+    await activeCall.pc.setRemoteDescription(new RTCSessionDescription(activeCall.offer));
+    const answer=await activeCall.pc.createAnswer();await activeCall.pc.setLocalDescription(answer);
+    await updateDoc(doc(db,"calls",activeCall.id),{answer:{type:answer.type,sdp:answer.sdp},status:"active"});
+    callCandidatesUnsubscribers.push(onSnapshot(collection(db,"calls",activeCall.id,"callerCandidates"),s=>s.docChanges().forEach(ch=>{if(ch.type==="added"&&activeCall)activeCall.pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())).catch(()=>{});})));
+    $("ipCallStatus").textContent="Connecting…";
+  }catch(err){alert("Call answer nahi hui: "+(err?.message||"Permission error"));await endDirectCall(true);}
+}
+async function endDirectCall(notify=true) {
+  const call=activeCall; activeCall=null;
+  if(callStatusUnsubscribe){callStatusUnsubscribe();callStatusUnsubscribe=null;}
+  callCandidatesUnsubscribers.forEach(fn=>fn());callCandidatesUnsubscribers=[];
+  try{if(notify&&call)await updateDoc(doc(db,"calls",call.id),{status:"ended",endedAt:serverTimestamp()});}catch{}
+  try{call?.pc?.close();}catch{}
+  localStream?.getTracks().forEach(t=>t.stop());localStream=null;remoteStream=null;
+  if($("ipCallOverlay"))$("ipCallOverlay").style.display="none";
+}
+function listenForIncomingCalls() {
+  if(incomingCallUnsubscribe||!currentUser||currentUser.isAnonymous)return;
+  incomingCallUnsubscribe=onSnapshot(query(collection(db,"calls"),where("to","==",currentUser.uid),where("status","==","ringing")),snap=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type!=="added"||activeCall)return;
+      const d=change.doc.data();
+      if(Date.now()-(d.createdAt?.toMillis?.()||Date.now())>120000)return;
+      activeCall={id:change.doc.id,mode:d.mode||"audio",from:d.from,to:d.to,initiator:false,offer:d.offer,pc:new RTCPeerConnection(rtcConfig)};
+      activeCall.pc.onicecandidate=null;
+      showCallUI(activeCall.mode,(d.fromName||"User")+" is calling…",true);
+      $("ipCallTitle").textContent=(d.mode==="video"?"Video":"Audio")+" call";
+      $("ipCallStatus").textContent=(d.fromName||"User")+" is calling you";
+      activeCall.pc.onicecandidate=async e=>{if(e.candidate&&activeCall)await addDoc(collection(db,"calls",activeCall.id,"calleeCandidates"),e.candidate.toJSON());};
+      callStatusUnsubscribe=onSnapshot(doc(db,"calls",activeCall.id),async s=>{const data=s.data();if(!data||!activeCall)return;if(data.status==="ended")await endDirectCall(false);});
+      callCandidatesUnsubscribers.push(onSnapshot(collection(db,"calls",activeCall.id,"callerCandidates"),s=>s.docChanges().forEach(ch=>{if(ch.type==="added"&&activeCall)activeCall.pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())).catch(()=>{});})));
+    });
+  },err=>console.warn("Incoming call listener:",err));
 }
 
 function openChat(user) {
