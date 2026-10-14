@@ -275,7 +275,22 @@ function addStyles() {
     #ipProfileOverlay .ipp-stat {
       text-align:center;
       padding:12px 4px;
+      border:0;cursor:pointer;color:inherit;font:inherit;background:transparent;border-radius:14px;
+      transition:transform .16s ease,background .16s ease;
     }
+    #ipProfileOverlay .ipp-stat:active{transform:scale(.96)}
+    #ipProfileOverlay .ipp-stat:hover{background:rgba(255,255,255,.07)}
+    #ippFollowList{position:fixed;inset:0;z-index:1000002;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
+    #ippFollowList .ipp-fl-card{width:min(420px,100%);max-height:min(72vh,620px);background:#17171d;color:#fff;border:1px solid #34343c;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 70px #0009}
+    #ippFollowList .ipp-fl-head{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #333}
+    #ippFollowList .ipp-fl-title{font-size:17px;font-weight:750}
+    #ippFollowList .ipp-fl-close{border:0;background:transparent;color:#fff;font-size:26px;cursor:pointer}
+    #ippFollowList .ipp-fl-list{overflow:auto;padding:6px 12px 14px}
+    #ippFollowList .ipp-fl-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:0;background:transparent;color:#fff;text-align:left;border-radius:14px;cursor:pointer}
+    #ippFollowList .ipp-fl-row:active{background:#303039}
+    #ippFollowList .ipp-fl-row img{width:46px;height:46px;object-fit:cover;border-radius:50%;border:1px solid #555}
+    #ippFollowList .ipp-fl-name{font-weight:700;font-size:14px}
+    #ippFollowList .ipp-fl-handle{font-size:12px;opacity:.65;margin-top:3px}
 
     #ipProfileOverlay .ipp-stat strong {
       display:block;
@@ -566,15 +581,15 @@ function render(data = profileData, posts = profilePosts) {
             <span>Posts</span>
           </div>
 
-          <div class="ipp-stat ipp-glass">
+          <button type="button" class="ipp-stat ipp-glass" id="ippFollowersStat" aria-label="View followers">
             <strong>${followers}</strong>
             <span>Followers</span>
-          </div>
+          </button>
 
-          <div class="ipp-stat ipp-glass">
+          <button type="button" class="ipp-stat ipp-glass" id="ippFollowingStat" aria-label="View following">
             <strong>${following}</strong>
             <span>Following</span>
-          </div>
+          </button>
 
         </div>
 
@@ -1064,6 +1079,9 @@ postTiles.forEach(tile => {
     toggleFollow
   );
 
+  $("#ippFollowersStat", page)?.addEventListener("click", () => openFollowList(targetUid, "followers"));
+  $("#ippFollowingStat", page)?.addEventListener("click", () => openFollowList(targetUid, "following"));
+
   $("#ippMessage", page)?.addEventListener("click", async () => {
     const target = viewingUid;
     try {
@@ -1384,6 +1402,57 @@ async function toggleFollow() {
 
   } finally {
     if (button) button.disabled = false;
+  }
+}
+
+
+async function openFollowList(uid, type) {
+  const title = type === "followers" ? "Followers" : "Following";
+  const field = type === "followers" ? "followers" : "following";
+  let overlay = document.getElementById("ippFollowList");
+  if (overlay) overlay.remove();
+  overlay = document.createElement("div");
+  overlay.id = "ippFollowList";
+  overlay.innerHTML = `<section class="ipp-fl-card" role="dialog" aria-modal="true" aria-label="${title}">
+    <header class="ipp-fl-head"><span class="ipp-fl-title">${title}</span><button class="ipp-fl-close" type="button" aria-label="Close">×</button></header>
+    <div class="ipp-fl-list"><div style="text-align:center;padding:28px;opacity:.7">Loading…</div></div>
+  </section>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector(".ipp-fl-close").addEventListener("click", close);
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    const raw = snap.exists() ? snap.data()[field] : [];
+    const ids = Array.isArray(raw) ? [...new Set(raw.filter(Boolean).map(String))] : [];
+    const list = overlay.querySelector(".ipp-fl-list");
+    if (!ids.length) {
+      list.innerHTML = '<div style="text-align:center;padding:30px 12px;opacity:.65">No users yet</div>';
+      return;
+    }
+    const people = await Promise.all(ids.map(async personUid => {
+      try {
+        const person = await getDoc(doc(db, "users", personUid));
+        return person.exists() ? { uid: personUid, ...person.data() } : { uid: personUid, username: personUid };
+      } catch { return { uid: personUid, username: personUid }; }
+    }));
+    if (!document.body.contains(overlay)) return;
+    list.innerHTML = people.map(person => {
+      const name = person.username || person.displayName || person.name || "User";
+      const photo = person.photoURL || person.profilePic || person.photoUrl || person.avatar || "";
+      return `<button class="ipp-fl-row" type="button" data-follow-person="${esc(person.uid)}">
+        <img src="${esc(photo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='100%25' height='100%25' fill='%23333'/%3E%3C/svg%3E")}" alt="">
+        <span><div class="ipp-fl-name">${esc(name)}</div><div class="ipp-fl-handle">@${esc(person.username || person.uid)}</div></span>
+      </button>`;
+    }).join("");
+    list.querySelectorAll("[data-follow-person]").forEach(row => row.addEventListener("click", async () => {
+      const personUid = row.dataset.followPerson;
+      close();
+      await openProfile(personUid);
+    }));
+  } catch (error) {
+    console.error("Followers/following list failed:", error);
+    overlay.querySelector(".ipp-fl-list").innerHTML = '<div style="text-align:center;padding:28px;opacity:.7">List load nahi hui. Firebase Rules check karein.</div>';
   }
 }
 
