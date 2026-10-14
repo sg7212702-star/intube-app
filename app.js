@@ -513,6 +513,50 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("closeMenu")?.addEventListener("click", closeAll);
   $("cancelSheet")?.addEventListener("click", closeAll);
 
+  // Keep the bottom profile tab in sync with the user's actual profile photo.
+  async function syncBottomProfileAvatar() {
+    const avatar = document.getElementById("myAvatar");
+    const largeAvatar = document.getElementById("myAvatarLarge");
+    if (!avatar) return;
+    const fallback = "https://www.gravatar.com/avatar/?d=mp";
+    try {
+      const { auth, db } = await import("./firebase.js");
+      const user = auth.currentUser;
+      if (!user || user.isAnonymous) {
+        avatar.src = fallback;
+        if (largeAvatar) largeAvatar.src = fallback;
+        return;
+      }
+      const { doc, getDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      const applyPhoto = data => {
+        const photo = data?.photoURL || data?.photoUrl || data?.profilePic || data?.avatar || user.photoURL || fallback;
+        [avatar, largeAvatar].filter(Boolean).forEach(img => {
+          if (img.src !== photo) img.src = photo;
+          img.alt = "Your profile";
+          img.style.objectFit = "cover";
+        });
+      };
+      const snap = await getDoc(doc(db, "users", user.uid));
+      applyPhoto(snap.exists() ? snap.data() : {});
+      // Subscribe once, so profile-photo changes update the bottom tab in realtime.
+      if (!avatar.dataset.photoListenerAttached) {
+        avatar.dataset.photoListenerAttached = "1";
+        onSnapshot(doc(db, "users", user.uid), latest => {
+          if (auth.currentUser?.uid !== user.uid) return;
+          applyPhoto(latest.exists() ? latest.data() : {});
+        }, error => console.warn("Bottom profile avatar listener:", error));
+      }
+      if (user.photoURL && !snap.exists()) applyPhoto({ photoURL: user.photoURL });
+    } catch (error) {
+      console.warn("Could not sync bottom profile avatar:", error);
+      if (!avatar.getAttribute("src")) avatar.src = fallback;
+    }
+  }
+  syncBottomProfileAvatar();
+  import("./firebase.js").then(({ auth }) => {
+    auth.onAuthStateChanged?.(() => syncBottomProfileAvatar());
+  }).catch(error => console.warn("Profile avatar auth sync:", error));
+
   // BOTTOM NAV - GLASS PROFILE FIX
   document.querySelectorAll(".bBtn").forEach(btn => {
     btn.addEventListener("click", async () => {
