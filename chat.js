@@ -430,7 +430,8 @@ async function showMessageActions(messageId) {
     alert("Action poora nahi hua. Firestore Rules/clipboard permission check karein.");
   }
 }
-\n// Open a direct chat from another profile.
+
+// Open a direct chat from another profile.
 window.openChatWithUser = async function(uid) {
   if (!currentUser || currentUser.isAnonymous) { alert('Pehle Google se login karein.'); return; }
   if (!uid || uid === currentUser.uid) return;
