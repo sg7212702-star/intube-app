@@ -296,10 +296,35 @@ async function openStoryViewers(){
   if(!story||!user||ownerId(story)!==user.uid){alert("Viewer list sirf apni story par dikhegi.");return;}
   const panel=openStoryPanel("Story viewers","<p>Viewers load ho rahe hain…</p>");
   try{
-    const ids=Array.isArray(story.seenBy)?story.seenBy:[];
-    if(!ids.length){panel.querySelector(".isp-body").innerHTML='<p style="text-align:center;color:#777;padding:20px 0;">Abhi kisi ne story nahi dekhi.</p>';return;}
-    const people=await Promise.all(ids.map(async uid=>{try{const s=await getDoc(doc(db,"users",uid));return s.exists()?{uid,...s.data()}:{uid,username:"InstaPro User"};}catch{return {uid,username:"InstaPro User"};}}));
-    panel.querySelector(".isp-body").innerHTML='<p style="font-size:13px;color:#777;">'+people.length+' views</p>'+people.map(p=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;"><img src="'+escapeHtml(p.photoURL||p.photo||"https://www.gravatar.com/avatar/?d=mp")+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;"><strong>'+escapeHtml(userLabel(p))+'</strong></div>').join("");
+    const viewIds=Array.isArray(story.seenBy)?story.seenBy:[];
+    const likedIds=Array.isArray(story.likedBy)?story.likedBy:[];
+    const ids=[...new Set([...viewIds,...likedIds])];
+    if(!ids.length){
+      panel.querySelector(".isp-body").innerHTML='<p style="text-align:center;color:#777;padding:20px 0;">Abhi kisi ne story nahi dekhi ya like nahi ki.</p>';
+      return;
+    }
+    const people=await Promise.all(ids.map(async uid=>{
+      try{const s=await getDoc(doc(db,"users",uid));return s.exists()?{uid,...s.data()}:{uid,username:"InstaPro User"};}
+      catch{return {uid,username:"InstaPro User"};}
+    }));
+    const body=panel.querySelector(".isp-body");
+    body.innerHTML='<p style="font-size:13px;color:#777;margin-bottom:8px;">'+viewIds.length+' views · '+likedIds.length+' likes</p>'+
+      people.map(p=>{
+        const liked=likedIds.includes(p.uid);
+        const viewed=viewIds.includes(p.uid);
+        return '<button type="button" data-story-viewer-uid="'+escapeHtml(p.uid)+'" style="display:flex;align-items:center;gap:10px;padding:10px 0;width:100%;border:0;border-bottom:1px solid #eee;background:transparent;text-align:left;color:#161616;cursor:pointer;">'+
+          '<img src="'+escapeHtml(p.photoURL||p.photo||"https://www.gravatar.com/avatar/?d=mp")+'" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 42px;">'+
+          '<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;"><strong>'+escapeHtml(userLabel(p))+'</strong><small style="color:#777;">'+(viewed?'Viewed':'')+(viewed&&liked?' · ':'')+(liked?'❤️ Liked your story':'')+'</small></span>'+
+          '<span style="color:#0095f6;font-size:12px;font-weight:700;">View profile ›</span></button>';
+      }).join("");
+    body.querySelectorAll("[data-story-viewer-uid]").forEach(row=>{
+      row.addEventListener("click",()=>{
+        const targetUid=row.getAttribute("data-story-viewer-uid");
+        panel.remove();
+        if(typeof window.openProfile==="function") window.openProfile(targetUid);
+        else alert("Profile system abhi load nahi hua. Dobara try karein.");
+      });
+    });
   }catch(e){console.error(e);panel.querySelector(".isp-body").textContent="Viewer list load nahi hui. Firestore Rules check karein.";}
 }
 async function openStoryDmShare(){
