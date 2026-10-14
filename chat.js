@@ -28,13 +28,33 @@ const nameOf = user => user?.username || user?.displayName || user?.name || user
 const chatIdFor = (a, b) => [a, b].sort().join("_");
 
 function syncChatKeyboardLayout() {
-  const form = $("chatForm"), msgs = $("chatMsgs");
-  if (!form) return;
-  const v = window.visualViewport;
-  const inset = v ? Math.max(0, window.innerHeight - v.height - v.offsetTop) : 0;
-  const typing = document.activeElement === $("chatInput") || document.activeElement === $("chatMessageSearch");
-  form.style.bottom = (typing ? inset : 0) + "px";
-  if (msgs) { msgs.style.paddingBottom = (form.getBoundingClientRect().height + inset + 18) + "px"; if (typing) requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; }); }
+  const form = $("chatForm");
+  const msgs = $("chatMsgs");
+  const box = $("chatBoxView");
+  if (!form || !box || box.style.display === "none") return;
+  const vv = window.visualViewport;
+  const height = vv ? vv.height : window.innerHeight;
+  const top = vv ? vv.offsetTop : 0;
+  const focused = document.activeElement === $("chatInput") || document.activeElement === $("chatMessageSearch");
+  box.style.setProperty("height", height + "px", "important");
+  box.style.setProperty("min-height", "0", "important");
+  box.style.setProperty("top", top + "px", "important");
+  box.style.setProperty("bottom", "auto", "important");
+  form.style.setProperty("position", "fixed", "important");
+  form.style.setProperty("bottom", "0px", "important");
+  form.style.setProperty("left", "50%", "important");
+  form.style.setProperty("transform", "translateX(-50%)", "important");
+  form.style.setProperty("z-index", "10020", "important");
+  if (msgs) {
+    const header = box.firstElementChild;
+    msgs.style.setProperty("position", "absolute", "important");
+    msgs.style.setProperty("top", (header ? header.getBoundingClientRect().height : 56) + "px", "important");
+    msgs.style.setProperty("bottom", form.getBoundingClientRect().height + "px", "important");
+    msgs.style.setProperty("overflow-y", "auto", "important");
+    msgs.style.setProperty("width", "100%", "important");
+    msgs.style.setProperty("box-sizing", "border-box", "important");
+    if (focused) requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+  }
 }
 
 function injectChatStyles() {
