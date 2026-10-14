@@ -280,7 +280,7 @@ function addStyles() {
     }
     #ipProfileOverlay .ipp-stat:active{transform:scale(.96)}
     #ipProfileOverlay .ipp-stat:hover{background:rgba(255,255,255,.07)}
-    #ippFollowList{position:fixed;inset:0;z-index:1000002;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
+    #ippFollowList{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
     #ippFollowList .ipp-fl-card{width:min(420px,100%);max-height:min(72vh,620px);background:#17171d;color:#fff;border:1px solid #34343c;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 70px #0009}
     #ippFollowList .ipp-fl-head{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #333}
     #ippFollowList .ipp-fl-title{font-size:17px;font-weight:750}
@@ -1079,8 +1079,28 @@ postTiles.forEach(tile => {
     toggleFollow
   );
 
-  $("#ippFollowersStat", page)?.addEventListener("click", () => openFollowList(targetUid, "followers"));
-  $("#ippFollowingStat", page)?.addEventListener("click", () => openFollowList(targetUid, "following"));
+  const followersButton = $("#ippFollowersStat", page);
+  const followingButton = $("#ippFollowingStat", page);
+  if (followersButton) {
+    followersButton.style.position = "relative";
+    followersButton.style.zIndex = "5";
+    followersButton.style.pointerEvents = "auto";
+    followersButton.onclick = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openFollowList(String(targetUid), "followers");
+    };
+  }
+  if (followingButton) {
+    followingButton.style.position = "relative";
+    followingButton.style.zIndex = "5";
+    followingButton.style.pointerEvents = "auto";
+    followingButton.onclick = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openFollowList(String(targetUid), "following");
+    };
+  }
 
   $("#ippMessage", page)?.addEventListener("click", async () => {
     const target = viewingUid;
@@ -1419,11 +1439,13 @@ async function openFollowList(uid, type) {
   </section>`;
   document.body.appendChild(overlay);
   const close = () => overlay.remove();
+  overlay.style.zIndex = "2147483000";
   overlay.querySelector(".ipp-fl-close").addEventListener("click", close);
   overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
   try {
     const snap = await getDoc(doc(db, "users", uid));
-    const raw = snap.exists() ? snap.data()[field] : [];
+    const rawValue = snap.exists() ? snap.data()[field] : [];
+    const raw = Array.isArray(rawValue) ? rawValue : (rawValue && typeof rawValue === "object" ? Object.keys(rawValue).filter(key => rawValue[key]) : []);
     const ids = Array.isArray(raw) ? [...new Set(raw.filter(Boolean).map(String))] : [];
     const list = overlay.querySelector(".ipp-fl-list");
     if (!ids.length) {
