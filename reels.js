@@ -14,7 +14,8 @@ import {
   arrayRemove,
   addDoc,
   serverTimestamp,
-  increment
+  increment,
+  where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const reelsPage = document.getElementById("reelsPage");
@@ -23,6 +24,9 @@ let unsubscribeReels = null;
 let reelsData = [];
 let activeIndex = 0;
 let reelsObserver = null;
+let activeStoryOwners = new Set();
+let unsubscribeReelStories = null;
+let reelFollowCache = new Map();
 
 const escapeHTML = (value = "") =>
   String(value).replace(/[&<>"']/g, c => ({
@@ -224,7 +228,7 @@ function installReelsStyles() {
       display:flex;align-items:center;gap:9px;
       margin-bottom:12px;font-size:14px;font-weight:bold;
     }
-    .ipr-user img {width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid white}
+    .ipr-user img {width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.75);box-sizing:border-box}\n    .ipr-user img.ipr-story-ring {border:2px solid transparent;background:linear-gradient(#111,#111) padding-box,conic-gradient(#ffb347,#ff2d95,#8b5cf6,#ffb347) border-box;padding:2px}\n    .ipr-user-meta{display:flex;align-items:center;gap:9px;min-width:0}\n    .ipr-author{border:0;background:transparent;color:#fff;font:inherit;font-weight:750;padding:5px 0;cursor:pointer;text-align:left}\n    .ipr-follow{border:1px solid rgba(255,255,255,.72);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:6px 12px;font-size:12px;font-weight:750;backdrop-filter:blur(12px);cursor:pointer}\n    .ipr-follow.is-following{background:rgba(255,255,255,.92);color:#171717;border-color:transparent}\n    .ipr-user img,.ipr-author,.ipr-follow{transition:transform .16s ease,filter .16s ease}\n    .ipr-user img:active,.ipr-author:active,.ipr-follow:active{transform:scale(.96)}
     .ipr-caption {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
     .ipr-heart {
       position:absolute;left:50%;top:45%;
@@ -541,14 +545,62 @@ function renderReelsSlides(track) {
 
         <div class="ipr-bottom">
           <div class="ipr-user">
-            <img src="${escapeHTML(photoURL(post))}" alt="">
-            <span>@${escapeHTML(username(post))}</span>
+            <img class="${activeStoryOwners.has(post.uid || post.userId || post.authorId || post.ownerUid) ? "ipr-story-ring" : ""}" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}" src="${escapeHTML(photoURL(post))}" alt="Profile photo" loading="lazy">
+            <div class="ipr-user-meta">
+              <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))}</button>
+              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid ? `<button type="button" class="ipr-follow ${reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) ? "is-following" : ""}" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">${reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) ? "Following" : "Follow"}</button>` : ""}
+            </div>
           </div>
           <div class="ipr-caption">${escapeHTML(post.caption || "")}</div>
         </div>
       </section>
     `;
   }).join("");
+
+  track.querySelectorAll("[data-open-reel-profile]").forEach(el => {
+    el.addEventListener("click", async event => {
+      event.stopPropagation();
+      const uid = el.dataset.openReelProfile;
+      if (!uid) return;
+      try {
+        if (typeof window.openProfile !== "function") await import("./profile.js");
+        if (typeof window.openProfile === "function") window.openProfile(uid);
+      } catch (error) { console.error("Reel profile open failed:", error); }
+    });
+  });
+  track.querySelectorAll("[data-follow-reel]").forEach(button => {
+    button.addEventListener("click", async event => {
+      event.stopPropagation();
+      const me = currentUser(), targetUid = button.dataset.followReel;
+      if (!me || me.isAnonymous) { showReelsMessage("Follow karne ke liye login karein."); return; }
+      if (!targetUid || targetUid === me.uid) return;
+      button.disabled = true;
+      const wasFollowing = reelFollowCache.get(targetUid) === true;
+      try {
+        const mineRef = doc(db, "users", me.uid);
+        const targetRef = doc(db, "users", targetUid);
+        const [mineSnap, targetSnap] = await Promise.all([getDoc(mineRef), getDoc(targetRef)]);
+        if (!mineSnap.exists() || !targetSnap.exists()) throw new Error("User profile not found");
+        const following = Array.isArray(mineSnap.data().following) ? mineSnap.data().following : [];
+        const followers = Array.isArray(targetSnap.data().followers) ? targetSnap.data().followers : [];
+        if (wasFollowing || following.includes(targetUid)) {
+          await Promise.all([
+            updateDoc(mineRef, { following: arrayRemove(targetUid), followingCount: Math.max(0, Number(mineSnap.data().followingCount || following.length) - 1) }),
+            updateDoc(targetRef, { followers: arrayRemove(me.uid), followersCount: Math.max(0, Number(targetSnap.data().followersCount || followers.length) - 1) })
+          ]);
+          reelFollowCache.set(targetUid, false);
+        } else {
+          await Promise.all([
+            updateDoc(mineRef, { following: arrayUnion(targetUid), followingCount: Number(mineSnap.data().followingCount ?? following.length) + 1 }),
+            updateDoc(targetRef, { followers: arrayUnion(me.uid), followersCount: Number(targetSnap.data().followersCount ?? followers.length) + 1 })
+          ]);
+          reelFollowCache.set(targetUid, true);
+        }
+        renderReelsSlides(track);
+      } catch (error) { console.error("Reel follow failed:", error); showReelsMessage("Follow save nahi hua. Firebase Rules check karein."); }
+      finally { button.disabled = false; }
+    });
+  });
 
   track.querySelectorAll(".ipr-slide").forEach(slide => {
     const video = slide.querySelector("video");
@@ -858,6 +910,32 @@ function openReelComments(postId) {
 }
 
 window.addEventListener("pagehide", () => {
+  if (unsubscribeReelStories) { unsubscribeReelStories(); unsubscribeReelStories = null; }
+  unsubscribeReelStories = onSnapshot(collection(db, "stories"), snapshot => {
+    const now = Date.now(), owners = new Set();
+    snapshot.docs.forEach(item => {
+      const story = item.data();
+      const uid = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID;
+      const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
+      const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
+      const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
+      if (uid && url && expires > now) owners.add(uid);
+    });
+    activeStoryOwners = owners;
+    const track = document.getElementById("ipReelsTrack");
+    if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+  }, error => console.warn("Reel story ring listener:", error));
+
+  const me = currentUser();
+  if (me && !me.isAnonymous) {
+    getDoc(doc(db, "users", me.uid)).then(snap => {
+      const following = snap.exists() && Array.isArray(snap.data().following) ? snap.data().following : [];
+      reelFollowCache = new Map(following.map(uid => [uid, true]));
+      const track = document.getElementById("ipReelsTrack");
+      if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+    }).catch(error => console.warn("Reel follow state:", error));
+  }
+
   if (unsubscribeReels) {
     unsubscribeReels();
   }
