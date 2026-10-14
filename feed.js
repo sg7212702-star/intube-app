@@ -452,6 +452,24 @@ function injectFeedStyles() {
       overflow-wrap: anywhere;
     }
 
+    .ip-feed-actions {
+      display:flex; align-items:center; gap:18px; flex-wrap:nowrap;
+    }
+    .ip-feed-actions .ip-feed-icon-action {
+      display:inline-flex; align-items:center; justify-content:center; gap:5px;
+      min-width:24px; padding:0; border:0; background:transparent; color:inherit;
+      font-size:14px; line-height:1; cursor:pointer;
+    }
+    .ip-feed-icon-action svg {
+      width:27px; height:27px; fill:none; stroke:currentColor; stroke-width:1.8;
+      stroke-linecap:round; stroke-linejoin:round; flex-shrink:0;
+    }
+    .ip-feed-icon-action[aria-pressed="true"] svg { color:#ff3040; }
+    .ip-feed-icon-action[data-feed-action="repost"][aria-pressed="true"] svg { color:#22c55e; }
+    .ip-feed-icon-action span { font-size:13px; }
+    .ip-feed-save-action { margin-left:auto; }
+    @media (max-width:360px) { .ip-feed-actions { gap:13px; } .ip-feed-icon-action svg { width:25px; height:25px; } }
+
     .ip-feed-view-comments {
       display: block;
       padding: 10px 0 4px;
@@ -776,43 +794,26 @@ async function renderFeed() {
 
           <div class="ip-feed-actions">
 
-            <button
-              type="button"
-              class="ip-feed-action"
-              data-feed-action="like"
-              data-id="${escapeHTML(post.id)}"
-              aria-pressed="${liked}"
-            >${liked ? "❤️" : "🤍"} ${likeCount}</button>
-
-            <button
-              type="button"
-              class="ip-feed-action"
-              data-feed-action="comments"
-              data-id="${escapeHTML(post.id)}"
-            >💬 ${commentCount}</button>
-
-            <button
-              type="button"
-              class="ip-feed-action"
-              data-feed-action="repost"
-              data-id="${escapeHTML(post.id)}"
-              aria-pressed="${Array.isArray(post.repostedBy) && post.repostedBy.includes(user.uid)}"
-            >🔁 Repost ${safeCount(post.repostCount)}</button>
-
-            <button
-              type="button"
-              class="ip-feed-action"
-              data-feed-action="share"
-              data-id="${escapeHTML(post.id)}"
-            >↗️ Share ${shareCount || ""}</button>
-
-            <button
-              type="button"
-              class="ip-feed-action"
-              data-feed-action="save"
-              data-id="${escapeHTML(post.id)}"
-              aria-pressed="${saved}"
-            >${saved ? "🔖 Saved" : "🔖 Save"}</button>
+            <button type="button" class="ip-feed-action ip-feed-icon-action" data-feed-action="like"
+              data-id="${escapeHTML(post.id)}" aria-label="Like" aria-pressed="${liked}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg><span>${likeCount}</span>
+            </button>
+            <button type="button" class="ip-feed-action ip-feed-icon-action" data-feed-action="comments"
+              data-id="${escapeHTML(post.id)}" aria-label="Comment">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.1a9 9 0 0 1-.9-4.4A8.5 8.5 0 1 1 21 11.5Z"/></svg><span>${commentCount}</span>
+            </button>
+            <button type="button" class="ip-feed-action ip-feed-icon-action" data-feed-action="repost"
+              data-id="${escapeHTML(post.id)}" aria-label="Repost" aria-pressed="${Array.isArray(post.repostedBy) && post.repostedBy.includes(user.uid)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4V7H7a3 3 0 0 0-3 3v1H2v-1a5 5 0 0 1 5-5h10V2ZM7 22l-4-4 4-4v3h10a3 3 0 0 0 3-3v-1h2v1a5 5 0 0 1-5 5H7v3Z"/></svg><span>${safeCount(post.repostCount)}</span>
+            </button>
+            <button type="button" class="ip-feed-action ip-feed-icon-action" data-feed-action="share"
+              data-id="${escapeHTML(post.id)}" aria-label="Share">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 9 15M22 2l-8 20-5-7-7-5 20-8Z"/></svg>
+            </button>
+            <button type="button" class="ip-feed-action ip-feed-icon-action ip-feed-save-action" data-feed-action="save"
+              data-id="${escapeHTML(post.id)}" aria-label="Save" aria-pressed="${saved}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>
+            </button>
 
           </div>
 
