@@ -205,6 +205,9 @@ function installReelsStyles() {
     }
      .ipr-action:active,.ipr-close:active { transform:scale(.92); }
     .ipr-action small {display:block;font-size:11px;margin-top:3px;color:rgba(255,255,255,.94)}
+    .ipr-icon-action svg {width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .ipr-icon-action[aria-pressed="true"] svg {color:#ff3040}
+    .ipr-icon-action.ipr-repost[aria-pressed="true"] svg {color:#22c55e}
     .ipr-action.ipr-liked {color:#ff3b78}
     .ipr-action.ipr-delete-reel {color:#ff6b8a}
     .ipr-bottom {
@@ -515,13 +518,24 @@ function renderReelsSlides(track) {
         <div class="ipr-pause">▶</div>
 
         <div class="ipr-actions">
-          <button class="ipr-action ipr-like ${liked ? "ipr-liked" : ""}" data-like="${id}">
-            ${liked ? "♥" : "♡"}<small>${count}</small>
+          <button class="ipr-action ipr-like ipr-icon-action ${liked ? "ipr-liked" : ""}" data-like="${id}" aria-label="Like Reel" aria-pressed="${liked}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg><small>${count}</small>
           </button>
-          <button class="ipr-action" data-comment="${id}">💬<small>${Number(post.commentCount) || 0}</small></button>
-          <button class="ipr-action ipr-repost" data-repost="${id}" aria-label="Repost Reel">🔁<small>${Number(post.repostCount) || 0}</small></button>
-          <button class="ipr-action" data-share="${id}">➤<small>${Number(post.shareCount) || "Share"}</small></button>
-          <button class="ipr-action" data-mute="${id}">🔇<small>Sound</small></button>
+          <button class="ipr-action ipr-icon-action" data-comment="${id}" aria-label="Comments">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.1a9 9 0 0 1-.9-4.4A8.5 8.5 0 1 1 21 11.5Z"/></svg><small>${Number(post.commentCount) || 0}</small>
+          </button>
+          <button class="ipr-action ipr-icon-action ipr-repost" data-repost="${id}" aria-label="Repost Reel" aria-pressed="${!!user && Array.isArray(post.repostedBy) && post.repostedBy.includes(user.uid)}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4V7H7a3 3 0 0 0-3 3v1H2v-1a5 5 0 0 1 5-5h10V2ZM7 22l-4-4 4-4v3h10a3 3 0 0 0 3-3v-1h2v1a5 5 0 0 1-5 5H7v3Z"/></svg><small>${Number(post.repostCount) || 0}</small>
+          </button>
+          <button class="ipr-action ipr-icon-action" data-share="${id}" aria-label="Share Reel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 9 15M22 2l-8 20-5-7-7-5 20-8Z"/></svg><small>Share</small>
+          </button>
+          <button class="ipr-action ipr-icon-action" data-save-reel="${id}" aria-label="Save Reel" aria-pressed="${!!user && Array.isArray(post.savedBy) && post.savedBy.includes(user.uid)}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg><small>${!!user && Array.isArray(post.savedBy) && post.savedBy.includes(user.uid) ? "Saved" : "Save"}</small>
+          </button>
+          <button class="ipr-action ipr-icon-action" data-mute="${id}" aria-label="Toggle sound">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 4a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/></svg><small>Sound</small>
+          </button>
           ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button class="ipr-action ipr-delete-reel" data-delete-reel="${id}" aria-label="Delete your Reel">🗑️<small>Delete</small></button>' : ""}
         </div>
 
@@ -607,6 +621,32 @@ function renderReelsSlides(track) {
     const post = reelsData.find(item => item.id === button.dataset.repost);
     if (post?.repostedBy?.includes(currentUser()?.uid)) button.classList.add("ipr-liked");
     button.addEventListener("click", () => toggleReelRepost(button.dataset.repost, button));
+  });
+
+  track.querySelectorAll("[data-save-reel]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const user = currentUser();
+      if (!user) { showReelsMessage("Reel save karne ke liye login karein."); return; }
+      const postId = button.dataset.saveReel;
+      const post = reelsData.find(item => item.id === postId);
+      if (!post) return;
+      const already = Array.isArray(post.savedBy) && post.savedBy.includes(user.uid);
+      button.disabled = true;
+      try {
+        await updateDoc(doc(db, "posts", postId), {
+          savedBy: already ? arrayRemove(user.uid) : arrayUnion(user.uid),
+          savesCount: Math.max(0, Number(post.savesCount || 0) + (already ? -1 : 1))
+        });
+        post.savedBy = already ? (post.savedBy || []).filter(uid => uid !== user.uid) : [...(post.savedBy || []), user.uid];
+        post.savesCount = Math.max(0, Number(post.savesCount || 0) + (already ? -1 : 1));
+        button.setAttribute("aria-pressed", String(!already));
+        button.querySelector("small").textContent = already ? "Save" : "Saved";
+        showReelsMessage(already ? "Saved reels se hata diya." : "Reel Saved.");
+      } catch (error) {
+        console.error("Reel save error:", error);
+        showReelsMessage("Reel save nahi hui. Firestore Rules check karein.");
+      } finally { button.disabled = false; }
+    });
   });
 
   track.querySelectorAll("[data-share]").forEach(button => {
