@@ -403,8 +403,9 @@ function listenForIncomingCalls() {
   if(incomingCallUnsubscribe||!currentUser||currentUser.isAnonymous)return;
   incomingCallUnsubscribe=onSnapshot(query(collection(db,"calls"),where("to","==",currentUser.uid),where("status","==","ringing")),snap=>{
     snap.docChanges().forEach(change=>{
-      if(change.type!=="added"||activeCall)return;
+      if(!["added","modified"].includes(change.type)||activeCall)return;
       const d=change.doc.data();
+      if(!d.offer)return;
       if(Date.now()-(d.createdAt?.toMillis?.()||Date.now())>120000)return;
       activeCall={id:change.doc.id,mode:d.mode||"audio",from:d.from,to:d.to,initiator:false,offer:d.offer,pc:new RTCPeerConnection(rtcConfig)};
       activeCall.pc.onicecandidate=null;
@@ -664,7 +665,8 @@ onAuthStateChanged(auth, user => {
   currentUser = user;
   if ($("chatOwnName")) $("chatOwnName").textContent = nameOf(user || {});
   if (document.readyState !== "loading") setupUI();
-  if (user) loadUsersAndChats();
+  if (user) { loadUsersAndChats(); listenForIncomingCalls(); }
+  else { if (incomingCallUnsubscribe) incomingCallUnsubscribe(); incomingCallUnsubscribe = null; if (activeCall) endDirectCall(false); }
   else {
     if (listListener) listListener();
     if (usersListener) usersListener();
