@@ -27,7 +27,47 @@ const photoOf = user => user?.photoURL || user?.photo || "https://www.gravatar.c
 const nameOf = user => user?.username || user?.displayName || user?.name || user?.email?.split("@")[0] || "user";
 const chatIdFor = (a, b) => [a, b].sort().join("_");
 
+function injectChatStyles() {
+  if (document.getElementById("instaproChatMotionStyles")) return;
+  const style = document.createElement("style");
+  style.id = "instaproChatMotionStyles";
+  style.textContent = `
+    #chatPage { color:#f7f7f7; }
+    #chatPage button, #chatPage input { -webkit-tap-highlight-color:transparent; }
+    #chatPage button { transition:transform .16s ease, opacity .16s ease, background-color .2s ease, box-shadow .2s ease; }
+    #chatPage button:active { transform:scale(.94); }
+    #chatPage #chatListView { animation: ipChatPageIn .32s cubic-bezier(.2,.75,.25,1) both; }
+    #chatPage #chatBoxView { animation: ipChatPageIn .26s cubic-bezier(.2,.75,.25,1) both; }
+    #chatPage #usersList > button { animation: ipChatRowIn .32s ease both; }
+    #chatPage #usersList > button:nth-child(2) { animation-delay:.025s; }
+    #chatPage #usersList > button:nth-child(3) { animation-delay:.05s; }
+    #chatPage #usersList > button:nth-child(4) { animation-delay:.075s; }
+    #chatPage #usersList > button:nth-child(5) { animation-delay:.1s; }
+    #chatPage #usersList > button:hover { background:rgba(255,255,255,.055)!important; }
+    #chatPage #chatMsgs [data-message-id] { animation: ipChatBubbleIn .24s cubic-bezier(.2,.8,.25,1) both; transform-origin:bottom; }
+    #chatPage #chatInput:focus, #chatPage #userSearch:focus, #chatPage #chatMessageSearch:focus { border-color:rgba(0,149,246,.85)!important; box-shadow:0 0 0 3px rgba(0,149,246,.12); transition:box-shadow .18s ease,border-color .18s ease; }
+    #chatPage #chatSend { transition:transform .16s ease,filter .2s ease,opacity .2s ease; }
+    #chatPage #chatSend:hover { filter:brightness(1.12); box-shadow:0 5px 22px rgba(0,149,246,.28)!important; }
+    #chatPage #chatInfoPanel { animation:ipChatFadeIn .18s ease both; }
+    #chatPage #chatInfoPanel > div { animation:ipChatModalIn .24s cubic-bezier(.2,.8,.25,1) both; }
+    #chatPage #chatReplyPreview { animation:ipChatSlideUp .2s ease both; }
+    #chatPage .ip-heart-pop { animation:ipChatHeart .42s cubic-bezier(.2,.8,.25,1) both; }
+    @keyframes ipChatPageIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes ipChatRowIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes ipChatBubbleIn { from { opacity:0; transform:translateY(8px) scale(.975); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes ipChatFadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes ipChatModalIn { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes ipChatSlideUp { from { opacity:0; transform:translate(-50%,8px); } to { opacity:1; transform:translate(-50%,0); } }
+    @keyframes ipChatHeart { 0% { transform:scale(.7); opacity:.4; } 55% { transform:scale(1.18); opacity:1; } 100% { transform:scale(1); opacity:1; } }
+    @media (prefers-reduced-motion:reduce) {
+      #chatPage *, #chatPage *::before, #chatPage *::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function setupUI() {
+  injectChatStyles();
   const page = $("chatPage");
   if (!page || page.dataset.instaProChatReady === "true") return;
   page.dataset.instaProChatReady = "true";
