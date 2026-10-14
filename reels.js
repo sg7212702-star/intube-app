@@ -195,19 +195,15 @@ function installReelsStyles() {
     }
     .ipr-action {
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      min-width:44px;min-height:48px;padding:5px 7px;
-      border:1px solid rgba(255,255,255,.19);border-radius:18px;
-      background:rgba(255,255,255,.075);color:white;
-      text-align:center;font-size:25px;cursor:pointer;
+      min-width:44px;min-height:48px;padding:2px 4px;
+      border:0;border-radius:0;
+      background:transparent;color:#fff;
+      text-align:center;font-size:29px;cursor:pointer;
       text-shadow:0 1px 5px #000;
-      backdrop-filter:blur(18px) saturate(165%);-webkit-backdrop-filter:blur(18px) saturate(165%);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 16px rgba(0,0,0,.12);
-      transition:transform .16s ease,background .16s ease,border-color .16s ease;
+      transition:transform .16s ease,color .16s ease;
       touch-action:manipulation;
     }
-    .ipr-action:active,.ipr-close:active {
-      transform:scale(.92);background:rgba(255,255,255,.19);border-color:rgba(255,255,255,.35);
-    }
+     .ipr-action:active,.ipr-close:active { transform:scale(.92); }
     .ipr-action small {display:block;font-size:11px;margin-top:3px;color:rgba(255,255,255,.94)}
     .ipr-action.ipr-liked {color:#ff3b78}
     .ipr-action.ipr-delete-reel {color:#ff6b8a}
@@ -427,6 +423,44 @@ async function toggleReelLike(postId, button, countLabel) {
   }
 }
 
+async function toggleReelRepost(postId, button) {
+  const user = currentUser();
+  if (!user || user.isAnonymous) {
+    showReelsMessage("Repost karne ke liye login karein.");
+    return;
+  }
+  try {
+    const ref = getPostRef(postId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      showReelsMessage("Yeh Reel ab available nahi hai.");
+      return;
+    }
+    const post = snap.data();
+    const repostedBy = Array.isArray(post.repostedBy) ? post.repostedBy : [];
+    const already = repostedBy.includes(user.uid);
+    const count = Math.max(0, Number(post.repostCount) || 0);
+    await updateDoc(ref, {
+      repostedBy: already ? arrayRemove(user.uid) : arrayUnion(user.uid),
+      repostCount: already ? Math.max(0, count - 1) : count + 1
+    });
+    if (button) {
+      button.classList.toggle("ipr-liked", !already);
+      const small = button.querySelector("small");
+      if (small) small.textContent = String(already ? Math.max(0, count - 1) : count + 1);
+    }
+    const item = reelsData.find(reel => reel.id === postId);
+    if (item) {
+      item.repostedBy = already ? repostedBy.filter(uid => uid !== user.uid) : [...repostedBy, user.uid];
+      item.repostCount = already ? Math.max(0, count - 1) : count + 1;
+    }
+    showReelsMessage(already ? "Repost hata diya." : "Reel repost ho gayi.");
+  } catch (error) {
+    console.error("Reel repost error:", error);
+    showReelsMessage("Repost save nahi hua. Firestore Rules check karein.");
+  }
+}
+
 function animateHeart(heart) {
   heart.classList.remove("ipr-heart-pop");
   void heart.offsetWidth;
@@ -485,7 +519,8 @@ function renderReelsSlides(track) {
             ${liked ? "♥" : "♡"}<small>${count}</small>
           </button>
           <button class="ipr-action" data-comment="${id}">💬<small>${Number(post.commentCount) || 0}</small></button>
-          <button class="ipr-action" data-share="${id}">↗<small>Share</small></button>
+          <button class="ipr-action ipr-repost" data-repost="${id}" aria-label="Repost Reel">🔁<small>${Number(post.repostCount) || 0}</small></button>
+          <button class="ipr-action" data-share="${id}">➤<small>${Number(post.shareCount) || "Share"}</small></button>
           <button class="ipr-action" data-mute="${id}">🔇<small>Sound</small></button>
           ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button class="ipr-action ipr-delete-reel" data-delete-reel="${id}" aria-label="Delete your Reel">🗑️<small>Delete</small></button>' : ""}
         </div>
@@ -566,6 +601,12 @@ function renderReelsSlides(track) {
 
   track.querySelectorAll("[data-delete-reel]").forEach(button => {
     button.addEventListener("click", () => deleteOwnReel(button.dataset.deleteReel));
+  });
+
+  track.querySelectorAll("[data-repost]").forEach(button => {
+    const post = reelsData.find(item => item.id === button.dataset.repost);
+    if (post?.repostedBy?.includes(currentUser()?.uid)) button.classList.add("ipr-liked");
+    button.addEventListener("click", () => toggleReelRepost(button.dataset.repost, button));
   });
 
   track.querySelectorAll("[data-share]").forEach(button => {
