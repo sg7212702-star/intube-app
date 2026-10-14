@@ -40,10 +40,15 @@ function syncChatKeyboardLayout() {
   box.style.setProperty("min-height", "0", "important");
   box.style.setProperty("top", top + "px", "important");
   box.style.setProperty("bottom", "auto", "important");
-  form.style.setProperty("position", "fixed", "important");
+  box.style.setProperty("position", "fixed", "important");
+  box.style.setProperty("left", "0", "important");
+  box.style.setProperty("right", "0", "important");
+  form.style.setProperty("position", "absolute", "important");
   form.style.setProperty("bottom", "0px", "important");
-  form.style.setProperty("left", "50%", "important");
-  form.style.setProperty("transform", "translateX(-50%)", "important");
+  form.style.setProperty("left", "0", "important");
+  form.style.setProperty("right", "0", "important");
+  form.style.setProperty("width", "100%", "important");
+  form.style.setProperty("transform", "none", "important");
   form.style.setProperty("z-index", "10020", "important");
   if (msgs) {
     const header = box.firstElementChild;
