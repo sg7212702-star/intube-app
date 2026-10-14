@@ -27,6 +27,16 @@ const photoOf = user => user?.photoURL || user?.photo || "https://www.gravatar.c
 const nameOf = user => user?.username || user?.displayName || user?.name || user?.email?.split("@")[0] || "user";
 const chatIdFor = (a, b) => [a, b].sort().join("_");
 
+function syncChatKeyboardLayout() {
+  const form = $("chatForm"), msgs = $("chatMsgs");
+  if (!form) return;
+  const v = window.visualViewport;
+  const inset = v ? Math.max(0, window.innerHeight - v.height - v.offsetTop) : 0;
+  const typing = document.activeElement === $("chatInput") || document.activeElement === $("chatMessageSearch");
+  form.style.bottom = (typing ? inset : 0) + "px";
+  if (msgs) { msgs.style.paddingBottom = (form.getBoundingClientRect().height + inset + 18) + "px"; if (typing) requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; }); }
+}
+
 function injectChatStyles() {
   if (document.getElementById("instaproChatMotionStyles")) return;
   const style = document.createElement("style");
@@ -45,6 +55,11 @@ function injectChatStyles() {
     #chatPage #usersList > button:nth-child(5) { animation-delay:.1s; }
     #chatPage #usersList > button:hover { background:rgba(255,255,255,.055)!important; }
     #chatPage #chatMsgs [data-message-id] { animation: ipChatBubbleIn .24s cubic-bezier(.2,.8,.25,1) both; transform-origin:bottom; }
+    #chatPage #chatForm { z-index:10006!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
+    #chatPage #chatBoxView { height:100dvh; height:100vh; }
+    #chatPage #chatMsgs { min-height:0; overscroll-behavior:contain; scroll-behavior:smooth; }
+    #chatPage #chatForm button { flex-shrink:0; }
+    #chatPage #chatInput { font-size:16px; }
     #chatPage #chatInput:focus, #chatPage #userSearch:focus, #chatPage #chatMessageSearch:focus { border-color:rgba(0,149,246,.85)!important; box-shadow:0 0 0 3px rgba(0,149,246,.12); transition:box-shadow .18s ease,border-color .18s ease; }
     #chatPage #chatSend { transition:transform .16s ease,filter .2s ease,opacity .2s ease; }
     #chatPage #chatSend:hover { filter:brightness(1.12); box-shadow:0 5px 22px rgba(0,149,246,.28)!important; }
@@ -64,6 +79,8 @@ function injectChatStyles() {
     }
   `;
   document.head.appendChild(style);
+  if (window.visualViewport && !window.visualViewport.__instaChatBound) { window.visualViewport.__instaChatBound = true; window.visualViewport.addEventListener("resize", syncChatKeyboardLayout); window.visualViewport.addEventListener("scroll", syncChatKeyboardLayout); }
+  window.addEventListener("resize", syncChatKeyboardLayout);
 }
 
 function setupUI() {
@@ -117,6 +134,10 @@ function setupUI() {
   });
   $("backToList")?.addEventListener("click", closeChat);
   $("chatForm")?.addEventListener("submit", sendMsg);
+  $("chatInput")?.addEventListener("focus", () => setTimeout(syncChatKeyboardLayout, 80));
+  $("chatInput")?.addEventListener("input", syncChatKeyboardLayout);
+  $("chatMessageSearch")?.addEventListener("focus", () => setTimeout(syncChatKeyboardLayout, 80));
+  $("chatInput")?.addEventListener("blur", () => setTimeout(syncChatKeyboardLayout, 120));
   $("chatEmoji")?.addEventListener("click", () => {
     const input = $("chatInput");
     if (!input) return;
