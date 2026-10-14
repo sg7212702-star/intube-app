@@ -261,11 +261,11 @@ function renderStories() {
     ring.type = "button";
     ring.className = "sRing";
     ring.setAttribute("aria-label", "View " + group.name + "'s story");
-    ring.style.cssText = "position:relative;overflow:hidden;padding:0;cursor:pointer;";
+    ring.style.cssText = "position:relative;overflow:visible;padding:3px;cursor:pointer;border:0;box-sizing:border-box;background:conic-gradient(#ffb347 0deg,#ff2d95 110deg,#a855f7 220deg,#ff2d95 300deg,#ffb347 360deg);border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.18);";
     const preview = document.createElement("img");
     preview.src = mediaUrl(group.latest);
     preview.alt = "";
-    preview.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;";
+    preview.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;border:2px solid #090909;box-sizing:border-box;";
     ring.appendChild(preview);
     const caption = document.createElement("p");
     caption.textContent = group.name;
