@@ -916,8 +916,15 @@ window.addEventListener("pagehide", () => {
     snapshot.docs.forEach(item => {
       const story = item.data();
       const uid = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID;
-      const created = story.createdAt?.toMillis?.() || story.createdAt?.toDate?.().getTime?.() || Number(story.createdAt || story.time || 0);
-      const expires = Number(story.expiresAt || 0) || ((created || now) + 86400000);
+      const toMillis = value => {
+        if (value?.toMillis) return value.toMillis();
+        if (value?.toDate) return value.toDate().getTime();
+        if (typeof value === "number") return value;
+        if (typeof value === "string") return Date.parse(value) || Number(value) || 0;
+        return 0;
+      };
+      const created = toMillis(story.createdAt || story.timestamp || story.time);
+      const expires = toMillis(story.expiresAt) || ((created || now) + 86400000);
       const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
       if (uid && url && expires > now) owners.add(uid);
     });
