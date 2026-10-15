@@ -263,11 +263,11 @@ function openStoryEditor(file) {
         <div class="ips-topbar">
           <button data-act="cancel" aria-label="Back">‹</button>
           <span class="ips-top-title">Story</span>
-          <button data-act="text" aria-label="Add text">Aa</button>
         </div>
         <div class="ips-media" id="ip-story-preview-wrap">
           ${isVideo ? '<video id="ip-story-preview" playsinline controls></video>' : '<img id="ip-story-preview" alt="Story preview">'}
           <div id="ip-story-overlay-text"></div>
+          <div class="ips-text-canvas" id="ip-story-text-canvas"></div>
           <div class="ips-sticker-canvas" id="ip-story-sticker-canvas"></div>
         </div>
         <nav class="ips-side-tools" aria-label="Story editing tools">
@@ -282,6 +282,23 @@ function openStoryEditor(file) {
           <div class="ips-effects-panel">
             <div class="ips-effects-heading"><b>Effects</b><small>Swipe to explore 50+</small></div>
             <div id="ip-story-filters"></div>
+          </div>
+          <div class="ips-text-panel" aria-label="Story text editor">
+            <div class="ips-text-head"><button type="button" data-act="close-text">‹ Back</button><b>Text editor</b><button type="button" data-act="close-text">×</button></div>
+            <textarea id="ip-story-text-input" maxlength="500" placeholder="Type something..." aria-label="Story text"></textarea>
+            <div class="ips-text-tools">
+              <button type="button" data-text-style="classic">Classic</button><button type="button" data-text-style="modern">Modern</button><button type="button" data-text-style="strong">Strong</button><button type="button" data-text-style="typewriter">Type</button><button type="button" data-text-style="neon">Neon</button>
+            </div>
+            <div class="ips-text-tools ips-text-colors">
+              <button type="button" data-text-color="#ffffff" style="background:#fff"></button><button type="button" data-text-color="#ff4267" style="background:#ff4267"></button><button type="button" data-text-color="#ffb52e" style="background:#ffb52e"></button><button type="button" data-text-color="#ffe94a" style="background:#ffe94a"></button><button type="button" data-text-color="#4de5a0" style="background:#4de5a0"></button><button type="button" data-text-color="#42b9ff" style="background:#42b9ff"></button><button type="button" data-text-color="#b78aff" style="background:#b78aff"></button><button type="button" data-text-color="#111111" style="background:#111"></button>
+            </div>
+            <div class="ips-text-tools">
+              <button type="button" data-text-align="left">☰ Left</button><button type="button" data-text-align="center">☰ Center</button><button type="button" data-text-align="right">☰ Right</button>
+              <button type="button" data-text-bg="none">A Clear</button><button type="button" data-text-bg="solid">A Box</button><button type="button" data-text-bg="fade">A Fade</button>
+            </div>
+            <div class="ips-text-tools">
+              <button type="button" data-text-size="-">A−</button><button type="button" data-text-size="+">A+</button><button type="button" data-act="apply-text" class="ips-text-done">Done ✓</button>
+            </div>
           </div>
           <div class="ips-sticker-panel" aria-label="Story stickers">
             <div class="ips-sticker-head"><button type="button" data-act="close-stickers" class="ips-sticker-back" aria-label="Back to story">‹ <span>Back</span></button><b>Stickers</b><button type="button" data-act="close-stickers" aria-label="Close stickers">×</button></div>
@@ -335,6 +352,21 @@ function openStoryEditor(file) {
       #ip-story-editor .ips-bottom{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000b 18%,#000e);display:flex;flex-direction:column;gap:9px}
       #ip-story-editor .ips-effects-panel{display:none}
       #ip-story-editor .ips-effects-panel.open{display:block}
+      #ip-story-editor .ips-text-panel{display:none;max-height:42vh;overflow:auto;padding:12px;border:1px solid #ffffff24;border-radius:20px;background:rgba(20,18,28,.96);backdrop-filter:blur(22px);box-shadow:0 12px 35px #0008}
+      #ip-story-editor .ips-text-panel.open{display:block}
+      #ip-story-editor .ips-text-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;font-size:14px}
+      #ip-story-editor .ips-text-head button{border:0;border-radius:18px;background:#ffffff18;color:white;padding:7px 10px}
+      #ip-story-editor #ip-story-text-input{display:block;width:100%;min-height:58px;max-height:100px;resize:vertical;padding:12px;border:1px solid #ffffff33;border-radius:12px;background:#ffffff12;color:white;font-size:17px;outline:none}
+      #ip-story-editor .ips-text-tools{display:flex;gap:7px;overflow-x:auto;align-items:center;padding:8px 0 2px;scrollbar-width:none}
+      #ip-story-editor .ips-text-tools button{flex:0 0 auto;min-height:34px;padding:6px 11px;border:1px solid #ffffff2a;border-radius:18px;background:#ffffff12;color:#fff;font-size:12px}
+      #ip-story-editor .ips-text-colors button{width:27px;height:27px;min-height:27px;padding:0;border:2px solid #ffffff90;border-radius:50%;font-size:0}
+      #ip-story-editor .ips-text-tools button.active{border-color:#c1a4ff;background:#7950ff66}
+      #ip-story-editor .ips-text-tools .ips-text-done{background:linear-gradient(100deg,#7657ff,#b94cff);font-weight:800}
+      #ip-story-editor .ips-text-canvas{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+      #ip-story-editor .ips-placed-text{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);min-width:40px;max-width:82%;padding:4px 8px;color:#fff;font-size:32px;font-weight:700;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;text-shadow:0 2px 8px #0009;pointer-events:auto;touch-action:none;user-select:none;border:1px dashed transparent;border-radius:8px}
+      #ip-story-editor .ips-placed-text.selected{border-color:#fff;background:#0002}
+      #ip-story-editor .ips-placed-text[data-bg="solid"]{background:#fff;color:#111;text-shadow:none}
+      #ip-story-editor .ips-placed-text[data-bg="fade"]{background:linear-gradient(90deg,#0000,#000a,#0000);text-shadow:0 2px 8px #000}
       #ip-story-editor .ips-sticker-panel{display:none;max-height:34vh;overflow:auto;padding:12px;border:1px solid #ffffff24;border-radius:20px;background:rgba(20,18,28,.94);backdrop-filter:blur(22px);box-shadow:0 12px 35px #0008}
       #ip-story-editor .ips-sticker-panel.open{display:block}
       #ip-story-editor .ips-sticker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px}
@@ -371,6 +403,24 @@ function openStoryEditor(file) {
     document.body.appendChild(modal);
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
+    const textPanel = modal.querySelector(".ips-text-panel");
+    const textInput = modal.querySelector("#ip-story-text-input");
+    const textCanvas = modal.querySelector("#ip-story-text-canvas");
+    let textStyle = "modern", textColor = "#ffffff", textAlign = "center", textBg = "none", textSize = 32;
+    let activeText = null;
+    const textItems = [];
+    const createStoryText = (value) => {
+      const node=document.createElement("div"); node.className="ips-placed-text selected"; node.textContent=value;
+      node.dataset.bg=textBg; node.style.color=textColor; node.style.textAlign=textAlign; node.style.fontSize=textSize+"px";
+      if(textStyle==="classic"){node.style.fontFamily="Georgia,serif";node.style.fontWeight="500";node.style.textShadow="0 2px 7px #000"}
+      if(textStyle==="modern"){node.style.fontFamily="Arial,sans-serif";node.style.fontWeight="700"}
+      if(textStyle==="strong"){node.style.fontFamily="Arial Black,Arial,sans-serif";node.style.fontWeight="900";node.style.textTransform="uppercase"}
+      if(textStyle==="typewriter"){node.style.fontFamily="monospace";node.style.fontWeight="500"}
+      if(textStyle==="neon"){node.style.fontFamily="Arial,sans-serif";node.style.color=textColor;node.style.textShadow="0 0 5px "+textColor+",0 0 15px "+textColor+",0 2px 8px #000"}
+      node.style.left="50%";node.style.top="44%";
+      node.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;activeText=node;textCanvas.querySelectorAll(".ips-placed-text").forEach(n=>n.classList.toggle("selected",n===node));const rect=textCanvas.getBoundingClientRect(),r=node.getBoundingClientRect();const drag={x:e.clientX,y:e.clientY,left:r.left-rect.left+r.width/2,top:r.top-rect.top+r.height/2};node.setPointerCapture?.(e.pointerId);e.preventDefault();const move=ev=>{const b=textCanvas.getBoundingClientRect();node.style.left=Math.max(0,Math.min(b.width,drag.left+ev.clientX-drag.x))/b.width*100+"%";node.style.top=Math.max(0,Math.min(b.height,drag.top+ev.clientY-drag.y))/b.height*100+"%"};const end=()=>{node.removeEventListener("pointermove",move);node.removeEventListener("pointerup",end);node.removeEventListener("pointercancel",end)};node.addEventListener("pointermove",move);node.addEventListener("pointerup",end);node.addEventListener("pointercancel",end)});
+      textCanvas.appendChild(node);textItems.push(node);activeText=node;return node;
+    };
     const stickerCanvas = modal.querySelector("#ip-story-sticker-canvas");
     const stickerPanel = modal.querySelector(".ips-sticker-panel");
     let stickerTouchStartY = null;
@@ -465,13 +515,29 @@ function openStoryEditor(file) {
         modal.querySelector(".ips-sticker-panel").classList.remove("open");
         return;
       }
+      const textControl=e.target.closest("[data-text-style],[data-text-color],[data-text-align],[data-text-bg],[data-text-size]");
+      if(textControl){
+        if(textControl.dataset.textStyle){textStyle=textControl.dataset.textStyle;textPanel.querySelectorAll("[data-text-style]").forEach(b=>b.classList.toggle("active",b===textControl))}
+        if(textControl.dataset.textColor){textColor=textControl.dataset.textColor;textPanel.querySelectorAll("[data-text-color]").forEach(b=>b.classList.toggle("active",b===textControl));if(activeText){activeText.style.color=textColor;activeText.style.textShadow=textStyle==="neon"?"0 0 5px "+textColor+",0 0 15px "+textColor+",0 2px 8px #000":""}}
+        if(textControl.dataset.textAlign){textAlign=textControl.dataset.textAlign;textPanel.querySelectorAll("[data-text-align]").forEach(b=>b.classList.toggle("active",b===textControl));if(activeText)activeText.style.textAlign=textAlign}
+        if(textControl.dataset.textBg){textBg=textControl.dataset.textBg;textPanel.querySelectorAll("[data-text-bg]").forEach(b=>b.classList.toggle("active",b===textControl));if(activeText)activeText.dataset.bg=textBg}
+        if(textControl.dataset.textSize){textSize=Math.max(16,Math.min(72,textSize+(textControl.dataset.textSize==="+"?4:-4)));if(activeText)activeText.style.fontSize=textSize+"px"}
+        return;
+      }
       const button = e.target.closest("[data-act]");
       if (!button) return;
       const act = button.dataset.act;
       if (act === "cancel") { close(null); return; }
       if (act === "text") {
-        const value = prompt("Story par text likhein", overlayText);
-        if (value !== null) { overlayText = value; modal.querySelector("#ip-story-overlay-text").textContent = value; }
+        textPanel.classList.add("open"); modal.querySelector(".ips-sticker-panel").classList.remove("open"); modal.querySelector(".ips-effects-panel").classList.remove("open");
+        textInput.value=activeText?.textContent || "";
+        textInput.focus();
+      }
+      if (act === "close-text") textPanel.classList.remove("open");
+      if (act === "apply-text") {
+        const value=textInput.value.trim();
+        if(value){ if(activeText && activeText.isConnected){activeText.textContent=value;activeText.style.color=textColor;activeText.style.textAlign=textAlign;activeText.dataset.bg=textBg;activeText.style.fontSize=textSize+"px"} else createStoryText(value); }
+        textPanel.classList.remove("open");
       }
       if (act === "stickers") {
         modal.querySelector(".ips-sticker-panel").classList.toggle("open");
@@ -525,6 +591,7 @@ function openStoryEditor(file) {
           }
           window.__instaProStoryCaption = caption;
           window.__instaProStoryOverlayText = overlayText;
+          window.__instaProStoryTexts = textItems.filter(n=>n.isConnected).map(n=>({text:n.textContent,x:n.style.left||"50%",y:n.style.top||"44%",size:n.style.fontSize||"32px",color:n.style.color||"#fff",align:n.style.textAlign||"center",background:n.dataset.bg||"none",font:n.style.fontFamily||"sans-serif"}));
           window.__instaProStoryStickers = stickerState.filter(n=>n.isConnected).map(n=>({text:n.dataset.sticker,x:n.style.left||"50%",y:n.style.top||"42%",size:n.style.fontSize||"42px"}));
           window.__instaProStoryFilter = STORY_FILTERS[selectedFilter][0];
           close(outputFile);
