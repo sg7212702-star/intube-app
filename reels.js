@@ -1169,6 +1169,14 @@ function startReelsSystem() {
         visibleReels.push(reel);
       }
       reelsData = rankReelsForViewer(visibleReels);
+      // If a Reel was deleted in Profile/another tab, immediately remove it from the open viewer too.
+      const viewer = document.getElementById("ipReelsViewer");
+      const track = viewer?.querySelector("#iprTrack");
+      const activeSlide = track?.querySelector(".ipr-slide");
+      const activePostId = activeSlide?.dataset.slideId;
+      if (viewer?.classList.contains("ipr-open") && activePostId && !reelsData.some(post => String(post.id) === String(activePostId) && isVideo(post) && mediaURL(post))) {
+        closeReelsViewer();
+      }
       renderReelsGrid(grid);
     },
     error => {
