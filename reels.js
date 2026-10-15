@@ -841,11 +841,17 @@ function openReelsViewer(index) {
   renderReelsSlides(track);
   viewer.classList.add("ipr-open");
   document.body.style.overflow = "hidden";
-  // The player is the Reels destination; hide the intermediate Reels grid page.
+  // Hide the intermediate Reels grid when launched from the Reels tab.
   if (reelsOpenedFromBottomTab) reelsPage.style.display = "none";
-  if (reelsOpenedFromBottomTab && !reelsHistoryEntryAdded) {
+
+  // Add a history entry for BOTH launch paths. Android/browser Back then closes
+  // only this full-screen player, preserving the exact profile underneath.
+  if ((reelsOpenedFromBottomTab || reelsOpenedFromProfile) && !reelsHistoryEntryAdded) {
     try {
-      history.pushState({ instaproReelsPlayer: true }, "", location.href);
+      history.pushState({
+        instaproReelsPlayer: true,
+        source: reelsOpenedFromProfile ? "profile" : "reels"
+      }, "", location.href);
       reelsHistoryEntryAdded = true;
     } catch (_) {}
   }
@@ -1184,7 +1190,16 @@ function startReelsSystem() {
   const closeButton = viewer.querySelector("#iprClose");
   if (closeButton && closeButton.dataset.bound !== "true") {
     closeButton.dataset.bound = "true";
-    closeButton.addEventListener("click", closeReelsViewer);
+    closeButton.addEventListener("click", () => {
+      // Consume the player history entry so the next Back doesn't navigate away
+      // from the profile the user originally opened this Reel from.
+      if (reelsHistoryEntryAdded) {
+        reelsHistoryEntryAdded = false;
+        history.back();
+        return;
+      }
+      closeReelsViewer();
+    });
   }
 
   const commentClose = viewer.querySelector("#iprCommentClose");
@@ -1298,10 +1313,11 @@ if (document.readyState === "loading") {
 }
 
 
-// Android/browser Back while the full-screen player is open returns directly to Home.
-window.addEventListener("popstate", () => {
+// Android/browser Back closes the player and restores its source screen.
+window.addEventListener("popstate", event => {
   const viewer = document.getElementById("ipReelsViewer");
   if (!viewer?.classList.contains("ipr-open")) return;
+  if (event.state?.instaproReelsPlayer) return;
   reelsHistoryEntryAdded = false;
   closeReelsViewer();
 });
