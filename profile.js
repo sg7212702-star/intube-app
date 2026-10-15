@@ -545,12 +545,18 @@ function render(data = profileData, posts = profilePosts) {
     ? data.following.length
     : Number(data.followingCount || data.following || 0);
 
+  // Hide locally tombstoned posts immediately, including stale repost/profile caches.
+  const deletedIds = (() => {
+    try { return new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String)); }
+    catch (_) { return new Set(); }
+  })();
+  const availablePosts = posts.filter(post => !deletedIds.has(String(post.id)));
   // Strictly scope profile media to the profile being viewed; never infer ownership from the signed-in user.
-  const ownPosts = posts.filter(post => {
+  const ownPosts = availablePosts.filter(post => {
     const ownerUid = post.uid || post.userId || post.authorId || post.ownerUid || "";
     return String(ownerUid) === String(uid);
   });
-  const ownReposts = posts.filter(
+  const ownReposts = availablePosts.filter(
     post => postOwner(post) !== uid &&
       Array.isArray(post.repostedBy) &&
       post.repostedBy.includes(uid)
@@ -1128,6 +1134,13 @@ async function deleteProfilePost(postId, viewer) {
 
     if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) return;
 
+    // Tombstone the ID before deleting so stale feed/profile caches cannot show a black Reel.
+    try {
+      const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
+      deleted.add(String(postId));
+      localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(postId) } }));
     await deleteDoc(postRef);
     // Immediately purge deleted content from local profile caches; the realtime listener will confirm it.
     ownedProfilePosts = ownedProfilePosts.filter(item => String(item.id) !== String(postId));
