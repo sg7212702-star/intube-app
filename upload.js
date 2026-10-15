@@ -281,6 +281,30 @@ function openStoryEditor(file) {
         </div>
         <button data-act="share" style="width:100%;border:0;border-radius:28px;background:#4058f5;color:white;font-weight:700;font-size:17px;padding:15px;margin-bottom:8px">Your story  ›</button>
       </div>`;
+    const premiumStyle = document.createElement("style");
+    premiumStyle.textContent = `
+      #ip-story-editor{background:radial-gradient(ellipse at 50% 18%,#24202f 0%,#09090d 46%,#000 100%)!important;font-family:Inter,system-ui,-apple-system,sans-serif!important}
+      #ip-story-editor header{height:58px!important;padding:0 16px!important;border-bottom:1px solid #ffffff12;background:#09090dcc;backdrop-filter:blur(18px)}
+      #ip-story-editor header strong{font-size:16px!important;letter-spacing:.2px}
+      #ip-story-editor button{font-family:inherit;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease}
+      #ip-story-editor button:active{transform:scale(.96)}
+      #ip-story-editor [data-act="cancel"]{width:38px;height:38px;border-radius:50%;font-size:28px!important;background:#ffffff12!important;border:1px solid #ffffff20!important;display:grid;place-items:center;line-height:1}
+      #ip-story-editor [data-act="text"]{background:#ffffff16!important;border:1px solid #ffffff28!important;border-radius:22px!important;font-weight:700}
+      #ip-story-editor #ip-story-preview-wrap{max-width:430px!important;width:calc(100% - 28px)!important;height:100%!important;max-height:100%!important;border-radius:20px;overflow:hidden;background:#14141a;box-shadow:0 18px 55px #0009;border:1px solid #ffffff16}
+      #ip-story-editor #ip-story-preview{width:100%;height:100%;object-fit:contain}
+      #ip-story-editor>div:nth-of-type(2){padding:12px 14px 4px!important;background:linear-gradient(180deg,#08080a00,#08080a 20%)}
+      #ip-story-editor #ip-story-filters{gap:12px!important;padding:4px 2px 12px!important;scroll-snap-type:x mandatory}
+      #ip-story-editor #ip-story-filters button{flex-basis:70px!important;scroll-snap-align:start;opacity:.78;white-space:nowrap}
+      #ip-story-editor #ip-story-filters button span{height:66px!important;width:66px!important;border-radius:14px!important;border:2px solid #ffffff20;box-shadow:0 5px 14px #0005}
+      #ip-story-editor #ip-story-filters button:focus span{border-color:#fff;box-shadow:0 0 0 2px #8b5cf6}
+      #ip-story-editor #ip-story-caption{background:#ffffff0d!important;border:1px solid #ffffff20!important;border-radius:14px!important;outline:none}
+      #ip-story-editor #ip-story-caption:focus{border-color:#9b8aff!important;box-shadow:0 0 0 3px #8b5cf622}
+      #ip-story-editor [data-act="stickers"],#ip-story-editor [data-act="music"],#ip-story-editor [data-act="draw"]{background:#ffffff0d!important;border:1px solid #ffffff20!important;border-radius:24px!important;font-weight:650}
+      #ip-story-editor [data-act="share"]{background:linear-gradient(100deg,#7657ff,#b94cff)!important;box-shadow:0 8px 24px #7950ff45;border-radius:28px!important;letter-spacing:.1px}
+      @media(max-height:740px){#ip-story-editor header{height:48px!important}#ip-story-editor>div:nth-of-type(2){padding-top:5px!important}#ip-story-editor #ip-story-filters button span{height:52px!important;width:58px!important}}
+      @media(min-width:700px){#ip-story-editor #ip-story-preview-wrap{max-width:380px!important}}
+    `;
+    modal.appendChild(premiumStyle);
     document.body.appendChild(modal);
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
