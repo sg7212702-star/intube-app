@@ -251,7 +251,7 @@ function installReelsStyles() {
     .ipr-caption {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
     /* Compact Instagram-DM-sized like animation, lifted above profile details */
     .ipr-heart {
-      position:absolute;left:50%;top:33%;
+      position:absolute;left:50%;top:calc(33% - 96px);
       transform:translate(-50%,-50%) scale(.2);
       font-size:48px;line-height:1;opacity:0;pointer-events:none;z-index:6;
       filter:drop-shadow(0 2px 8px rgba(0,0,0,.28));
