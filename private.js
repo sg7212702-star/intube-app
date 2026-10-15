@@ -26,7 +26,7 @@ async function requestFollow(targetUid){
   const batch=writeBatch(db);batch.set(doc(db,"users",me),{following:[...new Set([...following,targetUid])],updatedAt:serverTimestamp()},{merge:true});batch.set(doc(db,"users",targetUid),{followers:[...new Set([...followers,me])],updatedAt:serverTimestamp()},{merge:true});await batch.commit();
   await notify(targetUid,{type:"follow",message:"started following you",fromUid:me,fromUsername:mine.username||mine.displayName||auth.currentUser?.displayName||"InstaPro User",fromPhoto:mine.photoURL||auth.currentUser?.photoURL||""});return {status:"following"};
  }
- const ref=doc(db,"users",targetUid,"followRequests",me),old=await getDoc(ref);if(old.exists())return {status:old.data().status==="accepted"?"following":"pending"};
+ const ref=doc(db,"users",targetUid,"followRequests",me),old=await getDoc(ref);if(old.exists()&&old.data().status==="pending")return {status:"pending"};if(old.exists()&&old.data().status==="accepted")return {status:"following"};
  await setDoc(ref,{fromUid:me,toUid:targetUid,fromUsername:mine.username||mine.displayName||auth.currentUser?.displayName||auth.currentUser?.email?.split("@")[0]||"InstaPro User",fromPhoto:mine.photoURL||mine.photoUrl||auth.currentUser?.photoURL||"",status:"pending",createdAt:serverTimestamp()});
  await notify(targetUid,{type:"follow_request",message:"requested to follow you",fromUid:me,fromUsername:mine.username||mine.displayName||"InstaPro User",fromPhoto:mine.photoURL||""});return {status:"pending"};
 }
