@@ -62,7 +62,7 @@ function closeAll(){
 
 function openSheet(){
   const s=$("createSheet"); if(!s) return;
-  s.classList.add("show"); s.style.bottom="0";
+  s.classList.add("show"); s.style.bottom="calc(78px + env(safe-area-inset-bottom))";
   const ov=$("overlay"); if(ov){ ov.style.display="block"; ov.classList.add("show"); }
   const sov=$("sheetOverlay"); if(sov) sov.style.display="block";
 }
