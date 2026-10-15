@@ -614,9 +614,9 @@ function render(data = profileData, posts = profilePosts) {
       post.repostedBy.includes(uid)
   );
 
-  const postCount = privateLocked ? 0 : ownPosts.filter(
-    post => !isVideo(post)
-  ).length;
+  // Instagram-style profile post count includes every uploaded media item,
+  // including videos; the Reels tab count remains separate below.
+  const postCount = privateLocked ? 0 : ownPosts.length;
 
   const reelCount = privateLocked ? 0 : ownPosts.filter(
     post => isVideo(post)
