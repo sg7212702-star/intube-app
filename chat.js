@@ -629,7 +629,7 @@ async function showMessageActions(messageId) {
     if (!snap.exists()) return;
     const msg = snap.data();
     const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
-    const options = ["Reply", "Copy text", "React", ...(mine && !msg.deleted ? ["Edit message"] : []), "Forward", "Delete for me", ...(mine && !msg.deleted ? ["Unsend for everyone"] : [])];
+    const options = ["Reply", "Copy text", "React", ...(mine && !msg.deleted ? ["Edit message"] : []), "Forward", "Delete for me", ...(mine && !msg.deleted ? ["Delete for everyone"] : [])];
     const choice = prompt("Message actions:\n" + options.map((v,i)=>`${i+1}. ${v}`).join("\n") + "\nNumber choose karein:");
     const action = options[Number(choice)-1];
     if (!action) return;
@@ -657,7 +657,7 @@ async function showMessageActions(messageId) {
       finally { selectedUser = previous; }
     } else if (action === "Delete for me") {
       await updateDoc(ref, { hiddenFor: arrayUnion(currentUser.uid) });
-    } else if (action === "Unsend for everyone") {
+    } else if (action === "Delete for everyone") {
       if (!confirm("Is message ko dono taraf se unsend karein?")) return;
       await updateDoc(ref, { deleted: true, text: "", mediaUrl: "", fileName: "", deletedAt: serverTimestamp() });
     }
