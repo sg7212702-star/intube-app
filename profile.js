@@ -1111,7 +1111,7 @@ function closePostViewer() {
   viewer?.remove();
 }
 
-async function deleteProfilePost(postId, viewer) {
+async async function deleteProfilePost(postId, viewer) {
   const user = auth.currentUser;
   if (!user || user.isAnonymous) {
     alert("Pehle login karein.");
