@@ -483,6 +483,56 @@ function addStyles() {
         flex-basis:82px;
       }
     }
+    /* Instagram-inspired profile layout: flat, compact, media-first */
+    #ipProfileOverlay{background:#000!important;color:#f5f5f5!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;font-family:Arial,Helvetica,sans-serif!important}
+    #ipProfileOverlay .ipp-wrap{max-width:630px!important;background:#000!important;padding-bottom:28px!important}
+    #ipProfileOverlay .ipp-top{background:#000!important;border-bottom:1px solid #262626!important;backdrop-filter:none!important;padding:12px 14px!important;min-height:48px}
+    #ipProfileOverlay .ipp-top strong{font-size:17px!important;font-weight:750!important;letter-spacing:.1px}
+    #ipProfileOverlay .ipp-btn{border:0!important;border-radius:8px!important;min-height:36px!important;padding:8px 12px!important;background:#363636!important;color:#fff!important;font-size:13px!important;font-weight:650!important;box-shadow:none!important}
+    #ipProfileOverlay .ipp-btn:hover{background:#454545!important}
+    #ipProfileOverlay .ipp-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:12px 16px 4px!important}
+    #ipProfileOverlay .ipp-actions .ipp-primary{background:#0095f6!important;color:#fff!important}
+    #ipProfileOverlay .ipp-head{gap:26px!important;padding:24px 18px 8px!important;align-items:center!important}
+    #ipProfileOverlay .ipp-avatar{width:88px!important;height:88px!important;flex:0 0 88px!important;padding:3px!important;border-radius:50%!important;box-shadow:none!important}
+    #ipProfileOverlay .ipp-avatar.has-story{background:conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75)!important;box-shadow:none!important}
+    #ipProfileOverlay .ipp-avatar img{border:3px solid #000!important;background:#262626!important}
+    #ipProfileOverlay .ipp-head>div:nth-child(2)>div:first-child{font-size:20px!important;font-weight:400!important}
+    #ipProfileOverlay .ipp-head>div:nth-child(2)>div:nth-child(2){font-size:13px!important;color:#f5f5f5!important;opacity:1!important}
+    #ipProfileOverlay .ipp-head>div:nth-child(2)>div:nth-child(3){font-size:11px!important;letter-spacing:.4px!important;color:#a8a8a8!important}
+    #ipProfileOverlay .ipp-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0!important;padding:14px 10px!important;border:0!important}
+    #ipProfileOverlay .ipp-stat{padding:7px 2px!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+    #ipProfileOverlay .ipp-stat strong{display:block;font-size:16px!important;font-weight:700!important;line-height:1.35}
+    #ipProfileOverlay .ipp-stat span{display:block;font-size:12px!important;color:#f5f5f5!important;font-weight:400!important}
+    #ipProfileOverlay .ipp-glass{border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}
+    #ipProfileOverlay main>div[style*="white-space:pre-wrap"]{padding:0 18px!important;font-size:13px!important;line-height:1.45!important;color:#f5f5f5!important}
+    #ipProfileOverlay main>div[style*="color:#a5d8ff"]{padding:4px 18px!important;color:#e0f1ff!important;font-weight:600!important}
+    #ipProfileOverlay .ipp-highlight{gap:16px!important;padding:16px 16px 18px!important;border-bottom:1px solid #262626!important;scrollbar-width:none}
+    #ipProfileOverlay .ipp-highlight::-webkit-scrollbar{display:none}
+    #ipProfileOverlay .ipp-highlightBubble{min-width:64px!important;max-width:72px!important;opacity:1!important;color:#f5f5f5!important;font-size:11px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #ipProfileOverlay .ipp-highlightBubble i{width:58px!important;height:58px!important;margin-bottom:7px!important;border:1px solid #555!important;background:#121212!important;color:#f5f5f5!important;font-size:22px!important}
+    #ipProfileOverlay .ipp-tabs{position:sticky!important;top:48px!important;z-index:3!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;background:#000!important;border-bottom:1px solid #262626!important}
+    #ipProfileOverlay .ipp-tab{min-width:0!important;min-height:48px!important;padding:8px 2px!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;background:#000!important;color:#a8a8a8!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1px!important;white-space:normal!important;overflow-wrap:anywhere!important}
+    #ipProfileOverlay .ipp-tab.active{color:#fff!important;border-bottom:1px solid #f5f5f5!important}
+    #ipProfileOverlay .ipp-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:2px!important;padding:2px 0!important}
+    #ipProfileOverlay .ipp-tile{position:relative!important;aspect-ratio:1/1!important;min-width:0!important;overflow:hidden!important;border-radius:0!important;background:#171717!important}
+    #ipProfileOverlay .ipp-tile img,#ipProfileOverlay .ipp-tile video{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:0!important}
+    #ipProfileOverlay .ipp-reelTag{position:absolute!important;right:6px!important;top:6px!important;color:#fff!important;text-shadow:0 1px 4px #000!important;font-size:11px!important}
+    #ipProfileOverlay .ipp-empty{grid-column:1/-1!important;min-height:180px!important;padding:44px 20px!important;text-align:center!important;color:#f5f5f5!important;background:#000!important;border:0!important;border-radius:0!important}
+    #ipProfileOverlay .ipp-empty p{color:#a8a8a8!important;font-size:13px!important}
+    #ipProfileOverlay .ipp-reelDelete{font-size:10px!important;padding:5px 7px!important}
+    @media(max-width:420px){
+      #ipProfileOverlay .ipp-head{gap:20px!important;padding:20px 16px 6px!important}
+      #ipProfileOverlay .ipp-avatar{width:78px!important;height:78px!important;flex-basis:78px!important}
+      #ipProfileOverlay .ipp-tabs{top:46px!important}
+      #ipProfileOverlay .ipp-tab{font-size:9px!important;min-height:45px!important}
+      #ipProfileOverlay .ipp-highlight{gap:12px!important}
+    }
+    @media(min-width:600px){
+      #ipProfileOverlay .ipp-wrap{border-left:1px solid #202020!important;border-right:1px solid #202020!important}
+      #ipProfileOverlay .ipp-head{padding-top:30px!important}
+      #ipProfileOverlay .ipp-avatar{width:110px!important;height:110px!important;flex-basis:110px!important}
+    }
+
   `;
 
   document.head.appendChild(style);
