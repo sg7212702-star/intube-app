@@ -236,17 +236,19 @@ function installReelsStyles() {
     .ipr-like-face .ipr-like-badge{position:absolute;right:-5px;bottom:-3px;font-size:22px;line-height:1;text-shadow:0 1px 4px #000}
     .ipr-like-face:active{transform:scale(.94)}
     .ipr-caption {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+    /* Compact Instagram-DM-sized like animation, lifted above profile details */
     .ipr-heart {
-      position:absolute;left:50%;top:45%;
+      position:absolute;left:50%;top:39%;
       transform:translate(-50%,-50%) scale(.2);
-      font-size:100px;opacity:0;pointer-events:none;z-index:6;
+      font-size:62px;line-height:1;opacity:0;pointer-events:none;z-index:6;
+      filter:drop-shadow(0 2px 8px rgba(0,0,0,.28));
     }
-    .ipr-heart.ipr-heart-pop {animation:iprHeartPop .8s ease forwards}
+    .ipr-heart.ipr-heart-pop {animation:iprHeartPop .72s cubic-bezier(.2,.8,.25,1) forwards}
     @keyframes iprHeartPop {
       0% {opacity:0;transform:translate(-50%,-50%) scale(.2)}
-      25% {opacity:1;transform:translate(-50%,-50%) scale(1.2)}
+      25% {opacity:1;transform:translate(-50%,-50%) scale(1.08)}
       65% {opacity:1;transform:translate(-50%,-50%) scale(1)}
-      100% {opacity:0;transform:translate(-50%,-50%) scale(.8)}
+      100% {opacity:0;transform:translate(-50%,-50%) scale(.82)}
     }
     .ipr-pause {
       position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
