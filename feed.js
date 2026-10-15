@@ -963,12 +963,11 @@ async function renderFeed() {
                 <button
                   type="button"
                   class="ip-feed-more"
-                  data-feed-action="delete"
+                  data-feed-action="post-menu"
                   data-id="${escapeHTML(post.id)}"
-                  aria-label="Delete post"
-                  title="Delete post"
-                  style="min-width:84px;padding:8px 12px;border-radius:18px;background:#292929;color:#ff6678;border:1px solid rgba(255,102,120,.45);font-size:13px;font-weight:700;"
-                >🗑 Delete</button>
+                  aria-label="Post options"
+                  title="Post options"
+                >☰</button>
               `
               : ""
           }
@@ -1846,6 +1845,43 @@ feed.addEventListener("click", async event => {
 
     if (action === "follow") {
       await toggleFollow(uid, button);
+      return;
+    }
+
+    if (action === "post-menu") {
+      const post = currentPosts.find(item => String(item.id) === String(postId));
+      if (!post) return;
+      const menu = document.createElement("div");
+      menu.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.58);display:flex;align-items:flex-end;justify-content:center;padding:14px;box-sizing:border-box;";
+      const sheet = document.createElement("div");
+      sheet.style.cssText = "width:100%;max-width:460px;background:#202024;color:#fff;border:1px solid #3a3a40;border-radius:22px;padding:14px;box-shadow:0 0 35px rgba(0,0,0,.4);";
+      const heading = document.createElement("div");
+      heading.textContent = "Post options";
+      heading.style.cssText = "font-size:15px;font-weight:700;text-align:center;padding:8px 0 12px;";
+      sheet.appendChild(heading);
+      const addOption = (label, danger, fn) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.textContent = label;
+        option.style.cssText = "display:block;width:100%;padding:14px;margin:5px 0;border-radius:12px;border:1px solid " + (danger ? "rgba(255,90,110,.35)" : "#393940") + ";background:" + (danger ? "rgba(255,60,80,.10)" : "#2a2a30") + ";color:" + (danger ? "#ff6878" : "#fff") + ";font-size:15px;font-weight:600;text-align:left;";
+        option.addEventListener("click", async () => { menu.remove(); await fn(); });
+        sheet.appendChild(option);
+      };
+      if (isOwnPost(post)) {
+        addOption("🗑 Delete Post", true, () => deletePost(postId));
+      } else {
+        addOption("🚩 Report Post", true, async () => showMessage("Report feature abhi available nahi hai."));
+        addOption("🔗 Copy Post Link", false, async () => {
+          const link = location.origin + location.pathname + "#post-" + encodeURIComponent(postId);
+          try { await navigator.clipboard.writeText(link); showMessage("Post link copy ho gaya."); }
+          catch { showMessage(link); }
+        });
+      }
+      addOption("Cancel", false, async () => {});
+      menu.addEventListener("click", e => { if (e.target === menu) menu.remove(); });
+      sheet.addEventListener("click", e => e.stopPropagation());
+      menu.appendChild(sheet);
+      document.body.appendChild(menu);
       return;
     }
 
