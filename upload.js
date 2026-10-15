@@ -645,19 +645,31 @@ function openStoryEditor(file) {
             if (ev.target.closest("[data-music-local]")) { musicInput.value = ""; musicInput.click(); return; }
             const pick = ev.target.closest("[data-music-pick]");
             if (pick) {
-              const track = window.__instaProMusicSearchResults?.[Number(pick.dataset.musicPick)];
-              if (!track) return;
-              if (!track.previewUrl) { const s=panel.querySelector("#ip-story-music-status"); if(s)s.textContent="Is track ka playable preview available nahi hai. Phone se audio choose karein."; return; }
+              ev.preventDefault();
+              ev.stopPropagation();
+              let track = window.__instaProMusicSearchResults?.[Number(pick.dataset.musicPick)];
+              if (!track && pick.dataset.musicTrack) {
+                try { track = JSON.parse(pick.dataset.musicTrack); } catch (_) {}
+              }
+              if (!track || !track.previewUrl) {
+                const s = panel.querySelector("#ip-story-music-status");
+                if (s) s.textContent = "Is song ka audio link available nahi hai. Dusra song choose karein.";
+                return;
+              }
               window.__instaProPendingMusicFile = null;
-              window.__instaProPendingMusicTrack = {title:track.trackName,artistName:track.artistName,audioUrl:track.previewUrl,id:String(track.trackId),source:"commons-free",license:track.license,licenseUrl:track.licenseUrl,filePage:track.filePage};
-              const s=panel.querySelector("#ip-story-music-status");
-              if(s)s.textContent = "✓ Song selected: " + track.trackName + " — " + track.artistName + ". Story ke saath attach ho gaya. License: " + (track.license||"check file page") + ".";
-              panel.querySelectorAll("[data-music-pick]").forEach(b=>{b.style.borderColor=b===pick?"#a78bfa":"#ffffff20";b.textContent=b===pick?"✓ Selected":"Use";});
-              const audio=panel.querySelector("#ip-story-music-audio-preview");
-              if(audio){audio.pause();audio.remove();}
-              const playButton=pick.parentElement?.querySelector("button[title='Play / pause']");
-              if(playButton){playButton.textContent="▶";playButton.dataset.musicPlay="1";}
-              panel.style.display="none";
+              window.__instaProPendingMusicTrack = {
+                title: track.trackName || track.title || "Selected song",
+                artistName: track.artistName || "",
+                audioUrl: track.previewUrl,
+                id: String(track.trackId || track.id || ""),
+                source: "commons-free",
+                license: track.license || "",
+                licenseUrl: track.licenseUrl || "",
+                filePage: track.filePage || ""
+              };
+              const audio = panel.querySelector("#ip-story-music-audio-preview");
+              if (audio) { audio.pause(); audio.remove(); }
+              panel.remove();
               return;
             }
           });
@@ -690,7 +702,7 @@ function openStoryEditor(file) {
                 const title=document.createElement("b");title.textContent=track.trackName;title.style.cssText="display:block;font-size:13px;overflow-wrap:anywhere";
                 const artist=document.createElement("small");artist.textContent=track.artistName+" · "+(track.license||"Check license");artist.style.cssText="display:block;font-size:11px;opacity:.7;overflow-wrap:anywhere";
                 info.append(title,artist);row.appendChild(info);
-                const choose=document.createElement("button");choose.type="button";choose.dataset.musicPick=String(index);choose.textContent=track.previewUrl?"Use":"Unavailable";choose.disabled=!track.previewUrl;choose.style.cssText="padding:8px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff12;color:#fff";
+                const choose=document.createElement("button");choose.type="button";choose.dataset.musicPick=String(index);choose.dataset.musicTrack=JSON.stringify(track);choose.textContent=track.previewUrl?"Use":"Unavailable";choose.disabled=!track.previewUrl;choose.style.cssText="padding:8px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff12;color:#fff";
                 row.appendChild(choose);
                 if(track.previewUrl){
                   const play=document.createElement("button");
