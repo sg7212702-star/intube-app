@@ -746,7 +746,7 @@ function renderReelsSlides(track) {
           }
         });
 
-        video.play().then(() => countReelView(slide.dataset.slideId)).catch(() => {});
+        video.play().then(() => countReelView(entry.target.dataset.slideId)).catch(() => {});
       } else {
         video.pause();
       }
@@ -1145,6 +1145,19 @@ function startReelsSystem() {
     }
   );
 }
+
+// Tapping the bottom Reels tab opens the full-screen, vertically scrollable player directly.
+// The existing viewer contains all available video Reels; each swipe snaps to and plays the next one.
+document.addEventListener("click", event => {
+  const reelsTab = event.target.closest('.bBtn[data-v="reels"]');
+  if (!reelsTab) return;
+  // Let the app's normal tab navigation finish first, then open the full-screen player.
+  setTimeout(() => {
+    const videoReels = reelsData.filter(post => isVideo(post) && mediaURL(post));
+    if (videoReels.length) openReelsViewer(0);
+    else showReelsMessage("Abhi koi video Reel nahi hai.");
+  }, 120);
+}, true);
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", startReelsSystem, { once: true });
