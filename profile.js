@@ -545,9 +545,11 @@ function render(data = profileData, posts = profilePosts) {
     ? data.following.length
     : Number(data.followingCount || data.following || 0);
 
-  const ownPosts = posts.filter(
-    post => postOwner(post) === uid
-  );
+  // Strictly scope profile media to the profile being viewed; never infer ownership from the signed-in user.
+  const ownPosts = posts.filter(post => {
+    const ownerUid = post.uid || post.userId || post.authorId || post.ownerUid || "";
+    return String(ownerUid) === String(uid);
+  });
   const ownReposts = posts.filter(
     post => postOwner(post) !== uid &&
       Array.isArray(post.repostedBy) &&
