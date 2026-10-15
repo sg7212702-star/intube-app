@@ -209,6 +209,14 @@ export function openNotif() {
           ? escapeHTML(n.createdAt.toDate().toLocaleString())
           : "";
 
+        const requestActions = n.type === "follow_request" && n.fromUid
+          ? `
+            <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+              <button type="button" data-follow-accept="${escapeHTML(n.fromUid)}" data-notif-action-id="${escapeHTML(item.id)}" style="border:0;border-radius:9px;padding:8px 14px;background:#1688ff;color:#fff;font-weight:700;cursor:pointer">Confirm</button>
+              <button type="button" data-follow-reject="${escapeHTML(n.fromUid)}" data-notif-action-id="${escapeHTML(item.id)}" style="border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:8px 14px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer">Delete</button>
+            </div>`
+          : "";
+
         return `
           <div
             data-notif-id="${escapeHTML(item.id)}"
@@ -272,6 +280,7 @@ export function openNotif() {
                 <span>${type.toUpperCase()}</span>
                 ${time ? `<span>· ${time}</span>` : ""}
               </div>
+              ${requestActions}
             </div>
 
             ${unread ? `
@@ -313,8 +322,36 @@ export function openNotif() {
         }
       });
 
+      list.querySelectorAll("[data-follow-accept], [data-follow-reject]").forEach(button => {
+        button.onclick = async event => {
+          event.preventDefault();
+          event.stopPropagation();
+          const requesterUid = button.dataset.followAccept || button.dataset.followReject;
+          const accept = Boolean(button.dataset.followAccept);
+          const notificationId = button.dataset.notifActionId;
+          const actionButtons = button.parentElement.querySelectorAll("button");
+          actionButtons.forEach(b => b.disabled = true);
+          try {
+            const privateSystem = window.InstaProPrivate;
+            if (!privateSystem?.respondFollowRequest) throw new Error("Follow request system load nahi hua. App refresh karein.");
+            await privateSystem.respondFollowRequest(requesterUid, accept);
+            await updateDoc(doc(db, "users", user.uid, "notifications", notificationId), {
+              read: true,
+              requestAction: accept ? "accepted" : "rejected"
+            });
+            const actions = button.parentElement;
+            actions.innerHTML = `<span style="font-size:12px;font-weight:700;opacity:.8">${accept ? "✓ Request confirmed" : "Request deleted"}</span>`;
+          } catch (error) {
+            console.error("Follow request notification action failed:", error);
+            alert(error.message || "Follow request update nahi hui.");
+            actionButtons.forEach(b => b.disabled = false);
+          }
+        };
+      });
+
       list.querySelectorAll("[data-notif-id]").forEach((row) => {
-        row.onclick = async () => {
+        row.onclick = async (event) => {
+          if (event.target.closest("[data-follow-accept], [data-follow-reject]")) return;
           const notificationId = row.dataset.notifId;
           const postId = row.dataset.postId;
           const storyId = row.dataset.storyId;
