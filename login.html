@@ -28,7 +28,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 .divider div{flex:1; height:1px; background:rgba(255,255,255,.15);}
 .error{font-size:12px; color:#ff3040; min-height:16px; text-align:center; margin-bottom:8px;}
 .foot{font-size:12px; text-align:center; opacity:.5; margin-top:14px; line-height:1.4;}
-.foot b{color:#fff; cursor:pointer;}
+.foot b{color:#fff; cursor:pointer;}\n#recaptcha-container{margin:8px 0;display:flex;justify-content:center;min-height:1px;}\n.phone-row{display:flex;gap:8px;}\n.phone-code{width:92px;flex-shrink:0;}\n#otpForm{display:none;}
 </style>
 </head>
 <body>
@@ -59,7 +59,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
     <button id="signupBtn" class="btn">Sign up →</button>
   </div>
 
-  <div class="divider"><div></div>OR<div></div></div>
+  <button id="phoneToggleBtn" class="btn btn-google" style="margin-top:10px;">Continue with mobile number</button>\n  <div class="divider"><div></div>OR<div></div></div>
 
   <button id="googleBtn" class="btn btn-google">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;"> Continue with Google
@@ -71,7 +71,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
   getDoc,
@@ -81,7 +81,7 @@ import {
 
 const $=id=>document.getElementById(id);
 const tabLogin=$("tabLogin"), tabSignup=$("tabSignup");
-const loginForm=$("loginForm"), signupForm=$("signupForm");
+const loginForm=$("loginForm"), signupForm=$("signupForm"), phoneForm=$("phoneForm");\nlet recaptchaVerifier = null;\nlet confirmationResult = null;
 
 function switchTab(t){
   if(t==="login"){ tabLogin.classList.add("active"); tabSignup.classList.remove("active"); loginForm.style.display="block"; signupForm.style.display="none"; }
@@ -157,39 +157,66 @@ $("signupBtn").onclick = async () => {
   }
 };
 
-// GOOGLE LOGIN — redirect flow is more reliable on mobile browsers.
+// Google login: popup first, redirect fallback for browsers that block popups.
 $("googleBtn").onclick = async () => {
   try {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     $("googleBtn").disabled = true;
     $("googleBtn").textContent = "Opening Google...";
-    await signInWithRedirect(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    await finishLogin(result.user);
   } catch (error) {
+    if (["auth/popup-blocked","auth/popup-closed-by-user","auth/cancelled-popup-request","auth/operation-not-supported-in-this-environment"].includes(error.code)) {
+      try { const provider = new GoogleAuthProvider(); provider.setCustomParameters({prompt:"select_account"}); await signInWithRedirect(auth, provider); return; }
+      catch (redirectError) { error = redirectError; }
+    }
     $("googleBtn").disabled = false;
     $("googleBtn").textContent = "Continue with Google";
     showError((error.code ? error.code + ": " : "") + error.message);
   }
 };
-
-// Complete Google redirect after returning to this page.
-getRedirectResult(auth).then(async (result) => {
-  if (result?.user) {
-    try {
-      await saveProfile(result.user);
-    } catch (error) {
-      console.error("Google profile save failed:", error);
-      // Authentication succeeded; do not trap the user on the login screen
-      // just because the optional Firestore profile write failed.
-    }
-    window.location.replace("index.html");
-  }
-}).catch((error) => {
+getRedirectResult(auth).then(async result => { if (result?.user) await finishLogin(result.user); }).catch(error => {
   console.error("Google redirect login failed:", error);
   showError((error.code ? error.code + ": " : "") + error.message);
-  $("googleBtn").disabled = false;
-  $("googleBtn").textContent = "Continue with Google";
+  $("googleBtn").disabled = false; $("googleBtn").textContent = "Continue with Google";
 });
+async function finishLogin(user) {
+  try { await saveProfile(user); } catch (error) { console.error("Profile save failed:", error); }
+  window.location.replace("index.html");
+}
+
+$("sendOtpBtn").onclick = async () => {
+  const code = $("phoneCode").value.trim();
+  const number = $("phoneNumber").value.trim().replace(/[\\s()-]/g, "");
+  const fullPhone = code + number;
+  if (!/^\\+[1-9]\\d{7,14}$/.test(fullPhone)) { showError("Country code ke saath sahi mobile number likhein, jaise +91 9876543210."); return; }
+  try {
+    $("sendOtpBtn").disabled = true; $("sendOtpBtn").textContent = "Sending OTP...";
+    if (!recaptchaVerifier) setupRecaptcha();
+    if (!recaptchaVerifier) throw new Error("reCAPTCHA load nahi hua. Page refresh karke dobara try karein.");
+    confirmationResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifier);
+    $("otpForm").style.display = "block"; $("sendOtpBtn").textContent = "OTP Sent";
+    showError("OTP SMS se bhej diya gaya hai.");
+  } catch (error) {
+    showError((error.code ? error.code + ": " : "") + error.message);
+    $("sendOtpBtn").disabled = false; $("sendOtpBtn").textContent = "Send OTP";
+    if (recaptchaVerifier) { try { await recaptchaVerifier.render(); } catch (_) {} }
+  }
+};
+$("verifyOtpBtn").onclick = async () => {
+  const otp = $("phoneOtp").value.trim();
+  if (!confirmationResult) { showError("Pehle Send OTP dabayein."); return; }
+  if (!/^\\d{6}$/.test(otp)) { showError("6 digit OTP dalein."); return; }
+  try {
+    $("verifyOtpBtn").disabled = true; $("verifyOtpBtn").textContent = "Verifying...";
+    const result = await confirmationResult.confirm(otp);
+    await finishLogin(result.user);
+  } catch (error) {
+    showError((error.code ? error.code + ": " : "") + error.message);
+    $("verifyOtpBtn").disabled = false; $("verifyOtpBtn").textContent = "Verify OTP & Continue";
+  }
+};
 
 // ERROR MESSAGE
 function showError(message) {
