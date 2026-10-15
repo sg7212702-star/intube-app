@@ -398,9 +398,13 @@
     }
     const file = input.files?.[0];
     if (!file) return;
+    const desiredType = input.dataset.instaProUploadType || (input.id === "storyFile" ? "story" : "post");
+    // Story uploads use the dedicated Instagram-style Story editor in upload.js.
+    // Let the event continue so upload.js can open that editor instead of this legacy editor.
+    if (desiredType === "story") return;
     event.stopImmediatePropagation();
     event.preventDefault();
-    open(file, input.dataset.instaProUploadType || (input.id === "storyFile" ? "story" : "post"), input);
+    open(file, desiredType, input);
   }, true);
 
   window.InstaProEditor = { open, close };
