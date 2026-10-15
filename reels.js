@@ -957,6 +957,19 @@ window.addEventListener("pagehide", () => {
 });
 
 
+// Open a specific feed video inside the same full-screen Reels viewer.
+window.InstaProReels = window.InstaProReels || {};
+window.InstaProReels.openPost = function(postId) {
+  const visible = reelsData.filter(post => isVideo(post) && mediaURL(post));
+  const index = visible.findIndex(post => String(post.id) === String(postId));
+  if (index < 0) {
+    showReelsMessage("Yeh video abhi Reels feed mein available nahi hai. Reels feed refresh karein.");
+    return false;
+  }
+  openReelsViewer(index);
+  return true;
+};
+
 // ------------------------------------------------------
 // START REALTIME REELS FEED
 // ------------------------------------------------------
