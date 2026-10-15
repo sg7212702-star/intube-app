@@ -828,12 +828,9 @@ async function renderFeed() {
 
       const mediaType = getPostType(post);
       const reelTypeText = String(post.currentType || post.mediaType || post.contentType || post.type || post.kind || "").toLowerCase();
-      const isReelPost = mediaType === "video" && (
-        post.isReel === true ||
-        post.is_reel === true ||
-        reelTypeText === "reel" ||
-        reelTypeText.includes("reel")
-      );
+      // In the Home Feed, every video is shown with the immersive Reel header.
+      // Image posts and the existing Like/Comment/Repost/Share/Save row remain unchanged.
+      const isReelPost = mediaType === "video";
 
       const likes = Array.isArray(post.likes)
         ? post.likes
