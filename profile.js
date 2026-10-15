@@ -205,6 +205,21 @@ function addStyles() {
       border-radius:18px;
     }
 
+    /* Compact back/refresh controls in the profile header */
+    #ipProfileOverlay .ipp-top #ippBack,
+    #ipProfileOverlay .ipp-top #ippRefresh,
+    #ipProfileOverlay .ipp-top #ippInitialBack {
+      width:auto;
+      min-width:0;
+      min-height:32px;
+      padding:5px 9px;
+      gap:3px;
+      border-radius:9px;
+      font-size:12px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
     #ipProfileOverlay .ipp-btn {
       display:flex;
       align-items:center;
