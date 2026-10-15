@@ -64,6 +64,26 @@
       #instaproEditor .ipe-cancel{background:rgba(255,255,255,.07)}
       #instaproEditor .ipe-publish{background:rgba(117,80,255,.5);border:1px solid rgba(187,166,255,.7);font-weight:750}
       @media(min-width:700px){#instaproEditor .ipe-main{width:100%;max-width:760px;margin:auto}#instaproEditor .ipe-preview-wrap{height:420px}#instaproEditor .ipe-footer{justify-content:center}#instaproEditor .ipe-footer button{max-width:260px}}
+      /* Instagram-style vertical Reels editing layout */
+      #instaproEditor.ipe-reel-mode{background:#000}
+      #instaproEditor.ipe-reel-mode .ipe-head{height:52px;background:#000;border-bottom:0;backdrop-filter:none}
+      #instaproEditor.ipe-reel-mode .ipe-head strong{font-size:15px}
+      #instaproEditor.ipe-reel-mode .ipe-main{padding:0 0 12px;overflow-y:auto}
+      #instaproEditor.ipe-reel-mode .ipe-preview-wrap{width:min(100%,520px);height:min(66vh,720px);min-height:360px;aspect-ratio:9/16;margin:0 auto 10px;border:0;border-radius:18px;background:#111;box-shadow:none;overflow:hidden}
+      #instaproEditor.ipe-reel-mode #ipeMedia{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain}
+      #instaproEditor.ipe-reel-mode .ipe-preview-wrap.ipe-crop #ipeMedia{object-fit:cover}
+      #instaproEditor.ipe-reel-mode .ipe-preview-tag{top:10px;left:10px;background:rgba(0,0,0,.48);font-size:10px}
+      #instaproEditor .ipe-reel-rail{position:absolute;right:9px;top:50%;transform:translateY(-45%);display:flex;flex-direction:column;gap:10px;z-index:3}
+      #instaproEditor .ipe-reel-rail button{width:42px;height:42px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;background:rgba(0,0,0,.48);border:1px solid rgba(255,255,255,.28);box-shadow:0 2px 10px #0004}
+      #instaproEditor.ipe-reel-mode .ipe-tools{padding:4px 12px 9px;gap:7px}
+      #instaproEditor.ipe-reel-mode .ipe-tools button{border-radius:999px;min-height:36px;padding:7px 12px;font-size:12px}
+      #instaproEditor.ipe-reel-mode .ipe-section{margin:7px 12px 10px;padding:11px;border-radius:14px;background:#111;border-color:#292929}
+      #instaproEditor.ipe-reel-mode .ipe-footer{background:#000;border-top:1px solid #252525;padding-top:9px}
+      #instaproEditor.ipe-reel-mode .ipe-footer button{border-radius:999px;min-height:44px}
+      #instaproEditor.ipe-reel-mode .ipe-publish{background:#fff;color:#111;border:0}
+      #instaproEditor.ipe-reel-mode .ipe-cancel{background:#242424;border-color:#444}
+      @media(max-width:380px){#instaproEditor.ipe-reel-mode .ipe-preview-wrap{height:62vh;min-height:320px}#instaproEditor .ipe-reel-rail{right:6px;gap:7px}#instaproEditor .ipe-reel-rail button{width:36px;height:36px;font-size:16px}}
+      @media(min-width:700px){#instaproEditor.ipe-reel-mode .ipe-main{max-width:620px}#instaproEditor.ipe-reel-mode .ipe-preview-wrap{height:min(68vh,720px);width:min(100%,405px)}#instaproEditor.ipe-reel-mode .ipe-footer button{max-width:260px}}
     `;
     document.head.appendChild(style);
   }
@@ -117,15 +137,16 @@
     sourceUrl = URL.createObjectURL(file);
     root = document.createElement("section");
     root.id = "instaproEditor";
+    root.classList.toggle("ipe-reel-mode", uploadType === "reel");
     root.innerHTML = `
       <header class="ipe-head">
         <button class="ipe-glass" data-action="close" aria-label="Close editor">✕</button>
-        <strong>InstaPro Studio</strong>
+        <strong>${uploadType === "reel" ? "Edit Reel" : "InstaPro Studio"}</strong>
         <button class="ipe-glass ipe-next" data-action="next">Next →</button>
       </header>
       <main class="ipe-main">
         <div class="ipe-preview-wrap" id="ipePreviewWrap">
-          <span class="ipe-preview-tag">✦ STUDIO EDITOR</span>
+          <span class="ipe-preview-tag">${uploadType === "reel" ? "REEL PREVIEW" : "✦ STUDIO EDITOR"}</span><div class="ipe-reel-rail ${uploadType === "reel" ? "" : "ipe-hidden"}"><button type="button" data-action="browseMusic" aria-label="Add music" title="Add music">♫</button><button type="button" data-action="filters" aria-label="Filters" title="Filters">✧</button><button type="button" data-action="crop" aria-label="Fit or fill" title="Fit / Fill">▣</button><button type="button" data-action="rotate" aria-label="Rotate" title="Rotate">↻</button></div>
           <div id="ipePreview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"></div>
         </div>
         <div class="ipe-tools">
@@ -162,7 +183,7 @@
       </main>
       <footer class="ipe-footer">
         <button class="ipe-glass ipe-cancel" data-action="close">Cancel</button>
-        <button class="ipe-publish" data-action="next">Next: Continue →</button>
+        <button class="ipe-publish" data-action="next">${uploadType === "reel" ? "Next →" : "Next: Continue →"}</button>
       </footer>`;
     document.body.appendChild(root);
     document.body.style.overflow = "hidden";
