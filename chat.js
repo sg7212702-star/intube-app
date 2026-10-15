@@ -95,7 +95,7 @@ function injectChatStyles() {
     #chatPage #usersList > button:nth-child(5) { animation-delay:.1s; }
     #chatPage #usersList > button:hover { background:rgba(255,255,255,.055)!important; }
     #chatPage #chatMsgs [data-message-id] { animation: ipChatBubbleIn .24s cubic-bezier(.2,.8,.25,1) both; transform-origin:bottom; }
-    #chatPage #chatForm { gap:8px!important; background:rgba(255,255,255,.94)!important; border:1px solid rgba(255,255,255,.85)!important; border-radius:34px!important; margin:0 auto 8px!important; width:calc(100% - 28px)!important; max-width:470px!important; padding:8px 10px!important; box-shadow:0 5px 24px rgba(0,0,0,.2)!important; }
+    #chatPage #chatForm { gap:8px!important; background:rgba(0,0,0,.96)!important; border:1px solid rgba(255,255,255,.18)!important; border-radius:34px!important; margin:0 auto 8px!important; width:calc(100% - 28px)!important; max-width:470px!important; padding:8px 10px!important; box-shadow:0 5px 24px rgba(0,0,0,.2)!important; }
     #chatPage .ip-composer-icon { width:38px;height:38px;flex:0 0 38px;border:0;border-radius:50%;background:transparent;color:#d62976;font-size:23px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .16s ease,background .16s ease; }
     #chatPage .ip-composer-icon:active { transform:scale(.9);background:rgba(214,41,118,.12); }
     #chatPage .ip-composer-icon svg,#chatPage .ip-header-action svg{width:25px;height:25px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -107,7 +107,7 @@ function injectChatStyles() {
     #chatPage #chatForm{min-height:58px!important;gap:5px!important}
     #chatPage #chatInput{font-style:italic;font-family:Georgia,serif}
 
-    #chatPage #chatInput::placeholder { color:#777;opacity:1; }
+    #chatPage #chatInput::placeholder { color:#aaa;opacity:1; }
     #chatPage #chatForm { z-index:10020!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
     #chatPage #chatBoxView { height:100dvh; height:100vh; }
     #chatPage #chatMsgs { min-height:0; overscroll-behavior:contain; scroll-behavior:smooth; }
@@ -174,7 +174,7 @@ function setupUI() {
     <form id="chatForm" style="position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:470px; display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(12,12,14,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.13);box-shadow:0 -8px 30px rgba(0,0,0,.22);box-sizing:border-box;">
       <button id="chatCamera" type="button" aria-label="Take photo" title="Camera" class="ip-composer-icon" style="background:#6854f7;color:white;border-radius:50%;width:44px;height:44px;flex:0 0 44px;"> <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="4"/></svg></button>
       <input id="chatCameraInput" type="file" accept="image/*" capture="environment" hidden>
-      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 8px; border:0;background:transparent;color:#222;outline:none;font-style:italic;font-family:Georgia,serif;font-size:16px;">
+      <input id="chatInput" maxlength="4000" autocomplete="off" placeholder="Message..." style="flex:1; min-width:0; padding:12px 8px; border:0;background:transparent;color:#fff;outline:none;font-style:italic;font-family:Georgia,serif;font-size:16px;">
       <button id="chatClearDraft" type="button" aria-label="Clear message" title="Clear message" class="ip-composer-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg></button>
       <button id="chatVoice" type="button" aria-label="Record voice message" title="Voice message" class="ip-composer-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg></button>
       <button id="chatAttach" type="button" aria-label="Photo or video" title="Gallery" class="ip-composer-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 3-3 4 4"/></svg></button>
