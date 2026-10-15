@@ -884,7 +884,7 @@ function render(data = profileData, posts = profilePosts) {
         playsinline
         preload="metadata"
       ></video>
-      <span class="ipp-reelTag">▷</span>
+      <span class="ipp-reelTag">▷ ${Number(post.viewCount ?? post.viewsCount ?? post.playCount ?? post.views) || 0}</span>
     ` : `
       <img
         src="${esc(url)}"
