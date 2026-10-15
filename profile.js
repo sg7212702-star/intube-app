@@ -1180,19 +1180,9 @@ async function deleteProfilePost(postId, viewer) {
     const postRef = doc(db, "posts", postId);
     const snap = await getDoc(postRef);
     if (!snap.exists()) {
-      // Firestore record is already gone; clean stale profile/reel cache instead of stopping here.
-      try {
-        const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
-        deleted.add(String(postId));
-        localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
-      } catch (_) {}
-      window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(postId) } }));
-      ownedProfilePosts = ownedProfilePosts.filter(item => String(item.id) !== String(postId));
-      repostedProfilePosts = repostedProfilePosts.filter(item => String(item.id) !== String(postId));
-      profilePosts = profilePosts.filter(item => String(item.id) !== String(postId));
-      render(profileData, profilePosts);
-      closePostViewer();
-      alert("Yeh Reel pehle se delete thi. Profile se bhi hata di gayi.");
+      // Do not mark the ID deleted when its Firestore document cannot be found.
+      console.error("Profile delete: posts document not found", { postId, uid: user.uid });
+      alert("Yeh video posts/" + postId + " mein nahi mili. Video delete nahi hui. Upload record ID ki jaanch zaroori hai.");
       return;
     }
 
@@ -1277,17 +1267,14 @@ postTiles.forEach(tile => {
       reelsPage.style.display = "block";
       window.scrollTo({ top: 0, behavior: "smooth" });
 
-      // Wait for the existing realtime Reels grid to render, then use its
-      // normal click handler so the standard Reels viewer/actions are used.
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const reelTile = document.querySelector('#ipReelsGrid [data-reel-id="' + CSS.escape(post.id) + '"]');
-        if (reelTile) {
-          reelTile.click();
-          return;
-        }
-        await new Promise(resolve => setTimeout(resolve, 150));
+      // Open this exact profile upload directly in the shared full-screen Reels player.
+      // This avoids depending on whether the realtime Reels grid has caught up.
+      await import("./reels.js");
+      if (typeof window.InstaProReels?.openPost === "function") {
+        const opened = window.InstaProReels.openPost(post.id, post);
+        if (opened) return;
       }
-      alert("Yeh Reel abhi Reels feed mein nahi mili. Feed refresh karke dobara try karein.");
+      alert("Yeh video Reels player mein open nahi ho paayi. Dobara try karein.");
       return;
     }
 
