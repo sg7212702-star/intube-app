@@ -693,6 +693,48 @@ function render(data = profileData, posts = profilePosts) {
   `;
 
   const storyAvatar = $("#ippStoryAvatar", page);
+
+  // Instagram-style: hold the profile photo for 2 seconds to preview it.
+  const profilePhoto = $("#ippPhoto", page);
+  if (profilePhoto && !page.querySelector("#ippPhotoPreview")) {
+    let holdTimer = null;
+    let holdStarted = false;
+    const clearHold = () => {
+      if (holdTimer) clearTimeout(holdTimer);
+      holdTimer = null;
+    };
+    const openPhotoPreview = () => {
+      if (page.querySelector("#ippPhotoPreview")) return;
+      const preview = document.createElement("div");
+      preview.id = "ippPhotoPreview";
+      preview.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(12px);";
+      preview.innerHTML = `<button type="button" aria-label="Close profile photo" style="position:absolute;top:18px;right:20px;width:42px;height:42px;border:0;border-radius:50%;background:#ffffff20;color:#fff;font-size:28px;cursor:pointer">×</button><img src="${esc(photo)}" alt="Profile photo preview" style="width:min(82vw,420px);height:min(82vw,420px);max-height:75vh;object-fit:cover;border-radius:50%;border:3px solid #ffffff35;box-shadow:0 12px 60px #0009;">`;
+      document.body.appendChild(preview);
+      const closePreview = () => preview.remove();
+      preview.querySelector("button").onclick = closePreview;
+      preview.addEventListener("click", event => { if (event.target === preview) closePreview(); });
+      const onKey = event => { if (event.key === "Escape") { closePreview(); document.removeEventListener("keydown", onKey); } };
+      document.addEventListener("keydown", onKey);
+    };
+    profilePhoto.style.touchAction = "pan-y";
+    profilePhoto.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      holdStarted = false;
+      clearHold();
+      holdTimer = setTimeout(() => {
+        holdStarted = true;
+        openPhotoPreview();
+      }, 2000);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(type => profilePhoto.addEventListener(type, clearHold));
+    profilePhoto.addEventListener("contextmenu", event => event.preventDefault());
+    profilePhoto.addEventListener("click", event => {
+      if (holdStarted) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+  }
   if (storyAvatar && latestProfileStory) {
     storyAvatar.setAttribute("role", "button");
     storyAvatar.setAttribute("tabindex", "0");
