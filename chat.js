@@ -519,7 +519,7 @@ function openChat(user) {
   });
 }
 
-async function saveMessage(payload, previewText) {
+async async function saveMessage(payload, previewText) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) throw new Error("Please sign in first.");
   const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
   await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selectedUser.uid], lastMessage: previewText, lastSenderUid: currentUser.uid, updatedAt: serverTimestamp(), hiddenFor: arrayRemove(currentUser.uid) }, { merge: true });
@@ -528,7 +528,7 @@ async function saveMessage(payload, previewText) {
   catch (e) { console.warn("Chat notification not saved; check Firestore Rules:", e); }
   return messageRef;
 }
-async function sendMsg(event) {
+async async function sendMsg(event) {
   event?.preventDefault();
   const input = $("chatInput"), text = input?.value.trim();
   if (!text || !currentUser || !selectedUser || currentUser.isAnonymous) return;
@@ -545,7 +545,7 @@ async function uploadChatMedia(file) {
   if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "Media upload fail hua.");
   return result.secure_url;
 }
-async function sendMedia(file, mediaType) {
+async async function sendMedia(file, mediaType) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) { alert("Pehle Google se login karein."); return; }
   if (file.size > 100 * 1024 * 1024) { alert("File 100 MB se chhoti honi chahiye."); return; }
   const attach = $("chatAttach"), camera = $("chatCamera");
@@ -576,7 +576,7 @@ async function toggleVoiceRecording() {
     voiceRecorder.start(); if (button) button.textContent = "⏹️";
   } catch (error) { console.error("Voice recording error:", error); alert("Microphone permission dein, phir voice message record karein."); }
 }
-async function deleteChatForMe(otherUid) {
+async async function deleteChatForMe(otherUid) {
   if (!currentUser || !otherUid) return;
   if (!confirm("Is chat ko apni Messages list se delete karein? Doosre user ki chat delete nahi hogi.")) return;
   try {
@@ -598,7 +598,7 @@ async function quickHeart(messageId) {
   catch (error) { console.error("Double-tap reaction error:", error); }
 }
 
-async function reactToMessage(messageId) {
+async async function reactToMessage(messageId) {
   if (!currentUser || !selectedUser) return;
   const choice = prompt("Reaction choose karein: ❤️ 😂 😮 😢 👍 🔥", "❤️");
   if (!choice || !["❤️","😂","😮","😢","👍","🔥"].includes(choice.trim())) return;
