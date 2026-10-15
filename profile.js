@@ -572,8 +572,10 @@ function render(data = profileData, posts = profilePosts) {
 
   const isFollowing = viewerFollowing.includes(uid);
   const myUid = myId();
-  const targetFollowers = Array.isArray(data.followers) ? data.followers : [];
-  const isMutualFollow = Boolean(myUid && myUid !== uid && isFollowing && targetFollowers.includes(myUid));
+  // "Follow back" appears when this profile already follows the signed-in user.
+  const targetFollowing = Array.isArray(data.following) ? data.following : [];
+  const theyFollowMe = Boolean(myUid && myUid !== uid && targetFollowing.includes(myUid));
+  const isMutualFollow = Boolean(myUid && myUid !== uid && isFollowing && theyFollowMe);
 
   page.innerHTML = `
     <div class="ipp-wrap">
@@ -681,7 +683,7 @@ function render(data = profileData, posts = profilePosts) {
               id="ippFollow"
               class="ipp-btn ipp-primary"
             >
-              ${isFollowing ? "Following ✓" : "Follow +"}
+              ${isFollowing ? "Following ✓" : (theyFollowMe ? "Follow back ↩" : "Follow +")}
             </button>
             ${isMutualFollow ? `
               <button
@@ -1552,58 +1554,41 @@ async function toggleFollow() {
         return;
       }
     }
-    const [mineSnap, targetSnap] =
-      await Promise.all([
-        getDoc(doc(db, "users", followerUid)),
-        getDoc(doc(db, "users", targetUid))
-      ]);
+    const [mineSnap, targetSnap] = await Promise.all([
+      getDoc(doc(db, "users", followerUid)),
+      getDoc(doc(db, "users", targetUid))
+    ]);
 
-    const mine = mineSnap.exists()
-      ? mineSnap.data()
-      : {};
-
-    const target = targetSnap.exists()
-      ? targetSnap.data()
-      : {};
-
-    const following = Array.isArray(mine.following)
-      ? mine.following
-      : [];
-
-    const followers = Array.isArray(target.followers)
-      ? target.followers
-      : [];
-
+    const mine = mineSnap.exists() ? mineSnap.data() : {};
+    const target = targetSnap.exists() ? targetSnap.data() : {};
+    const following = Array.isArray(mine.following) ? mine.following : [];
     const already = following.includes(targetUid);
 
+    // Atomic array operations avoid overwriting another follow/unfollow action
+    // when multiple devices update the same account around the same time.
     const batch = writeBatch(db);
+    const mineRef = doc(db, "users", followerUid);
+    const targetRef = doc(db, "users", targetUid);
 
-    batch.set(
-      doc(db, "users", followerUid),
-      {
-        following: already
-          ? following.filter(id => id !== targetUid)
-          : [...following, targetUid],
+    if (already) {
+      batch.update(mineRef, {
+        following: arrayRemove(targetUid),
         updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
-
-    batch.set(
-      doc(db, "users", targetUid),
-      {
-        followers: already
-          ? followers.filter(id => id !== followerUid)
-          : [
-              ...new Set([
-                ...followers,
-                followerUid
-              ])
-            ],
+      });
+      batch.update(targetRef, {
+        followers: arrayRemove(followerUid),
         updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
+      });
+    } else {
+      batch.set(mineRef, {
+        following: arrayUnion(targetUid),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      batch.set(targetRef, {
+        followers: arrayUnion(followerUid),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
 
     await batch.commit();
 
