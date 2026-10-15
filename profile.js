@@ -563,11 +563,11 @@ function render(data = profileData, posts = profilePosts) {
   );
 
   const postCount = privateLocked ? 0 : ownPosts.filter(
-    post => !isReel(post)
+    post => !isVideo(post)
   ).length;
 
   const reelCount = privateLocked ? 0 : ownPosts.filter(
-    post => isReel(post)
+    post => isVideo(post)
   ).length;
 
   const isFollowing = viewerFollowing.includes(uid);
@@ -850,9 +850,9 @@ function render(data = profileData, posts = profilePosts) {
   if (privateLocked) {
     grid.innerHTML = '<div class="ipp-empty" style="padding:38px 18px"><div style="font-size:42px">🔒</div><strong>This account is private</strong><p>Posts aur Reels dekhne ke liye follow request bhejein aur approval ka wait karein.</p></div>';
   } else if (activeTab === "posts") {
-    filtered = ownPosts.filter(post => !isReel(post));
+    filtered = ownPosts.filter(post => !isVideo(post));
   } else if (activeTab === "reels") {
-    filtered = ownPosts.filter(post => isReel(post));
+    filtered = ownPosts.filter(post => isVideo(post));
   } else if (activeTab === "reposts") {
     filtered = ownReposts.map(post => ({ ...post, __profileRepost: true }));
   }
