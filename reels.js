@@ -570,7 +570,7 @@ function renderReelsSlides(track) {
             <img class="${activeStoryOwners.has(post.uid || post.userId || post.authorId || post.ownerUid) ? "ipr-story-ring" : ""}" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}" src="${escapeHTML(photoURL(post))}" alt="Profile photo" loading="lazy">
             <div class="ipr-user-meta">
               <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))}</button>
-              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid ? `<button type="button" class="ipr-follow ${reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) ? "is-following" : ""}" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">${reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) ? "Following" : "Follow"}</button>` : ""}
+              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) !== true ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
             </div>
           </div>
           <div class="ipr-caption">${escapeHTML(post.caption || "")}</div>
