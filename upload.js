@@ -282,6 +282,27 @@ function openStoryEditor(file) {
             <div class="ips-effects-heading"><b>Effects</b><small>Swipe to explore 50+</small></div>
             <div id="ip-story-filters"></div>
           </div>
+          <div class="ips-sticker-panel" aria-label="Story stickers">
+            <div class="ips-sticker-head"><b>Stickers</b><button type="button" data-act="close-stickers" aria-label="Close stickers">×</button></div>
+            <div class="ips-sticker-grid">
+              <button type="button" data-sticker="❤️"><span>❤️</span><small>Love</small></button>
+              <button type="button" data-sticker="😍"><span>😍</span><small>Crush</small></button>
+              <button type="button" data-sticker="✨"><span>✨</span><small>Sparkle</small></button>
+              <button type="button" data-sticker="🔥"><span>🔥</span><small>Fire</small></button>
+              <button type="button" data-sticker="🎉"><span>🎉</span><small>Party</small></button>
+              <button type="button" data-sticker="💖"><span>💖</span><small>Shine</small></button>
+              <button type="button" data-sticker="🦋"><span>🦋</span><small>Butterfly</small></button>
+              <button type="button" data-sticker="🌈"><span>🌈</span><small>Rainbow</small></button>
+              <button type="button" data-sticker="☁️"><span>☁️</span><small>Cloud</small></button>
+              <button type="button" data-sticker="🌸"><span>🌸</span><small>Bloom</small></button>
+              <button type="button" data-sticker="📍"><span>📍</span><small>Location</small></button>
+              <button type="button" data-sticker="💯"><span>💯</span><small>100</small></button>
+              <button type="button" data-sticker="GOOD VIBES"><span>GOOD VIBES</span><small>Vibes</small></button>
+              <button type="button" data-sticker="NEW POST"><span>NEW POST</span><small>New post</small></button>
+              <button type="button" data-sticker="✨ yours ✨"><span>✨ yours ✨</span><small>Yours</small></button>
+              <button type="button" data-sticker="♥︎"><span>♥︎</span><small>Classic</small></button>
+            </div>
+          </div>
           <input id="ip-story-caption" placeholder="Add a caption..." maxlength="2200" aria-label="Story caption">
           <button data-act="share" class="ips-share">Your story <span>›</span></button>
         </div>
@@ -305,6 +326,16 @@ function openStoryEditor(file) {
       #ip-story-editor .ips-bottom{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000b 18%,#000e);display:flex;flex-direction:column;gap:9px}
       #ip-story-editor .ips-effects-panel{display:none}
       #ip-story-editor .ips-effects-panel.open{display:block}
+      #ip-story-editor .ips-sticker-panel{display:none;max-height:34vh;overflow:auto;padding:12px;border:1px solid #ffffff24;border-radius:20px;background:rgba(20,18,28,.94);backdrop-filter:blur(22px);box-shadow:0 12px 35px #0008}
+      #ip-story-editor .ips-sticker-panel.open{display:block}
+      #ip-story-editor .ips-sticker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px}
+      #ip-story-editor .ips-sticker-head button{width:30px;height:30px;border:0;border-radius:50%;background:#ffffff18;color:#fff;font-size:23px}
+      #ip-story-editor .ips-sticker-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+      #ip-story-editor .ips-sticker-grid button{min-height:65px;padding:7px 3px;border:1px solid #ffffff17;border-radius:14px;background:linear-gradient(145deg,#ffffff16,#ffffff08);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+      #ip-story-editor .ips-sticker-grid button:active{background:#8e65ff66}
+      #ip-story-editor .ips-sticker-grid button span{font-size:25px;line-height:30px;max-width:100%;overflow-wrap:anywhere}
+      #ip-story-editor .ips-sticker-grid button[data-sticker="GOOD VIBES"] span,#ip-story-editor .ips-sticker-grid button[data-sticker="NEW POST"] span,#ip-story-editor .ips-sticker-grid button[data-sticker="✨ yours ✨"] span{font-size:11px;font-weight:900;letter-spacing:.4px}
+      #ip-story-editor .ips-sticker-grid button small{font-size:9px;opacity:.75}
       #ip-story-editor .ips-effects-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:13px}
       #ip-story-editor .ips-effects-heading small{opacity:.7;font-size:10px}
       #ip-story-editor #ip-story-filters{display:flex;gap:10px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:none;scroll-snap-type:x mandatory}
@@ -347,6 +378,17 @@ function openStoryEditor(file) {
     filterRow.firstElementChild?.click();
     const close = (value) => { URL.revokeObjectURL(url); modal.remove(); resolve(value); };
     modal.addEventListener("click", async (e) => {
+      const stickerButton = e.target.closest("[data-sticker]");
+      if (stickerButton) {
+        const sticker = stickerButton.dataset.sticker;
+        const overlay = modal.querySelector("#ip-story-overlay-text");
+        overlay.textContent = overlayText ? overlayText + "\\n" + sticker : sticker;
+        overlayText = overlay.textContent;
+        modal.querySelectorAll(".ips-sticker-grid button").forEach(b => b.style.borderColor = "rgba(255,255,255,.09)");
+        stickerButton.style.borderColor = "#b99aff";
+        stickerButton.style.background = "linear-gradient(145deg,#8d5cff66,#ffffff12)";
+        return;
+      }
       const button = e.target.closest("[data-act]");
       if (!button) return;
       const act = button.dataset.act;
@@ -356,9 +398,11 @@ function openStoryEditor(file) {
         if (value !== null) { overlayText = value; modal.querySelector("#ip-story-overlay-text").textContent = value; }
       }
       if (act === "stickers") {
-        const value = prompt("Sticker choose karein: ❤️ 😂 🔥 ✨ 😍 🎉", "❤️");
-        if (value) modal.querySelector("#ip-story-overlay-text").textContent += " " + value;
-        overlayText = modal.querySelector("#ip-story-overlay-text").textContent;
+        modal.querySelector(".ips-sticker-panel").classList.toggle("open");
+        modal.querySelector(".ips-effects-panel").classList.remove("open");
+      }
+      if (act === "close-stickers") {
+        modal.querySelector(".ips-sticker-panel").classList.remove("open");
       }
       if (act === "effects") {
         const panel = modal.querySelector(".ips-effects-panel");
