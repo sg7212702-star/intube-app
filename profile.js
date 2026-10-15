@@ -455,6 +455,7 @@ function render(data = profileData, posts = profilePosts) {
 
   const uid = viewingUid;
   const own = myId() === uid;
+  const privateLocked = !own && (data.isPrivate === true || data.privateAccount === true) && !viewerFollowing.includes(uid);
 
   const name =
     data.displayName ||
@@ -496,11 +497,11 @@ function render(data = profileData, posts = profilePosts) {
     post => postOwner(post) === uid
   );
 
-  const postCount = ownPosts.filter(
+  const postCount = privateLocked ? 0 : ownPosts.filter(
     post => !isReel(post)
   ).length;
 
-  const reelCount = ownPosts.filter(
+  const reelCount = privateLocked ? 0 : ownPosts.filter(
     post => isReel(post)
   ).length;
 
@@ -603,6 +604,8 @@ function render(data = profileData, posts = profilePosts) {
             >
               ✦ Edit profile
             </button>
+
+            <button type="button" class="ipp-btn" data-open-private-settings style="flex:1">🔒 Privacy</button>
 
             <button
               id="ippPhotoBtn"
@@ -759,7 +762,9 @@ function render(data = profileData, posts = profilePosts) {
 
   let filtered = [];
 
-  if (activeTab === "posts") {
+  if (privateLocked) {
+    grid.innerHTML = '<div class="ipp-empty" style="padding:38px 18px"><div style="font-size:42px">🔒</div><strong>This account is private</strong><p>Posts aur Reels dekhne ke liye follow request bhejein aur approval ka wait karein.</p></div>';
+  } else if (activeTab === "posts") {
     filtered = ownPosts.filter(post => !isReel(post));
   } else if (activeTab === "reels") {
     filtered = ownPosts.filter(post => isReel(post));
@@ -1432,6 +1437,16 @@ async function toggleFollow() {
   }
 
   try {
+    // Private accounts must approve new followers before content is unlocked.
+    const privacyApi = window.InstaProPrivate;
+    if (privacyApi && !viewerFollowing.includes(targetUid)) {
+      const privacy = await privacyApi.getAccountPrivacy(targetUid);
+      if (privacy.isPrivate) {
+        const result = await privacyApi.requestFollow(targetUid);
+        if (button) button.textContent = result.status === "pending" ? "Requested ✓" : "Following ✓";
+        return;
+      }
+    }
     const [mineSnap, targetSnap] =
       await Promise.all([
         getDoc(doc(db, "users", followerUid)),
