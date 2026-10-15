@@ -1142,6 +1142,18 @@ function startReelsSystem() {
     unsubscribeReels = null;
   }
 
+  // Immediately remove deleted Reel cards/viewers if another page deletes one in this tab.
+  window.addEventListener("instapro:post-deleted", event => {
+    const deletedId = String(event.detail?.postId || "");
+    if (!deletedId) return;
+    reelsData = reelsData.filter(post => String(post.id) !== deletedId);
+    const grid = document.getElementById("reelsGrid");
+    if (grid) renderReelsGrid(grid);
+    const viewer = document.getElementById("ipReelsViewer");
+    const active = viewer?.querySelector(".ipr-slide");
+    if (active && String(active.dataset.slideId) === deletedId) closeReelsViewer();
+  });
+
   const postsQuery = query(
     collection(db, "posts"),
     orderBy("createdAt", "desc")
@@ -1150,7 +1162,13 @@ function startReelsSystem() {
   unsubscribeReels = onSnapshot(
     postsQuery,
     async snapshot => {
-      const rawReels = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      const deletedIds = (() => {
+        try { return new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String)); }
+        catch (_) { return new Set(); }
+      })();
+      const rawReels = snapshot.docs
+        .filter(item => !deletedIds.has(String(item.id)))
+        .map(item => ({ id: item.id, ...item.data() }));
       const privacyApi = window.InstaProPrivate;
       const viewerUid = currentUser()?.uid || "";
       const visibleReels = [];
