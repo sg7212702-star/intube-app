@@ -227,9 +227,17 @@ function installReelsStyles() {
     .ipr-reel-more-menu {position:absolute;right:58px;bottom:104px;z-index:12;min-width:150px;padding:6px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(20,20,24,.82);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);box-shadow:0 8px 28px rgba(0,0,0,.35)}
     .ipr-reel-more-menu button {display:block;width:100%;padding:12px 14px;border:0;border-radius:9px;background:transparent;color:#ff7188;text-align:left;font-size:14px;font-weight:650}
     .ipr-bottom {
-      position:absolute;left:15px;right:80px;bottom:28px;
-      z-index:3;text-shadow:0 1px 5px #000;
+      position:absolute;left:15px;right:88px;bottom:calc(34px + env(safe-area-inset-bottom));
+      z-index:8;text-shadow:0 1px 5px #000;
+      max-width:calc(100% - 108px);min-width:0;
+      animation:iprDetailsFloat 3.8s ease-in-out infinite;
+      pointer-events:auto;
     }
+    .ipr-user{position:relative;z-index:9;display:flex;align-items:center;gap:9px;min-width:0;overflow:visible}
+    .ipr-user-meta{position:relative;z-index:10;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;overflow:visible}
+    .ipr-author{position:relative;z-index:11;display:inline-block;max-width:calc(100vw - 190px);overflow:hidden;text-overflow:ellipsis;color:#fff!important;opacity:1!important;text-shadow:0 1px 5px #000;white-space:nowrap}
+    .ipr-caption{position:relative;z-index:8;max-height:4.5em;overflow:hidden;color:#fff;text-shadow:0 1px 5px #000}
+    @keyframes iprDetailsFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
     .ipr-user {
       display:flex;align-items:center;gap:9px;
       margin-bottom:12px;font-size:14px;font-weight:bold;
@@ -243,9 +251,9 @@ function installReelsStyles() {
     .ipr-caption {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
     /* Compact Instagram-DM-sized like animation, lifted above profile details */
     .ipr-heart {
-      position:absolute;left:50%;top:39%;
+      position:absolute;left:50%;top:33%;
       transform:translate(-50%,-50%) scale(.2);
-      font-size:62px;line-height:1;opacity:0;pointer-events:none;z-index:6;
+      font-size:48px;line-height:1;opacity:0;pointer-events:none;z-index:6;
       filter:drop-shadow(0 2px 8px rgba(0,0,0,.28));
     }
     .ipr-heart.ipr-heart-pop {animation:iprHeartPop .72s cubic-bezier(.2,.8,.25,1) forwards}
