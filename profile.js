@@ -1592,6 +1592,11 @@ async function toggleFollow() {
 
     await batch.commit();
 
+    const targetFollowsMe = Array.isArray(target.following) && target.following.includes(followerUid);
+    if (button) button.textContent = already
+      ? (targetFollowsMe ? "Follow back ↩" : "Follow +")
+      : "Following ✓";
+
     if (!already) {
       try {
         const actor = auth.currentUser;
