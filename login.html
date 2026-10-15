@@ -28,7 +28,11 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 .divider div{flex:1; height:1px; background:rgba(255,255,255,.15);}
 .error{font-size:12px; color:#ff3040; min-height:16px; text-align:center; margin-bottom:8px;}
 .foot{font-size:12px; text-align:center; opacity:.5; margin-top:14px; line-height:1.4;}
-.foot b{color:#fff; cursor:pointer;}\n#recaptcha-container{margin:8px 0;display:flex;justify-content:center;min-height:1px;}\n.phone-row{display:flex;gap:8px;}\n.phone-code{width:92px;flex-shrink:0;}\n#otpForm{display:none;}
+.foot b{color:#fff; cursor:pointer;}
+#recaptcha-container{margin:8px 0;display:flex;justify-content:center;min-height:1px;}
+.phone-row{display:flex;gap:8px;}
+.phone-code{width:92px;flex-shrink:0;}
+#otpForm{display:none;}
 </style>
 </head>
 <body>
@@ -67,7 +71,8 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
     <div class="foot">SMS verification se mobile number verify hoga.</div>
   </div>
 
-  <button id="phoneToggleBtn" class="btn btn-google" style="margin-top:10px;">Continue with mobile number</button>\n  <div class="divider"><div></div>OR<div></div></div>
+  <button id="phoneToggleBtn" class="btn btn-google" style="margin-top:10px;">Continue with mobile number</button>
+  <div class="divider"><div></div>OR<div></div></div>
 
   <button id="googleBtn" class="btn btn-google">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;"> Continue with Google
@@ -89,7 +94,9 @@ import {
 
 const $=id=>document.getElementById(id);
 const tabLogin=$("tabLogin"), tabSignup=$("tabSignup");
-const loginForm=$("loginForm"), signupForm=$("signupForm"), phoneForm=$("phoneForm");\nlet recaptchaVerifier = null;\nlet confirmationResult = null;
+const loginForm=$("loginForm"), signupForm=$("signupForm"), phoneForm=$("phoneForm");
+let recaptchaVerifier = null;
+let confirmationResult = null;
 
 function switchTab(t){
   if(t==="login"){ tabLogin.classList.add("active"); tabSignup.classList.remove("active"); loginForm.style.display="block"; signupForm.style.display="none"; }
@@ -98,6 +105,25 @@ function switchTab(t){
 }
 tabLogin.onclick=()=>switchTab("login");
 tabSignup.onclick = () => switchTab("signup");
+
+$("phoneToggleBtn").onclick=()=>{
+  const opening=phoneForm.style.display==="none";
+  loginForm.style.display="none"; signupForm.style.display="none"; phoneForm.style.display=opening?"block":"none";
+  tabLogin.classList.remove("active"); tabSignup.classList.remove("active"); $("errorMsg").textContent="";
+  if(opening) setupRecaptcha();
+};
+function setupRecaptcha(){
+  if(recaptchaVerifier) return;
+  try {
+    recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size:"normal",
+      callback:()=>{$("errorMsg").textContent="";},
+      "expired-callback":()=>showError("reCAPTCHA expire ho gaya. Dobara verify karein.")
+    });
+    recaptchaVerifier.render().catch(error=>showError("reCAPTCHA: "+error.message));
+  } catch(error) { showError("reCAPTCHA setup: "+error.message); }
+}
+
 
 async function saveProfile(user) {
   const userRef = doc(db, "users", user.uid);
@@ -196,9 +222,9 @@ async function finishLogin(user) {
 
 $("sendOtpBtn").onclick = async () => {
   const code = $("phoneCode").value.trim();
-  const number = $("phoneNumber").value.trim().replace(/[\\s()-]/g, "");
+  const number = $("phoneNumber").value.trim().replace(/[\s()-]/g, "");
   const fullPhone = code + number;
-  if (!/^\\+[1-9]\\d{7,14}$/.test(fullPhone)) { showError("Country code ke saath sahi mobile number likhein, jaise +91 9876543210."); return; }
+  if (!/^\+[1-9]\d{7,14}$/.test(fullPhone)) { showError("Country code ke saath sahi mobile number likhein, jaise +91 9876543210."); return; }
   try {
     $("sendOtpBtn").disabled = true; $("sendOtpBtn").textContent = "Sending OTP...";
     if (!recaptchaVerifier) setupRecaptcha();
@@ -215,7 +241,7 @@ $("sendOtpBtn").onclick = async () => {
 $("verifyOtpBtn").onclick = async () => {
   const otp = $("phoneOtp").value.trim();
   if (!confirmationResult) { showError("Pehle Send OTP dabayein."); return; }
-  if (!/^\\d{6}$/.test(otp)) { showError("6 digit OTP dalein."); return; }
+  if (!/^\d{6}$/.test(otp)) { showError("6 digit OTP dalein."); return; }
   try {
     $("verifyOtpBtn").disabled = true; $("verifyOtpBtn").textContent = "Verifying...";
     const result = await confirmationResult.confirm(otp);
