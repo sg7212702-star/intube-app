@@ -959,11 +959,25 @@ window.addEventListener("pagehide", () => {
 
 // Open a specific feed video inside the same full-screen Reels viewer.
 window.InstaProReels = window.InstaProReels || {};
-window.InstaProReels.openPost = function(postId) {
-  const visible = reelsData.filter(post => isVideo(post) && mediaURL(post));
-  const index = visible.findIndex(post => String(post.id) === String(postId));
+window.InstaProReels.openPost = function(postId, feedPost = null) {
+  let visible = reelsData.filter(post => isVideo(post) && mediaURL(post));
+  let index = visible.findIndex(post => String(post.id) === String(postId));
+
+  // Home Feed may contain a video that has not entered the Reels query/cache yet.
+  // Add that exact post temporarily so the same full-screen Reels player can play it.
+  if (index < 0 && feedPost && String(feedPost.id) === String(postId) && mediaURL(feedPost)) {
+    const playablePost = {
+      ...feedPost,
+      id: String(postId),
+      type: feedPost.type || feedPost.mediaType || "video"
+    };
+    reelsData = [playablePost, ...reelsData.filter(post => String(post.id) !== String(postId))];
+    visible = reelsData.filter(post => isVideo(post) && mediaURL(post));
+    index = visible.findIndex(post => String(post.id) === String(postId));
+  }
+
   if (index < 0) {
-    showReelsMessage("Yeh video abhi Reels feed mein available nahi hai. Reels feed refresh karein.");
+    showReelsMessage("Yeh video play nahi ho paayi. Feed refresh karke dobara try karein.");
     return false;
   }
   openReelsViewer(index);
