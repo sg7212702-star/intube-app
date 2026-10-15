@@ -630,6 +630,19 @@ function openStoryEditor(file) {
           panel.style.cssText = "position:absolute;z-index:12;left:10px;right:10px;top:58px;bottom:110px;overflow:auto;padding:15px;border:1px solid #ffffff30;border-radius:18px;background:rgba(18,18,24,.98);box-shadow:0 12px 35px #0009;color:#fff;";
           panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:18px;flex:1">♫ Insta Pro Music</b><button type="button" data-music-close style="border:0;border-radius:50%;width:32px;height:32px;background:#ffffff20;color:#fff;font-size:20px">×</button></div><form id="ip-story-music-search-form" style="display:flex;gap:7px"><input id="ip-story-music-search" type="search" placeholder="Song, singer, language..." style="min-width:0;flex:1;padding:11px;border:1px solid #ffffff35;border-radius:12px;background:#ffffff12;color:#fff;outline:none"><button type="submit" style="padding:10px 13px;border:0;border-radius:12px;background:#8b5cf6;color:#fff;font-weight:700">Search</button></form><div style="display:flex;gap:7px;overflow-x:auto;padding:10px 0;scrollbar-width:none"><button type="button" data-music-query="Hindi Bollywood songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">🇮🇳 Hindi</button><button type="button" data-music-query="Punjabi songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Punjabi</button><button type="button" data-music-query="Bhojpuri songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Bhojpuri</button><button type="button" data-music-query="Tamil songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Tamil</button><button type="button" data-music-query="Telugu songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Telugu</button><button type="button" data-music-query="English pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">English</button><button type="button" data-music-query="Korean pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">K-pop</button><button type="button" data-music-query="Top songs India" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Top India</button><button type="button" data-music-query="lofi music" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Lo-fi</button><button type="button" data-music-query="relaxing piano music" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Piano</button><button type="button" data-music-query="acoustic guitar music" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Acoustic</button><button type="button" data-music-query="Indian classical music" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Indian classical</button></div><button type="button" data-music-local style="width:100%;margin:0 0 9px;padding:10px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff10;color:#fff">＋ Choose audio from my phone</button><div id="ip-story-music-status" style="font-size:12px;opacity:.8;margin:8px 0">Search free music by genre, mood, or artist. Results depend on what creators have shared with an open reuse license.</div><div id="ip-story-music-results" style="display:grid;gap:8px"></div><div style="font-size:11px;opacity:.65;margin-top:12px">Song names and short previews are searched from the Apple iTunes catalog. Preview clips are usually short samples, not full songs; full-song availability and rights depend on the music provider.</div>';
           modal.appendChild(panel);
+          // Close the music picker reliably, including while a preview is playing.
+          const closeMusicPicker = event => {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const previewAudio = panel.querySelector("#ip-story-music-audio-preview");
+            if (previewAudio) { previewAudio.pause(); previewAudio.removeAttribute("src"); previewAudio.load(); previewAudio.remove(); }
+            panel.remove();
+            document.removeEventListener("keydown", musicPickerEscapeHandler);
+          };
+          const musicPickerEscapeHandler = event => {
+            if (event.key === "Escape" && panel.isConnected) closeMusicPicker(event);
+          };
+          document.addEventListener("keydown", musicPickerEscapeHandler);
+          panel.querySelector("[data-music-close]")?.addEventListener("click", closeMusicPicker);
           panel.addEventListener("click", ev => {
             const quickQuery = ev.target.closest("[data-music-query]");
             if (quickQuery) {
@@ -641,7 +654,7 @@ function openStoryEditor(file) {
               }
               return;
             }
-            if (ev.target.closest("[data-music-close]")) { panel.remove(); return; }
+            if (ev.target.closest("[data-music-close]")) { closeMusicPicker(ev); return; }
             if (ev.target.closest("[data-music-local]")) { musicInput.value = ""; musicInput.click(); return; }
             const pick = ev.target.closest("[data-music-pick]");
             if (pick) {
@@ -667,9 +680,7 @@ function openStoryEditor(file) {
                 licenseUrl: track.licenseUrl || "",
                 filePage: track.filePage || ""
               };
-              const audio = panel.querySelector("#ip-story-music-audio-preview");
-              if (audio) { audio.pause(); audio.remove(); }
-              panel.remove();
+              closeMusicPicker(ev);
               return;
             }
           });
