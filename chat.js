@@ -108,7 +108,7 @@ function injectChatStyles() {
     #chatPage #chatInput{font-style:italic;font-family:Georgia,serif}
 
     #chatPage #chatInput::placeholder { color:#777;opacity:1; }
-    #chatPage #chatForm { z-index:10020!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; } padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
+    #chatPage #chatForm { z-index:10020!important; padding-bottom:max(8px, env(safe-area-inset-bottom))!important; }
     #chatPage #chatBoxView { height:100dvh; height:100vh; }
     #chatPage #chatMsgs { min-height:0; overscroll-behavior:contain; scroll-behavior:smooth; }
     #chatPage #chatForm button { flex-shrink:0; }
@@ -226,8 +226,11 @@ function setupUI() {
     const q = event.target.value.trim().toLowerCase();
     renderList(allUsers.filter(user =>
       nameOf(user).toLowerCase().includes(q) ||
-      String(user.name || "").toLowerCase().includes(q)
-    ));
+      String(user.name || "").toLowerCase().includes(q) ||
+      String(user.username || "").toLowerCase().includes(q) ||
+      String(user.displayName || "").toLowerCase().includes(q) ||
+      String(user.email || "").toLowerCase().includes(q)
+    ), currentChatMap);
   });
 }
 
@@ -545,10 +548,19 @@ async function uploadChatMedia(file) {
 async function sendMedia(file, mediaType) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) { alert("Pehle Google se login karein."); return; }
   if (file.size > 100 * 1024 * 1024) { alert("File 100 MB se chhoti honi chahiye."); return; }
-  const attach = $("chatAttach"); if (attach) { attach.disabled = true; attach.textContent = "…"; }
-  try { const url = await uploadChatMedia(file); await saveMessage({ mediaUrl: url, mediaType, fileName: file.name || mediaType }, mediaType === "video" ? "🎬 Video" : mediaType === "audio" ? "🎙️ Voice message" : "📷 Photo"); }
-  catch (error) { console.error("Chat media upload error:", error); alert("Media send nahi hua: " + (error.message || "Upload error")); }
-  finally { if (attach) { attach.disabled = false; attach.textContent = "＋"; } }
+  const attach = $("chatAttach"), camera = $("chatCamera");
+  if (attach) attach.disabled = true;
+  if (camera) camera.disabled = true;
+  try {
+    const url = await uploadChatMedia(file);
+    await saveMessage({ mediaUrl: url, mediaType, fileName: file.name || mediaType }, mediaType === "video" ? "🎬 Video" : mediaType === "audio" ? "🎙️ Voice message" : "📷 Photo");
+  } catch (error) {
+    console.error("Chat media upload error:", error);
+    alert("Media send nahi hua: " + (error.message || "Upload error"));
+  } finally {
+    if (attach) attach.disabled = false;
+    if (camera) camera.disabled = false;
+  }
 }
 let voiceRecorder = null, voiceChunks = [];
 async function toggleVoiceRecording() {
