@@ -199,14 +199,44 @@ function addStyles() {
     }
 
     #ipProfileOverlay .ipp-btn {
-      border:1px solid rgba(255,255,255,.15);
-      border-radius:12px;
-      padding:10px 13px;
-      background:rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      width:100%;
+      min-width:0;
+      min-height:43px;
+      padding:10px 9px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:11px;
+      background:rgba(255,255,255,.075);
       color:#fff;
-      font-weight:700;
-      font-size:12px;
+      font:700 13px/1.2 inherit;
+      text-align:center;
+      white-space:normal;
+      overflow-wrap:anywhere;
       cursor:pointer;
+      transition:transform .16s ease,background .16s ease,border-color .16s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #ipProfileOverlay .ipp-btn:hover { background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.28); }
+    #ipProfileOverlay .ipp-btn:active { transform:scale(.98); }
+    #ipProfileOverlay .ipp-actions {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:9px;
+      padding:4px 16px 0;
+      align-items:stretch;
+    }
+    #ipProfileOverlay .ipp-actions .ipp-btn { margin:0; }
+    #ipProfileOverlay .ipp-actions .ipp-primary {
+      background:linear-gradient(110deg,#8b5cf6,#ec4899);
+      border-color:transparent;
+      box-shadow:0 5px 16px rgba(168,85,247,.18);
+    }
+    @media (max-width:360px) {
+      #ipProfileOverlay .ipp-actions { gap:7px;padding-left:12px;padding-right:12px; }
+      #ipProfileOverlay .ipp-actions .ipp-btn { min-height:41px;font-size:12px;padding:9px 6px; }
     }
 
     #ipProfileOverlay .ipp-btn:disabled {
@@ -594,18 +624,17 @@ function render(data = profileData, posts = profilePosts) {
 
         </div>
 
-        <div style="display:flex;gap:8px;padding:0 16px">
+        <div class="ipp-actions">
 
           ${own ? `
             <button
               id="ippEdit"
               class="ipp-btn ipp-primary"
-              style="flex:1"
             >
               ✦ Edit profile
             </button>
 
-            <button type="button" class="ipp-btn" data-open-private-settings style="flex:1">🔒 Privacy</button>
+            <button type="button" class="ipp-btn" data-open-private-settings>🔒 Privacy</button>
 
             <button
               id="ippPhotoBtn"
@@ -621,7 +650,7 @@ function render(data = profileData, posts = profilePosts) {
               style="flex:1"
             >
               ${isFollowing ? "Following ✓" : "Follow +"}
-            </button>            ${isMutualFollow ? `
+            </button>\n            ${isMutualFollow ? `
               <button
                 id="ippMessage"
                 class="ipp-btn"
