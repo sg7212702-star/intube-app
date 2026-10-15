@@ -24,6 +24,8 @@ let unsubscribeReels = null;
 let reelsData = [];
 let activeIndex = 0;
 let reelsObserver = null;
+let reelsOpenedFromBottomTab = false;
+let reelsHistoryEntryAdded = false;
 let activeStoryOwners = new Set();
 let unsubscribeReelStories = null;
 let reelFollowCache = new Map();
@@ -830,6 +832,14 @@ function openReelsViewer(index) {
   renderReelsSlides(track);
   viewer.classList.add("ipr-open");
   document.body.style.overflow = "hidden";
+  // The player is the Reels destination; hide the intermediate Reels grid page.
+  if (reelsOpenedFromBottomTab) reelsPage.style.display = "none";
+  if (reelsOpenedFromBottomTab && !reelsHistoryEntryAdded) {
+    try {
+      history.pushState({ instaproReelsPlayer: true }, "", location.href);
+      reelsHistoryEntryAdded = true;
+    } catch (_) {}
+  }
 
   const slides = track.querySelectorAll(".ipr-slide");
   activeIndex = Math.max(0, Math.min(index, slides.length - 1));
@@ -864,6 +874,20 @@ function closeReelsViewer() {
   box?.classList.remove("ipr-comments-open");
 
   document.body.style.overflow = "";
+
+  if (reelsOpenedFromBottomTab) {
+    reelsOpenedFromBottomTab = false;
+    reelsPage.style.display = "none";
+    // One Back/close action returns straight to the main Home entry.
+    const homeTab = document.querySelector('.bBtn[data-v="home"]');
+    if (homeTab) homeTab.click();
+    else {
+      document.querySelectorAll(".page").forEach(page => { page.style.display = "none"; });
+      const homePage = document.getElementById("homePage");
+      if (homePage) homePage.style.display = "block";
+      try { sessionStorage.setItem("instapro-last-page", "home"); } catch (_) {}
+    }
+  }
 
   if (reelsObserver) {
     reelsObserver.disconnect();
@@ -1239,12 +1263,16 @@ function startReelsSystem() {
 document.addEventListener("click", event => {
   const reelsTab = event.target.closest('.bBtn[data-v="reels"]');
   if (!reelsTab) return;
-  // Let the app's normal tab navigation finish first, then open the full-screen player.
+  // Open the full-screen player on the first tap, without showing the grid page.
+  reelsOpenedFromBottomTab = true;
   setTimeout(() => {
     const videoReels = reelsData.filter(post => isVideo(post) && mediaURL(post));
     if (videoReels.length) openReelsViewer(0);
-    else showReelsMessage("Abhi koi video Reel nahi hai.");
-  }, 120);
+    else {
+      reelsOpenedFromBottomTab = false;
+      showReelsMessage("Abhi koi video Reel nahi hai.");
+    }
+  }, 0);
 }, true);
 
 if (document.readyState === "loading") {
@@ -1252,3 +1280,12 @@ if (document.readyState === "loading") {
 } else {
   startReelsSystem();
 }
+
+
+// Android/browser Back while the full-screen player is open returns directly to Home.
+window.addEventListener("popstate", () => {
+  const viewer = document.getElementById("ipReelsViewer");
+  if (!viewer?.classList.contains("ipr-open")) return;
+  reelsHistoryEntryAdded = false;
+  closeReelsViewer();
+});
