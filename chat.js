@@ -65,6 +65,24 @@ function injectChatStyles() {
   style.id = "instaproChatMotionStyles";
   style.textContent = `
     #chatPage { color:#f7f7f7; }
+    #chatPage #chatListView { background:#000!important; }
+    #chatPage #chatListView > div:first-child { background:rgba(0,0,0,.94)!important; }
+    #chatPage #chatOwnName { font-size:22px!important; font-weight:750; letter-spacing:-.4px; }
+    #chatPage #chatListView #userSearch { font-size:16px; }
+    #chatPage #storyInChat { align-items:flex-start; }
+    #chatPage #storyInChat > * { min-width:76px; }
+    #chatPage #usersList { padding-bottom:100px!important; }
+    #chatPage .ip-chat-list-row { min-height:94px; gap:13px!important; padding:12px 18px!important; box-sizing:border-box; }
+    #chatPage .ip-chat-list-row .ip-chat-list-avatar { width:70px!important;height:70px!important;flex:0 0 70px; border-radius:50%;object-fit:cover;background:#242424;border:1px solid rgba(255,255,255,.08); }
+    #chatPage .ip-chat-row-name { font-size:17px!important;font-weight:750;letter-spacing:-.2px; }
+    #chatPage .ip-chat-row-preview { font-size:14px!important;margin-top:7px!important; }
+    #chatPage .ip-chat-row-open { flex:0 0 18px;color:#8d8d93;font-size:24px;line-height:1;text-align:center; }
+    #chatPage .ip-chat-delete { flex:0 0 48px!important;width:48px!important;height:48px!important;border-radius:50%!important;background:#111!important;border:1px solid #303034!important;color:#aeb5bb!important;font-size:21px!important;display:flex;align-items:center;justify-content:center; }
+    #chatPage .ip-chat-list-row:hover { background:#0d0d0d!important; }
+    #chatPage .ip-chat-story-avatar { width:76px;height:76px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf);box-sizing:border-box; }
+    #chatPage .ip-chat-story-avatar img { width:100%;height:100%;border-radius:50%;border:2px solid #000;object-fit:cover;display:block; }
+    #chatPage .ip-chat-story-name { font-size:12px;margin-top:5px;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+
     #chatPage button, #chatPage input { -webkit-tap-highlight-color:transparent; }
     #chatPage button { transition:transform .16s ease, opacity .16s ease, background-color .2s ease, box-shadow .2s ease; }
     #chatPage button:active { transform:scale(.94); }
@@ -296,19 +314,22 @@ function renderList(users, chatMap = new Map()) {
   list.innerHTML = "";
   sorted.forEach(user => {
     const chat = chatMap.get(user.uid) || {};
-    const row = document.createElement("button");
-    row.type = "button";
-    row.style.cssText = "width:100%;display:flex;align-items:center;gap:12px;padding:10px 16px;border:0;background:transparent;color:white;text-align:left;cursor:pointer;";
-    row.innerHTML = `<img src="${escapeHTML(photoOf(user))}" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:#222;"><span style="flex:1;min-width:0;"><b style="display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(nameOf(user))}</b><small style="display:block;margin-top:5px;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(chat.lastMessage || "Tap to message")}</small></span><span style="opacity:.55;">›</span>`;
+    const row = document.createElement("div");
+    row.className = "ip-chat-list-row";
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    row.style.cssText = "width:100%;display:flex;align-items:center;border:0;background:transparent;color:white;text-align:left;cursor:pointer;";
+    row.innerHTML = `<img class="ip-chat-list-avatar" src="${escapeHTML(photoOf(user))}" alt=""><span style="flex:1;min-width:0;"><b class="ip-chat-row-name" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(nameOf(user))}</b><small class="ip-chat-row-preview" style="display:block;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(chat.lastMessage || "Tap to message")}</small></span><span class="ip-chat-row-open" aria-hidden="true">›</span>`;
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.textContent = "🗑";
+    deleteButton.className = "ip-chat-delete";
+    deleteButton.textContent = "🗑️";
     deleteButton.title = "Delete chat";
     deleteButton.setAttribute("aria-label", "Delete chat");
-    deleteButton.style.cssText = "flex:0 0 36px;width:36px;height:36px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.08);backdrop-filter:blur(14px);color:#fff;cursor:pointer;";
     deleteButton.addEventListener("click", event => { event.stopPropagation(); deleteChatForMe(user.uid); });
     row.appendChild(deleteButton);
     row.addEventListener("click", () => openChat(user));
+    row.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openChat(user); } });
     list.appendChild(row);
   });
 }
