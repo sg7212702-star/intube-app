@@ -496,7 +496,7 @@ function renderReelsGrid(grid) {
 
   grid.innerHTML = visible.map(post => `
     <div class="ipr-grid-item" data-reel-id="${escapeHTML(post.id)}">
-      <video src="${escapeHTML(mediaURL(post))}" muted playsinline preload="metadata"></video>
+      <video src="${escapeHTML(mediaURL(post))}" muted playsinline preload="auto"></video>
       <div class="ipr-grid-label">▶ ${Number(post.viewCount ?? post.viewsCount ?? post.playCount ?? post.views) || 0} views</div>
     </div>
   `).join("");
@@ -522,7 +522,7 @@ function renderReelsSlides(track) {
     return `
       <section class="ipr-slide" data-slide-id="${id}">
         <video class="ipr-media" src="${escapeHTML(mediaURL(post))}"
-          playsinline loop preload="metadata"></video>
+          playsinline loop preload="auto" disablepictureinpicture></video>
         <div class="ipr-shade"></div>
         <div class="ipr-heart">❤️</div>
         <div class="ipr-like-faces" data-like-faces="${id}" aria-label="People who liked this Reel"></div>
