@@ -84,7 +84,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
   getDoc,
@@ -201,20 +201,11 @@ $("googleBtn").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     await finishLogin(result.user);
   } catch (error) {
-    if (["auth/popup-blocked","auth/popup-closed-by-user","auth/cancelled-popup-request","auth/operation-not-supported-in-this-environment"].includes(error.code)) {
-      try { const provider = new GoogleAuthProvider(); provider.setCustomParameters({prompt:"select_account"}); await signInWithRedirect(auth, provider); return; }
-      catch (redirectError) { error = redirectError; }
-    }
     $("googleBtn").disabled = false;
     $("googleBtn").textContent = "Continue with Google";
     showError((error.code ? error.code + ": " : "") + error.message);
   }
 };
-getRedirectResult(auth).then(async result => { if (result?.user) await finishLogin(result.user); }).catch(error => {
-  console.error("Google redirect login failed:", error);
-  showError((error.code ? error.code + ": " : "") + error.message);
-  $("googleBtn").disabled = false; $("googleBtn").textContent = "Continue with Google";
-});
 async function finishLogin(user) {
   try { await saveProfile(user); } catch (error) { console.error("Profile save failed:", error); }
   window.location.replace("index.html");
