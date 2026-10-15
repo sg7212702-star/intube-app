@@ -1060,9 +1060,60 @@ async function shareProfilePost(post) {
 
 const postTiles = grid.querySelectorAll(".ipp-tile");
 postTiles.forEach(tile => {
-  function openFromTile() {
+  async function openFromTile() {
     const post = filtered.find(item => item.id === tile.dataset.postId);
-    openSelectedPost(post);
+    if (!post) return;
+
+    // Profile grid must reuse the app's existing Home feed / Reels feed,
+    // not create a second, profile-specific post viewer.
+    const isProfileReel = isReel(post);
+    closePostViewer();
+    closeProfile();
+
+    document.querySelectorAll(".page").forEach(section => {
+      section.style.display = "none";
+    });
+
+    if (isProfileReel) {
+      const reelsPage = document.getElementById("reelsPage");
+      if (!reelsPage) {
+        alert("Reels feed nahi mila. reels.js check karein.");
+        return;
+      }
+      reelsPage.style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // Wait for the existing realtime Reels grid to render, then use its
+      // normal click handler so the standard Reels viewer/actions are used.
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const reelTile = document.querySelector('#ipReelsGrid [data-reel-id="' + CSS.escape(post.id) + '"]');
+        if (reelTile) {
+          reelTile.click();
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      alert("Yeh Reel abhi Reels feed mein nahi mili. Feed refresh karke dobara try karein.");
+      return;
+    }
+
+    const homePage = document.getElementById("homePage");
+    if (!homePage) return;
+    homePage.style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.InstaProFeed?.refresh?.();
+
+    // The Home feed owns its normal post cards and their like/comment/share
+    // controls. Scroll to the matching card instead of opening a duplicate UI.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const card = document.querySelector('.instapro-feed-post[data-post-id="' + CSS.escape(post.id) + '"]');
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    alert("Yeh Post abhi Home feed mein nahi mili. Feed refresh karke dobara try karein.");
   }
   tile.addEventListener("click", openFromTile);
   tile.addEventListener("keydown", event => {
