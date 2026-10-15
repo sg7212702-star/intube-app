@@ -3,6 +3,7 @@ import { db, auth } from "./firebase.js";
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   addDoc,
   updateDoc,
@@ -29,6 +30,7 @@ let postsUnsub = null;
 let repostsUnsub = null;
 let ownedProfilePosts = [];
 let repostedProfilePosts = [];
+let savedProfilePosts = [];
 let storiesUnsub = null;
 let postViewerUnsub = null;
 let commentsViewerUnsub = null;
@@ -755,6 +757,7 @@ function render(data = profileData, posts = profilePosts) {
           >
             ♙ TAGGED
           </button>
+          ${own ? `<button class="ipp-tab ${activeTab === "saved" ? "active" : ""}" data-tab="saved">🔖 SAVED</button>` : ""}
 
         </div>
 
@@ -855,15 +858,18 @@ function render(data = profileData, posts = profilePosts) {
     filtered = ownPosts.filter(post => isVideo(post));
   } else if (activeTab === "reposts") {
     filtered = ownReposts.map(post => ({ ...post, __profileRepost: true }));
+  } else if (activeTab === "saved" && own) {
+    filtered = savedProfilePosts;
+  } else if (activeTab === "tagged") {
+    filtered = availablePosts.filter(post => {
+      const tags = [post.taggedUsers, post.taggedUids, post.mentionedUids, post.peopleTagged, post.taggedUserIds]
+        .flatMap(value => Array.isArray(value) ? value : value && typeof value === "object" ? Object.keys(value).filter(key => value[key]) : [])
+        .map(value => String(typeof value === "object" ? value.uid || value.userId || value.id || "" : value));
+      return tags.includes(String(uid));
+    });
   }
 
-  if (activeTab === "tagged") {
-    grid.innerHTML = `
-      <div class="ipp-empty">
-        Tagged posts ke liye tagging system abhi alag se add karna hoga.
-      </div>
-    `;
-  } else if (!filtered.length) {
+  if (!filtered.length) {
     grid.innerHTML = `
       <div class="ipp-empty">
         <div style="font-size:38px">▧</div>
@@ -1264,8 +1270,28 @@ postTiles.forEach(tile => {
     openProfile(uid);
 
   page.querySelectorAll("[data-tab]").forEach(button => {
-    button.onclick = () => {
+    button.onclick = async () => {
       activeTab = button.dataset.tab;
+      if (activeTab === "saved" && myId() === viewingUid) {
+        const grid = $("#ippGrid", page);
+        if (grid) grid.innerHTML = '<div class="ipp-empty">Loading saved posts…</div>';
+        try {
+          const savedSnap = await getDocs(collection(db, "savedPosts", viewingUid, "posts"));
+          const ids = savedSnap.docs.map(item => item.id || item.data().postId).filter(Boolean);
+          const docs = await Promise.all(ids.map(async id => {
+            try {
+              const postSnap = await getDoc(doc(db, "posts", String(id)));
+              return postSnap.exists() ? { id: postSnap.id, ...postSnap.data() } : null;
+            } catch (error) { console.warn("Saved post could not load:", error); return null; }
+          }));
+          const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
+          savedProfilePosts = docs.filter(Boolean).filter(post => !deleted.has(String(post.id)));
+        } catch (error) {
+          console.error("Saved profile posts load failed:", error);
+          savedProfilePosts = [];
+          alert("Saved posts load nahi hue. Firebase Rules check karein.");
+        }
+      }
       render();
     };
   });
