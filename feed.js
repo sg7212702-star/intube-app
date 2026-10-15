@@ -1792,7 +1792,27 @@ function openPostOwnerProfile(uid) {
 // ------------------------------------------------------
 
 if (feed) {
-  feed.addEventListener("click", async event => {
+  feed.addEventListener("click", event => {
+    // Tapping a video in Home Feed opens that exact post in the full-screen Reels viewer.
+    const video = event.target.closest("video.ip-feed-media");
+    if (!video) return;
+    const card = video.closest(".instapro-feed-post");
+    const postId = card?.dataset.postId;
+    if (!postId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const openReel = () => window.InstaProReels?.openPost?.(postId);
+    if (typeof window.InstaProReels?.openPost === "function") {
+      openReel();
+    } else {
+      import("./reels.js").then(() => setTimeout(openReel, 250)).catch(error => {
+        console.error("Could not open video in Reels feed:", error);
+        alert("Reels feed open nahi ho payi. App refresh karke dobara try karein.");
+      });
+    }
+  });
+
+feed.addEventListener("click", async event => {
     const button = event.target.closest("[data-feed-action]");
 
     if (!button) return;
