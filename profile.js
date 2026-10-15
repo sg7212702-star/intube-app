@@ -26,6 +26,9 @@ const UPLOAD_PRESET = "intube_free";
 let profileUnsub = null;
 let viewerUnsub = null;
 let postsUnsub = null;
+let repostsUnsub = null;
+let ownedProfilePosts = [];
+let repostedProfilePosts = [];
 let storiesUnsub = null;
 let postViewerUnsub = null;
 let commentsViewerUnsub = null;
@@ -118,6 +121,7 @@ function stopListeners() {
   if (profileUnsub) profileUnsub();
   if (viewerUnsub) viewerUnsub();
   if (postsUnsub) postsUnsub();
+  if (repostsUnsub) repostsUnsub();
   if (storiesUnsub) storiesUnsub();
   if (postViewerUnsub) postViewerUnsub();
   if (commentsViewerUnsub) commentsViewerUnsub();
@@ -125,6 +129,9 @@ function stopListeners() {
   profileUnsub = null;
   viewerUnsub = null;
   postsUnsub = null;
+  repostsUnsub = null;
+  ownedProfilePosts = [];
+  repostedProfilePosts = [];
   storiesUnsub = null;
   profileStories = [];
   postViewerUnsub = null;
@@ -526,6 +533,11 @@ function render(data = profileData, posts = profilePosts) {
   const ownPosts = posts.filter(
     post => postOwner(post) === uid
   );
+  const ownReposts = posts.filter(
+    post => postOwner(post) !== uid &&
+      Array.isArray(post.repostedBy) &&
+      post.repostedBy.includes(uid)
+  );
 
   const postCount = privateLocked ? 0 : ownPosts.filter(
     post => !isReel(post)
@@ -707,6 +719,13 @@ function render(data = profileData, posts = profilePosts) {
           </button>
 
           <button
+            class="ipp-tab ${activeTab === "reposts" ? "active" : ""}"
+            data-tab="reposts"
+          >
+            ↻ REPOSTS (${privateLocked ? 0 : ownReposts.length})
+          </button>
+
+          <button
             class="ipp-tab ${activeTab === "tagged" ? "active" : ""}"
             data-tab="tagged"
           >
@@ -794,6 +813,8 @@ function render(data = profileData, posts = profilePosts) {
     filtered = ownPosts.filter(post => !isReel(post));
   } else if (activeTab === "reels") {
     filtered = ownPosts.filter(post => isReel(post));
+  } else if (activeTab === "reposts") {
+    filtered = ownReposts.map(post => ({ ...post, __profileRepost: true }));
   }
 
   if (activeTab === "tagged") {
@@ -825,6 +846,7 @@ function render(data = profileData, posts = profilePosts) {
     aria-label="Open post"
     style="cursor:pointer"
   >
+    ${post.__profileRepost ? '<span style="position:absolute;z-index:2;left:6px;top:6px;padding:4px 6px;border-radius:7px;background:#111b;color:#fff;font-size:10px;font-weight:800">↻ Reposted</span>' : ""}
     ${isVideo(post) ? `
       <video
         src="${esc(url)}"
@@ -916,11 +938,16 @@ async function openSelectedPost(post) {
       if (!snap.exists()) throw new Error("Post ab available nahi hai.");
       const currentLikes = Array.isArray(snap.data().likes) ? snap.data().likes : [];
       const already = currentLikes.includes(user.uid);
+      const nextCount = Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1));
       await updateDoc(ref, {
         likes: already ? arrayRemove(user.uid) : arrayUnion(user.uid),
-        likesCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1)),
-        likeCount: Math.max(0, Number(snap.data().likesCount ?? currentLikes.length) + (already ? -1 : 1))
+        likesCount: nextCount,
+        likeCount: nextCount
       });
+      button.textContent = already ? "♡" : "♥";
+      button.style.color = already ? "#fff" : "#ff3158";
+      button.setAttribute("aria-pressed", String(!already));
+      $("#ippLikeCount", viewer).textContent = nextCount + (nextCount === 1 ? " like" : " likes");
       if (!already && postOwner(post) && postOwner(post) !== user.uid) {
         try {
           await addDoc(collection(db, "users", postOwner(post), "notifications"), {
@@ -1781,10 +1808,11 @@ postsUnsub = onSnapshot(
   ),
 
     snapshot => {
-      profilePosts = snapshot.docs.map(item => ({
+      ownedProfilePosts = snapshot.docs.map(item => ({
         id: item.id,
         ...item.data()
       }));
+      profilePosts = [...ownedProfilePosts, ...repostedProfilePosts];
 
       profilePosts.sort((a, b) => {
         const timeValue = value => {
@@ -1816,6 +1844,23 @@ postsUnsub = onSnapshot(
         `;
       }
     }
+  );
+
+  // Live Reposts tab: show original posts the profile owner has reposted.
+  repostsUnsub = onSnapshot(
+    query(collection(db, "posts"), where("repostedBy", "array-contains", targetUid), limit(200)),
+    snapshot => {
+      repostedProfilePosts = snapshot.docs
+        .map(item => ({ id: item.id, ...item.data() }))
+        .filter(post => postOwner(post) !== targetUid);
+      profilePosts = [...ownedProfilePosts, ...repostedProfilePosts];
+      profilePosts.sort((a, b) => {
+        const timeValue = value => value?.toMillis ? value.toMillis() : value?.toDate ? value.toDate().getTime() : Number(value || 0);
+        return timeValue(b.createdAt || b.time) - timeValue(a.createdAt || a.time);
+      });
+      render(profileData, profilePosts);
+    },
+    error => console.warn("Profile reposts listener error:", error)
   );
 
   // Realtime profile story ring. Normalize Firebase timestamps and UID types
