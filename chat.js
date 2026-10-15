@@ -519,7 +519,7 @@ function openChat(user) {
   });
 }
 
-async async function saveMessage(payload, previewText) {
+async function saveMessage(payload, previewText) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) throw new Error("Please sign in first.");
   const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
   await setDoc(doc(db, "chats", chatId), { participants: [currentUser.uid, selectedUser.uid], lastMessage: previewText, lastSenderUid: currentUser.uid, updatedAt: serverTimestamp(), hiddenFor: arrayRemove(currentUser.uid) }, { merge: true });
@@ -528,7 +528,7 @@ async async function saveMessage(payload, previewText) {
   catch (e) { console.warn("Chat notification not saved; check Firestore Rules:", e); }
   return messageRef;
 }
-async async function sendMsg(event) {
+async function sendMsg(event) {
   event?.preventDefault();
   const input = $("chatInput"), text = input?.value.trim();
   if (!text || !currentUser || !selectedUser || currentUser.isAnonymous) return;
@@ -545,7 +545,7 @@ async function uploadChatMedia(file) {
   if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "Media upload fail hua.");
   return result.secure_url;
 }
-async async function sendMedia(file, mediaType) {
+async function sendMedia(file, mediaType) {
   if (!currentUser || !selectedUser || currentUser.isAnonymous) { alert("Pehle Google se login karein."); return; }
   if (file.size > 100 * 1024 * 1024) { alert("File 100 MB se chhoti honi chahiye."); return; }
   const attach = $("chatAttach"), camera = $("chatCamera");
