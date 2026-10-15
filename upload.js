@@ -1,4 +1,4 @@
-// upload.js - InstaPro Firebase + Cloudinary Upload
+// upload.js - InstaPro Firebase + Cloudinary Upload | Story sticker tray refresh 2026-10-15
 
 import { auth, db } from "./firebase.js";
 
