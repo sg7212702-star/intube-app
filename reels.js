@@ -1001,16 +1001,28 @@ function startReelsSystem() {
 
   unsubscribeReels = onSnapshot(
     postsQuery,
-    snapshot => {
-      reelsData = snapshot.docs.map(item => ({
-        id: item.id,
-        ...item.data()
-      }));
-
-      // Rank available Reels using freshness and existing engagement signals.
-      // Firestore onSnapshot remains the source of truth and refreshes this ranking live.
-      reelsData = rankReelsForViewer(reelsData);
-
+    async snapshot => {
+      const rawReels = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      const privacyApi = window.InstaProPrivate;
+      const viewerUid = currentUser()?.uid || "";
+      const visibleReels = [];
+      for (const reel of rawReels) {
+        const owner = reel.uid || reel.userId || reel.authorId || reel.ownerUid || "";
+        if (owner && owner !== viewerUid && privacyApi) {
+          try {
+            const privacy = await privacyApi.getAccountPrivacy(owner);
+            if (privacy.isPrivate && !(await privacyApi.canViewAccountContent(owner, viewerUid))) continue;
+          } catch (privacyError) {
+            console.warn("Could not verify Reel account privacy; hiding Reel:", privacyError);
+            continue;
+          }
+        } else if (owner && owner !== viewerUid && !privacyApi) {
+          // Fail closed until privacy helpers have initialized.
+          continue;
+        }
+        visibleReels.push(reel);
+      }
+      reelsData = rankReelsForViewer(visibleReels);
       renderReelsGrid(grid);
     },
     error => {
