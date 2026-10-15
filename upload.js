@@ -367,6 +367,15 @@ function openStoryEditor(file) {
       #ip-story-editor .ips-placed-text.selected{border-color:#fff;background:#0002}
       #ip-story-editor .ips-placed-text[data-bg="solid"]{background:#fff;color:#111;text-shadow:none}
       #ip-story-editor .ips-placed-text[data-bg="fade"]{background:linear-gradient(90deg,#0000,#000a,#0000);text-shadow:0 2px 8px #000}
+      #ip-story-editor .ips-draw-panel{display:none;position:relative;z-index:7;padding:10px 12px;border:1px solid #ffffff24;border-radius:18px;background:rgba(20,18,28,.96);backdrop-filter:blur(22px)}
+      #ip-story-editor .ips-draw-panel.open{display:block}
+      #ip-story-editor .ips-draw-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+      #ip-story-editor .ips-draw-head b{flex:1}
+      #ip-story-editor .ips-draw-head button{border:1px solid #ffffff2a;border-radius:15px;background:#ffffff15;color:#fff;padding:6px 10px}
+      #ip-story-editor .ips-draw-colors{display:flex;gap:10px;padding:4px 0}
+      #ip-story-editor .ips-draw-colors button{width:25px;height:25px;border-radius:50%;border:2px solid #ffffff99}
+      #ip-story-editor .ips-draw-size{display:flex;align-items:center;gap:10px;font-size:12px}
+      #ip-story-editor .ips-draw-size input{flex:1}
       #ip-story-editor .ips-sticker-panel{display:none;max-height:34vh;overflow:auto;padding:12px;border:1px solid #ffffff24;border-radius:20px;background:rgba(20,18,28,.94);backdrop-filter:blur(22px);box-shadow:0 12px 35px #0008}
       #ip-story-editor .ips-sticker-panel.open{display:block}
       #ip-story-editor .ips-sticker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px}
@@ -423,21 +432,24 @@ function openStoryEditor(file) {
     };
     const stickerCanvas = modal.querySelector("#ip-story-sticker-canvas");
     const stickerPanel = modal.querySelector(".ips-sticker-panel");
-    let stickerTouchStartY = null;
-    let stickerTouchStartX = null;
-    let stickerPanelStartY = 0;
-    stickerPanel.addEventListener("touchstart", e => {
-      if (!stickerPanel.classList.contains("open")) return;
-      const t=e.touches[0]; stickerTouchStartY=t.clientY; stickerTouchStartX=t.clientX; stickerPanelStartY=stickerPanel.getBoundingClientRect().top;
-    }, {passive:true});
-    stickerPanel.addEventListener("touchend", e => {
-      if (stickerTouchStartY===null || !stickerPanel.classList.contains("open")) return;
-      const t=e.changedTouches[0], dy=t.clientY-stickerTouchStartY, dx=t.clientX-stickerTouchStartX;
-      if (dy>55 && Math.abs(dy)>Math.abs(dx)*1.15) {
-        stickerPanel.classList.remove("open");
-      }
-      stickerTouchStartY=null; stickerTouchStartX=null;
-    }, {passive:true});
+    const effectsPanel = modal.querySelector(".ips-effects-panel");
+    // Instagram-like swipe-down-to-dismiss for every bottom editing tray.
+    const addSwipeToClose = (panel) => {
+      let startY=null, startX=null;
+      panel.addEventListener("touchstart", e => {
+        if (!panel.classList.contains("open")) return;
+        const t=e.touches[0]; startY=t.clientY; startX=t.clientX;
+      }, {passive:true});
+      panel.addEventListener("touchend", e => {
+        if (startY===null || !panel.classList.contains("open")) return;
+        const t=e.changedTouches[0], dy=t.clientY-startY, dx=t.clientX-startX;
+        if (dy>45 && Math.abs(dy)>Math.abs(dx)*1.1) panel.classList.remove("open");
+        startY=null; startX=null;
+      }, {passive:true});
+    };
+    addSwipeToClose(stickerPanel);
+    addSwipeToClose(textPanel);
+    addSwipeToClose(effectsPanel);
     let activeSticker = null;
     const stickerState = [];
     const selectSticker = (node) => {
@@ -515,6 +527,8 @@ function openStoryEditor(file) {
         modal.querySelector(".ips-sticker-panel").classList.remove("open");
         return;
       }
+      const drawColor=e.target.closest("[data-draw-color]");
+      if(drawColor){const cv=modal.querySelector(".ips-draw-canvas");if(cv){cv.getContext("2d").strokeStyle=drawColor.dataset.drawColor;cv.style.pointerEvents="auto";}return;}
       const textControl=e.target.closest("[data-text-style],[data-text-color],[data-text-align],[data-text-bg],[data-text-size]");
       if(textControl){
         if(textControl.dataset.textStyle){textStyle=textControl.dataset.textStyle;textPanel.querySelectorAll("[data-text-style]").forEach(b=>b.classList.toggle("active",b===textControl))}
@@ -564,7 +578,29 @@ function openStoryEditor(file) {
           } catch(error) { alert("Story save nahi ho payi: "+error.message); }
         }
       }
-      if (act === "draw") alert("Draw tool agle update mein add hoga. Abhi text aur effects use kar sakte hain.");
+      if (act === "draw") {
+        let drawPanel=modal.querySelector(".ips-draw-panel");
+        if(!drawPanel){
+          drawPanel=document.createElement("div"); drawPanel.className="ips-draw-panel open";
+          drawPanel.innerHTML='<div class="ips-draw-head"><b>Draw</b><button type="button" data-act="clear-draw">Clear</button><button type="button" data-act="close-draw">Done ✓</button></div><div class="ips-draw-colors"><button data-draw-color="#ffffff" style="background:#fff"></button><button data-draw-color="#ff4267" style="background:#ff4267"></button><button data-draw-color="#ffb52e" style="background:#ffb52e"></button><button data-draw-color="#4de5a0" style="background:#4de5a0"></button><button data-draw-color="#42b9ff" style="background:#42b9ff"></button><button data-draw-color="#b78aff" style="background:#b78aff"></button></div><label class="ips-draw-size">Brush size <input type="range" min="2" max="28" value="6" data-draw-size></label>';
+          modal.querySelector(".ips-bottom").prepend(drawPanel);
+          const canvas=document.createElement("canvas");canvas.className="ips-draw-canvas";canvas.width=modal.clientWidth*2;canvas.height=modal.clientHeight*2;
+          canvas.style.width="100%";canvas.style.height="100%";canvas.style.position="absolute";canvas.style.inset="0";canvas.style.zIndex="4";canvas.style.pointerEvents="auto";canvas.style.touchAction="none";
+          modal.querySelector(".ips-stage").appendChild(canvas);
+          const ctx=canvas.getContext("2d");ctx.scale(2,2);ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#ffffff";ctx.lineWidth=6;
+          let drawing=false;
+          const point=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+          canvas.addEventListener("pointerdown",e=>{drawing=true;const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);canvas.setPointerCapture(e.pointerId)});
+          canvas.addEventListener("pointermove",e=>{if(!drawing)return;const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke()});
+          const stop=()=>drawing=false;canvas.addEventListener("pointerup",stop);canvas.addEventListener("pointercancel",stop);
+          drawPanel.querySelectorAll("[data-draw-color]").forEach(b=>b.addEventListener("click",()=>ctx.strokeStyle=b.dataset.drawColor));
+          drawPanel.querySelector("[data-draw-size]").addEventListener("input",e=>ctx.lineWidth=Number(e.target.value));
+          drawPanel.dataset.ready="1";
+        } else {drawPanel.classList.add("open");}
+      }
+      if (act === "close-draw") {modal.querySelector(".ips-draw-panel")?.classList.remove("open");const cv=modal.querySelector(".ips-draw-canvas");if(cv)cv.style.pointerEvents="none";}
+      if (act === "clear-draw") {const cv=modal.querySelector(".ips-draw-canvas");if(cv){const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);}}
+      if (act === "close-draw") {const cv=modal.querySelector(".ips-draw-canvas");if(cv)cv.style.pointerEvents="none";}
       if (act === "music") {
         const title = prompt("Music track ka naam ya URL daalein");
         if (title) {
