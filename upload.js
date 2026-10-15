@@ -331,14 +331,16 @@ function openStoryEditor(file) {
     STORY_FILTERS.forEach(([name, filter], i) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.style.cssText = "flex:0 0 68px;width:68px;padding:0;background:transparent;color:white;border:0;font-size:11px;";
+      btn.style.cssText = "flex:0 0 62px;width:62px;padding:0;background:transparent;color:white;border:0;font-size:10px;";
+      btn.className = i === 0 ? "active" : "";
       btn.innerHTML = '<span style="display:block;width:62px;height:62px;border-radius:10px;background:#333;margin-bottom:5px;overflow:hidden"><img src="'+(isVideo ? "" : url)+'" style="width:100%;height:100%;object-fit:cover;filter:'+filter+'"></span>'+name;
       if (isVideo) btn.querySelector("span").style.filter = filter;
       btn.addEventListener("click", () => {
         selectedFilter = i;
         preview.style.filter = filter;
-        filterRow.querySelectorAll("button").forEach(b => b.style.opacity = ".65");
+        filterRow.querySelectorAll("button").forEach(b => { b.style.opacity = ".78"; b.classList.remove("active"); });
         btn.style.opacity = "1";
+        btn.classList.add("active");
       });
       filterRow.appendChild(btn);
     });
@@ -357,6 +359,24 @@ function openStoryEditor(file) {
         const value = prompt("Sticker choose karein: ❤️ 😂 🔥 ✨ 😍 🎉", "❤️");
         if (value) modal.querySelector("#ip-story-overlay-text").textContent += " " + value;
         overlayText = modal.querySelector("#ip-story-overlay-text").textContent;
+      }
+      if (act === "effects") {
+        const panel = modal.querySelector(".ips-effects-panel");
+        panel.classList.toggle("open");
+        if (panel.classList.contains("open")) panel.scrollIntoView({behavior:"smooth",block:"end"});
+      }
+      if (act === "save") {
+        if (isVideo) {
+          const link = document.createElement("a"); link.href = url; link.download = file.name || "instapro-story-video"; link.click();
+        } else {
+          const image = new Image(); image.src = url;
+          try {
+            await image.decode();
+            const canvas = document.createElement("canvas"); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+            const ctx = canvas.getContext("2d"); ctx.filter = STORY_FILTERS[selectedFilter][1]; ctx.drawImage(image,0,0);
+            canvas.toBlob(blob => { if (!blob) return; const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="instapro-story.jpg"; link.click(); setTimeout(()=>URL.revokeObjectURL(link.href),1500); }, "image/jpeg", .94);
+          } catch(error) { alert("Story save nahi ho payi: "+error.message); }
+        }
       }
       if (act === "draw") alert("Draw tool agle update mein add hoga. Abhi text aur effects use kar sakte hain.");
       if (act === "music") {
