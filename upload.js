@@ -259,50 +259,69 @@ function openStoryEditor(file) {
     modal.id = "ip-story-editor";
     modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#fff;font-family:Arial,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
     modal.innerHTML = `
-      <header style="height:54px;display:flex;align-items:center;gap:18px;padding:0 16px;flex-shrink:0">
-        <button data-act="cancel" aria-label="Back" style="background:none;border:0;color:white;font-size:30px">‹</button>
-        <strong style="font-size:17px;flex:1">Story editor</strong>
-        <button data-act="text" style="border:0;background:#ffffff22;color:white;border-radius:20px;padding:9px 13px">Aa Text</button>
-      </header>
-      <div style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111">
-        <div id="ip-story-preview-wrap" style="position:relative;max-width:100%;max-height:100%;width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-          ${isVideo ? '<video id="ip-story-preview" playsinline controls style="max-width:100%;max-height:100%;object-fit:contain"></video>' : '<img id="ip-story-preview" style="max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain">'}
-          <div id="ip-story-overlay-text" style="position:absolute;left:8%;right:8%;top:45%;text-align:center;font-size:30px;font-weight:700;text-shadow:0 2px 8px #000;overflow-wrap:anywhere"></div>
+      <div class="ips-stage">
+        <div class="ips-topbar">
+          <button data-act="cancel" aria-label="Back">‹</button>
+          <span class="ips-top-title">Story</span>
+          <button data-act="text" aria-label="Add text">Aa</button>
         </div>
-      </div>
-      <div style="padding:10px 12px 4px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b>Effects</b><small>50+ filters · swipe horizontally</small></div>
-        <div id="ip-story-filters" style="display:flex;gap:10px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none"></div>
-        <input id="ip-story-caption" placeholder="Add a caption..." maxlength="2200" style="box-sizing:border-box;width:100%;padding:13px 12px;background:#171717;color:white;border:1px solid #444;border-radius:12px;font-size:15px;margin:5px 0 12px">
-        <div style="display:flex;gap:10px;padding-bottom:10px">
-          <button data-act="stickers" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">☻ Stickers</button>
-          <button data-act="music" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">♫ Music</button>
-          <button data-act="draw" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">〰 Draw</button>
+        <div class="ips-media" id="ip-story-preview-wrap">
+          ${isVideo ? '<video id="ip-story-preview" playsinline controls></video>' : '<img id="ip-story-preview" alt="Story preview">'}
+          <div id="ip-story-overlay-text"></div>
         </div>
-        <button data-act="share" style="width:100%;border:0;border-radius:28px;background:#4058f5;color:white;font-weight:700;font-size:17px;padding:15px;margin-bottom:8px">Your story  ›</button>
-      </div>`;
+        <nav class="ips-side-tools" aria-label="Story editing tools">
+          <button data-act="text"><span>Aa</span><small>Text</small></button>
+          <button data-act="stickers"><span>☻</span><small>Stickers</small></button>
+          <button data-act="music"><span>♫</span><small>Music</small></button>
+          <button data-act="effects"><span>✧</span><small>Effects</small></button>
+          <button data-act="draw"><span>〰</span><small>Draw</small></button>
+          <button data-act="save"><span>↓</span><small>Save</small></button>
+        </nav>
+        <div class="ips-bottom">
+          <div class="ips-effects-panel">
+            <div class="ips-effects-heading"><b>Effects</b><small>Swipe to explore 50+</small></div>
+            <div id="ip-story-filters"></div>
+          </div>
+          <input id="ip-story-caption" placeholder="Add a caption..." maxlength="2200" aria-label="Story caption">
+          <button data-act="share" class="ips-share">Your story <span>›</span></button>
+        </div>
+      </div>`
     const premiumStyle = document.createElement("style");
     premiumStyle.textContent = `
-      #ip-story-editor{background:radial-gradient(ellipse at 50% 18%,#24202f 0%,#09090d 46%,#000 100%)!important;font-family:Inter,system-ui,-apple-system,sans-serif!important}
-      #ip-story-editor header{height:58px!important;padding:0 16px!important;border-bottom:1px solid #ffffff12;background:#09090dcc;backdrop-filter:blur(18px)}
-      #ip-story-editor header strong{font-size:16px!important;letter-spacing:.2px}
-      #ip-story-editor button{font-family:inherit;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease}
-      #ip-story-editor button:active{transform:scale(.96)}
-      #ip-story-editor [data-act="cancel"]{width:38px;height:38px;border-radius:50%;font-size:28px!important;background:#ffffff12!important;border:1px solid #ffffff20!important;display:grid;place-items:center;line-height:1}
-      #ip-story-editor [data-act="text"]{background:#ffffff16!important;border:1px solid #ffffff28!important;border-radius:22px!important;font-weight:700}
-      #ip-story-editor #ip-story-preview-wrap{max-width:430px!important;width:calc(100% - 28px)!important;height:100%!important;max-height:100%!important;border-radius:20px;overflow:hidden;background:#14141a;box-shadow:0 18px 55px #0009;border:1px solid #ffffff16}
-      #ip-story-editor #ip-story-preview{width:100%;height:100%;object-fit:contain}
-      #ip-story-editor>div:nth-of-type(2){padding:12px 14px 4px!important;background:linear-gradient(180deg,#08080a00,#08080a 20%)}
-      #ip-story-editor #ip-story-filters{gap:12px!important;padding:4px 2px 12px!important;scroll-snap-type:x mandatory}
-      #ip-story-editor #ip-story-filters button{flex-basis:70px!important;scroll-snap-align:start;opacity:.78;white-space:nowrap}
-      #ip-story-editor #ip-story-filters button span{height:66px!important;width:66px!important;border-radius:14px!important;border:2px solid #ffffff20;box-shadow:0 5px 14px #0005}
-      #ip-story-editor #ip-story-filters button:focus span{border-color:#fff;box-shadow:0 0 0 2px #8b5cf6}
-      #ip-story-editor #ip-story-caption{background:#ffffff0d!important;border:1px solid #ffffff20!important;border-radius:14px!important;outline:none}
-      #ip-story-editor #ip-story-caption:focus{border-color:#9b8aff!important;box-shadow:0 0 0 3px #8b5cf622}
-      #ip-story-editor [data-act="stickers"],#ip-story-editor [data-act="music"],#ip-story-editor [data-act="draw"]{background:#ffffff0d!important;border:1px solid #ffffff20!important;border-radius:24px!important;font-weight:650}
-      #ip-story-editor [data-act="share"]{background:linear-gradient(100deg,#7657ff,#b94cff)!important;box-shadow:0 8px 24px #7950ff45;border-radius:28px!important;letter-spacing:.1px}
-      @media(max-height:740px){#ip-story-editor header{height:48px!important}#ip-story-editor>div:nth-of-type(2){padding-top:5px!important}#ip-story-editor #ip-story-filters button span{height:52px!important;width:58px!important}}
-      @media(min-width:700px){#ip-story-editor #ip-story-preview-wrap{max-width:380px!important}}
+      #ip-story-editor{position:fixed!important;inset:0!important;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;background:#000!important;color:#fff!important;font-family:Inter,system-ui,-apple-system,sans-serif!important;overflow:hidden!important}
+      #ip-story-editor *{box-sizing:border-box}
+      #ip-story-editor .ips-stage{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;background:#000;overflow:hidden}
+      #ip-story-editor .ips-media{position:absolute;inset:0;width:100%;height:100%;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;background:#000!important;box-shadow:none!important;overflow:hidden;display:flex;align-items:center;justify-content:center}
+      #ip-story-editor #ip-story-preview{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;background:#000}
+      #ip-story-editor #ip-story-overlay-text{position:absolute;left:8%;right:18%;top:45%;text-align:center;font-size:30px;font-weight:750;text-shadow:0 2px 10px #000;overflow-wrap:anywhere;white-space:pre-wrap;pointer-events:none}
+      #ip-story-editor .ips-topbar{position:absolute;z-index:5;top:0;left:0;right:0;height:58px;padding:5px 12px;display:flex;align-items:center;gap:12px;background:linear-gradient(#0008,transparent)}
+      #ip-story-editor .ips-topbar button{width:40px;height:40px;border-radius:50%;border:1px solid #ffffff2b;background:#17171780;color:white;font-size:25px;display:grid;place-items:center;backdrop-filter:blur(12px)}
+      #ip-story-editor .ips-top-title{flex:1;font-size:15px;font-weight:700;text-shadow:0 1px 5px #000}
+      #ip-story-editor .ips-side-tools{position:absolute;z-index:6;right:10px;top:68px;display:flex;flex-direction:column;gap:11px;align-items:center;max-height:calc(100% - 255px);overflow-y:auto;scrollbar-width:none}
+      #ip-story-editor .ips-side-tools::-webkit-scrollbar{display:none}
+      #ip-story-editor .ips-side-tools button{width:48px;min-height:48px;padding:5px 2px;border:1px solid #ffffff26;border-radius:16px;background:#1010149c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;backdrop-filter:blur(14px);box-shadow:0 3px 12px #0003}
+      #ip-story-editor .ips-side-tools button span{font-size:23px;line-height:24px}
+      #ip-story-editor .ips-side-tools button small{font-size:9px;font-weight:600}
+      #ip-story-editor .ips-bottom{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000b 18%,#000e);display:flex;flex-direction:column;gap:9px}
+      #ip-story-editor .ips-effects-panel{display:none}
+      #ip-story-editor .ips-effects-panel.open{display:block}
+      #ip-story-editor .ips-effects-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:13px}
+      #ip-story-editor .ips-effects-heading small{opacity:.7;font-size:10px}
+      #ip-story-editor #ip-story-filters{display:flex;gap:10px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:none;scroll-snap-type:x mandatory}
+      #ip-story-editor #ip-story-filters::-webkit-scrollbar{display:none}
+      #ip-story-editor #ip-story-filters button{flex:0 0 62px;width:62px;padding:0;background:transparent;color:white;border:0;font-size:10px;scroll-snap-align:start;opacity:.78;white-space:nowrap}
+      #ip-story-editor #ip-story-filters button span{display:block!important;width:56px!important;height:56px!important;border-radius:50%!important;border:2px solid #ffffff45;margin:0 auto 4px!important;overflow:hidden;box-shadow:0 3px 10px #0008}
+      #ip-story-editor #ip-story-filters button.active{opacity:1!important;font-weight:750}
+      #ip-story-editor #ip-story-filters button.active span{border:2px solid #fff!important;box-shadow:0 0 0 2px #9b75ff}
+      #ip-story-editor #ip-story-caption{width:100%;min-height:43px;padding:11px 14px;background:#ffffff19;border:1px solid #ffffff38;border-radius:24px;color:#fff;font-size:14px;outline:none}
+      #ip-story-editor #ip-story-caption::placeholder{color:#ffffffd0}
+      #ip-story-editor #ip-story-caption:focus{border-color:#fff}
+      #ip-story-editor .ips-share{width:100%;height:47px;border:0;border-radius:14px;background:linear-gradient(100deg,#7657ff,#b94cff);color:white;font-weight:750;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 5px 20px #7950ff38}
+      #ip-story-editor .ips-share span{font-size:23px}
+      #ip-story-editor button{font-family:inherit;cursor:pointer;touch-action:manipulation;transition:transform .14s ease}
+      #ip-story-editor button:active{transform:scale(.95)}
+      @media(max-height:700px){#ip-story-editor .ips-side-tools{top:56px;gap:6px;max-height:calc(100% - 210px)}#ip-story-editor .ips-side-tools button{width:42px;min-height:42px;border-radius:13px}#ip-story-editor .ips-side-tools button span{font-size:20px;line-height:20px}#ip-story-editor .ips-side-tools button small{font-size:8px}#ip-story-editor .ips-bottom{gap:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}#ip-story-editor #ip-story-filters button span{width:46px!important;height:46px!important}}
+      @media(min-width:700px){#ip-story-editor .ips-stage{max-width:520px;margin:auto;border-left:1px solid #222;border-right:1px solid #222}}
     `;
     modal.appendChild(premiumStyle);
     document.body.appendChild(modal);
