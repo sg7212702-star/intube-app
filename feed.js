@@ -651,6 +651,13 @@ async function renderFeed() {
 
       const profile = await getUserProfile(ownerUid, post);
 
+      // Hide private-account posts from viewers who are not approved followers.
+      if (ownerUid && ownerUid !== user.uid && (profile.isPrivate === true || profile.privateAccount === true)) {
+        const privacyApi = window.InstaProPrivate;
+        const allowed = privacyApi ? await privacyApi.canViewAccountContent(ownerUid, user.uid) : false;
+        if (!allowed) continue;
+      }
+
       const ownerName = escapeHTML(
         profile.username || "InstaPro User"
       );
