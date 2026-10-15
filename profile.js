@@ -1174,7 +1174,9 @@ postTiles.forEach(tile => {
 
     // Profile grid must reuse the app's existing Home feed / Reels feed,
     // not create a second, profile-specific post viewer.
-    const isProfileReel = isReel(post);
+    // Anything opened from the Profile Reels tab must use the existing Reels feed,
+    // including uploads whose stored type is "video" instead of "reel".
+    const isProfileReel = activeTab === "reels" || isReel(post) || isVideo(post);
     closePostViewer();
     closeProfile();
 
