@@ -1127,8 +1127,13 @@ async function deleteProfilePost(postId, viewer) {
     if (!confirm("Kya aap is post ko hamesha ke liye delete karna chahte hain?")) return;
 
     await deleteDoc(postRef);
+    // Immediately purge deleted content from local profile caches; the realtime listener will confirm it.
+    ownedProfilePosts = ownedProfilePosts.filter(item => String(item.id) !== String(postId));
+    repostedProfilePosts = repostedProfilePosts.filter(item => String(item.id) !== String(postId));
+    profilePosts = profilePosts.filter(item => String(item.id) !== String(postId));
+    render(profileData, profilePosts);
     closePostViewer();
-    alert("Post delete ho gayi.");
+    alert("Post/Reel delete ho gayi.");
   } catch (error) {
     console.error("Profile post delete error:", error);
     alert("Post delete nahi hui. Firebase Rules mein owner-delete permission check karein.");
