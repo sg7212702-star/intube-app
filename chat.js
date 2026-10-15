@@ -653,51 +653,53 @@ function clearReply() {
   const preview = $("chatReplyPreview");
   if (preview) preview.style.display = "none";
 }
+function closeMessageActionSheet() {
+  document.getElementById("ipMessageActionSheet")?.remove();
+}
+function openMessageActionSheet(messageId, msg, ref, mine) {
+  closeMessageActionSheet();
+  const overlay = document.createElement("div");
+  overlay.id = "ipMessageActionSheet";
+  overlay.style.cssText = "position:fixed;inset:0;z-index:300000;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;justify-content:center;padding:12px;box-sizing:border-box;";
+  const sheet = document.createElement("div");
+  sheet.style.cssText = "width:100%;max-width:470px;background:#202024;color:#fff;border:1px solid #3b3b40;border-radius:22px;padding:12px 12px max(12px,env(safe-area-inset-bottom));box-shadow:0 -10px 50px rgba(0,0,0,.4);font-family:Arial,sans-serif;animation:ipChatPageIn .18s ease-out;";
+  const title=document.createElement("div");
+  title.textContent="Message options";
+  title.style.cssText="font-size:14px;font-weight:700;opacity:.65;text-align:center;padding:7px 0 12px;";
+  sheet.appendChild(title);
+  const addButton=(label,icon,fn,danger=false)=>{
+    const b=document.createElement("button"); b.type="button"; b.textContent=icon+"  "+label;
+    b.style.cssText="display:block;width:100%;text-align:left;padding:14px 13px;margin:4px 0;border:1px solid "+(danger?"rgba(255,70,90,.25)":"rgba(255,255,255,.07)")+";border-radius:12px;background:"+(danger?"rgba(255,55,75,.09)":"#29292e")+";color:"+(danger?"#ff6978":"#fff")+";font-size:15px;font-weight:600;";
+    b.addEventListener("click",async()=>{closeMessageActionSheet();await fn();});sheet.appendChild(b);
+  };
+  const runDelete=async everyone=>{
+    if(everyone&&!mine){alert("Aap sirf apne bheje hue message ko sabke liye delete kar sakte hain.");return;}
+    const question=everyone?"Is message ko aap aur receiver dono ke liye delete karein?":"Is message ko sirf apni chat se delete karein?";
+    if(!confirm(question))return;
+    try{
+      if(everyone) await updateDoc(ref,{deleted:true,text:"",mediaUrl:"",fileName:"",deletedAt:serverTimestamp()});
+      else await updateDoc(ref,{hiddenFor:arrayUnion(currentUser.uid)});
+    }catch(error){console.error("Message delete error:",error);alert("Message delete nahi hua. Firestore Rules check karein.");}
+  };
+  addButton("Reply","↩",async()=>{replyTarget={id:messageId,text:msg.text||(msg.mediaType==="video"?"🎬 Video":msg.mediaType==="audio"?"🎙️ Voice message":msg.mediaUrl?"📷 Photo":"")};$("chatReplyText").textContent="Replying to: "+replyTarget.text;$("chatReplyPreview").style.display="block";$("chatInput")?.focus();});
+  addButton("Copy text","▣",async()=>{if(!msg.text){alert("Is message mein copy karne ke liye text nahi hai.");return;}try{await navigator.clipboard.writeText(msg.text);}catch{const ta=document.createElement("textarea");ta.value=msg.text;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}});
+  addButton("React","☺",async()=>reactToMessage(messageId));
+  if(mine&&!msg.deleted)addButton("Edit message","✎",async()=>{const next=prompt("Message edit karein:",msg.text||"");if(next===null||!next.trim())return;try{await updateDoc(ref,{text:next.trim(),edited:true,editedAt:serverTimestamp()});}catch(e){alert("Message edit nahi hua. Firestore Rules check karein.");}});
+  addButton("Forward","➦",async()=>{const targetName=prompt("Forward karne ke liye username/name likhein:");const target=allUsers.find(u=>nameOf(u).toLowerCase()===String(targetName||"").trim().toLowerCase()||String(u.username||"").toLowerCase()===String(targetName||"").trim().toLowerCase());if(!target){alert("User nahi mila.");return;}const previous=selectedUser;selectedUser=target;try{await saveMessage({text:msg.text||"",...(msg.mediaUrl?{mediaUrl:msg.mediaUrl,mediaType:msg.mediaType,fileName:msg.fileName||""}:{}),forwarded:true},msg.text||(msg.mediaType==="video"?"🎬 Video":"📷 Photo"));}catch(e){alert("Message forward nahi hua.");}finally{selectedUser=previous;}});
+  addButton("Delete for me","🗑",()=>runDelete(false),true);
+  if(mine&&!msg.deleted)addButton("Delete for everyone","✕",()=>runDelete(true),true);
+  addButton("Cancel","—",async()=>{});
+  overlay.addEventListener("click",e=>{if(e.target===overlay)closeMessageActionSheet();});
+  sheet.addEventListener("click",e=>e.stopPropagation());overlay.appendChild(sheet);document.body.appendChild(overlay);
+}
 async function showMessageActions(messageId) {
   if (!currentUser || !selectedUser) return;
-  const chatId = chatIdFor(currentUser.uid, selectedUser.uid);
-  const ref = doc(db, "chats", chatId, "messages", messageId);
+  const ref=doc(db,"chats",chatIdFor(currentUser.uid,selectedUser.uid),"messages",messageId);
   try {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
-    const msg = snap.data();
-    const mine = msg.senderUid === currentUser.uid || msg.uid === currentUser.uid;
-    const options = ["Reply", "Copy text", "React", ...(mine && !msg.deleted ? ["Edit message"] : []), "Forward", "Delete for me", ...(mine && !msg.deleted ? ["Delete for everyone"] : [])];
-    const choice = prompt("Message actions:\n" + options.map((v,i)=>`${i+1}. ${v}`).join("\n") + "\nNumber choose karein:");
-    const action = options[Number(choice)-1];
-    if (!action) return;
-    if (action === "Reply") {
-      replyTarget = { id: messageId, text: msg.text || (msg.mediaType === "video" ? "🎬 Video" : msg.mediaType === "audio" ? "🎙️ Voice message" : msg.mediaUrl ? "📷 Photo" : "") };
-      $("chatReplyText").textContent = "Replying to: " + replyTarget.text;
-      $("chatReplyPreview").style.display = "block";
-      $("chatInput")?.focus();
-    } else if (action === "Copy text") {
-      if (!msg.text) { alert("Is message mein copy karne ke liye text nahi hai."); return; }
-      await navigator.clipboard.writeText(msg.text);
-    } else if (action === "React") {
-      await reactToMessage(messageId);
-    } else if (action === "Edit message") {
-      const next = prompt("Message edit karein:", msg.text || "");
-      if (next === null || !next.trim()) return;
-      await updateDoc(ref, { text: next.trim(), edited: true, editedAt: serverTimestamp() });
-    } else if (action === "Forward") {
-      const targetName = prompt("Forward karne ke liye user ka exact username/name likhein:");
-      const target = allUsers.find(u => nameOf(u).toLowerCase() === String(targetName || "").trim().toLowerCase() || String(u.username || "").toLowerCase() === String(targetName || "").trim().toLowerCase());
-      if (!target) { alert("User nahi mila."); return; }
-      const previous = selectedUser;
-      selectedUser = target;
-      try { await saveMessage({ text: msg.text || "", ...(msg.mediaUrl ? { mediaUrl: msg.mediaUrl, mediaType: msg.mediaType, fileName: msg.fileName || "" } : {}), forwarded: true }, msg.text || (msg.mediaType === "video" ? "🎬 Video" : "📷 Photo")); }
-      finally { selectedUser = previous; }
-    } else if (action === "Delete for me") {
-      await updateDoc(ref, { hiddenFor: arrayUnion(currentUser.uid) });
-    } else if (action === "Delete for everyone") {
-      if (!confirm("Is message ko dono taraf se unsend karein?")) return;
-      await updateDoc(ref, { deleted: true, text: "", mediaUrl: "", fileName: "", deletedAt: serverTimestamp() });
-    }
-  } catch (error) {
-    console.error("Message action error:", error);
-    alert("Action poora nahi hua. Firestore Rules/clipboard permission check karein.");
-  }
+    const snap=await getDoc(ref);if(!snap.exists())return;
+    const msg=snap.data();const mine=msg.senderUid===currentUser.uid||msg.uid===currentUser.uid;
+    openMessageActionSheet(messageId,msg,ref,mine);
+  } catch(error) { console.error("Message action error:",error);alert("Message options nahi khule. Firestore Rules check karein."); }
 }
 
 // Open a direct chat from another profile.
