@@ -490,9 +490,17 @@ function injectFeedStyles() {
     }
 
     .ip-feed-reel-post .ip-feed-header { gap:10px; padding:14px 16px; }
+    /* Instagram-style creator header on regular feed posts and Reels. */
+    .instapro-feed-post .ip-feed-header { display:flex;align-items:center;gap:10px;padding:12px 14px; }
+    .instapro-feed-post .ip-feed-user-info { min-width:0;flex:1; }
+    .instapro-feed-post .ip-feed-username { display:block;font-size:14px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .instapro-feed-post .ip-feed-date { display:block;font-size:12px;opacity:.68;line-height:1.4;margin-top:3px; }
+    .instapro-feed-post .ip-feed-follow { flex-shrink:0;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7);border-radius:8px;padding:7px 15px;font-size:13px;font-weight:600; }
+    .instapro-feed-post .ip-feed-follow.following { opacity:.78; }
     .ip-feed-story-avatar { width:54px;height:54px;min-width:54px;padding:3px;border-radius:50%;box-sizing:border-box;flex-shrink:0; }
     .ip-feed-story-avatar.has-story { background:conic-gradient(#ffb347,#ff3d9a,#a855f7,#ff3d9a,#ffb347); }
     .ip-feed-story-avatar img { display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid #111;box-sizing:border-box; }
+    .instapro-feed-post .ip-feed-story-avatar:not(.has-story) { background:transparent;padding:0; }
     .ip-feed-reel-post .ip-feed-username { font-size:15px; }
     .ip-feed-reel-post .ip-feed-date { color:#fff;opacity:.92;font-size:12px; }
     .ip-feed-reel-post .ip-feed-follow { background:transparent;color:#fff;border:1px solid rgba(255,255,255,.8);border-radius:12px;padding:9px 20px;font-size:14px; }
@@ -905,7 +913,7 @@ async function renderFeed() {
       card.innerHTML = `
         <div class="ip-feed-header">
 
-          <div class="ip-feed-story-avatar ${ownerHasStory ? "has-story" : ""}" style="${isReelPost ? "" : "display:contents"}">
+          <div class="ip-feed-story-avatar ${ownerHasStory ? "has-story" : ""}">
             <img
               class="ip-feed-avatar"
               src="${avatar}"
