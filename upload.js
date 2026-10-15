@@ -268,6 +268,7 @@ function openStoryEditor(file) {
         <div class="ips-media" id="ip-story-preview-wrap">
           ${isVideo ? '<video id="ip-story-preview" playsinline controls></video>' : '<img id="ip-story-preview" alt="Story preview">'}
           <div id="ip-story-overlay-text"></div>
+          <div class="ips-sticker-canvas" id="ip-story-sticker-canvas"></div>
         </div>
         <nav class="ips-side-tools" aria-label="Story editing tools">
           <button data-act="text"><span>Aa</span><small>Text</small></button>
@@ -315,6 +316,14 @@ function openStoryEditor(file) {
       #ip-story-editor .ips-media{position:absolute;inset:0;width:100%;height:100%;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;background:#000!important;box-shadow:none!important;overflow:hidden;display:flex;align-items:center;justify-content:center}
       #ip-story-editor #ip-story-preview{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;background:#000}
       #ip-story-editor #ip-story-overlay-text{position:absolute;left:8%;right:18%;top:45%;text-align:center;font-size:30px;font-weight:750;text-shadow:0 2px 10px #000;overflow-wrap:anywhere;white-space:pre-wrap;pointer-events:none}
+      #ip-story-editor .ips-sticker-canvas{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+      #ip-story-editor .ips-placed-sticker{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);min-width:44px;min-height:44px;padding:4px 9px;border:1px dashed transparent;border-radius:12px;background:transparent;color:white;font-size:42px;line-height:1.1;text-align:center;text-shadow:0 2px 8px #0009;white-space:pre;touch-action:none;pointer-events:auto;user-select:none;cursor:move}
+      #ip-story-editor .ips-placed-sticker.selected{border-color:#fff;background:#0002}
+      #ip-story-editor .ips-sticker-controls{position:absolute;right:-12px;top:-12px;display:none;gap:4px}
+      #ip-story-editor .ips-placed-sticker.selected .ips-sticker-controls{display:flex}
+      #ip-story-editor .ips-sticker-controls button{width:26px;height:26px;border:1px solid #fff;border-radius:50%;background:#25212f;color:#fff;font-size:15px;line-height:1}
+      #ip-story-editor .ips-sticker-resize{position:absolute;right:-11px;bottom:-11px;width:24px;height:24px;border:2px solid #fff;border-radius:50%;background:#8d5cff;display:none;touch-action:none}
+      #ip-story-editor .ips-placed-sticker.selected .ips-sticker-resize{display:block}
       #ip-story-editor .ips-topbar{position:absolute;z-index:5;top:0;left:0;right:0;height:58px;padding:5px 12px;display:flex;align-items:center;gap:12px;background:linear-gradient(#0008,transparent)}
       #ip-story-editor .ips-topbar button{width:40px;height:40px;border-radius:50%;border:1px solid #ffffff2b;background:#17171780;color:white;font-size:25px;display:grid;place-items:center;backdrop-filter:blur(12px)}
       #ip-story-editor .ips-top-title{flex:1;font-size:15px;font-weight:700;text-shadow:0 1px 5px #000}
@@ -358,6 +367,58 @@ function openStoryEditor(file) {
     document.body.appendChild(modal);
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
+    const stickerCanvas = modal.querySelector("#ip-story-sticker-canvas");
+    let activeSticker = null;
+    const stickerState = [];
+    const selectSticker = (node) => {
+      stickerCanvas.querySelectorAll(".ips-placed-sticker").forEach(n => n.classList.toggle("selected", n === node));
+      activeSticker = node;
+    };
+    const makeSticker = (value) => {
+      const node = document.createElement("div");
+      node.className = "ips-placed-sticker selected";
+      node.textContent = value;
+      node.dataset.sticker = value;
+      const controls = document.createElement("div");
+      controls.className = "ips-sticker-controls";
+      const del = document.createElement("button");
+      del.type = "button"; del.textContent = "×"; del.setAttribute("aria-label","Delete sticker");
+      del.addEventListener("pointerdown", e => e.stopPropagation());
+      del.addEventListener("click", e => { e.stopPropagation(); node.remove(); const i=stickerState.indexOf(node); if(i>=0) stickerState.splice(i,1); activeSticker=null; });
+      controls.appendChild(del);
+      const resize = document.createElement("button");
+      resize.type = "button"; resize.className = "ips-sticker-resize"; resize.setAttribute("aria-label","Resize sticker");
+      node.append(controls, resize);
+      stickerCanvas.appendChild(node);
+      stickerState.push(node);
+      selectSticker(node);
+      let drag = null;
+      node.addEventListener("pointerdown", e => {
+        if (e.target.closest("button")) return;
+        selectSticker(node);
+        const rect=stickerCanvas.getBoundingClientRect(), r=node.getBoundingClientRect();
+        drag={x:e.clientX,y:e.clientY,left:r.left-rect.left+ r.width/2,top:r.top-rect.top+r.height/2};
+        node.setPointerCapture?.(e.pointerId);
+        e.preventDefault();
+      });
+      node.addEventListener("pointermove", e => {
+        if(!drag || e.target.closest("button")) return;
+        const rect=stickerCanvas.getBoundingClientRect();
+        const x=Math.max(0,Math.min(rect.width,drag.left+e.clientX-drag.x));
+        const y=Math.max(0,Math.min(rect.height,drag.top+e.clientY-drag.y));
+        node.style.left=(x/rect.width*100)+"%"; node.style.top=(y/rect.height*100)+"%"; node.style.transform="translate(-50%,-50%)";
+      });
+      const stopDrag=()=>{drag=null};
+      node.addEventListener("pointerup",stopDrag); node.addEventListener("pointercancel",stopDrag);
+      resize.addEventListener("pointerdown",e=>{
+        e.preventDefault();e.stopPropagation();selectSticker(node);
+        const startY=e.clientY,startSize=parseFloat(getComputedStyle(node).fontSize);
+        const move=ev=>{node.style.fontSize=Math.max(18,Math.min(120,startSize+(ev.clientY-startY)))+"px"};
+        const end=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",end)};
+        window.addEventListener("pointermove",move);window.addEventListener("pointerup",end,{once:true});
+      });
+    };
+    stickerCanvas.addEventListener("pointerdown",e=>{if(e.target===stickerCanvas){stickerCanvas.querySelectorAll(".ips-placed-sticker").forEach(n=>n.classList.remove("selected"));activeSticker=null}});
     const filterRow = modal.querySelector("#ip-story-filters");
     STORY_FILTERS.forEach(([name, filter], i) => {
       const btn = document.createElement("button");
@@ -380,13 +441,8 @@ function openStoryEditor(file) {
     modal.addEventListener("click", async (e) => {
       const stickerButton = e.target.closest("[data-sticker]");
       if (stickerButton) {
-        const sticker = stickerButton.dataset.sticker;
-        const overlay = modal.querySelector("#ip-story-overlay-text");
-        overlay.textContent = overlayText ? overlayText + "\\n" + sticker : sticker;
-        overlayText = overlay.textContent;
-        modal.querySelectorAll(".ips-sticker-grid button").forEach(b => b.style.borderColor = "rgba(255,255,255,.09)");
-        stickerButton.style.borderColor = "#b99aff";
-        stickerButton.style.background = "linear-gradient(145deg,#8d5cff66,#ffffff12)";
+        makeSticker(stickerButton.dataset.sticker);
+        modal.querySelector(".ips-sticker-panel").classList.remove("open");
         return;
       }
       const button = e.target.closest("[data-act]");
@@ -449,6 +505,7 @@ function openStoryEditor(file) {
           }
           window.__instaProStoryCaption = caption;
           window.__instaProStoryOverlayText = overlayText;
+          window.__instaProStoryStickers = stickerState.filter(n=>n.isConnected).map(n=>({text:n.dataset.sticker,x:n.style.left||"50%",y:n.style.top||"42%",size:n.style.fontSize||"42px"}));
           window.__instaProStoryFilter = STORY_FILTERS[selectedFilter][0];
           close(outputFile);
         } catch (err) { alert("Effect apply nahi hua: " + err.message); }
