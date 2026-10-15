@@ -58,5 +58,5 @@ async function openPrivateSettings(){
   },e=>{console.error(e);const h=$("#ipPrRequests",body);if(h)h.textContent="Requests load nahi hui. Firestore Rules check karein.";});
  },e=>{console.error(e);body.textContent="Privacy settings load nahi hui. Firestore Rules check karein.";});
 }
-function initPrivateAccountSystem(){window.InstaProPrivate={getAccountPrivacy,isApprovedFollower,canViewAccountContent,requestFollow,respondFollowRequest,cancelFollowRequest,openPrivateSettings};document.addEventListener("click",e=>{const b=e.target.closest("[data-open-private-settings]");if(b){e.preventDefault();openPrivateSettings();}});console.log("InstaPro Private Account System loaded.");}
+function initPrivateAccountSystem(){window.InstaProPrivate={getAccountPrivacy,isApprovedFollower,canViewAccountContent,requestFollow,respondFollowRequest,cancelFollowRequest,openPrivateSettings};document.addEventListener("click",e=>{const b=e.target.closest("[data-open-private-settings]");if(b){e.preventDefault();if(typeof window.InstaProOpenPrivacySettings==="function")window.InstaProOpenPrivacySettings();else openPrivateSettings();}});console.log("InstaPro Private Account System loaded.");}
 export {getAccountPrivacy,isApprovedFollower,canViewAccountContent,requestFollow,respondFollowRequest,cancelFollowRequest,openPrivateSettings,initPrivateAccountSystem};
