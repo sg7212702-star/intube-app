@@ -1123,8 +1123,19 @@ async function deleteProfilePost(postId, viewer) {
     const postRef = doc(db, "posts", postId);
     const snap = await getDoc(postRef);
     if (!snap.exists()) {
-      alert("Yeh post pehle hi delete ho chuki hai.");
+      // Firestore record is already gone; clean stale profile/reel cache instead of stopping here.
+      try {
+        const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
+        deleted.add(String(postId));
+        localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
+      } catch (_) {}
+      window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(postId) } }));
+      ownedProfilePosts = ownedProfilePosts.filter(item => String(item.id) !== String(postId));
+      repostedProfilePosts = repostedProfilePosts.filter(item => String(item.id) !== String(postId));
+      profilePosts = profilePosts.filter(item => String(item.id) !== String(postId));
+      render(profileData, profilePosts);
       closePostViewer();
+      alert("Yeh Reel pehle se delete thi. Profile se bhi hata di gayi.");
       return;
     }
 
