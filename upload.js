@@ -651,8 +651,13 @@ function openStoryEditor(file) {
               window.__instaProPendingMusicFile = null;
               window.__instaProPendingMusicTrack = {title:track.trackName,artistName:track.artistName,audioUrl:track.previewUrl,id:String(track.trackId),source:"commons-free",license:track.license,licenseUrl:track.licenseUrl,filePage:track.filePage};
               const s=panel.querySelector("#ip-story-music-status");
-              if(s)s.textContent = "Selected: " + track.trackName + " — " + track.artistName + ". License: " + (track.license||"check file page") + ". This is a full audio file; check the file page for attribution requirements." ;
-              panel.querySelectorAll("[data-music-pick]").forEach(b=>{b.style.borderColor=b===pick?"#a78bfa":"#ffffff20";});
+              if(s)s.textContent = "✓ Song selected: " + track.trackName + " — " + track.artistName + ". Story ke saath attach ho gaya. License: " + (track.license||"check file page") + ".";
+              panel.querySelectorAll("[data-music-pick]").forEach(b=>{b.style.borderColor=b===pick?"#a78bfa":"#ffffff20";b.textContent=b===pick?"✓ Selected":"Use";});
+              const audio=panel.querySelector("#ip-story-music-audio-preview");
+              if(audio){audio.pause();audio.remove();}
+              const playButton=pick.parentElement?.querySelector("button[title='Play / pause']");
+              if(playButton){playButton.textContent="▶";playButton.dataset.musicPlay="1";}
+              panel.style.display="none";
               return;
             }
           });
@@ -687,7 +692,23 @@ function openStoryEditor(file) {
                 info.append(title,artist);row.appendChild(info);
                 const choose=document.createElement("button");choose.type="button";choose.dataset.musicPick=String(index);choose.textContent=track.previewUrl?"Use":"Unavailable";choose.disabled=!track.previewUrl;choose.style.cssText="padding:8px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff12;color:#fff";
                 row.appendChild(choose);
-                if(track.previewUrl){const play=document.createElement("button");play.type="button";play.textContent="▶";play.title="Play full track";play.style.cssText="padding:8px;border:0;border-radius:10px;background:#ffffff15;color:#fff";play.addEventListener("click",()=>{let audio=panel.querySelector("#ip-story-music-audio-preview");if(!audio){audio=document.createElement("audio");audio.id="ip-story-music-audio-preview";audio.controls=true;audio.style.cssText="width:100%;margin:8px 0";results.before(audio);}audio.src=track.previewUrl;audio.play().catch(()=>{});});row.appendChild(play);}
+                if(track.previewUrl){
+                  const play=document.createElement("button");
+                  play.type="button";play.textContent="▶";play.title="Play / pause";
+                  play.style.cssText="padding:8px;border:0;border-radius:10px;background:#ffffff15;color:#fff";
+                  play.addEventListener("click",()=>{
+                    let audio=panel.querySelector("#ip-story-music-audio-preview");
+                    if(!audio){audio=document.createElement("audio");audio.id="ip-story-music-audio-preview";audio.preload="none";audio.style.display="none";panel.appendChild(audio);}
+                    if(audio.src!==track.previewUrl){audio.pause();audio.src=track.previewUrl;}
+                    if(!audio.paused){audio.pause();play.textContent="▶";return;}
+                    panel.querySelectorAll("[data-music-play]").forEach(b=>{b.textContent="▶";});
+                    play.dataset.musicPlay="1";
+                    audio.play().then(()=>{play.textContent="Ⅱ";}).catch(()=>{const s=panel.querySelector("#ip-story-music-status");if(s)s.textContent="Is audio ko browser play nahi kar paaya. Dusra track try karein.";});
+                    audio.onended=()=>{play.textContent="▶";};
+                  });
+                  play.dataset.musicPlay="1";
+                  row.appendChild(play);
+                }
                 results.appendChild(row);
               });
             } catch(error) {status.textContent="Music search connect nahi ho paya. Internet check karein ya phone se audio choose karein.";console.warn("Story music search:",error);}
