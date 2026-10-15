@@ -59,6 +59,14 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
     <button id="signupBtn" class="btn">Sign up →</button>
   </div>
 
+  <div id="phoneForm" style="display:none;">
+    <div class="phone-row"><input id="phoneCode" class="input phone-code" type="text" value="+91" aria-label="Country calling code"><input id="phoneNumber" class="input" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Mobile number"></div>
+    <div id="recaptcha-container"></div>
+    <button id="sendOtpBtn" class="btn">Send OTP</button>
+    <div id="otpForm"><input id="phoneOtp" class="input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit OTP"><button id="verifyOtpBtn" class="btn">Verify OTP & Continue</button></div>
+    <div class="foot">SMS verification se mobile number verify hoga.</div>
+  </div>
+
   <button id="phoneToggleBtn" class="btn btn-google" style="margin-top:10px;">Continue with mobile number</button>\n  <div class="divider"><div></div>OR<div></div></div>
 
   <button id="googleBtn" class="btn btn-google">
