@@ -4,6 +4,9 @@ const $ = id => document.getElementById(id);
 // Load the standalone Music Library without changing index.html or style.css.
 import("./music.js").catch(error => console.error("Music Library failed to load:", error));
 
+// Private account settings, follow requests, and privacy helpers.
+import("./private.js").then(module => module.initPrivateAccountSystem()).catch(error => console.error("Private Account System failed to load:", error));
+
 // Instagram-style people suggestions on Home and Explore.
 import("./suggestions.js").then(module => module.initSuggestions()).catch(error => console.error("People suggestions failed to load:", error));
 
