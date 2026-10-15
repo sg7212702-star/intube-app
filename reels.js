@@ -25,6 +25,7 @@ let reelsData = [];
 let activeIndex = 0;
 let reelsObserver = null;
 let reelsOpenedFromBottomTab = false;
+let reelsOpenedFromProfile = false;
 let reelsHistoryEntryAdded = false;
 let activeStoryOwners = new Set();
 let unsubscribeReelStories = null;
@@ -883,7 +884,12 @@ function closeReelsViewer() {
 
   document.body.style.overflow = "";
 
-  if (reelsOpenedFromBottomTab) {
+  // If a Reel was opened from a profile, close only the player and reveal
+  // the same profile overlay. Do not route to the standalone Reels page/Home.
+  if (reelsOpenedFromProfile) {
+    reelsOpenedFromProfile = false;
+    if (reelsPage) reelsPage.style.display = "none";
+  } else if (reelsOpenedFromBottomTab) {
     reelsOpenedFromBottomTab = false;
     reelsPage.style.display = "none";
     // One Back/close action returns straight to the main Home entry.
@@ -1136,6 +1142,8 @@ window.addEventListener("pagehide", () => {
 // Open a specific feed video inside the same full-screen Reels viewer.
 window.InstaProReels = window.InstaProReels || {};
 window.InstaProReels.openPost = function(postId, feedPost = null) {
+  // Remember the source screen so Android/browser Back returns to the profile.
+  reelsOpenedFromProfile = !!document.getElementById("ipProfileOverlay");
   let visible = reelsData.filter(post => isVideo(post) && mediaURL(post));
   let index = visible.findIndex(post => String(post.id) === String(postId));
 
