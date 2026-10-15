@@ -568,8 +568,14 @@ function injectFeedStyles() {
     }
     @media (max-width: 600px) {
       .instapro-feed-post.ip-feed-reel-post {
-        width: 100vw;
-        margin-left: calc((100% - 100vw) / 2);
+        width: 100vw !important;
+        max-width: none !important;
+        min-width: 100vw;
+        box-sizing: border-box !important;
+        margin-left: calc(50% - 50vw) !important;
+        margin-right: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
       }
     }
 
