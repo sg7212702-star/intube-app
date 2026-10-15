@@ -211,7 +211,7 @@ function addStyles() {
       border-radius:11px;
       background:rgba(255,255,255,.075);
       color:#fff;
-      font:700 13px/1.2 inherit;
+      font-family:inherit;\n      font-size:13px;\n      font-weight:700;\n      line-height:1.2;
       text-align:center;
       white-space:normal;
       overflow-wrap:anywhere;
