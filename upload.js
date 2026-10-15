@@ -284,7 +284,7 @@ function openStoryEditor(file) {
             <div id="ip-story-filters"></div>
           </div>
           <div class="ips-sticker-panel" aria-label="Story stickers">
-            <div class="ips-sticker-head"><b>Stickers</b><button type="button" data-act="close-stickers" aria-label="Close stickers">×</button></div>
+            <div class="ips-sticker-head"><button type="button" data-act="close-stickers" class="ips-sticker-back" aria-label="Back to story">‹ <span>Back</span></button><b>Stickers</b><button type="button" data-act="close-stickers" aria-label="Close stickers">×</button></div>
             <div class="ips-sticker-grid">
               <button type="button" data-sticker="❤️"><span>❤️</span><small>Love</small></button>
               <button type="button" data-sticker="😍"><span>😍</span><small>Crush</small></button>
@@ -339,6 +339,10 @@ function openStoryEditor(file) {
       #ip-story-editor .ips-sticker-panel.open{display:block}
       #ip-story-editor .ips-sticker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px}
       #ip-story-editor .ips-sticker-head button{width:30px;height:30px;border:0;border-radius:50%;background:#ffffff18;color:#fff;font-size:23px}
+      #ip-story-editor .ips-sticker-head .ips-sticker-back{width:auto;padding:0 10px;display:flex;align-items:center;gap:4px;font-size:21px}
+      #ip-story-editor .ips-sticker-head .ips-sticker-back span{font-size:11px;font-weight:650}
+      #ip-story-editor .ips-sticker-panel{touch-action:pan-y}
+      #ip-story-editor .ips-sticker-panel.dragging{transition:none!important}
       #ip-story-editor .ips-sticker-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
       #ip-story-editor .ips-sticker-grid button{min-height:65px;padding:7px 3px;border:1px solid #ffffff17;border-radius:14px;background:linear-gradient(145deg,#ffffff16,#ffffff08);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
       #ip-story-editor .ips-sticker-grid button:active{background:#8e65ff66}
@@ -368,6 +372,22 @@ function openStoryEditor(file) {
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
     const stickerCanvas = modal.querySelector("#ip-story-sticker-canvas");
+    const stickerPanel = modal.querySelector(".ips-sticker-panel");
+    let stickerTouchStartY = null;
+    let stickerTouchStartX = null;
+    let stickerPanelStartY = 0;
+    stickerPanel.addEventListener("touchstart", e => {
+      if (!stickerPanel.classList.contains("open")) return;
+      const t=e.touches[0]; stickerTouchStartY=t.clientY; stickerTouchStartX=t.clientX; stickerPanelStartY=stickerPanel.getBoundingClientRect().top;
+    }, {passive:true});
+    stickerPanel.addEventListener("touchend", e => {
+      if (stickerTouchStartY===null || !stickerPanel.classList.contains("open")) return;
+      const t=e.changedTouches[0], dy=t.clientY-stickerTouchStartY, dx=t.clientX-stickerTouchStartX;
+      if (dy>55 && Math.abs(dy)>Math.abs(dx)*1.15) {
+        stickerPanel.classList.remove("open");
+      }
+      stickerTouchStartY=null; stickerTouchStartX=null;
+    }, {passive:true});
     let activeSticker = null;
     const stickerState = [];
     const selectSticker = (node) => {
