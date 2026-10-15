@@ -221,6 +221,9 @@ function installReelsStyles() {
       -webkit-backdrop-filter:blur(16px) saturate(145%);
     }
     .ipr-delete-reel {color:#ff6b8a}
+    .ipr-action.ipr-more-reel {font-size:32px;line-height:1;color:#fff}
+    .ipr-reel-more-menu {position:absolute;right:58px;bottom:104px;z-index:12;min-width:150px;padding:6px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(20,20,24,.82);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+    .ipr-reel-more-menu button {display:block;width:100%;padding:12px 14px;border:0;border-radius:9px;background:transparent;color:#ff7188;text-align:left;font-size:14px;font-weight:650}
     .ipr-bottom {
       position:absolute;left:15px;right:80px;bottom:28px;
       z-index:3;text-shadow:0 1px 5px #000;
@@ -549,7 +552,7 @@ function renderReelsSlides(track) {
           <button class="ipr-action ipr-icon-action" data-mute="${id}" aria-label="Toggle sound">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 4a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/></svg><small>Sound</small>
           </button>
-          ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button class="ipr-action ipr-delete-reel" data-delete-reel="${id}" aria-label="Delete your Reel">🗑️<small>Delete</small></button>' : ""}
+          ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button type="button" class="ipr-action ipr-more-reel" data-reel-more="${id}" aria-label="More Reel options">⋮<small>More</small></button>' : ""}
         </div>
 
         <div class="ipr-bottom">
@@ -705,8 +708,28 @@ function renderReelsSlides(track) {
     });
   });
 
-  track.querySelectorAll("[data-delete-reel]").forEach(button => {
-    button.addEventListener("click", () => deleteOwnReel(button.dataset.deleteReel));
+  track.querySelectorAll("[data-reel-more]").forEach(button => {
+    button.addEventListener("click", () => {
+      const slide = button.closest(".ipr-slide");
+      const existing = slide.querySelector(".ipr-reel-more-menu");
+      if (existing) {
+        existing.remove();
+        button.setAttribute("aria-expanded", "false");
+        return;
+      }
+      track.querySelectorAll(".ipr-reel-more-menu").forEach(menu => menu.remove());
+      track.querySelectorAll("[data-reel-more]").forEach(other => other.setAttribute("aria-expanded", "false"));
+      const menu = document.createElement("div");
+      menu.className = "ipr-reel-more-menu";
+      menu.innerHTML = '<button type="button" data-delete-reel="' + escapeHTML(button.dataset.reelMore) + '">🗑️ &nbsp; Delete Reel</button>';
+      slide.appendChild(menu);
+      button.setAttribute("aria-expanded", "true");
+      menu.querySelector("[data-delete-reel]").addEventListener("click", () => {
+        menu.remove();
+        button.setAttribute("aria-expanded", "false");
+        deleteOwnReel(button.dataset.reelMore);
+      });
+    });
   });
 
   track.querySelectorAll("[data-repost]").forEach(button => {
