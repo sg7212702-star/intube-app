@@ -129,7 +129,13 @@ function connectFileInput(inputId, type) {
     try {
       const chosenType = input.dataset.instaProUploadType || type;
       delete input.dataset.instaProUploadType;
-      await handleFile(file, chosenType);
+      if (chosenType === "story") {
+        const editedFile = await openStoryEditor(file);
+        if (!editedFile) return;
+        await handleFile(editedFile, chosenType);
+      } else {
+        await handleFile(file, chosenType);
+      }
     } finally {
       input.value = "";
     }
@@ -218,6 +224,132 @@ async function uploadToCloudinary(file, onProgress) {
   return result;
 }
 
+
+const STORY_FILTERS = [
+  ["Normal","none"],["Clarendon","contrast(1.18) saturate(1.25)"],["Gingham","brightness(1.08) sepia(.12)"],
+  ["Moon","grayscale(.85) contrast(1.12)"],["Lark","brightness(1.12) saturate(.82)"],["Reyes","sepia(.22) brightness(1.08)"],
+  ["Juno","saturate(1.35) contrast(1.05)"],["Slumber","saturate(.72) brightness(1.08)"],["Crema","sepia(.18) contrast(.95)"],
+  ["Ludwig","saturate(1.1) brightness(1.04)"],["Aden","sepia(.12) saturate(.85)"],["Perpetua","saturate(1.2) contrast(1.08)"],
+  ["Amaro","sepia(.18) contrast(1.08)"],["Mayfair","contrast(1.08) saturate(1.1)"],["Rise","sepia(.14) brightness(1.12)"],
+  ["Hudson","brightness(1.08) contrast(1.1)"],["Valencia","sepia(.2) saturate(1.15)"],["X-Pro II","contrast(1.25) saturate(1.2)"],
+  ["Sierra","sepia(.12) contrast(.95)"],["Willow","grayscale(.35) contrast(.95)"],["Lo-Fi","contrast(1.3) saturate(1.25)"],
+  ["Earlybird","sepia(.25) contrast(1.08)"],["Brannan","contrast(1.2) sepia(.12)"],["Inkwell","grayscale(1)"],
+  ["Hefe","contrast(1.18) sepia(.12)"],["Nashville","sepia(.25) brightness(1.08)"],["1977","sepia(.15) hue-rotate(-10deg)"],
+  ["Brooklyn","sepia(.1) brightness(1.08)"],["Maven","saturate(.8) contrast(1.08)"],["Ginza","sepia(.12) saturate(1.2)"],
+  ["Skyline","saturate(1.35) brightness(1.08)"],["Vivid","saturate(1.65) contrast(1.1)"],["Warm","sepia(.18)"],
+  ["Cool","hue-rotate(12deg) saturate(1.1)"],["Golden","sepia(.3) saturate(1.2)"],["Vintage","sepia(.35) contrast(.9)"],
+  ["Retro","sepia(.2) hue-rotate(-8deg) contrast(1.08)"],["Fade","contrast(.82) brightness(1.12)"],
+  ["Matte","contrast(.88) saturate(.85)"],["Pop","contrast(1.35) saturate(1.3)"],["Soft","brightness(1.1) contrast(.9)"],
+  ["Dramatic","contrast(1.45) saturate(.9)"],["B&W","grayscale(1) contrast(1.15)"],["Noir","grayscale(1) contrast(1.4)"],
+  ["Rose","sepia(.12) hue-rotate(325deg) saturate(1.15)"],["Lavender","hue-rotate(18deg) saturate(.85)"],
+  ["Mint","hue-rotate(35deg) saturate(.9)"],["Ocean","hue-rotate(165deg) saturate(1.1)"],
+  ["Sunset","sepia(.18) hue-rotate(-18deg) saturate(1.3)"],["Cinematic","contrast(1.25) saturate(.85) brightness(.95)"],
+  ["Glow","brightness(1.18) saturate(1.15)"],["Deep","brightness(.88) contrast(1.2)"]
+];
+
+function openStoryEditor(file) {
+  return new Promise((resolve) => {
+    document.getElementById("ip-story-editor")?.remove();
+    const url = URL.createObjectURL(file);
+    const isVideo = file.type.startsWith("video/");
+    let selectedFilter = 0;
+    let caption = "";
+    let overlayText = "";
+    const modal = document.createElement("div");
+    modal.id = "ip-story-editor";
+    modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#fff;font-family:Arial,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
+    modal.innerHTML = `
+      <header style="height:54px;display:flex;align-items:center;gap:18px;padding:0 16px;flex-shrink:0">
+        <button data-act="cancel" aria-label="Back" style="background:none;border:0;color:white;font-size:30px">‹</button>
+        <strong style="font-size:17px;flex:1">Story editor</strong>
+        <button data-act="text" style="border:0;background:#ffffff22;color:white;border-radius:20px;padding:9px 13px">Aa Text</button>
+      </header>
+      <div style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111">
+        <div id="ip-story-preview-wrap" style="position:relative;max-width:100%;max-height:100%;width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          ${isVideo ? '<video id="ip-story-preview" playsinline controls style="max-width:100%;max-height:100%;object-fit:contain"></video>' : '<img id="ip-story-preview" style="max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain">'}
+          <div id="ip-story-overlay-text" style="position:absolute;left:8%;right:8%;top:45%;text-align:center;font-size:30px;font-weight:700;text-shadow:0 2px 8px #000;overflow-wrap:anywhere"></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px 4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b>Effects</b><small>50+ filters · swipe horizontally</small></div>
+        <div id="ip-story-filters" style="display:flex;gap:10px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none"></div>
+        <input id="ip-story-caption" placeholder="Add a caption..." maxlength="2200" style="box-sizing:border-box;width:100%;padding:13px 12px;background:#171717;color:white;border:1px solid #444;border-radius:12px;font-size:15px;margin:5px 0 12px">
+        <div style="display:flex;gap:10px;padding-bottom:10px">
+          <button data-act="stickers" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">☻ Stickers</button>
+          <button data-act="music" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">♫ Music</button>
+          <button data-act="draw" style="flex:1;background:#222;color:white;border:1px solid #444;border-radius:24px;padding:12px">〰 Draw</button>
+        </div>
+        <button data-act="share" style="width:100%;border:0;border-radius:28px;background:#4058f5;color:white;font-weight:700;font-size:17px;padding:15px;margin-bottom:8px">Your story  ›</button>
+      </div>`;
+    document.body.appendChild(modal);
+    const preview = modal.querySelector("#ip-story-preview");
+    if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
+    const filterRow = modal.querySelector("#ip-story-filters");
+    STORY_FILTERS.forEach(([name, filter], i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.cssText = "flex:0 0 68px;width:68px;padding:0;background:transparent;color:white;border:0;font-size:11px;";
+      btn.innerHTML = '<span style="display:block;width:62px;height:62px;border-radius:10px;background:#333;margin-bottom:5px;overflow:hidden"><img src="'+(isVideo ? "" : url)+'" style="width:100%;height:100%;object-fit:cover;filter:'+filter+'"></span>'+name;
+      if (isVideo) btn.querySelector("span").style.filter = filter;
+      btn.addEventListener("click", () => {
+        selectedFilter = i;
+        preview.style.filter = filter;
+        filterRow.querySelectorAll("button").forEach(b => b.style.opacity = ".65");
+        btn.style.opacity = "1";
+      });
+      filterRow.appendChild(btn);
+    });
+    filterRow.firstElementChild?.click();
+    const close = (value) => { URL.revokeObjectURL(url); modal.remove(); resolve(value); };
+    modal.addEventListener("click", async (e) => {
+      const button = e.target.closest("[data-act]");
+      if (!button) return;
+      const act = button.dataset.act;
+      if (act === "cancel") { close(null); return; }
+      if (act === "text") {
+        const value = prompt("Story par text likhein", overlayText);
+        if (value !== null) { overlayText = value; modal.querySelector("#ip-story-overlay-text").textContent = value; }
+      }
+      if (act === "stickers") {
+        const value = prompt("Sticker choose karein: ❤️ 😂 🔥 ✨ 😍 🎉", "❤️");
+        if (value) modal.querySelector("#ip-story-overlay-text").textContent += " " + value;
+        overlayText = modal.querySelector("#ip-story-overlay-text").textContent;
+      }
+      if (act === "draw") alert("Draw tool agle update mein add hoga. Abhi text aur effects use kar sakte hain.");
+      if (act === "music") {
+        const title = prompt("Music track ka naam ya URL daalein");
+        if (title) {
+          const audioUrl = /^https?:\/\//i.test(title) ? title : "";
+          window.__instaProPendingMusicTrack = audioUrl ? {title:"Story soundtrack",audioUrl} : {title};
+          alert(audioUrl ? "Music reference select ho gaya." : "Music ka naam note hua; playable track URL chahiye hota hai.");
+        }
+      }
+      if (act === "share") {
+        caption = modal.querySelector("#ip-story-caption").value.trim();
+        try {
+          let outputFile = file;
+          if (!isVideo && selectedFilter !== 0) {
+            const image = new Image();
+            image.src = url;
+            await image.decode();
+            const canvas = document.createElement("canvas");
+            canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.filter = STORY_FILTERS[selectedFilter][1];
+            ctx.drawImage(image, 0, 0);
+            const blob = await new Promise(r => canvas.toBlob(r, file.type === "image/png" ? "image/png" : "image/jpeg", .94));
+            if (blob) outputFile = new File([blob], file.name.replace(/\.[^.]+$/, "")+"-story.jpg", {type:blob.type});
+          }
+          window.__instaProStoryCaption = caption;
+          window.__instaProStoryOverlayText = overlayText;
+          window.__instaProStoryFilter = STORY_FILTERS[selectedFilter][0];
+          close(outputFile);
+        } catch (err) { alert("Effect apply nahi hua: " + err.message); }
+      }
+    });
+  });
+}
+
 // -------------------------------------
 // MAIN UPLOAD HANDLER
 // -------------------------------------
@@ -303,6 +435,9 @@ const notice = window.InstaProUploadNotification;
     }
     window.__instaProPendingMusicFile = null;
     window.__instaProPendingMusicTrack = null;
+    window.__instaProStoryCaption = "";
+    window.__instaProStoryOverlayText = "";
+    window.__instaProStoryFilter = "Normal";
 
     // Firestore save starts
     status.textContent =
@@ -327,7 +462,8 @@ const notice = window.InstaProUploadNotification;
       type: isVideo ? "video" : "image",
       contentType: isVideo ? "video" : "image",
       mediaType: isVideo ? "video" : "image",
-      caption: "",
+      caption: postType === "story" ? (window.__instaProStoryCaption || "") : "",
+      ...(postType === "story" ? { storyText: window.__instaProStoryOverlayText || "", storyFilter: window.__instaProStoryFilter || "Normal" } : {}),
       postType: postType === "reel" ? "reel" : postType,
       isReel: postType === "reel",
       ...(soundtrackUrl ? {
