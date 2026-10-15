@@ -560,12 +560,25 @@ function openPage(name){
   if(name==="home" && home){ home.style.display="block"; }
   const target=document.getElementById(name+"Page");
   if(target){ target.style.display="block"; }
+  if(target || (name==="home" && home)){
+    try { sessionStorage.setItem("instapro-last-page", name); } catch (_) {}
+  }
   closeAll();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
   installGlobalGlassStyles();
+
+  // Restore the last app page after refresh instead of always returning to Home.
+  try {
+    const savedPage = sessionStorage.getItem("instapro-last-page");
+    const savedTarget = savedPage && document.getElementById(savedPage + "Page");
+    if (savedTarget && savedTarget.classList.contains("page")) {
+      document.querySelectorAll(".page").forEach(page => { page.style.display = "none"; });
+      savedTarget.style.display = savedPage === "chat" ? "flex" : "block";
+    }
+  } catch (_) {}
   // HOME ADD (+) BUTTON: open the create sheet.
   const addButton = $("addBtn");
   if (addButton) {
