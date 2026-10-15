@@ -72,10 +72,10 @@ function injectChatStyles() {
     #chatPage #storyInChat { align-items:flex-start; }
     #chatPage #storyInChat > * { min-width:76px; }
     #chatPage #usersList { padding-bottom:100px!important; }
-    #chatPage .ip-chat-list-row { min-height:104px; gap:13px!important; padding:12px 16px!important; box-sizing:border-box; }
-    #chatPage .ip-chat-list-row .ip-chat-list-avatar { width:64px!important;height:64px!important;flex:0 0 64px; border-radius:50%;object-fit:cover;background:#242424;border:1px solid rgba(255,255,255,.08); }
-    #chatPage .ip-chat-row-name { font-size:16px!important;font-weight:750;letter-spacing:-.2px; }
-    #chatPage .ip-chat-row-preview { font-size:14px!important;margin-top:7px!important; }
+    #chatPage .ip-chat-list-row { min-height:76px; gap:12px!important; padding:8px 16px!important; box-sizing:border-box; border-bottom:1px solid #262626!important; }
+    #chatPage .ip-chat-list-row .ip-chat-list-avatar { width:56px!important;height:56px!important;flex:0 0 56px; border-radius:50%;object-fit:cover;background:#242424;border:1px solid rgba(255,255,255,.08); }
+    #chatPage .ip-chat-row-name { font-size:15px!important;font-weight:750;letter-spacing:-.2px; }
+    #chatPage .ip-chat-row-preview { font-size:13px!important;margin-top:7px!important; }
     #chatPage .ip-chat-row-open { flex:0 0 18px;color:#8d8d93;font-size:24px;line-height:1;text-align:center; }
     #chatPage .ip-chat-delete { flex:0 0 44px!important;width:44px!important;height:44px!important;border-radius:50%!important;background:#111!important;border:1px solid #303034!important;color:#aeb5bb!important;font-size:21px!important;display:flex;align-items:center;justify-content:center; }
     #chatPage .ip-chat-list-row:hover { background:#0d0d0d!important; }
