@@ -1852,52 +1852,54 @@ async function openProfile(uid = null) {
     }
   );
 
-// Realtime profile posts listener
-postsUnsub = onSnapshot(
-  query(
-    collection(db, "posts"),
-    where("uid", "==", targetUid),
-    limit(200)
-  ),
-
+// Realtime profile posts listener: collect only media owned by this profile creator.
+// Support the owner field names used by different upload flows and deduplicate by post ID.
+const ownedPostsById = new Map();
+const ownerQueryUnsubs = [];
+let ownerQueryReady = 0;
+const ownerFields = ["uid", "userId", "authorId", "ownerUid"];
+const refreshOwnedProfilePosts = () => {
+  ownedProfilePosts = [...ownedPostsById.values()]
+    .filter(post => String(postOwner(post)) === String(targetUid));
+  profilePosts = [...ownedProfilePosts, ...repostedProfilePosts];
+  profilePosts.sort((a, b) => {
+    const timeValue = value => {
+      if (value?.toMillis) return value.toMillis();
+      if (value?.toDate) return value.toDate().getTime();
+      const numeric = Number(value || 0);
+      return Number.isFinite(numeric) ? numeric : 0;
+    };
+    return timeValue(b.createdAt || b.time) - timeValue(a.createdAt || a.time);
+  });
+  render(profileData, profilePosts);
+};
+ownerFields.forEach(field => {
+  const stop = onSnapshot(
+    query(collection(db, "posts"), where(field, "==", targetUid), limit(200)),
     snapshot => {
-      ownedProfilePosts = snapshot.docs.map(item => ({
-        id: item.id,
-        ...item.data()
-      }));
-      profilePosts = [...ownedProfilePosts, ...repostedProfilePosts];
-
-      profilePosts.sort((a, b) => {
-        const timeValue = value => {
-          if (value?.toMillis) return value.toMillis();
-          if (value?.toDate) return value.toDate().getTime();
-          const numeric = Number(value || 0);
-          return Number.isFinite(numeric) ? numeric : 0;
-        };
-        return timeValue(b.createdAt || b.time) - timeValue(a.createdAt || a.time);
-      });
-
-      render(profileData, profilePosts);
+      // Refresh only this field's current results, while preserving results from other owner fields.
+      const fieldIds = new Set(snapshot.docs.map(item => item.id));
+      for (const [id, post] of ownedPostsById) {
+        if (String(post[field] || "") === String(targetUid) && !fieldIds.has(id)) {
+          ownedPostsById.delete(id);
+        }
+      }
+      snapshot.docs.forEach(item => ownedPostsById.set(item.id, { id: item.id, ...item.data() }));
+      ownerQueryReady++;
+      refreshOwnedProfilePosts();
     },
-
     error => {
-      console.error(
-        "Profile posts listener error:",
-        error
-      );
-
-      const grid = $("#ippGrid");
-
-      if (grid) {
-        grid.innerHTML = `
-          <div class="ipp-empty">
-            Posts load nahi ho sake.
-            Firestore Rules aur query check karein.
-          </div>
-        `;
+      console.warn("Profile owner-field query failed (" + field + "):", error);
+      ownerQueryReady++;
+      if (ownerQueryReady >= ownerFields.length && ownedPostsById.size === 0) {
+        const grid = $("#ippGrid");
+        if (grid) grid.innerHTML = '<div class="ipp-empty">Posts/Reels load nahi ho sake. Firebase Rules aur query check karein.</div>';
       }
     }
   );
+  ownerQueryUnsubs.push(stop);
+});
+postsUnsub = () => ownerQueryUnsubs.forEach(stop => stop());
 
   // Live Reposts tab: show original posts the profile owner has reposted.
   repostsUnsub = onSnapshot(
