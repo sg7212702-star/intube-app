@@ -27,6 +27,7 @@ let reelsObserver = null;
 let activeStoryOwners = new Set();
 let unsubscribeReelStories = null;
 let reelFollowCache = new Map();
+const countedReelViewsThisSession = new Set();
 
 const escapeHTML = (value = "") =>
   String(value).replace(/[&<>"']/g, c => ({
@@ -491,7 +492,7 @@ function renderReelsGrid(grid) {
   grid.innerHTML = visible.map(post => `
     <div class="ipr-grid-item" data-reel-id="${escapeHTML(post.id)}">
       <video src="${escapeHTML(mediaURL(post))}" muted playsinline preload="metadata"></video>
-      <div class="ipr-grid-label">▶ ${Number(post.playCount) || 0}</div>
+      <div class="ipr-grid-label">▶ ${Number(post.viewCount ?? post.viewsCount ?? post.playCount ?? post.views) || 0} views</div>
     </div>
   `).join("");
 
@@ -745,7 +746,7 @@ function renderReelsSlides(track) {
           }
         });
 
-        video.play().catch(() => {});
+        video.play().then(() => countReelView(slide.dataset.slideId)).catch(() => {});
       } else {
         video.pause();
       }
@@ -775,8 +776,19 @@ function openReelsViewer(index) {
 
   setTimeout(() => {
     const video = slides[activeIndex]?.querySelector("video");
-    if (video) video.play().catch(() => {});
+    if (video) video.play().then(() => countReelView(slides[activeIndex]?.dataset.slideId)).catch(() => {});
   }, 150);
+}
+
+async function countReelView(postId) {
+  if (!postId || countedReelViewsThisSession.has(String(postId))) return;
+  countedReelViewsThisSession.add(String(postId));
+  try {
+    await updateDoc(doc(db, "posts", String(postId)), { viewCount: increment(1) });
+  } catch (error) {
+    countedReelViewsThisSession.delete(String(postId));
+    console.warn("Reel view count could not be saved:", error);
+  }
 }
 
 function closeReelsViewer() {
