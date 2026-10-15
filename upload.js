@@ -47,6 +47,7 @@ if (document.readyState === "loading") {
 function initializeUploadSystem() {
   const postButton = $("optPost");
   const storyButton = $("optStory");
+  const reelButton = $("optReel");
 
   console.log("Post button:", postButton);
   console.log("Story button:", storyButton);
@@ -71,8 +72,22 @@ function initializeUploadSystem() {
     });
   }
 
+  if (reelButton) {
+    reelButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const input = $("reelFile");
+      if (input) {
+        input.setAttribute("accept", "video/*");
+        input.dataset.instaProUploadType = "reel";
+      }
+      openGallery("reelFile");
+    });
+  }
+
   connectFileInput("postFile", "post");
   connectFileInput("storyFile", "story");
+  connectFileInput("reelFile", "reel");
 
   console.log("InstaPro upload system initialized.");
 }
