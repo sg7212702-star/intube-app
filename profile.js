@@ -1088,7 +1088,7 @@ postTiles.forEach(tile => {
     followersButton.onclick = event => {
       event.preventDefault();
       event.stopPropagation();
-      openFollowList(String(targetUid), "followers");
+      openFollowList(String(uid), "followers");
     };
   }
   if (followingButton) {
@@ -1098,7 +1098,7 @@ postTiles.forEach(tile => {
     followingButton.onclick = event => {
       event.preventDefault();
       event.stopPropagation();
-      openFollowList(String(targetUid), "following");
+      openFollowList(String(uid), "following");
     };
   }
 
