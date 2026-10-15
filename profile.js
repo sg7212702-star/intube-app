@@ -648,7 +648,8 @@ function render(data = profileData, posts = profilePosts) {
               class="ipp-btn ipp-primary"
             >
               ${isFollowing ? "Following ✓" : "Follow +"}
-            </button>\n            ${isMutualFollow ? `
+            </button>
+            ${isMutualFollow ? `
               <button
                 id="ippMessage"
                 class="ipp-btn"
