@@ -794,12 +794,17 @@ async function renderFeed() {
     return;
   }
 
-  if (!currentPosts.length) {
+  // Home Feed is for photo/image posts only. Video/Reel content belongs in Reels.
+  const feedPhotoPosts = currentPosts.filter(post =>
+    !!getPostMedia(post) && getPostType(post) !== "video"
+  );
+
+  if (!feedPhotoPosts.length) {
     feed.innerHTML = `
       <div style="text-align:center;padding:55px 20px">
         <div style="font-size:46px">📸</div>
-        <h3>No Posts Yet</h3>
-        <p>Apni pehli post upload karein.</p>
+        <h3>No Photo Posts Yet</h3>
+        <p>Photo posts yahan dikhengi. Video Reels tab mein dekhein.</p>
       </div>
     `;
     return;
@@ -810,7 +815,7 @@ async function renderFeed() {
   try {
     const fragment = document.createDocumentFragment();
 
-    for (const post of currentPosts) {
+    for (const post of feedPhotoPosts) {
       const mediaUrl = getPostMedia(post);
 
       if (!mediaUrl) continue;
