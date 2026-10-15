@@ -133,6 +133,13 @@ function connectFileInput(inputId, type) {
         const editedFile = await openStoryEditor(file);
         if (!editedFile) return;
         await handleFile(editedFile, chosenType);
+      } else if (file.type.startsWith("video/")) {
+        const reelResult = await openPremiumReelEditor(file);
+        if (!reelResult) return;
+        window.__instaProReelCaption = reelResult.caption || "";
+        window.__instaProPendingMusicFile = reelResult.musicFile || null;
+        window.__instaProPendingMusicTrack = null;
+        await handleFile(reelResult.file, "reel");
       } else {
         await handleFile(file, chosenType);
       }
@@ -773,6 +780,57 @@ function openStoryEditor(file) {
 }
 
 // -------------------------------------
+// PREMIUM REELS EDITOR — gallery videos open here before uploading.
+function openPremiumReelEditor(file) {
+  return new Promise(resolve => {
+    document.getElementById("ip-premium-reel-editor")?.remove();
+    const sourceUrl=URL.createObjectURL(file), modal=document.createElement("div");
+    modal.id="ip-premium-reel-editor";
+    modal.style.cssText="position:fixed;inset:0;z-index:2147483001;background:#08080b;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden";
+    modal.innerHTML='<style>#ip-premium-reel-editor *{box-sizing:border-box}#ip-premium-reel-editor .head{height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#111116;border-bottom:1px solid #ffffff20}#ip-premium-reel-editor button{color:#fff;cursor:pointer}#ip-premium-reel-editor .title{font-weight:800;flex:1}#ip-premium-reel-editor .pro{font-size:10px;letter-spacing:1px;padding:5px 8px;border-radius:8px;background:linear-gradient(120deg,#8d5cff,#ff398a)}#ip-premium-reel-editor .stage{position:relative;flex:1;min-height:140px;background:#000;display:flex;justify-content:center;align-items:center;overflow:hidden}#ip-premium-reel-editor video{width:100%;height:100%;object-fit:contain}#ip-premium-reel-editor .overlay{position:absolute;top:43%;left:8%;right:18%;text-align:center;font-weight:850;font-size:30px;white-space:pre-wrap;text-shadow:0 2px 9px #000;pointer-events:none}#ip-premium-reel-editor .tools{display:flex;gap:7px;overflow:auto;padding:8px;background:#111116}#ip-premium-reel-editor .tools button{flex-shrink:0;padding:9px;border-radius:11px;border:1px solid #ffffff20;background:#24242c;font-size:11px}#ip-premium-reel-editor .tools button.active{border-color:#b58cff;background:#392452}#ip-premium-reel-editor .panel{padding:9px 13px;background:#15151b;max-height:28vh;overflow:auto}#ip-premium-reel-editor .row{display:flex;align-items:center;gap:8px;margin:8px 0}#ip-premium-reel-editor label{font-size:12px;min-width:58px}#ip-premium-reel-editor input[type=range]{flex:1;min-width:0;accent-color:#b58cff}#ip-premium-reel-editor input[type=text],#ip-premium-reel-editor textarea{width:100%;padding:9px;background:#24242c;color:#fff;border:1px solid #ffffff20;border-radius:9px}#ip-premium-reel-editor .foot{padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#111116}#ip-premium-reel-editor .next{width:100%;height:45px;border:0;border-radius:13px;background:linear-gradient(100deg,#914cff,#ff398a);font-weight:850;font-size:15px}</style><div class="head"><button data-act="cancel" style="font-size:25px;background:none;border:0">‹</button><div class="title">Reels editor</div><span class="pro">PREMIUM</span></div><div class="stage"><video id="ipr-video" playsinline controls></video><div class="overlay" id="ipr-overlay"></div></div><div class="tools"><button data-tool="trim" class="active">✂ Trim</button><button data-tool="filter">🎨 Filters</button><button data-tool="text">Aa Text</button><button data-tool="music">♫ Music</button><button data-tool="speed">⏩ Speed</button><button data-tool="audio">🔊 Audio</button></div><div class="panel"><section data-panel="trim"><div class="row"><label>Start</label><input id="ipr-start" type="range" min="0" max="100" value="0" step=".1"><b id="ipr-st">0:00</b></div><div class="row"><label>End</label><input id="ipr-end" type="range" min="0" max="100" value="100" step=".1"><b id="ipr-en">0:00</b></div><small id="ipr-dur">Clip duration loading…</small></section><section data-panel="filter" hidden><div class="tools" style="padding:0"><button data-filter="none" class="active">Normal</button><button data-filter="contrast(1.15) saturate(1.2)">Vivid</button><button data-filter="sepia(.35) saturate(1.2)">Warm</button><button data-filter="grayscale(1)">Mono</button><button data-filter="brightness(1.12) saturate(.8)">Fade</button><button data-filter="hue-rotate(25deg) saturate(1.25)">Dream</button></div></section><section data-panel="text" hidden><div class="row"><textarea id="ipr-caption" maxlength="2200" rows="2" placeholder="Write a Reel caption…"></textarea></div><div class="row"><input id="ipr-text" type="text" maxlength="120" placeholder="Add text over video (optional)"></div></section><section data-panel="music" hidden><div class="row"><label>Music</label><input id="ipr-music" type="file" accept="audio/*" style="min-width:0;width:100%"></div><small>Choose an audio file from your device.</small></section><section data-panel="speed" hidden><div class="row"><label>Speed</label><input id="ipr-speed" type="range" min=".5" max="2" step=".25" value="1"><b id="ipr-speed-label">1×</b></div></section><section data-panel="audio" hidden><div class="row"><label>Original audio</label><button id="ipr-mute">On</button></div></section></div><div class="foot"><button class="next" data-act="next">Next →</button><div style="text-align:center;font-size:10px;color:#aaa;margin-top:6px">Preview · edit · export · upload</div></div>';
+    document.body.appendChild(modal);
+    const video=modal.querySelector("#ipr-video"), start=modal.querySelector("#ipr-start"), end=modal.querySelector("#ipr-end"), cap=modal.querySelector("#ipr-caption"), txt=modal.querySelector("#ipr-text"), overlay=modal.querySelector("#ipr-overlay"), musicInput=modal.querySelector("#ipr-music");
+    let duration=0,filter="none",musicFile=null,muted=false,closed=false;
+    video.src=sourceUrl;
+    const fmt=n=>{n=Math.max(0,Math.floor(Number(n)||0));return Math.floor(n/60)+":"+String(n%60).padStart(2,"0");};
+    const finish=result=>{if(closed)return;closed=true;video.pause();URL.revokeObjectURL(sourceUrl);modal.remove();resolve(result);};
+    const labels=()=>{modal.querySelector("#ipr-st").textContent=fmt(start.value);modal.querySelector("#ipr-en").textContent=fmt(end.value);modal.querySelector("#ipr-dur").textContent="Clip duration: "+fmt(Number(end.value)-Number(start.value));};
+    video.addEventListener("loadedmetadata",()=>{duration=Number.isFinite(video.duration)?video.duration:0;start.max=end.max=String(duration);end.value=String(duration);labels();video.play().catch(()=>{});});
+    start.addEventListener("input",()=>{if(+start.value>=+end.value)end.value=String(Math.min(duration,+start.value+.2));labels();});
+    end.addEventListener("input",()=>{if(+end.value<=+start.value)start.value=String(Math.max(0,+end.value-.2));labels();});
+    start.addEventListener("change",()=>{video.currentTime=+start.value||0;});
+    video.addEventListener("timeupdate",()=>{if(duration&&video.currentTime>=+end.value)video.pause();});
+    txt.addEventListener("input",()=>overlay.textContent=txt.value);
+    modal.querySelectorAll("[data-tool]").forEach(b=>b.addEventListener("click",()=>{modal.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("active",x===b));modal.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==b.dataset.tool);}));
+    modal.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;modal.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));video.style.filter=filter;}));
+    modal.querySelector("#ipr-speed").addEventListener("input",e=>{video.playbackRate=+e.target.value;modal.querySelector("#ipr-speed-label").textContent=e.target.value+"×";});
+    modal.querySelector("#ipr-mute").addEventListener("click",e=>{muted=!muted;video.muted=muted;e.currentTarget.textContent=muted?"Off":"On";});
+    musicInput.addEventListener("change",()=>musicFile=musicInput.files&&musicInput.files[0]||null);
+    modal.querySelector('[data-act="cancel"]').addEventListener("click",()=>finish(null));
+    modal.querySelector('[data-act="next"]').addEventListener("click",async e=>{
+      const btn=e.currentTarget;btn.disabled=true;btn.textContent="Rendering Reel…";
+      try{
+        const st=Math.max(0,+start.value||0),en=Math.min(duration,+end.value||duration);
+        if(!duration||en-st<.25)throw new Error("Trim range must be at least 0.25 seconds.");
+        if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){finish({file,caption:cap.value.trim(),musicFile});return;}
+        video.pause();video.currentTime=st;
+        await new Promise((res,rej)=>{const timer=setTimeout(()=>rej(new Error("Video seek timeout")),5000);video.addEventListener("seeked",()=>{clearTimeout(timer);res();},{once:true});});
+        const canvas=document.createElement("canvas"),vw=video.videoWidth||720,vh=video.videoHeight||1280,scale=Math.min(1,1080/Math.max(vw,vh));
+        canvas.width=Math.max(2,Math.round(vw*scale/2)*2);canvas.height=Math.max(2,Math.round(vh*scale/2)*2);
+        const ctx=canvas.getContext("2d"),stream=canvas.captureStream(30);let ac=null,musicEl=null;
+        try{ac=new(window.AudioContext||window.webkitAudioContext)();const dest=ac.createMediaStreamDestination();if(!muted){const vs=video.captureStream?video.captureStream():null;if(vs)vs.getAudioTracks().forEach(t=>ac.createMediaStreamSource(new MediaStream([t])).connect(dest));}if(musicFile){musicEl=new Audio(URL.createObjectURL(musicFile));musicEl.loop=true;const ms=ac.createMediaElementSource(musicEl);ms.connect(dest);await ac.resume();await musicEl.play().catch(()=>{});}dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));}catch(err){console.warn("Audio mix unavailable",err);}
+        const draw=()=>{if(closed)return;ctx.save();ctx.filter=filter;ctx.drawImage(video,0,0,canvas.width,canvas.height);ctx.restore();if(txt.value.trim()){ctx.save();ctx.font="800 "+Math.max(24,canvas.width*.055)+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.shadowColor="#000";ctx.shadowBlur=9;const words=txt.value.trim().split(/\\s+/),rows=[];let row="";for(const word of words){const test=row?row+" "+word:word;if(ctx.measureText(test).width>canvas.width*.78&&row){rows.push(row);row=word;}else row=test;}if(row)rows.push(row);rows.slice(0,5).forEach((line,i)=>ctx.fillText(line,canvas.width/2,canvas.height*.43+(i-(Math.min(rows.length,5)-1)/2)*Math.max(28,canvas.width*.065),canvas.width*.78));ctx.restore();}if(!video.paused&&!video.ended)requestAnimationFrame(draw);};
+        const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"].find(t=>MediaRecorder.isTypeSupported(t))||"",chunks=[],recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+        recorder.ondataavailable=ev=>{if(ev.data&&ev.data.size)chunks.push(ev.data);};const stopped=new Promise(res=>recorder.onstop=res);recorder.start(250);await video.play();draw();
+        await new Promise(res=>{const check=()=>{if(video.currentTime>=en||video.ended){video.pause();res();}else setTimeout(check,40);};check();});
+        if(recorder.state!=="inactive")recorder.stop();await stopped;if(musicEl){musicEl.pause();URL.revokeObjectURL(musicEl.src);}if(ac)await ac.close().catch(()=>{});stream.getTracks().forEach(t=>t.stop());
+        const type=chunks[0]&&chunks[0].type||mime||"video/webm",ext=type.includes("mp4")?"mp4":"webm",blob=new Blob(chunks,{type});if(!blob.size)throw new Error("Edited video export failed.");
+        finish({file:new File([blob],file.name.replace(/\\.[^.]+$/,"")+"-instapro-reel."+ext,{type,lastModified:Date.now()}),caption:cap.value.trim(),musicFile});
+      }catch(err){console.error("Reels editor export failed",err);btn.disabled=false;btn.textContent="Retry Export";alert("Export fail: "+(err.message||"Unknown error")+". Please retry.");}
+    });
+  });
+}
+
 // MAIN UPLOAD HANDLER
 // -------------------------------------
 
@@ -858,6 +916,7 @@ const notice = window.InstaProUploadNotification;
     window.__instaProPendingMusicFile = null;
     window.__instaProPendingMusicTrack = null;
     window.__instaProStoryCaption = "";
+    window.__instaProReelCaption = "";
     window.__instaProStoryOverlayText = "";
     window.__instaProStoryFilter = "Normal";
 
@@ -884,7 +943,7 @@ const notice = window.InstaProUploadNotification;
       type: isVideo ? "video" : "image",
       contentType: isVideo ? "video" : "image",
       mediaType: isVideo ? "video" : "image",
-      caption: postType === "story" ? (window.__instaProStoryCaption || "") : "",
+      caption: postType === "story" ? (window.__instaProStoryCaption || "") : postType === "reel" ? (window.__instaProReelCaption || "") : "",
       ...(postType === "story" ? { storyText: window.__instaProStoryOverlayText || "", storyFilter: window.__instaProStoryFilter || "Normal" } : {}),
       postType: postType === "reel" ? "reel" : postType,
       isReel: postType === "reel",
