@@ -31,9 +31,9 @@ function styles() {
 function closeMenu(){const m=box();m?.classList.remove("show");const o=document.getElementById("sideOverlay");if(o){o.classList.remove("show");o.style.display="none";}}
 function apply(){document.body.classList.toggle("ip-dark",!!state.darkMode);}
 async function save(key,value){
- const u=auth.currentUser;if(!u||u.isAnonymous){alert("Pehle login karein.");return;}
- try{await setDoc(doc(db,"users",u.uid,"settings","app"),{[key]:value,updatedAt:new Date()},{merge:true});}
- catch(e){console.error(e);alert("Setting save nahi hui. Firestore Rules check karein.");}
+ const u=auth.currentUser;if(!u||u.isAnonymous){alert("Pehle login karein.");return false;}
+ try{await setDoc(doc(db,"users",u.uid,"settings","app"),{[key]:value,updatedAt:new Date()},{merge:true});return true;}
+ catch(e){console.error("Settings save failed:",e);alert("Setting save nahi hui. Internet aur Firestore Rules check karein.");return false;}
 }
 function head(title,back=true){return '<div class="sideHead"><b>'+esc(title)+'</b><button id="ipClose">✕</button></div>'+(back?'<button class="ip-back" data-action="back">‹ Back</button>':"");}
 function row(icon,label,action,sub=""){return '<button class="ip-row" data-action="'+action+'"><span class="ip-ico">'+icon+'</span><span class="ip-label">'+esc(label)+(sub?'<span class="ip-sub">'+esc(sub)+'</span>':"")+'</span><span>›</span></button>';}
@@ -41,7 +41,7 @@ function toggle(icon,label,key,sub){return '<button class="ip-row" data-toggle="
 function bind(){
  const m=box();m?.querySelector("#ipClose")?.addEventListener("click",closeMenu);
  m?.querySelectorAll("[data-action]").forEach(b=>b.addEventListener("click",()=>action(b.dataset.action)));
- m?.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",async()=>{const k=b.dataset.toggle;state[k]=!state[k];if(k==="darkMode")apply();renderSettings();await save(k,state[k]);}));
+ m?.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",async()=>{const k=b.dataset.toggle;const previous=!!state[k];const next=!previous;state[k]=next;if(k==="darkMode")apply();renderSettings();const saved=await save(k,next);if(!saved){state[k]=previous;if(k==="darkMode")apply();if(view==="settings")renderSettings();}}));
 }
 function renderMenu(){
  view="menu";const m=box();if(!m)return;
