@@ -1632,48 +1632,81 @@ function openCommentsPanel(postId) {
         return;
       }
 
+      const me = getCurrentUser();
       list.innerHTML = snapshot.docs.map(item => {
         const comment = item.data();
-
-        const username = escapeHTML(
-          comment.username || "InstaPro User"
-        );
-
+        const username = escapeHTML(comment.username || "InstaPro User");
         const text = escapeHTML(comment.text || "");
-
-        const photo = escapeHTML(
-          comment.photo ||
-          comment.photoURL ||
-          "https://www.gravatar.com/avatar/?d=mp"
-        );
-
+        const photo = escapeHTML(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp");
+        const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy : [];
+        const replies = Array.isArray(comment.replies) ? comment.replies : [];
+        const liked = !!me && likedBy.includes(me.uid);
+        const cid = escapeHTML(item.id);
         return `
-          <div style="
-            display:flex;
-            align-items:flex-start;
-            gap:10px;
-            margin:12px;
-            overflow-wrap:anywhere;
-          ">
-            <img
-              src="${photo}"
-              alt=""
-              style="
-                width:36px;
-                height:36px;
-                min-width:36px;
-                border-radius:50%;
-                object-fit:cover;
-              "
-            >
-
-            <div style="min-width:0">
-              <strong>${username}</strong>
-              <span>${text}</span>
+          <div data-feed-comment-row="${cid}" style="display:flex;align-items:flex-start;gap:10px;margin:12px;overflow-wrap:anywhere">
+            <img src="${photo}" alt="" style="width:36px;height:36px;min-width:36px;border-radius:50%;object-fit:cover">
+            <div style="min-width:0;flex:1">
+              <strong>${username}</strong> <span>${text}</span>
+              <div style="display:flex;gap:14px;align-items:center;margin-top:6px;font-size:12px">
+                <button type="button" data-feed-comment-like="${cid}" style="border:0;background:none;color:${liked ? "#ff4d86" : "inherit"};padding:2px 0;font:inherit;cursor:pointer">${liked ? "♥ Liked" : "♡ Like"}${likedBy.length ? " · "+likedBy.length : ""}</button>
+                <button type="button" data-feed-comment-reply="${cid}" style="border:0;background:none;color:inherit;opacity:.75;padding:2px 0;font:inherit;cursor:pointer">Reply</button>
+              </div>
+              ${replies.map(reply => `<div style="margin:9px 0 0 10px;padding-left:10px;border-left:2px solid #999"><strong>${escapeHTML(reply.username || "User")}</strong><br><span>${escapeHTML(reply.text || "")}</span></div>`).join("")}
+              <form data-feed-reply-form="${cid}" style="display:none;gap:6px;margin-top:8px">
+                <input data-feed-reply-input maxlength="1000" placeholder="Write a reply..." style="flex:1;min-width:0;border:1px solid #999;border-radius:18px;padding:8px 10px;background:transparent;color:inherit">
+                <button type="submit" style="border:0;border-radius:18px;padding:0 12px;background:#a855f7;color:white">Send</button>
+              </form>
             </div>
           </div>
         `;
       }).join("");
+
+      list.querySelectorAll("[data-feed-comment-like]").forEach(button => {
+        button.onclick = async () => {
+          const user = getCurrentUser();
+          if (!user) return showMessage("Comment like karne ke liye login karein.");
+          try {
+            const ref = doc(db, "posts", postId, "comments", button.dataset.feedCommentLike);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const likedBy = Array.isArray(snap.data().likedBy) ? snap.data().likedBy : [];
+            await updateDoc(ref, { likedBy: likedBy.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid) });
+          } catch (error) {
+            console.error("Feed comment like error:", error);
+            showMessage("Comment like save nahi hua. Firebase Rules check karein.");
+          }
+        };
+      });
+
+      list.querySelectorAll("[data-feed-comment-reply]").forEach(button => {
+        button.onclick = () => {
+          const form = list.querySelector(`[data-feed-reply-form="${button.dataset.feedCommentReply}"]`);
+          if (!form) return;
+          form.style.display = form.style.display === "flex" ? "none" : "flex";
+          form.querySelector("input")?.focus();
+        };
+      });
+
+      list.querySelectorAll("[data-feed-reply-form]").forEach(form => {
+        form.onsubmit = async event => {
+          event.preventDefault();
+          const user = getCurrentUser();
+          if (!user) return showMessage("Reply karne ke liye login karein.");
+          const input = form.querySelector("input");
+          const replyText = input.value.trim();
+          if (!replyText) return;
+          try {
+            await updateDoc(doc(db, "posts", postId, "comments", form.dataset.feedReplyForm), {
+              replies: arrayUnion({ uid: user.uid, username: getUsername(user), photo: getAvatar(user), text: replyText, createdAt: new Date().toISOString() })
+            });
+            input.value = "";
+            form.style.display = "none";
+          } catch (error) {
+            console.error("Feed comment reply error:", error);
+            showMessage("Reply save nahi hua. Firebase Rules check karein.");
+          }
+        };
+      });
     },
 
     error => {
