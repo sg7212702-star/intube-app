@@ -965,8 +965,10 @@ async function renderFeed() {
                   class="ip-feed-more"
                   data-feed-action="delete"
                   data-id="${escapeHTML(post.id)}"
-                  aria-label="Post options"
-                >☰</button>
+                  aria-label="Delete post"
+                  title="Delete post"
+                  style="min-width:84px;padding:8px 12px;border-radius:18px;background:#292929;color:#ff6678;border:1px solid rgba(255,102,120,.45);font-size:13px;font-weight:700;"
+                >🗑 Delete</button>
               `
               : ""
           }
