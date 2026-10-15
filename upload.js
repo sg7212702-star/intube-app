@@ -628,7 +628,7 @@ function openStoryEditor(file) {
           panel = document.createElement("div");
           panel.id = "ip-story-music-panel";
           panel.style.cssText = "position:absolute;z-index:12;left:10px;right:10px;top:58px;bottom:110px;overflow:auto;padding:15px;border:1px solid #ffffff30;border-radius:18px;background:rgba(18,18,24,.98);box-shadow:0 12px 35px #0009;color:#fff;";
-          panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:18px;flex:1">♫ Insta Pro Music</b><button type="button" data-music-close style="border:0;border-radius:50%;width:32px;height:32px;background:#ffffff20;color:#fff;font-size:20px">×</button></div><form id="ip-story-music-search-form" style="display:flex;gap:7px"><input id="ip-story-music-search" type="search" placeholder="Song, singer, language..." style="min-width:0;flex:1;padding:11px;border:1px solid #ffffff35;border-radius:12px;background:#ffffff12;color:#fff;outline:none"><button type="submit" style="padding:10px 13px;border:0;border-radius:12px;background:#8b5cf6;color:#fff;font-weight:700">Search</button></form><div style="display:flex;gap:7px;overflow-x:auto;padding:10px 0;scrollbar-width:none"><button type="button" data-music-query="Hindi Bollywood songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">🇮🇳 Hindi</button><button type="button" data-music-query="Punjabi songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Punjabi</button><button type="button" data-music-query="Bhojpuri songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Bhojpuri</button><button type="button" data-music-query="Tamil songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Tamil</button><button type="button" data-music-query="Telugu songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Telugu</button><button type="button" data-music-query="English pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">English</button><button type="button" data-music-query="Korean pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">K-pop</button><button type="button" data-music-query="Top songs India" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Top India</button></div><button type="button" data-music-local style="width:100%;margin:0 0 9px;padding:10px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff10;color:#fff">＋ Choose audio from my phone</button><div id="ip-story-music-status" style="font-size:12px;opacity:.8;margin:8px 0">Choose a language or search a song / singer. Online results may provide preview clips only.</div><div id="ip-story-music-results" style="display:grid;gap:8px"></div><div style="font-size:11px;opacity:.65;margin-top:12px">Catalog results and previews are provided by Apple/iTunes. Full-length songs for public Reels/Stories require appropriate music rights.</div>';
+          panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:18px;flex:1">♫ Insta Pro Music</b><button type="button" data-music-close style="border:0;border-radius:50%;width:32px;height:32px;background:#ffffff20;color:#fff;font-size:20px">×</button></div><form id="ip-story-music-search-form" style="display:flex;gap:7px"><input id="ip-story-music-search" type="search" placeholder="Song, singer, language..." style="min-width:0;flex:1;padding:11px;border:1px solid #ffffff35;border-radius:12px;background:#ffffff12;color:#fff;outline:none"><button type="submit" style="padding:10px 13px;border:0;border-radius:12px;background:#8b5cf6;color:#fff;font-weight:700">Search</button></form><div style="display:flex;gap:7px;overflow-x:auto;padding:10px 0;scrollbar-width:none"><button type="button" data-music-query="Hindi Bollywood songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">🇮🇳 Hindi</button><button type="button" data-music-query="Punjabi songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Punjabi</button><button type="button" data-music-query="Bhojpuri songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Bhojpuri</button><button type="button" data-music-query="Tamil songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Tamil</button><button type="button" data-music-query="Telugu songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Telugu</button><button type="button" data-music-query="English pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">English</button><button type="button" data-music-query="Korean pop songs" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">K-pop</button><button type="button" data-music-query="Top songs India" style="white-space:nowrap;padding:8px 11px;border:1px solid #ffffff30;border-radius:18px;background:#ffffff12;color:#fff">Top India</button></div><button type="button" data-music-local style="width:100%;margin:0 0 9px;padding:10px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff10;color:#fff">＋ Choose audio from my phone</button><div id="ip-story-music-status" style="font-size:12px;opacity:.8;margin:8px 0">Choose a language or search a song / singer. Online results may provide preview clips only.</div><div id="ip-story-music-results" style="display:grid;gap:8px"></div><div style="font-size:11px;opacity:.65;margin-top:12px">Free audio files are searched from Wikimedia Commons. Only CC BY, CC BY-SA, CC0 and Public Domain-labelled results are shown; check each file page and give attribution where required.</div>';
           modal.appendChild(panel);
           panel.addEventListener("click", ev => {
             const quickQuery = ev.target.closest("[data-music-query]");
@@ -649,9 +649,9 @@ function openStoryEditor(file) {
               if (!track) return;
               if (!track.previewUrl) { const s=panel.querySelector("#ip-story-music-status"); if(s)s.textContent="Is track ka playable preview available nahi hai. Phone se audio choose karein."; return; }
               window.__instaProPendingMusicFile = null;
-              window.__instaProPendingMusicTrack = {title:track.trackName,artistName:track.artistName,audioUrl:track.previewUrl,id:String(track.trackId),source:"catalog-preview"};
+              window.__instaProPendingMusicTrack = {title:track.trackName,artistName:track.artistName,audioUrl:track.previewUrl,id:String(track.trackId),source:"commons-free",license:track.license,licenseUrl:track.licenseUrl,filePage:track.filePage};
               const s=panel.querySelector("#ip-story-music-status");
-              if(s)s.textContent = "Selected: " + track.trackName + " — " + track.artistName + ". Available preview clip will be attached.";
+              if(s)s.textContent = "Selected: " + track.trackName + " — " + track.artistName + ". License: " + (track.license||"check file page") + ". This is a full audio file; check the file page for attribution requirements." ;
               panel.querySelectorAll("[data-music-pick]").forEach(b=>{b.style.borderColor=b===pick?"#a78bfa":"#ffffff20";});
               return;
             }
@@ -663,20 +663,27 @@ function openStoryEditor(file) {
             if(!query){status.textContent="Song ya artist ka naam likhein.";return;}
             status.textContent="Searching music…"; results.replaceChildren();
             try {
-              const response=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(query)+"&entity=song&limit=50&media=music");
-              if(!response.ok) throw new Error("Music search abhi available nahi hai.");
+              const apiUrl="https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch="+encodeURIComponent("filetype:audio "+query)+"&prop=imageinfo&iiprop=url|extmetadata&iiextmetadatafilter=LicenseShortName|LicenseUrl|Artist|Credit|UsageTerms&format=json&origin=*";
+              const response=await fetch(apiUrl);
+              if(!response.ok) throw new Error("Free music search abhi available nahi hai.");
               const data=await response.json();
-              const tracks=(data.results||[]).filter(t=>t.trackName&&t.artistName);
+              const pages=Object.values(data.query?.pages||{});
+              const tracks=pages.map(page=>{
+                const info=page.imageinfo?.[0]; const meta=info?.extmetadata||{};
+                const license=(meta.LicenseShortName?.value||meta.UsageTerms?.value||"").replace(/<[^>]*>/g,"").trim();
+                const artist=(meta.Artist?.value||meta.Credit?.value||"Unknown artist").replace(/<[^>]*>/g,"").trim();
+                return {trackName:(page.title||"").replace(/^File:/,"").replace(/\.[^.]+$/,"").replace(/_/g," "),artistName:artist,collectionName:license,previewUrl:info?.url||"",artworkUrl100:"",trackId:page.pageid,license,licenseUrl:meta.LicenseUrl?.value||"",filePage:info?.descriptionurl||("https://commons.wikimedia.org/wiki/"+encodeURIComponent(page.title||""))};
+              }).filter(t=>t.trackName&&t.previewUrl&&(/CC BY-SA|CC BY [0-9]|CC0|Public domain/i.test(t.license)));
               window.__instaProMusicSearchResults=tracks;
-              if(!tracks.length){status.textContent="Koi result nahi mila. Dusra naam search karein ya phone se audio choose karein.";return;}
-              status.textContent=tracks.length+" songs found. Select a track to attach its available preview.";
+              if(!tracks.length){status.textContent="Is search mein reuse-friendly licensed music nahi mili. Dusra genre/keyword try karein, ya phone se audio choose karein.";return;}
+              status.textContent=tracks.length+" freely reusable audio files found. License aur artist credit check karke Use karein.";
               tracks.forEach((track,index)=>{
                 const row=document.createElement("div");
                 row.style.cssText="display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff08";
                 if(track.artworkUrl100){const img=document.createElement("img");img.src=track.artworkUrl100;img.alt="";img.style.cssText="width:46px;height:46px;border-radius:8px;object-fit:cover";row.appendChild(img);}
                 const info=document.createElement("div");info.style.cssText="flex:1;min-width:0";
                 const title=document.createElement("b");title.textContent=track.trackName;title.style.cssText="display:block;font-size:13px;overflow-wrap:anywhere";
-                const artist=document.createElement("small");artist.textContent=track.artistName+" · "+(track.collectionName||"");artist.style.cssText="display:block;font-size:11px;opacity:.7;overflow-wrap:anywhere";
+                const artist=document.createElement("small");artist.textContent=track.artistName+" · "+(track.license||"Check license");artist.style.cssText="display:block;font-size:11px;opacity:.7;overflow-wrap:anywhere";
                 info.append(title,artist);row.appendChild(info);
                 const choose=document.createElement("button");choose.type="button";choose.dataset.musicPick=String(index);choose.textContent=track.previewUrl?"Use":"Unavailable";choose.disabled=!track.previewUrl;choose.style.cssText="padding:8px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff12;color:#fff";
                 row.appendChild(choose);
@@ -838,7 +845,10 @@ const notice = window.InstaProUploadNotification;
         musicName: soundtrackTrack?.title || soundtrackFile?.name || "Soundtrack",
         ...(soundtrackTrack?.artistName ? { musicArtist: soundtrackTrack.artistName } : {}),
         ...(soundtrackTrack?.id ? { musicTrackId: soundtrackTrack.id } : {}),
-        ...(soundtrackTrack?.language ? { musicLanguage: soundtrackTrack.language } : {})
+        ...(soundtrackTrack?.language ? { musicLanguage: soundtrackTrack.language } : {}),
+        ...(soundtrackTrack?.license ? { musicLicense: soundtrackTrack.license } : {}),
+        ...(soundtrackTrack?.licenseUrl ? { musicLicenseUrl: soundtrackTrack.licenseUrl } : {}),
+        ...(soundtrackTrack?.filePage ? { musicSourcePage: soundtrackTrack.filePage } : {})
       } : {}),
       likes: [],
       likesCount: 0,
