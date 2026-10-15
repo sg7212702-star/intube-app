@@ -1807,7 +1807,8 @@ if (feed) {
     if (!postId) return;
     event.preventDefault();
     event.stopPropagation();
-    const openReel = () => window.InstaProReels?.openPost?.(postId);
+    const feedPost = currentPosts.find(post => String(post.id) === String(postId));
+    const openReel = () => window.InstaProReels?.openPost?.(postId, feedPost);
     if (typeof window.InstaProReels?.openPost === "function") {
       openReel();
     } else {
