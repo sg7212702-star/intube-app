@@ -576,7 +576,7 @@ async function toggleVoiceRecording() {
     voiceRecorder.start(); if (button) button.textContent = "⏹️";
   } catch (error) { console.error("Voice recording error:", error); alert("Microphone permission dein, phir voice message record karein."); }
 }
-async async function deleteChatForMe(otherUid) {
+async function deleteChatForMe(otherUid) {
   if (!currentUser || !otherUid) return;
   if (!confirm("Is chat ko apni Messages list se delete karein? Doosre user ki chat delete nahi hogi.")) return;
   try {
@@ -598,7 +598,7 @@ async function quickHeart(messageId) {
   catch (error) { console.error("Double-tap reaction error:", error); }
 }
 
-async async function reactToMessage(messageId) {
+async function reactToMessage(messageId) {
   if (!currentUser || !selectedUser) return;
   const choice = prompt("Reaction choose karein: ❤️ 😂 😮 😢 👍 🔥", "❤️");
   if (!choice || !["❤️","😂","😮","😢","👍","🔥"].includes(choice.trim())) return;
