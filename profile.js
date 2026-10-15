@@ -661,7 +661,6 @@ function render(data = profileData, posts = profilePosts) {
               ✦ Edit profile
             </button>
 
-            <button type="button" class="ipp-btn" data-open-private-settings>🔒 Privacy</button>
 
             <button
               id="ippPhotoBtn"
