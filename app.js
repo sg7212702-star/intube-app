@@ -237,7 +237,7 @@ async function openSettingsCategory(category, user, panel) {
       ["privateAccount","Private account","Only approved followers should be able to see your private content.",privateOn],
       ...options.filter(option => option[0] !== "privateAccount")
     ];
-    rows.innerHTML = privacyOptions.map(([key,label,description,defaultValue]) => {
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Follow requests</div><div class="isp-desc">Review, accept or reject pending requests for your private account.</div></div><button class="isp-action" id="ispManageFollowRequests">Manage</button></div>' + privacyOptions.map(([key,label,description,defaultValue]) => {
       const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
       return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
     }).join("");
@@ -246,6 +246,14 @@ async function openSettingsCategory(category, user, panel) {
       const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
       return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
     }).join("");
+  }
+  if (category === "Privacy") {
+    const manageRequests = rows.querySelector("#ispManageFollowRequests");
+    if (manageRequests) manageRequests.onclick = () => {
+      const api = window.InstaProPrivate;
+      if (api && typeof api.openPrivateSettings === "function") api.openPrivateSettings();
+      else status.textContent = "Private account system load nahi hua. Page refresh karein.";
+    };
   }
   rows.querySelectorAll("[data-setting-key]").forEach(button => {
     button.onclick = async () => {
@@ -391,6 +399,15 @@ async function openSettingsPanel() {
 
 
 // Creator dashboard: live Firestore totals and a 28-day daily trend.
+// Shared entry point for privacy settings from the three-line menu.
+window.InstaProOpenPrivacySettings = async function() {
+  await openSettingsPanel();
+  const { auth } = await import("./firebase.js");
+  const user = auth.currentUser;
+  const panel = document.getElementById("instaproSettingsPanel");
+  if (user && panel) await openSettingsCategory("Privacy", user, panel);
+};
+
 async function openCreatorAnalytics(user, panel) {
   if (!user || user.isAnonymous) { alert("Creator analytics ke liye Google login karein."); return; }
   if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; }
