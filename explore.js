@@ -20,20 +20,43 @@ const videoOf = post => {
 function openExplorePost(post) {
   const url = mediaOf(post);
   if (!url) return;
+  if (videoOf(post)) {
+    const openInReels = () => {
+      if (typeof window.InstaProReels?.openPost === "function") {
+        window.InstaProReels.openPost(post.id, post);
+        return;
+      }
+      import("./reels.js").then(() => {
+        setTimeout(() => {
+          if (typeof window.InstaProReels?.openPost === "function") {
+            window.InstaProReels.openPost(post.id, post);
+          } else {
+            console.error("Full-screen Reels player is unavailable.");
+            alert("Reels player load nahi hua. App refresh karke dobara try karein.");
+          }
+        }, 250);
+      }).catch(error => {
+        console.error("Could not open Explore video in Reels:", error);
+        alert("Reels player open nahi hua. Dobara try karein.");
+      });
+    };
+    openInReels();
+    return;
+  }
+
   const viewer = document.createElement("div");
-  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(7,9,16,.48);backdrop-filter:blur(28px) saturate(165%);-webkit-backdrop-filter:blur(28px) saturate(165%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;color:white;";
-  const media = document.createElement(videoOf(post) ? "video" : "img");
+  viewer.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(7,9,16,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;color:white;";
+  const media = document.createElement("img");
   media.src = url;
-  media.style.cssText = "max-width:100%;max-height:78vh;object-fit:contain;border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:0 18px 55px rgba(0,0,0,.28);";
-  if (videoOf(post)) { media.controls = true; media.autoplay = true; media.playsInline = true; }
+  media.style.cssText = "max-width:100%;max-height:78vh;object-fit:contain;";
   const caption = document.createElement("p");
   caption.textContent = post.caption || "";
   caption.style.cssText = "max-width:100%;overflow-wrap:anywhere;";
   const close = document.createElement("button");
   close.type = "button"; close.textContent = "✕ Close";
-  close.style.cssText = "position:absolute;top:18px;left:16px;padding:10px 16px;border:1px solid rgba(255,255,255,.25);border-radius:22px;background:rgba(255,255,255,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:white;";
-  close.onclick = () => { media.pause?.(); viewer.remove(); };
-  viewer.addEventListener("click", event => { if (event.target === viewer) { media.pause?.(); viewer.remove(); } });
+  close.style.cssText = "position:absolute;top:18px;left:16px;padding:10px 16px;border:1px solid rgba(255,255,255,.25);border-radius:22px;background:#222;color:white;";
+  close.onclick = () => viewer.remove();
+  viewer.addEventListener("click", event => { if (event.target === viewer) viewer.remove(); });
   viewer.append(close, media, caption);
   document.body.appendChild(viewer);
 }
