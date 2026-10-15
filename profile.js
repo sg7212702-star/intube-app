@@ -756,44 +756,60 @@ function render(data = profileData, posts = profilePosts) {
 
   const storyAvatar = $("#ippStoryAvatar", page);
 
-  // Instagram-style: hold the profile photo for 2 seconds to preview it.
+  // Instagram-style long-press preview (works on both own and other profiles).
   const profilePhoto = $("#ippPhoto", page);
-  if (profilePhoto && !page.querySelector("#ippPhotoPreview")) {
+  if (profilePhoto && storyAvatar && !page.querySelector("#ippPhotoPreview")) {
     let holdTimer = null;
     let holdStarted = false;
+    let startX = 0;
+    let startY = 0;
     const clearHold = () => {
-      if (holdTimer) clearTimeout(holdTimer);
+      if (holdTimer !== null) clearTimeout(holdTimer);
       holdTimer = null;
     };
     const openPhotoPreview = () => {
-      if (page.querySelector("#ippPhotoPreview")) return;
+      if (document.getElementById("ippPhotoPreview")) return;
       const preview = document.createElement("div");
       preview.id = "ippPhotoPreview";
-      preview.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(12px);";
-      preview.innerHTML = `<button type="button" aria-label="Close profile photo" style="position:absolute;top:18px;right:20px;width:42px;height:42px;border:0;border-radius:50%;background:#ffffff20;color:#fff;font-size:28px;cursor:pointer">×</button><img src="${esc(photo)}" alt="Profile photo preview" style="width:min(82vw,420px);height:min(82vw,420px);max-height:75vh;object-fit:cover;border-radius:50%;border:3px solid #ffffff35;box-shadow:0 12px 60px #0009;">`;
+      preview.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);";
+      preview.innerHTML = `<button type="button" aria-label="Close profile photo" style="position:absolute;top:18px;right:20px;width:44px;height:44px;border:0;border-radius:50%;background:#ffffff22;color:#fff;font-size:30px;cursor:pointer">×</button><img src="${esc(photo)}" alt="Profile photo preview" style="width:min(82vw,420px);height:min(82vw,420px);max-height:75vh;object-fit:cover;border-radius:50%;border:3px solid #ffffff55;box-shadow:0 12px 60px #0009;">`;
       document.body.appendChild(preview);
       const closePreview = () => preview.remove();
       preview.querySelector("button").onclick = closePreview;
       preview.addEventListener("click", event => { if (event.target === preview) closePreview(); });
-      const onKey = event => { if (event.key === "Escape") { closePreview(); document.removeEventListener("keydown", onKey); } };
+      const onKey = event => {
+        if (event.key === "Escape") {
+          closePreview();
+          document.removeEventListener("keydown", onKey);
+        }
+      };
       document.addEventListener("keydown", onKey);
     };
-    profilePhoto.style.touchAction = "pan-y";
-    profilePhoto.addEventListener("pointerdown", event => {
+    // Attach to the whole circular avatar, not just the image element.
+    storyAvatar.style.touchAction = "none";
+    storyAvatar.style.webkitUserSelect = "none";
+    storyAvatar.style.userSelect = "none";
+    storyAvatar.addEventListener("pointerdown", event => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       holdStarted = false;
       clearHold();
+      startX = event.clientX;
+      startY = event.clientY;
       holdTimer = setTimeout(() => {
         holdStarted = true;
         openPhotoPreview();
       }, 2000);
     });
-    ["pointerup", "pointercancel", "pointerleave"].forEach(type => profilePhoto.addEventListener(type, clearHold));
-    profilePhoto.addEventListener("contextmenu", event => event.preventDefault());
-    profilePhoto.addEventListener("click", event => {
+    storyAvatar.addEventListener("pointermove", event => {
+      if (holdTimer !== null && (Math.abs(event.clientX - startX) > 18 || Math.abs(event.clientY - startY) > 18)) clearHold();
+    });
+    ["pointerup", "pointercancel"].forEach(type => storyAvatar.addEventListener(type, clearHold));
+    storyAvatar.addEventListener("contextmenu", event => event.preventDefault());
+    storyAvatar.addEventListener("click", event => {
       if (holdStarted) {
         event.preventDefault();
-        event.stopPropagation();
+        event.stopImmediatePropagation();
+        holdStarted = false;
       }
     }, true);
   }
