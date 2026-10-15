@@ -52,6 +52,7 @@ let currentFollowing = new Set();
 
 let currentPosts = [];
 let profileCache = new Map();
+const profileWatchers = new Map();
 
 let feedStarted = false;
 let activeCommentsPostId = null;
@@ -219,6 +220,57 @@ function isOwnPost(post) {
 }
 
 // ------------------------------------------------------
+// PROFILE CACHE + LIVE USER PROFILE UPDATES
+// ------------------------------------------------------
+
+function watchUserProfile(uid) {
+  if (!uid || profileWatchers.has(uid)) return;
+
+  const unsubscribe = onSnapshot(
+    getUserRef(uid),
+    snapshot => {
+      if (!snapshot.exists()) {
+        profileCache.delete(uid);
+        return;
+      }
+
+      const data = snapshot.data();
+      const nextProfile = {
+        ...data,
+        username: data.username || data.displayName || data.name || "InstaPro User",
+        photoURL: data.photoURL || data.photoUrl || data.profilePic || data.photo || data.avatar || ""
+      };
+
+      const previous = profileCache.get(uid);
+      const changed = !previous ||
+        previous.username !== nextProfile.username ||
+        previous.displayName !== nextProfile.displayName ||
+        previous.name !== nextProfile.name ||
+        previous.photoURL !== nextProfile.photoURL ||
+        previous.photoUrl !== nextProfile.photoUrl ||
+        previous.photo !== nextProfile.photo ||
+        previous.profilePic !== nextProfile.profilePic ||
+        previous.bio !== nextProfile.bio;
+
+      profileCache.set(uid, nextProfile);
+
+      // Name/username/photo changes appear in other users' feed without reload.
+      if (changed && feedStarted && auth.currentUser) renderFeed();
+    },
+    error => console.warn("Live user profile update listener error:", uid, error)
+  );
+
+  profileWatchers.set(uid, unsubscribe);
+}
+
+function stopProfileWatchers() {
+  profileWatchers.forEach(unsubscribe => {
+    try { unsubscribe(); } catch {}
+  });
+  profileWatchers.clear();
+}
+
+// ------------------------------------------------------
 // PROFILE CACHE
 // ------------------------------------------------------
 
@@ -238,6 +290,8 @@ async function getUserProfile(uid, post = {}) {
     };
   }
 
+  watchUserProfile(uid);
+
   if (profileCache.has(uid)) {
     const cached = profileCache.get(uid);
 
@@ -252,6 +306,9 @@ async function getUserProfile(uid, post = {}) {
 
       photoURL:
         cached.photoURL ||
+        cached.photoUrl ||
+        cached.profilePic ||
+        cached.photo ||
         post.photoURL ||
         post.photo ||
         post.userPhoto ||
@@ -1787,6 +1844,9 @@ onAuthStateChanged(auth, user => {
     startFeed();
 
   } else {
+    stopProfileWatchers();
+    profileCache.clear();
+
     if (unsubscribeFeed) {
       unsubscribeFeed();
       unsubscribeFeed = null;
