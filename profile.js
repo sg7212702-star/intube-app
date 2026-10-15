@@ -895,6 +895,7 @@ function render(data = profileData, posts = profilePosts) {
         preload="metadata"
       ></video>
       <span class="ipp-reelTag">▷ ${Number(post.viewCount ?? post.viewsCount ?? post.playCount ?? post.views) || 0}</span>
+      ${myId() === postOwner(post) ? `<button type="button" class="ipp-reelDelete" data-delete-reel="${esc(post.id)}" aria-label="Delete reel" style="position:absolute;left:6px;bottom:6px;z-index:3;border:0;border-radius:8px;background:#b91c1c;color:#fff;padding:6px 8px;font-size:11px;font-weight:800;cursor:pointer">Delete</button>` : ""}
     ` : `
       <img
         src="${esc(url)}"
@@ -1178,6 +1179,20 @@ async function shareProfilePost(post) {
     await updateDoc(doc(db, "posts", post.id), { shareCount: increment(1) }).catch(() => {});
   } catch (error) { if (error.name !== "AbortError") console.error("Post share error:", error); }
 }
+
+grid.querySelectorAll("[data-delete-reel]").forEach(button => {
+  button.addEventListener("click", async event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const reelId = button.dataset.deleteReel;
+    const reel = filtered.find(item => String(item.id) === String(reelId));
+    if (!reel || myId() !== postOwner(reel)) {
+      alert("Aap sirf apni Reel delete kar sakte hain.");
+      return;
+    }
+    await deleteProfilePost(reelId, $("#ippActivePostViewer"));
+  });
+});
 
 const postTiles = grid.querySelectorAll(".ipp-tile");
 postTiles.forEach(tile => {
