@@ -53,6 +53,8 @@ let currentFollowing = new Set();
 let currentPosts = [];
 let profileCache = new Map();
 const profileWatchers = new Map();
+let activeStoryOwnerUids = new Set();
+let unsubscribeFeedStories = null;
 
 let feedStarted = false;
 let activeCommentsPostId = null;
@@ -487,6 +489,17 @@ function injectFeedStyles() {
       background: #080808;
     }
 
+    .ip-feed-reel-post .ip-feed-header { gap:10px; padding:14px 16px; }
+    .ip-feed-story-avatar { width:54px;height:54px;min-width:54px;padding:3px;border-radius:50%;box-sizing:border-box;flex-shrink:0; }
+    .ip-feed-story-avatar.has-story { background:conic-gradient(#ffb347,#ff3d9a,#a855f7,#ff3d9a,#ffb347); }
+    .ip-feed-story-avatar img { display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid #111;box-sizing:border-box; }
+    .ip-feed-reel-post .ip-feed-username { font-size:15px; }
+    .ip-feed-reel-post .ip-feed-date { color:#fff;opacity:.92;font-size:12px; }
+    .ip-feed-reel-post .ip-feed-follow { background:transparent;color:#fff;border:1px solid rgba(255,255,255,.8);border-radius:12px;padding:9px 20px;font-size:14px; }
+    .ip-feed-reel-post .ip-feed-follow.following { background:rgba(0,0,0,.25);color:#fff; }
+    .ip-feed-reel-post .ip-feed-more { color:#fff;font-size:28px; }
+    .ip-feed-reel-musicline { display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:12px;line-height:19px; }
+    .ip-feed-reel-post .ip-feed-music-toggle { right:16px !important;bottom:92px !important;width:42px !important;height:42px !important;background:rgba(20,20,20,.62) !important;font-size:18px !important; }
     /* Immersive Instagram-style vertical Reel cards inside Home Feed */
     .instapro-feed-post.ip-feed-reel-post {
       position: relative;
@@ -640,6 +653,25 @@ console.log("InstaPro Feed Part 1 loaded.");
 // REAL-TIME FEED
 // ------------------------------------------------------
 
+function startFeedStories() {
+  if (unsubscribeFeedStories) return;
+  unsubscribeFeedStories = onSnapshot(collection(db, "stories"), snapshot => {
+    const now = Date.now();
+    const next = new Set();
+    snapshot.docs.forEach(item => {
+      const story = item.data();
+      const uid = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
+      const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
+      const created = story.createdAt?.toDate ? story.createdAt.toDate().getTime() : (typeof story.createdAt === "number" ? story.createdAt : Date.parse(story.createdAt || "") || 0);
+      const expiry = Number(story.expiresAt) || ((created || now) + 86400000);
+      if (uid && url && expiry > now) next.add(uid);
+    });
+    const changed = next.size !== activeStoryOwnerUids.size || [...next].some(uid => !activeStoryOwnerUids.has(uid));
+    activeStoryOwnerUids = next;
+    if (changed && feedStarted) renderFeed();
+  }, error => console.warn("Feed story ring listener error:", error));
+}
+
 function startFeed() {
   if (!feed || feedStarted) return;
 
@@ -790,6 +822,7 @@ async function renderFeed() {
       );
 
       const ownPost = !!user && ownerUid === user.uid;
+      const ownerHasStory = !!ownerUid && activeStoryOwnerUids.has(ownerUid);
 
       const isFollowing = currentFollowing.has(ownerUid);
 
@@ -834,6 +867,8 @@ async function renderFeed() {
       trackCreatorPostView(card, post);
 
       const musicUrl = typeof post.musicUrl === "string" ? post.musicUrl : "";
+      const reelMusicTitle = post.musicName || post.musicTitle || post.audioTitle || post.songName || post.musicTrack?.title || post.musicTrack?.name || "";
+      const reelMusicArtist = post.musicArtist || post.artistName || post.musicTrack?.artistName || post.musicTrack?.artist || "";
       const musicHTML = musicUrl
         ? `
           <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="auto"></audio>
@@ -873,13 +908,15 @@ async function renderFeed() {
       card.innerHTML = `
         <div class="ip-feed-header">
 
-          <img
-            class="ip-feed-avatar"
-            src="${avatar}"
-            alt="${ownerName}"
-            data-feed-action="profile"
-            data-uid="${escapeHTML(ownerUid)}"
-          >
+          <div class="ip-feed-story-avatar ${ownerHasStory ? "has-story" : ""}" style="${isReelPost ? "" : "display:contents"}">
+            <img
+              class="ip-feed-avatar"
+              src="${avatar}"
+              alt="${ownerName}"
+              data-feed-action="profile"
+              data-uid="${escapeHTML(ownerUid)}"
+            >
+          </div>
 
           <div class="ip-feed-user-info">
 
@@ -890,7 +927,7 @@ async function renderFeed() {
             >${ownerName}</strong>
 
             <span class="ip-feed-date">
-              ${escapeHTML(formatDate(post.createdAt || post.time))}
+              ${isReelPost && (reelMusicTitle || post.musicUrl) ? "♫ " + escapeHTML([reelMusicTitle || "Original audio", reelMusicArtist].filter(Boolean).join(" · ")) : escapeHTML(formatDate(post.createdAt || post.time))}
             </span>
 
           </div>
@@ -918,7 +955,7 @@ async function renderFeed() {
                   data-feed-action="delete"
                   data-id="${escapeHTML(post.id)}"
                   aria-label="Post options"
-                >⋮</button>
+                >☰</button>
               `
               : ""
           }
@@ -1763,7 +1800,8 @@ if (feed) {
 
     if (action === "retry") {
       feedStarted = false;
-      startFeed();
+      startFeedStories();
+    startFeed();
       return;
     }
 
@@ -1844,6 +1882,8 @@ onAuthStateChanged(auth, user => {
     startFeed();
 
   } else {
+    if (unsubscribeFeedStories) { unsubscribeFeedStories(); unsubscribeFeedStories = null; }
+    activeStoryOwnerUids = new Set();
     stopProfileWatchers();
     profileCache.clear();
 
