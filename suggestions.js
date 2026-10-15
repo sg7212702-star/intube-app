@@ -53,7 +53,7 @@ function mount(target) {
   const box=document.createElement("section");
   box.className="ipsg-wrap";
   box.innerHTML='<div class="ipsg-head"><div class="ipsg-title">Suggested for you</div><button class="ipsg-refresh" type="button">↻ Refresh</button></div><div class="ipsg-list"><div class="ipsg-empty">Loading suggestions…</div></div>';
-  target.prepend(box);
+  target.append(box);
   box.querySelector(".ipsg-refresh").onclick=()=>{dismissed.clear();renderAll();};
   return box;
 }
