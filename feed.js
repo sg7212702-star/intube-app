@@ -430,6 +430,71 @@ function injectFeedStyles() {
       background: #080808;
     }
 
+    /* Immersive Instagram-style vertical Reel cards inside Home Feed */
+    .instapro-feed-post.ip-feed-reel-post {
+      position: relative;
+      width: 100%;
+      height: 100svh;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background: #000;
+    }
+    .ip-feed-reel-post .ip-feed-media-wrap {
+      position: absolute !important;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+    .ip-feed-reel-post .ip-feed-media {
+      width: 100%;
+      height: 100%;
+      max-height: none;
+      object-fit: cover;
+      background: #000;
+    }
+    .ip-feed-reel-post > .ip-feed-header {
+      position: absolute;
+      z-index: 5;
+      top: max(8px, env(safe-area-inset-top));
+      left: 0;
+      right: 0;
+      color: #fff;
+      background: linear-gradient(180deg,rgba(0,0,0,.48),transparent);
+    }
+    .ip-feed-reel-post > div[style*="padding:12px"] {
+      position: absolute;
+      z-index: 5;
+      left: 0;
+      right: 0;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      padding: 14px 12px 20px !important;
+      color: #fff;
+      background: linear-gradient(0deg,rgba(0,0,0,.62),transparent);
+    }
+    .ip-feed-reel-post .ip-feed-caption {
+      max-width: calc(100% - 4px);
+      color: #fff;
+    }
+    .ip-feed-reel-post .ip-feed-view-comments {
+      color: #fff;
+    }
+    .ip-feed-reel-post .ip-feed-actions {
+      gap: 18px;
+    }
+    .ip-feed-reel-post .ip-feed-icon-action svg {
+      filter: drop-shadow(0 1px 3px #0008);
+    }
+    @media (max-width: 600px) {
+      .instapro-feed-post.ip-feed-reel-post {
+        width: 100vw;
+        margin-left: calc((100% - 100vw) / 2);
+      }
+    }
+
     .ip-feed-actions {
       display: flex;
       align-items: center;
@@ -672,6 +737,13 @@ async function renderFeed() {
       const isFollowing = currentFollowing.has(ownerUid);
 
       const mediaType = getPostType(post);
+      const reelTypeText = String(post.currentType || post.mediaType || post.contentType || post.type || post.kind || "").toLowerCase();
+      const isReelPost = mediaType === "video" && (
+        post.isReel === true ||
+        post.is_reel === true ||
+        reelTypeText === "reel" ||
+        reelTypeText.includes("reel")
+      );
 
       const likes = Array.isArray(post.likes)
         ? post.likes
@@ -698,9 +770,10 @@ async function renderFeed() {
 
       const card = document.createElement("article");
 
-      card.className = "instapro-feed-post";
+      card.className = "instapro-feed-post" + (isReelPost ? " ip-feed-reel-post" : "");
 
       card.dataset.postId = post.id;
+      if (isReelPost) card.dataset.contentType = "reel";
       trackCreatorPostView(card, post);
 
       const musicUrl = typeof post.musicUrl === "string" ? post.musicUrl : "";
