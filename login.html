@@ -71,7 +71,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
   getDoc,
@@ -157,19 +157,39 @@ $("signupBtn").onclick = async () => {
   }
 };
 
-// GOOGLE LOGIN
+// GOOGLE LOGIN — redirect flow is more reliable on mobile browsers.
 $("googleBtn").onclick = async () => {
   try {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-
-    const result = await signInWithPopup(auth, provider);
-    await saveProfile(result.user);
-    window.location.href = "index.html";
+    $("googleBtn").disabled = true;
+    $("googleBtn").textContent = "Opening Google...";
+    await signInWithRedirect(auth, provider);
   } catch (error) {
-    showError(error.message);
+    $("googleBtn").disabled = false;
+    $("googleBtn").textContent = "Continue with Google";
+    showError((error.code ? error.code + ": " : "") + error.message);
   }
 };
+
+// Complete Google redirect after returning to this page.
+getRedirectResult(auth).then(async (result) => {
+  if (result?.user) {
+    try {
+      await saveProfile(result.user);
+    } catch (error) {
+      console.error("Google profile save failed:", error);
+      // Authentication succeeded; do not trap the user on the login screen
+      // just because the optional Firestore profile write failed.
+    }
+    window.location.replace("index.html");
+  }
+}).catch((error) => {
+  console.error("Google redirect login failed:", error);
+  showError((error.code ? error.code + ": " : "") + error.message);
+  $("googleBtn").disabled = false;
+  $("googleBtn").textContent = "Continue with Google";
+});
 
 // ERROR MESSAGE
 function showError(message) {
