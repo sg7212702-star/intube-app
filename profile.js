@@ -639,7 +639,6 @@ function render(data = profileData, posts = profilePosts) {
             <button
               id="ippPhotoBtn"
               class="ipp-btn"
-              style="flex:1"
             >
               📷 Change photo
             </button>
@@ -647,14 +646,12 @@ function render(data = profileData, posts = profilePosts) {
             <button
               id="ippFollow"
               class="ipp-btn ipp-primary"
-              style="flex:1"
             >
               ${isFollowing ? "Following ✓" : "Follow +"}
             </button>\n            ${isMutualFollow ? `
               <button
                 id="ippMessage"
                 class="ipp-btn"
-                style="flex:1"
               >
                 ✉ Message
               </button>
@@ -664,7 +661,6 @@ function render(data = profileData, posts = profilePosts) {
           <button
             id="ippShare"
             class="ipp-btn"
-            style="flex:1"
           >
             ↗ Share
           </button>
