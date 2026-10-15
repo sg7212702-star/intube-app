@@ -949,15 +949,15 @@ async function renderFeed() {
           </div>
 
           ${
-            !ownPost && ownerUid
+            !ownPost && ownerUid && !isFollowing
               ? `
                 <button
                   type="button"
-                  class="ip-feed-follow ${isFollowing ? "following" : ""}"
+                  class="ip-feed-follow"
                   data-feed-action="follow"
                   data-uid="${escapeHTML(ownerUid)}"
-                  aria-pressed="${isFollowing}"
-                >${isFollowing ? "Following" : "Follow"}</button>
+                  aria-pressed="false"
+                >Follow</button>
               `
               : ""
           }
