@@ -846,6 +846,58 @@ async function renderFeed() {
     // Clean up observers from the previous feed render.
     (window.__instaProFeedMusicObservers || []).forEach(observer => observer.disconnect());
     window.__instaProFeedMusicObservers = [];
+    (window.__instaProFeedVideoObservers || []).forEach(observer => observer.disconnect());
+    window.__instaProFeedVideoObservers = [];
+
+    // Instagram-style Home feed video autoplay: play only the video that is
+    // mostly visible, pause videos as they leave the screen, and keep autoplay
+    // muted so Android/mobile browser autoplay policies allow it.
+    const feedVideos = Array.from(feed.querySelectorAll("video.ip-feed-media"));
+    feedVideos.forEach(video => {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.loop = true;
+      video.preload = document.documentElement.classList.contains("instapro-data-saver") ? "metadata" : "auto";
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.setAttribute("loop", "");
+      video.setAttribute("aria-label", "Feed video; sound can be enabled using video controls");
+      video.addEventListener("error", () => {
+        console.warn("InstaPro feed video failed to load:", video.currentSrc || video.src);
+      }, { once: true });
+    });
+
+    if ("IntersectionObserver" in window) {
+      const activeFeedVideoObserver = new IntersectionObserver(entries => {
+        const visible = entries
+          .filter(entry => entry.target instanceof HTMLVideoElement)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const candidate = visible.find(entry => entry.isIntersecting && entry.intersectionRatio >= 0.6);
+        if (candidate) {
+          feedVideos.forEach(video => {
+            if (video !== candidate.target && !video.paused) video.pause();
+          });
+          const video = candidate.target;
+          if (video.paused) {
+            const playAttempt = video.play();
+            if (playAttempt && typeof playAttempt.catch === "function") {
+              playAttempt.catch(error => console.warn("Feed autoplay was blocked by the browser:", error));
+            }
+          }
+        }
+        visible.forEach(entry => {
+          if ((!entry.isIntersecting || entry.intersectionRatio < 0.25) && !entry.target.paused) {
+            entry.target.pause();
+          }
+        });
+      }, { threshold: [0, 0.25, 0.6, 0.85] });
+      feedVideos.forEach(video => activeFeedVideoObserver.observe(video));
+      window.__instaProFeedVideoObservers.push(activeFeedVideoObserver);
+    } else if (feedVideos.length) {
+      feedVideos[0].play().catch(() => {});
+    }
 
     // Each visible post should try to play its own soundtrack automatically.
     feed.querySelectorAll(".instapro-feed-post").forEach(card => {
