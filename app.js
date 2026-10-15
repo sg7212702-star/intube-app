@@ -600,17 +600,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   $("closeMenu")?.addEventListener("click", closeAll);
   $("cancelSheet")?.addEventListener("click", closeAll);
-  $("optReel")?.addEventListener("click", () => {
-    closeAll();
-    openPage("reels");
-    setTimeout(() => {
-      if (window.InstaProReels && typeof window.InstaProReels.openPost === "function") {
-        const firstVideo = document.querySelector("#ipReelsGrid [data-reel-id], #ipReelsGrid [data-post-id]");
-        if (firstVideo) firstVideo.click();
-        else document.querySelector('.bBtn[data-v="reels"]')?.click();
-      }
-    }, 180);
-  });
+
 
   // Show the signed-in user's real profile photo in the bottom Profile tab.
   let bottomAvatarUnsubscribe = null;
