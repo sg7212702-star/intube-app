@@ -602,7 +602,7 @@ function openStoryEditor(file) {
       if (act === "clear-draw") {const cv=modal.querySelector(".ips-draw-canvas");if(cv){const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);}}
       if (act === "close-draw") {const cv=modal.querySelector(".ips-draw-canvas");if(cv)cv.style.pointerEvents="none";}
       if (act === "music") {
-        // Open the device's audio/music library so the user can attach a real playable track.
+        // Searchable public song catalogue plus local-device music picker.
         let musicInput = modal.querySelector("#ip-story-music-input");
         if (!musicInput) {
           musicInput = document.createElement("input");
@@ -615,39 +615,69 @@ function openStoryEditor(file) {
             const trackFile = musicInput.files && musicInput.files[0];
             if (!trackFile) return;
             if (!trackFile.type.startsWith("audio/") && !/\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i.test(trackFile.name)) {
-              alert("Audio/music file select karein.");
-              musicInput.value = "";
-              return;
+              alert("Audio/music file select karein."); musicInput.value = ""; return;
             }
-            if (window.__instaProStoryMusicPreviewUrl) URL.revokeObjectURL(window.__instaProStoryMusicPreviewUrl);
-            window.__instaProStoryMusicPreviewUrl = URL.createObjectURL(trackFile);
             window.__instaProPendingMusicFile = trackFile;
-            window.__instaProPendingMusicTrack = { title: trackFile.name.replace(/\.[^.]+$/, ""), artistName: "", source: "device-library" };
-            let panel = modal.querySelector("#ip-story-music-panel");
-            if (!panel) {
-              panel = document.createElement("div");
-              panel.id = "ip-story-music-panel";
-              panel.style.cssText = "position:absolute;z-index:12;left:12px;right:12px;top:62px;padding:16px;border:1px solid #ffffff30;border-radius:18px;background:rgba(20,20,25,.97);box-shadow:0 12px 35px #0009;color:#fff;";
-              panel.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">♫</span><div style="flex:1;min-width:0"><b id="ip-story-music-name" style="display:block;overflow-wrap:anywhere"></b><small style="opacity:.7">Selected from your music library</small></div><button type="button" data-music-close style="border:0;border-radius:50%;width:32px;height:32px;background:#ffffff20;color:#fff;font-size:20px">×</button></div><audio id="ip-story-music-preview" controls style="width:100%;margin-top:12px"></audio><div style="display:flex;gap:8px;margin-top:10px"><button type="button" data-music-change style="flex:1;padding:10px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff12;color:#fff">Choose another</button><button type="button" data-music-done style="flex:1;padding:10px;border:0;border-radius:12px;background:linear-gradient(100deg,#7657ff,#b94cff);color:#fff;font-weight:700">Use music ✓</button></div>';
-              modal.appendChild(panel);
-              panel.addEventListener("click", ev => {
-                if (ev.target.closest("[data-music-close]")) panel.remove();
-                if (ev.target.closest("[data-music-change]")) { musicInput.value = ""; musicInput.click(); }
-                if (ev.target.closest("[data-music-done]")) {
-                  panel.remove();
-                  alert("Music select ho gaya. Story share karne par soundtrack save hoga.");
-                }
-              });
-            }
-            panel.querySelector("#ip-story-music-name").textContent = trackFile.name;
-            const player = panel.querySelector("#ip-story-music-preview");
-            player.src = window.__instaProStoryMusicPreviewUrl;
-            player.load();
-            panel.style.display = "block";
+            window.__instaProPendingMusicTrack = {title:trackFile.name.replace(/\.[^.]+$/, ""),artistName:"",source:"device-library"};
+            const status = modal.querySelector("#ip-story-music-status");
+            if(status) status.textContent = "Selected: " + trackFile.name + " — Story share karne par audio file upload hogi.";
           });
         }
-        musicInput.value = "";
-        musicInput.click();
+        let panel = modal.querySelector("#ip-story-music-panel");
+        if (!panel) {
+          panel = document.createElement("div");
+          panel.id = "ip-story-music-panel";
+          panel.style.cssText = "position:absolute;z-index:12;left:10px;right:10px;top:58px;bottom:110px;overflow:auto;padding:15px;border:1px solid #ffffff30;border-radius:18px;background:rgba(18,18,24,.98);box-shadow:0 12px 35px #0009;color:#fff;";
+          panel.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:18px;flex:1">♫ Music Library</b><button type="button" data-music-close style="border:0;border-radius:50%;width:32px;height:32px;background:#ffffff20;color:#fff;font-size:20px">×</button></div><form id="ip-story-music-search-form" style="display:flex;gap:7px"><input id="ip-story-music-search" type="search" placeholder="Search songs, artists..." style="min-width:0;flex:1;padding:11px;border:1px solid #ffffff35;border-radius:12px;background:#ffffff12;color:#fff;outline:none"><button type="submit" style="padding:10px 13px;border:0;border-radius:12px;background:#8b5cf6;color:#fff;font-weight:700">Search</button></form><button type="button" data-music-local style="width:100%;margin:9px 0;padding:10px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff10;color:#fff">Choose audio from my phone</button><div id="ip-story-music-status" style="font-size:12px;opacity:.8;margin:8px 0">Search songs by title or artist. Online results provide preview clips where available.</div><div id="ip-story-music-results" style="display:grid;gap:8px"></div><div style="font-size:11px;opacity:.65;margin-top:12px">Online catalogue previews are supplied by the catalogue provider; full-length licensed music requires a music-rights provider.</div>';
+          modal.appendChild(panel);
+          panel.addEventListener("click", ev => {
+            if (ev.target.closest("[data-music-close]")) { panel.remove(); return; }
+            if (ev.target.closest("[data-music-local]")) { musicInput.value = ""; musicInput.click(); return; }
+            const pick = ev.target.closest("[data-music-pick]");
+            if (pick) {
+              const track = window.__instaProMusicSearchResults?.[Number(pick.dataset.musicPick)];
+              if (!track) return;
+              if (!track.previewUrl) { const s=panel.querySelector("#ip-story-music-status"); if(s)s.textContent="Is track ka playable preview available nahi hai. Phone se audio choose karein."; return; }
+              window.__instaProPendingMusicFile = null;
+              window.__instaProPendingMusicTrack = {title:track.trackName,artistName:track.artistName,audioUrl:track.previewUrl,id:String(track.trackId),source:"catalog-preview"};
+              const s=panel.querySelector("#ip-story-music-status");
+              if(s)s.textContent = "Selected: " + track.trackName + " — " + track.artistName + ". Available preview clip will be attached.";
+              panel.querySelectorAll("[data-music-pick]").forEach(b=>{b.style.borderColor=b===pick?"#a78bfa":"#ffffff20";});
+              return;
+            }
+          });
+          panel.querySelector("#ip-story-music-search-form").addEventListener("submit", async ev => {
+            ev.preventDefault();
+            const query=panel.querySelector("#ip-story-music-search").value.trim();
+            const status=panel.querySelector("#ip-story-music-status"), results=panel.querySelector("#ip-story-music-results");
+            if(!query){status.textContent="Song ya artist ka naam likhein.";return;}
+            status.textContent="Searching music…"; results.replaceChildren();
+            try {
+              const response=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(query)+"&entity=song&limit=50&media=music");
+              if(!response.ok) throw new Error("Music search abhi available nahi hai.");
+              const data=await response.json();
+              const tracks=(data.results||[]).filter(t=>t.trackName&&t.artistName);
+              window.__instaProMusicSearchResults=tracks;
+              if(!tracks.length){status.textContent="Koi result nahi mila. Dusra naam search karein ya phone se audio choose karein.";return;}
+              status.textContent=tracks.length+" songs found. Select a track to attach its available preview.";
+              tracks.forEach((track,index)=>{
+                const row=document.createElement("div");
+                row.style.cssText="display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff08";
+                if(track.artworkUrl100){const img=document.createElement("img");img.src=track.artworkUrl100;img.alt="";img.style.cssText="width:46px;height:46px;border-radius:8px;object-fit:cover";row.appendChild(img);}
+                const info=document.createElement("div");info.style.cssText="flex:1;min-width:0";
+                const title=document.createElement("b");title.textContent=track.trackName;title.style.cssText="display:block;font-size:13px;overflow-wrap:anywhere";
+                const artist=document.createElement("small");artist.textContent=track.artistName+" · "+(track.collectionName||"");artist.style.cssText="display:block;font-size:11px;opacity:.7;overflow-wrap:anywhere";
+                info.append(title,artist);row.appendChild(info);
+                const choose=document.createElement("button");choose.type="button";choose.dataset.musicPick=String(index);choose.textContent=track.previewUrl?"Use":"Unavailable";choose.disabled=!track.previewUrl;choose.style.cssText="padding:8px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff12;color:#fff";
+                row.appendChild(choose);
+                if(track.previewUrl){const play=document.createElement("button");play.type="button";play.textContent="▶";play.title="Play preview";play.style.cssText="padding:8px;border:0;border-radius:10px;background:#ffffff15;color:#fff";play.addEventListener("click",()=>{let audio=panel.querySelector("#ip-story-music-audio-preview");if(!audio){audio=document.createElement("audio");audio.id="ip-story-music-audio-preview";audio.controls=true;audio.style.cssText="width:100%;margin:8px 0";results.before(audio);}audio.src=track.previewUrl;audio.play().catch(()=>{});});row.appendChild(play);}
+                results.appendChild(row);
+              });
+            } catch(error) {status.textContent="Music search connect nahi ho paya. Internet check karein ya phone se audio choose karein.";console.warn("Story music search:",error);}
+          });
+        }
+        panel.style.display = "block";
+        panel.querySelector("#ip-story-music-search")?.focus();
       }
       if (act === "share") {
         caption = modal.querySelector("#ip-story-caption").value.trim();
