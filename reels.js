@@ -846,15 +846,85 @@ function openReelComments(postId) {
 
       list.innerHTML = snapshot.docs.map(docSnap => {
         const comment = docSnap.data();
-
+        const commentId = docSnap.id;
+        const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy : [];
+        const replies = Array.isArray(comment.replies) ? comment.replies : [];
+        const me = currentUser();
+        const liked = !!me && likedBy.includes(me.uid);
         return `
-          <div class="ipr-comment-row">
+          <div class="ipr-comment-row" data-comment-id="${escapeHTML(commentId)}">
             <img src="${escapeHTML(comment.photo || "https://www.gravatar.com/avatar/?d=mp")}" alt="">
-            <div><strong>${escapeHTML(comment.username || "User")}</strong><br>
-            ${escapeHTML(comment.text || "")}</div>
+            <div style="flex:1;min-width:0">
+              <strong>${escapeHTML(comment.username || "User")}</strong><br>
+              <span>${escapeHTML(comment.text || "")}</span>
+              <div style="display:flex;gap:14px;align-items:center;margin-top:6px;font-size:12px">
+                <button type="button" data-comment-like="${escapeHTML(commentId)}" style="border:0;background:none;color:${liked ? "#ff4d86" : "#bbb"};padding:2px 0;font:inherit;cursor:pointer">${liked ? "♥ Liked" : "♡ Like"}${likedBy.length ? " · "+likedBy.length : ""}</button>
+                <button type="button" data-comment-reply="${escapeHTML(commentId)}" data-reply-name="${escapeHTML(comment.username || "User")}" style="border:0;background:none;color:#bbb;padding:2px 0;font:inherit;cursor:pointer">Reply</button>
+              </div>
+              ${replies.map(reply => `<div style="margin:9px 0 0 10px;padding-left:10px;border-left:2px solid #555"><strong>${escapeHTML(reply.username || "User")}</strong><br><span>${escapeHTML(reply.text || "")}</span></div>`).join("")}
+              <form data-reply-form="${escapeHTML(commentId)}" style="display:none;gap:6px;margin-top:8px">
+                <input data-reply-input="${escapeHTML(commentId)}" maxlength="1000" placeholder="Reply to ${escapeHTML(comment.username || "User")}..." style="flex:1;min-width:0;background:#292929;color:white;border:1px solid #444;border-radius:18px;padding:8px 10px">
+                <button type="submit" style="border:0;border-radius:18px;padding:0 12px;background:#a855f7;color:white">Send</button>
+              </form>
+            </div>
           </div>
         `;
       }).join("");
+
+      list.querySelectorAll("[data-comment-like]").forEach(button => {
+        button.onclick = async () => {
+          const me = currentUser();
+          if (!me || me.isAnonymous) return showReelsMessage("Comment like karne ke liye login karein.");
+          try {
+            const ref = doc(db, "posts", postId, "comments", button.dataset.commentLike);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const likedBy = Array.isArray(snap.data().likedBy) ? snap.data().likedBy : [];
+            await updateDoc(ref, { likedBy: likedBy.includes(me.uid) ? arrayRemove(me.uid) : arrayUnion(me.uid) });
+          } catch (error) {
+            console.error("Comment like error:", error);
+            showReelsMessage("Comment like save nahi hua. Firestore Rules check karein.");
+          }
+        };
+      });
+
+      list.querySelectorAll("[data-comment-reply]").forEach(button => {
+        button.onclick = () => {
+          const form = list.querySelector(`[data-reply-form="${button.dataset.commentReply}"]`);
+          if (!form) return;
+          form.style.display = form.style.display === "flex" ? "none" : "flex";
+          form.querySelector("input")?.focus();
+        };
+      });
+
+      list.querySelectorAll("[data-reply-form]").forEach(form => {
+        form.onsubmit = async event => {
+          event.preventDefault();
+          const me = currentUser();
+          if (!me || me.isAnonymous) return showReelsMessage("Reply karne ke liye login karein.");
+          const commentId = form.dataset.replyForm;
+          const input = form.querySelector("input");
+          const replyText = input.value.trim();
+          if (!replyText) return;
+          try {
+            await updateDoc(doc(db, "posts", postId, "comments", commentId), {
+              replies: arrayUnion({
+                uid: me.uid,
+                username: me.displayName || me.email?.split("@")[0] || "User",
+                photo: me.photoURL || "",
+                text: replyText,
+                createdAt: new Date().toISOString()
+              })
+            });
+            input.value = "";
+            form.style.display = "none";
+            showReelsMessage("Reply added");
+          } catch (error) {
+            console.error("Comment reply error:", error);
+            showReelsMessage("Reply save nahi hua. Firestore Rules check karein.");
+          }
+        };
+      });
     },
     error => {
       console.error("Reel comments error:", error);
