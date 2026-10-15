@@ -62,7 +62,7 @@ function closeAll(){
 
 function openSheet(){
   const s=$("createSheet"); if(!s) return;
-  s.classList.add("show"); s.style.bottom="calc(78px + env(safe-area-inset-bottom))";
+  s.classList.add("show"); s.style.setProperty("position","fixed","important"); s.style.setProperty("left","12px","important"); s.style.setProperty("right","12px","important"); s.style.setProperty("width","auto","important"); s.style.setProperty("max-width","none","important"); s.style.setProperty("transform","none","important"); s.style.setProperty("box-sizing","border-box","important"); s.style.setProperty("bottom","calc(78px + env(safe-area-inset-bottom))","important"); s.style.setProperty("z-index","10020","important");
   const ov=$("overlay"); if(ov){ ov.style.display="block"; ov.classList.add("show"); }
   const sov=$("sheetOverlay"); if(sov) sov.style.display="block";
 }
