@@ -6,9 +6,9 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  updateDoc,
-  onAuthStateChanged
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 let unsubscribeNotifications = null;
 
