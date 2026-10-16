@@ -353,14 +353,97 @@ async function openSettingsCategory(category, user, panel) {
   }
 
   if (category === "Your activity") {
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Your profile and posts</div><div class="isp-desc">Apne published posts, reels aur profile ko dekhein.</div></div><button class="isp-action" id="ispActivityProfile">Open</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Account activity summary</div><div class="isp-desc" id="ispActivitySummary">Loading account activity…</div></div></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Account data</div><div class="isp-desc">Profile information and saved activity settings are stored with your account.</div></div><button class="isp-action" id="ispActivityData">View</button></div>';
-    panel.querySelector("#ispActivityProfile").onclick = async () => { close(); try { await import("./profile.js"); if (typeof window.openProfile==="function") await window.openProfile(user.uid); } catch(e) { alert("Profile open nahi hua: "+e.message); } };
-    panel.querySelector("#ispActivityData").onclick = async () => { try { const snap=await getDoc(doc(db,"users",me.uid)); const d=snap.exists()?snap.data():{}; status.textContent="Username: "+(d.username||"Not set")+" • Followers: "+(Array.isArray(d.followers)?d.followers.length:0)+" • Following: "+(Array.isArray(d.following)?d.following.length:0); } catch(e) { status.textContent="Account data load nahi hua: "+e.message; } };
+    rows.innerHTML = `
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Activity overview</div><div class="isp-desc" id="ipaActivityOverview">Firebase account activity load ho rahi hai…</div></div></div>
+      <div class="isp-subtitle">Your interactions</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Likes</div><div class="isp-desc">Aapne jin posts aur Reels ko like kiya.</div></div><button class="isp-action" data-activity-list="likes">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Comments</div><div class="isp-desc">Aapke comments, jahan comment records readable hain.</div></div><button class="isp-action" data-activity-list="comments">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts and Reels</div><div class="isp-desc">Aapke saved content.</div></div><button class="isp-action" data-activity-list="saved">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Reposts</div><div class="isp-desc">Aapke repost kiye gaye posts/Reels.</div></div><button class="isp-action" data-activity-list="reposts">View</button></div>
+      <div class="isp-subtitle">Your content and connections</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Posts and Reels</div><div class="isp-desc">Aapke published content ki list.</div></div><button class="isp-action" data-activity-list="content">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Followers and following</div><div class="isp-desc">Current account connection lists.</div></div><button class="isp-action" data-activity-list="follows">View</button></div>
+      <div class="isp-subtitle">Account history on this device</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Search history</div><div class="isp-desc">Insta Pro is device par save ki gayi searches.</div></div><button class="isp-action" data-activity-list="searches">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Recently deleted</div><div class="isp-desc">Is device par locally remembered deleted post/Reel IDs.</div></div><button class="isp-action" data-activity-list="deleted">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Time spent</div><div class="isp-desc" id="ipaTimeSpent">Is device par app use ka available record.</div></div><button class="isp-action" data-activity-list="time">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Account information</div><div class="isp-desc">Account ID, username, email aur account creation date.</div></div><button class="isp-action" data-activity-list="account">View</button></div>
+      <div class="isp-status" id="ipaActivityList" aria-live="polite" style="white-space:normal;overflow-wrap:anywhere"></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Export account activity</div><div class="isp-desc">Available account activity ka JSON file banayein.</div></div><button class="isp-action" id="ipaExportActivity">Export</button></div>`;
+    const activityList=panel.querySelector("#ipaActivityList");
+    const safeActivityText=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    const getMillis=value=>value?.toMillis?.() || value?.toDate?.()?.getTime?.() || (typeof value==="number"?value:Date.parse(value||"")||0);
+    let activityPosts=[], activityProfile={}, activityComments=[];
+    const readLocal=(key,fallback=[])=>{try{const value=JSON.parse(localStorage.getItem(key)||"null");return value??fallback;}catch(_){return fallback;}};
+    const prettyDate=value=>getMillis(value)?new Date(getMillis(value)).toLocaleString():"Date unavailable";
+    const showList=(title,items)=>{activityList.innerHTML='<div class="isp-subtitle">'+safeActivityText(title)+' ('+items.length+')</div>'+(items.length?items.slice(0,100).map(item=>'<div class="isp-row" style="display:block"><div class="isp-label">'+safeActivityText(item.title||item.caption||item.text||item.type||"Activity")+'</div><div class="isp-desc">'+safeActivityText(item.detail||prettyDate(item.createdAt||item.time||item.timestamp))+'</div></div>').join(""):'<div class="isp-row">Is category ka saved record nahi mila.</div>');};
     try {
-      const snap=await getDoc(doc(db,"users",me.uid)); const d=snap.exists()?snap.data():{};
-      const summary=panel.querySelector("#ispActivitySummary");
-      summary.textContent="Followers: "+(Array.isArray(d.followers)?d.followers.length:0)+" • Following: "+(Array.isArray(d.following)?d.following.length:0)+" • Account created: "+(me.metadata?.creationTime?new Date(me.metadata.creationTime).toLocaleDateString():"available nahi");
-    } catch(e) { panel.querySelector("#ispActivitySummary").textContent="Activity summary load nahi hua: "+e.message; }
+      const [profileSnap,postsSnap]=await Promise.all([getDoc(doc(db,"users",me.uid)),getDocs(collection(db,"posts"))]);
+      activityProfile=profileSnap.exists()?profileSnap.data():{};
+      activityPosts=postsSnap.docs.map(snap=>({id:snap.id,...snap.data()}));
+      const owns=p=>String(p.uid||p.userId||p.authorId||p.ownerUid||p.userUID||"")===me.uid;
+      const liked=activityPosts.filter(p=>Array.isArray(p.likes)&&p.likes.includes(me.uid));
+      const saved=activityPosts.filter(p=>Array.isArray(p.savedBy)&&p.savedBy.includes(me.uid));
+      const reposted=activityPosts.filter(p=>Array.isArray(p.repostedBy)&&p.repostedBy.includes(me.uid));
+      const own=activityPosts.filter(owns);
+      panel.querySelector("#ipaActivityOverview").textContent="Posts/Reels: "+own.length+" • Liked: "+liked.length+" • Saved: "+saved.length+" • Reposted: "+reposted.length+" • Followers: "+(Array.isArray(activityProfile.followers)?activityProfile.followers.length:Number(activityProfile.followersCount||0))+" • Following: "+(Array.isArray(activityProfile.following)?activityProfile.following.length:Number(activityProfile.followingCount||0));
+      panel.querySelectorAll("[data-activity-list]").forEach(button=>button.onclick=async()=>{
+        const kind=button.dataset.activityList; button.disabled=true;
+        try {
+          if(kind==="likes") return showList("Liked posts and Reels",liked.map(p=>({title:p.caption||"Liked post",detail:"Post ID: "+p.id+" • "+prettyDate(p.createdAt||p.time)})));
+          if(kind==="saved") return showList("Saved posts and Reels",saved.map(p=>({title:p.caption||"Saved post",detail:"Post ID: "+p.id+" • "+prettyDate(p.createdAt||p.time)})));
+          if(kind==="reposts") return showList("Reposts",reposted.map(p=>({title:p.caption||"Reposted post",detail:"Post ID: "+p.id+" • "+prettyDate(p.createdAt||p.time)})));
+          if(kind==="content") return showList("Your published posts and Reels",own.map(p=>({title:p.caption||((p.type||p.mediaType||"").toLowerCase().includes("reel")?"Reel":"Post"),detail:(p.type||p.mediaType||"Post")+" • ID: "+p.id+" • "+prettyDate(p.createdAt||p.time)})));
+          if(kind==="comments") {
+            const records=[];
+            for(const post of activityPosts.slice(0,80)) {
+              try {
+                const cs=await getDocs(query(collection(db,"posts",post.id,"comments"),where("uid","==",me.uid),limit(30)));
+                cs.docs.forEach(c=>records.push({title:c.data().text||c.data().comment||"Comment",detail:"Post ID: "+post.id+" • "+prettyDate(c.data().createdAt||c.data().time)}));
+              } catch(_) {}
+            }
+            return showList("Your comments (readable recent posts)",records);
+          }
+          if(kind==="follows") {
+            const followers=Array.isArray(activityProfile.followers)?activityProfile.followers:[];
+            const following=Array.isArray(activityProfile.following)?activityProfile.following:[];
+            return showList("Followers and following",[
+              ...followers.map(uid=>({title:"Follower: "+uid,detail:"Current follower"})),
+              ...following.map(uid=>({title:"Following: "+uid,detail:"Current following"}))
+            ]);
+          }
+          if(kind==="searches") {
+            const searches=readLocal("instapro-search-history",readLocal("searchHistory",[]));
+            return showList("Search history on this device",(Array.isArray(searches)?searches:[]).map(x=>typeof x==="string"?{title:x,detail:"Saved on this device"}:{title:x.query||x.term||x.text||"Search",detail:prettyDate(x.createdAt||x.time||x.timestamp)}));
+          }
+          if(kind==="deleted") {
+            const ids=readLocal("instapro-deleted-post-ids",[]);
+            return showList("Recently deleted IDs on this device",(Array.isArray(ids)?ids:[]).map(id=>({title:"Deleted post/Reel",detail:"ID: "+id+" • Local device record only"})));
+          }
+          if(kind==="time") {
+            const seconds=Number(localStorage.getItem("instapro-total-time-seconds")||0);
+            const sessionSeconds=Number(sessionStorage.getItem("instapro-session-time-seconds")||0);
+            return showList("Time spent",[{title:"Recorded time on this device",detail:Math.floor((seconds+sessionSeconds)/60)+" minutes. Tracking only covers sessions where this counter is active; it is not historical server-wide usage."}]);
+          }
+          if(kind==="account") return showList("Account information",[
+            {title:"Username",detail:activityProfile.username||activityProfile.userName||"Not set"},
+            {title:"Email",detail:me.email||"Not available"},
+            {title:"Account UID",detail:me.uid},
+            {title:"Created",detail:me.metadata?.creationTime||"Not available"},
+            {title:"Last sign in",detail:me.metadata?.lastSignInTime||"Not available"}
+          ]);
+        } catch(error) { activityList.textContent="Activity load nahi hui: "+error.message; }
+        finally { button.disabled=false; }
+      });
+      panel.querySelector("#ipaExportActivity").onclick=()=>{
+        const payload={exportedAt:new Date().toISOString(),account:{uid:me.uid,email:me.email||null,username:activityProfile.username||activityProfile.userName||null,createdAt:me.metadata?.creationTime||null},summary:{postsAndReels:own.length,liked:liked.length,saved:saved.length,reposted:reposted.length,followers:Array.isArray(activityProfile.followers)?activityProfile.followers.length:Number(activityProfile.followersCount||0),following:Array.isArray(activityProfile.following)?activityProfile.following.length:Number(activityProfile.followingCount||0)},content:own.map(p=>({id:p.id,caption:p.caption||"",type:p.type||p.mediaType||"post",createdAt:p.createdAt||p.time||null})),likedPostIds:liked.map(p=>p.id),savedPostIds:saved.map(p=>p.id),repostedPostIds:reposted.map(p=>p.id),localSearchHistory:readLocal("instapro-search-history",readLocal("searchHistory",[])),localDeletedIds:readLocal("instapro-deleted-post-ids",[])};
+        const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+        const url=URL.createObjectURL(blob); const a=document.createElement("a");a.href=url;a.download="instapro-account-activity.json";a.click();URL.revokeObjectURL(url);
+        status.textContent="Available activity JSON export taiyar hai. Kuch purane actions ke records save nahi the, isliye woh export mein nahi aa sakte.";
+      };
+    } catch(error) {
+      panel.querySelector("#ipaActivityOverview").textContent="Firebase activity load nahi hui: "+error.message+" • Firestore Rules aur posts collection access check karein.";
+    }
     return;
   }
 
