@@ -351,5 +351,6 @@ border-radius: 24px;
 .instapro-feed-post .ip-feed-music-toggle:active{transform:scale(.94)}
 /* Reduce feed paint work while scrolling on mobile */
 #feed{overflow-anchor:none;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
-.instapro-feed-post{content-visibility:auto;contain-intrinsic-size:auto 760px;contain:layout style}
+.instapro-feed-post{content-visibility:auto;contain-intrinsic-size:auto 760px;contain:layout style;overflow-anchor:none}
+.instapro-feed-post img.ip-feed-media{content-visibility:auto;}
 .instapro-feed-post img,.instapro-feed-post video{backface-visibility:hidden}
