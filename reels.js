@@ -709,14 +709,30 @@ function renderReelsSlides(track) {
   });
 
   track.querySelectorAll("[data-open-reel-profile]").forEach(el => {
-    el.addEventListener("click", async event => {
+    el.style.cursor = "pointer";
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    const openAuthorProfile = async event => {
+      event.preventDefault();
       event.stopPropagation();
       const uid = el.dataset.openReelProfile;
       if (!uid) return;
       try {
         if (typeof window.openProfile !== "function") await import("./profile.js");
-        if (typeof window.openProfile === "function") window.openProfile(uid);
-      } catch (error) { console.error("Reel profile open failed:", error); }
+        if (typeof window.openProfile === "function") {
+          await window.openProfile(uid);
+        } else {
+          console.error("Reel profile open failed: openProfile is unavailable.");
+          showReelsMessage("Profile abhi open nahi ho pa rahi. Dobara try karein.");
+        }
+      } catch (error) {
+        console.error("Reel profile open failed:", error);
+        showReelsMessage("Profile open nahi hui. Dobara try karein.");
+      }
+    };
+    el.addEventListener("click", openAuthorProfile);
+    el.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") openAuthorProfile(event);
     });
   });
   track.querySelectorAll("[data-follow-reel]").forEach(button => {
