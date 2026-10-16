@@ -151,6 +151,7 @@ function connectFileInput(inputId, type) {
     try {
       const chosenType = input.dataset.instaProUploadType || type;
       if (chosenType === "post" && selectedFiles.every(f => f.type.startsWith("image/"))) {
+        delete input.dataset.instaProUploadType;
         const editResult = await openMultiPhotoPostEditor(selectedFiles);
         if (!editResult) return;
         await handleMultiplePhotoFiles(editResult.files, editResult.caption);
@@ -297,6 +298,8 @@ function openMultiPhotoPostEditor(files) {
     const track = modal.querySelector("#ipmp-track");
     const count = modal.querySelector("#ipmp-counter");
     const thumbs = [...modal.querySelectorAll(".ipmp-thumb")];
+    const filterSwatches=[...modal.querySelectorAll(".ipmp-filters button span")];
+    filterSwatches.forEach((el,i)=>{el.style.backgroundImage='url("'+urls[0]+'")';el.style.backgroundSize="cover";el.style.backgroundPosition="center";});
     const show = next => {
       index = Math.max(0, Math.min(files.length - 1, next));
       track.scrollTo({left:index * track.clientWidth,behavior:"smooth"});
@@ -304,10 +307,18 @@ function openMultiPhotoPostEditor(files) {
       thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
       thumbs[index]?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
       const cfg=edits[index];
+      filterSwatches.forEach((el,i)=>{el.style.backgroundImage='url("'+urls[index]+'")';el.style.filter=modal.querySelectorAll("[data-filter]")[i]?.dataset.filter||"none";});
       modal.querySelectorAll("[data-ratio]").forEach(b=>b.classList.toggle("active",b.dataset.ratio===cfg.ratio));
       modal.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===cfg.filter));
       const current=track.querySelectorAll(".ipmp-slide img")[index];
-      if(current){current.style.filter=cfg.filter;current.style.transform="rotate("+cfg.rotation+"deg)";}
+      if(current){
+        current.style.filter=cfg.filter;current.style.transform="rotate("+cfg.rotation+"deg)";
+        const stage=modal.querySelector(".ipmp-stage"),sw=stage.clientWidth,sh=stage.clientHeight;
+        if(cfg.ratio==="square"){const side=Math.min(sw,sh);current.style.width=side+"px";current.style.height=side+"px";current.style.objectFit="cover";}
+        else if(cfg.ratio==="portrait"){current.style.width=Math.min(sw,sh*4/5)+"px";current.style.height=Math.min(sh,sw*5/4)+"px";current.style.objectFit="cover";}
+        else if(cfg.ratio==="landscape"){const w=Math.min(sw,sh*1.91);current.style.width=w+"px";current.style.height=(w/1.91)+"px";current.style.objectFit="cover";}
+        else{current.style.width="100%";current.style.height="100%";current.style.objectFit="contain";}
+      }
     };
     let scrollTimer;
     track.addEventListener("scroll",()=>{
