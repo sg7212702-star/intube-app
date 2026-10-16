@@ -286,16 +286,9 @@ function openMultiPhotoPostEditor(files) {
         <button type="button" data-filter="contrast(.82) brightness(1.12)"><span style="filter:contrast(.82) brightness(1.12)"></span>Fade</button>
       </div>
       <div class="ipmp-divider"></div>
-      <section class="ipmp-music">
-        <div style="font-size:13px;font-weight:700;margin-bottom:9px">♫ Add music to post</div>
-        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-          <button type="button" data-act="choose-music" style="padding:9px 11px;border:1px solid #ffffff30;border-radius:9px;background:#181818;color:#fff">＋ From phone</button>
-          <input id="ipmp-music-file" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" style="display:none">
-          <input id="ipmp-music-search" type="search" placeholder="Search song or singer" style="min-width:0;flex:1;padding:10px;border:1px solid #333;border-radius:9px;background:#111;color:#fff">
-          <button type="button" data-act="search-music" style="padding:10px 12px;border:0;border-radius:9px;background:#0095f6;color:#fff;font-weight:700">Search</button>
-        </div>
-        <div id="ipmp-music-status" style="font-size:11px;color:#aaa;margin-top:8px">Choose an audio file or search song previews.</div>
-        <div id="ipmp-music-results" style="display:grid;gap:6px;margin-top:7px"></div>
+      <section class="ipmp-music" style="padding:12px 14px;flex:0 0 auto">
+        <button type="button" data-act="add-music" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 16px;border:1px solid #ffffff25;border-radius:11px;background:#181818;color:#fff;font-size:14px;font-weight:700">♫ Add music</button>
+        <div id="ipmp-music-status" style="font-size:12px;color:#aaa;margin-top:8px;text-align:center">No song selected</div>
       </section>
       <div class="ipmp-divider"></div>
       <div class="ipmp-caption-wrap">
@@ -401,12 +394,6 @@ function openMultiPhotoPostEditor(files) {
       });
       input.focus({preventScroll:true});
     };
-    modal.querySelector("#ipmp-music-file").addEventListener("change",event=>{
-      const file=event.target.files?.[0];if(!file)return;
-      if(!file.type.startsWith("audio/")&&!/\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i.test(file.name)){alert("Audio file select karein.");event.target.value="";return;}
-      selectedMusicFile=file;selectedMusicTrack={title:file.name.replace(/\.[^.]+$/,""),artistName:"",source:"device-library"};
-      modal.querySelector("#ipmp-music-status").textContent="Selected: "+file.name;
-    });
     modal.addEventListener("click",async e=>{
       const thumb=e.target.closest(".ipmp-thumb");
       if(thumb){show(Number(thumb.dataset.index));return;}
@@ -417,8 +404,7 @@ function openMultiPhotoPostEditor(files) {
       const btn=e.target.closest("button[data-act]");
       if(!btn)return;
       if(btn.dataset.act==="cancel")clean(null);
-      else if(btn.dataset.act==="choose-music"){modal.querySelector("#ipmp-music-file").click();}
-      else if(btn.dataset.act==="search-music"){openSongPicker();}
+      else if(btn.dataset.act==="add-music"){openSongPicker();}
       else if(btn.dataset.act==="prev")show(index-1);
       else if(btn.dataset.act==="next")show(index+1);
       else if(btn.dataset.act==="rotate"){edits[index].rotation=(edits[index].rotation+90)%360;show(index);}
