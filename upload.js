@@ -207,6 +207,9 @@ function openMultiPhotoPostEditor(files) {
     modal.innerHTML = `
       <style>
         #ip-multi-photo-editor *{box-sizing:border-box}
+        #ip-multi-photo-editor #ipmp-music-results{max-height:min(26dvh,220px);overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;padding:0 2px 6px;}
+        #ip-multi-photo-editor #ipmp-music-results button{flex:0 0 auto;touch-action:manipulation;}
+        #ip-multi-photo-editor .ipmp-music{flex:0 0 auto;min-height:0;}
         #ip-multi-photo-editor .ipmp-top{height:54px;flex:0 0 54px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #262626}
         #ip-multi-photo-editor button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
         #ip-multi-photo-editor .ipmp-back{width:34px;height:38px;border:0;background:transparent;color:#fff;font-size:32px;line-height:1}
