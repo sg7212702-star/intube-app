@@ -910,7 +910,7 @@ async function renderFeed() {
             : carouselUrls.length > 1
               ? `
                 <div class="ip-feed-photo-carousel" data-photo-carousel role="group" aria-label="Photo carousel, ${carouselUrls.length} photos" style="display:flex;flex-flow:row nowrap;width:100%;min-width:0;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;line-height:0">
-                  ${carouselUrls.map((url,i)=>`<img class="ip-feed-media ip-feed-carousel-image" src="${escapeHTML(url)}" alt="Photo ${i+1} of ${carouselUrls.length} by ${ownerName}" loading="eager" draggable="false" style="display:block!important;flex:0 0 100%!important;width:100%!important;min-width:100%!important;max-width:100%!important;height:auto;max-height:75vh;scroll-snap-align:start;object-fit:contain;touch-action:pan-x;user-select:none;-webkit-user-drag:none" onerror="this.style.background='#222'">`).join("")}
+                  ${carouselUrls.map((url,i)=>`<img class="ip-feed-media ip-feed-carousel-image" src="${escapeHTML(url)}" alt="Photo ${i+1} of ${carouselUrls.length} by ${ownerName}" loading="lazy" decoding="async" draggable="false" style="display:block!important;flex:0 0 100%!important;width:100%!important;min-width:100%!important;max-width:100%!important;height:auto;max-height:75vh;scroll-snap-align:start;object-fit:contain;touch-action:pan-x;user-select:none;-webkit-user-drag:none" onerror="this.style.background='#222'">`).join("")}
                 </div>
                 <span class="ip-feed-carousel-count" style="position:absolute;top:12px;right:12px;z-index:2;padding:5px 9px;border-radius:20px;background:#0009;color:#fff;font:12px system-ui;line-height:1.2">1/${carouselUrls.length}</span>
                 <div style="display:flex;justify-content:center;gap:4px;padding:8px 0;line-height:0;background:#000">${carouselUrls.map((_,i)=>`<span data-carousel-dot="${i}" style="width:5px;height:5px;border-radius:50%;background:${i===0?"#0095f6":"#777"};display:block"></span>`).join("")}</div>
@@ -1061,7 +1061,7 @@ async function renderFeed() {
       video.defaultMuted = true;
       video.playsInline = true;
       video.loop = true;
-      video.preload = document.documentElement.classList.contains("instapro-data-saver") ? "metadata" : "auto";
+      video.preload = "metadata";
       video.setAttribute("muted", "");
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
