@@ -107,7 +107,10 @@ function openGallery(inputId) {
     return;
   }
 
-  input.setAttribute("accept", "image/*,video/*");
+  // Reels picker is video-only; Post and Story may use photo or video.
+  const uploadType = input.dataset.instaProUploadType ||
+    (inputId === "reelFile" ? "reel" : inputId === "storyFile" ? "story" : "post");
+  input.setAttribute("accept", uploadType === "reel" ? "video/*" : "image/*,video/*");
 input.value = "";
 
 console.log("Gallery input:", input);
