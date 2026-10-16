@@ -1188,7 +1188,7 @@ async function deleteProfilePost(postId, viewer) {
       if (cachedUrl) {
         for (const field of ["uid", "userId", "authorId", "ownerUid"]) {
           try {
-            const result = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid), limit(300)));
+            const result = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid)));
             result.forEach(item => {
               if (postUrl(item.data()) === cachedUrl) matches.set(item.id, item);
             });
