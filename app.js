@@ -805,7 +805,8 @@ function openMenu(){
     ["Message and story reply", "💬", "Messages and replies"],
     ["Data usage and media quality", "📶", "Data usage and media quality"],
     ["Account type and tools", "🧰", "Account type and tools"],
-    ["Insta Pro Verified", "✓", "Insta Pro Verified"]
+    ["Insta Pro Verified", "✓", "Insta Pro Verified"],
+    ["Log out", "🚪", "Log out"]
   ];
   entries.forEach(([label,icon,action])=>{
     const item=document.createElement("div");
@@ -814,6 +815,20 @@ function openMenu(){
     const activate=async()=>{
       try {
         const {auth}=await import("./firebase.js"); const user=auth.currentUser;
+        if(label==="Log out") {
+          if(!user){alert("Aap pehle se logged out hain.");return;}
+          if(!confirm("Kya aap Insta Pro se log out karna chahte hain?")) return;
+          try {
+            if(settingsUnsubscribe){settingsUnsubscribe();settingsUnsubscribe=null;}
+            const {signOut}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+            m.classList.remove("show");
+            const logoutOverlay=document.getElementById("sideOverlay");
+            if(logoutOverlay){logoutOverlay.classList.remove("show");logoutOverlay.style.display="none";}
+            await signOut(auth);
+            location.reload();
+          } catch(error) { alert("Logout nahi hua: "+error.message); }
+          return;
+        }
         if(!user||user.isAnonymous){alert("Is option ke liye pehle Google se login karein.");return;}
         m.classList.remove("show");
         const overlay=document.getElementById("sideOverlay");
