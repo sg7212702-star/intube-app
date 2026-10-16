@@ -1041,12 +1041,47 @@ async function handleFile(file, postType) {
 
   uploadInProgress = true;
 
+  // Small live upload HUD: editor closes only after export; this remains visible
+  // through Cloudinary transfer and Firestore publication, with real progress.
+  const uploadHudId = "instapro-live-upload-hud";
+  document.getElementById(uploadHudId)?.remove();
+  const hud = document.createElement("div");
+  hud.id = uploadHudId;
+  hud.style.cssText = "position:fixed;left:14px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:2147483646;padding:15px 16px;border:1px solid #ffffff24;border-radius:18px;background:rgba(18,18,25,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#fff;font:14px system-ui,sans-serif;box-shadow:0 14px 44px #0008";
+  hud.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span id="ipuh-icon" style="width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(130deg,#914cff,#ff398a);font-size:18px">↑</span><div style="flex:1;min-width:0"><b id="ipuh-title" style="display:block;font-size:14px">Preparing upload…</b><small id="ipuh-message" style="display:block;opacity:.7;margin-top:3px;overflow-wrap:anywhere">Please keep InstaPro open.</small></div><b id="ipuh-percent" style="font-size:13px">0%</b></div><div style="height:5px;border-radius:9px;background:#ffffff20;margin-top:13px;overflow:hidden"><div id="ipuh-bar" style="height:100%;width:0%;border-radius:9px;background:linear-gradient(90deg,#914cff,#ff398a);transition:width .18s"></div></div>';
+  document.body.appendChild(hud);
   const status = {
-  set textContent(message) {
-    console.log("Upload:", message);
-  },
-  remove() {}
-};
+    set textContent(message) {
+      console.log("Upload:", message);
+      const label = hud.querySelector("#ipuh-message");
+      const title = hud.querySelector("#ipuh-title");
+      const percent = hud.querySelector("#ipuh-percent");
+      const bar = hud.querySelector("#ipuh-bar");
+      if (label) label.textContent = String(message);
+      const match = String(message).match(/(\\d{1,3})%/);
+      if (match) {
+        const value = Math.max(0, Math.min(100, Number(match[1])));
+        if (percent) percent.textContent = value + "%";
+        if (bar) bar.style.width = value + "%";
+        if (title) title.textContent = "Uploading media…";
+      } else if (/Firestore/i.test(String(message))) {
+        if (title) title.textContent = "Publishing post…";
+        if (percent) percent.textContent = "✓";
+        if (bar) bar.style.width = "100%";
+      } else if (/successfully/i.test(String(message))) {
+        if (title) title.textContent = "Published successfully";
+        if (percent) percent.textContent = "✓";
+        if (bar) bar.style.width = "100%";
+      } else if (/fail/i.test(String(message))) {
+        if (title) title.textContent = "Upload failed";
+      } else if (title) {
+        title.textContent = "Preparing upload…";
+      }
+    },
+    remove() {
+      document.getElementById(uploadHudId)?.remove();
+    }
+  };
 
 const notice = window.InstaProUploadNotification;
   try {
