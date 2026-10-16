@@ -9,6 +9,8 @@ let usersCache = [];
 let myFollowing = [];
 let unsubMe = null;
 let unsubUsers = null;
+let unsubAuth = null;
+let initialized = false;
 let dismissed = new Set();
 let refreshBusy = false;
 
@@ -112,20 +114,42 @@ async function followUser(targetUid,button) {
     button.disabled=false;button.textContent="Follow";
   }
 }
+function showSuggestionState(message, isError=false) {
+  document.querySelectorAll(".ipsg-list").forEach(list => {
+    list.innerHTML = '<div class="' + (isError ? 'ipsg-error' : 'ipsg-empty') + '">' + esc(message) + '</div>';
+  });
+}
 function init() {
   styles();
   const home=document.getElementById("homePage");
   const explore=document.getElementById("explorePage");
   if(home) mount(home);
   if(explore) mount(explore);
-  if(!home && !explore) return;
-  if(!auth.currentUser) {
-    const unsub=auth.onAuthStateChanged(user=>{if(user){unsub();startListeners();}});
-  } else startListeners();
+  if((!home && !explore) || initialized) return;
+  initialized = true;
+
+  // Firebase auth can still be restoring its persisted session during a refresh.
+  // Keep the loading state temporary and handle signed-out/anonymous sessions explicitly.
+  unsubAuth = auth.onAuthStateChanged(user => {
+    if (unsubMe) { unsubMe(); unsubMe = null; }
+    if (unsubUsers) { unsubUsers(); unsubUsers = null; }
+    if (!user || user.isAnonymous) {
+      usersCache = [];
+      myFollowing = [];
+      showSuggestionState(user ? "Follow suggestions ke liye Google account se login karein." : "Login status check ho raha hai…");
+      return;
+    }
+    startListeners(user);
+  }, error => {
+    console.error("Suggestion auth state error:", error);
+    showSuggestionState("Suggestions load nahi hue. Internet connection check karein.", true);
+  });
 }
-function startListeners() {
-  const user=auth.currentUser;
-  if(!user || user.isAnonymous)return;
+function startListeners(user = auth.currentUser) {
+  if(!user || user.isAnonymous) {
+    showSuggestionState("Follow suggestions ke liye Google account se login karein.");
+    return;
+  }
   if(unsubMe)unsubMe();
   if(unsubUsers)unsubUsers();
   unsubMe=onSnapshot(doc(db,"users",user.uid),snap=>{
