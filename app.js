@@ -76,6 +76,8 @@ function applyPersonalCustomization(settings = currentAppSettings) {
   const familyMap = { system: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', roboto: 'Roboto, "Segoe UI", sans-serif', serif: 'Georgia, "Times New Roman", serif', mono: 'ui-monospace, SFMono-Regular, Consolas, monospace' };
   root.style.setProperty("--ip-user-font", familyMap[settings.fontFamily] || familyMap.system);
   root.style.setProperty("--ip-user-font-size", Math.min(125, Math.max(85, Number(settings.fontSize) || 100)) + "%");
+  root.style.fontSize = root.style.getPropertyValue("--ip-user-font-size");
+  document.body.classList.add("instapro-user-font");
   root.style.setProperty("--ip-accent", /^#[0-9a-f]{6}$/i.test(settings.accentColor || "") ? settings.accentColor : "#ff2d7a");
   root.style.setProperty("--ip-user-background", /^#[0-9a-f]{6}$/i.test(settings.appBackground || "") ? settings.appBackground : "#000000");
   document.body.style.fontFamily = root.style.getPropertyValue("--ip-user-font");
@@ -111,6 +113,11 @@ function installSettingsStyles() {
     body.instapro-light-mode{background:#f4f4f7!important;color:#161616!important}
     body.instapro-amoled-mode,body.instapro-amoled-mode .app,body.instapro-amoled-mode .page{background:#000!important}
     body.instapro-custom-mode,body.instapro-custom-mode .app,body.instapro-custom-mode .page{background:var(--ip-user-background,#000)!important}
+    body.instapro-user-font,body.instapro-user-font *{font-family:var(--ip-user-font,-apple-system,sans-serif)!important}
+    .plusGlass{background:linear-gradient(135deg,var(--ip-accent,#ff2d7a),color-mix(in srgb,var(--ip-accent,#ff2d7a) 55%,#38bdf8))!important}
+    .postActions .like.active{border-color:var(--ip-accent,#ff2d7a)!important;color:var(--ip-accent,#ff2d7a)!important}
+    .iconGlass .dot{background:var(--ip-accent,#ff2d7a)!important;box-shadow:0 0 10px var(--ip-accent,#ff2d7a)!important}
+    .sRing:not(.add){background:linear-gradient(45deg,var(--ip-accent,#ff2d7a),#38bdf8,#a78bfa)!important}
     body.instapro-custom-mode .topGlass,body.instapro-custom-mode .bottomGlass,body.instapro-custom-mode .sideGlass,body.instapro-custom-mode .sheetGlass{background:color-mix(in srgb,var(--ip-user-background,#000) 82%,transparent)!important}
     body.instapro-light-mode .post,body.instapro-light-mode .storyGlass{background:rgba(255,255,255,.88)!important;color:#161616!important}
     .logo{touch-action:manipulation;user-select:none;-webkit-user-select:none}
