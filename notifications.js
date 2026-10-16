@@ -6,7 +6,8 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  updateDoc
+  updateDoc,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let unsubscribeNotifications = null;
@@ -460,6 +461,55 @@ export function openNotif() {
     }
   );
 }
+
+
+/* Live Instagram-style unread notification counter on the top notification button. */
+let unsubscribeUnreadCount = null;
+let lastUnreadCount = 0;
+
+function renderNotificationBadge(count) {
+  const button = document.getElementById("notifBtn");
+  if (!button) return;
+  let badge = button.querySelector(".notification-badge");
+  if (!badge) {
+    const oldDot = button.querySelector(".dot");
+    if (oldDot) oldDot.remove();
+    badge = document.createElement("span");
+    badge.className = "notification-badge";
+    badge.setAttribute("aria-live", "polite");
+    badge.setAttribute("aria-label", "Unread notifications");
+    button.appendChild(badge);
+  }
+  const safeCount = Math.max(0, Number(count) || 0);
+  badge.textContent = safeCount > 99 ? "99+" : String(safeCount);
+  badge.hidden = safeCount === 0;
+  badge.classList.toggle("notification-badge-pop", safeCount > lastUnreadCount);
+  if (safeCount > lastUnreadCount) {
+    window.setTimeout(() => badge.classList.remove("notification-badge-pop"), 450);
+  }
+  lastUnreadCount = safeCount;
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (unsubscribeUnreadCount) {
+    unsubscribeUnreadCount();
+    unsubscribeUnreadCount = null;
+  }
+  lastUnreadCount = 0;
+  renderNotificationBadge(0);
+  if (!user) return;
+
+  const unreadRef = collection(db, "users", user.uid, "notifications");
+  unsubscribeUnreadCount = onSnapshot(unreadRef, (snapshot) => {
+    const unread = snapshot.docs.reduce((total, item) => {
+      const data = item.data();
+      return total + (data.read === false || data.read == null ? 1 : 0);
+    }, 0);
+    renderNotificationBadge(unread);
+  }, (error) => {
+    console.error("Unread notification count error:", error);
+  });
+});
 
 const oldBox = document.getElementById("notifBox");
 if (oldBox) oldBox.remove();
