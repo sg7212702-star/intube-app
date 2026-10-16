@@ -375,24 +375,63 @@ export function openNotif() {
             );
           }
 
+          // Instagram-style routing: close Activity first, then open the exact
+          // content/profile instead of dispatching an event with no guaranteed listener.
+          page.style.display = "none";
+          document.body.style.overflow = "";
+          if (unsubscribeNotifications) {
+            unsubscribeNotifications();
+            unsubscribeNotifications = null;
+          }
+
           if (storyId) {
-            document.dispatchEvent(
-              new CustomEvent("open-notification-story", {
-                detail: { storyId, fromUid }
-              })
-            );
+            document.dispatchEvent(new CustomEvent("open-notification-story", {
+              detail: { storyId, fromUid }
+            }));
+            // Story viewers may be lazily loaded; profile is a safe fallback.
+            setTimeout(async () => {
+              const storyViewer = document.querySelector('[data-story-id="' + CSS.escape(String(storyId)) + '"]');
+              if (!storyViewer && fromUid && typeof window.openProfile === "function") {
+                try { await window.openProfile(fromUid); } catch (error) { console.error("Notification story fallback:", error); }
+              }
+            }, 350);
           } else if (postId) {
-            document.dispatchEvent(
-              new CustomEvent("open-notification-post", {
-                detail: { postId, fromUid }
-              })
-            );
+            const feedCard = document.querySelector('#feed [data-post-id="' + CSS.escape(String(postId)) + '"]');
+            if (feedCard) {
+              feedCard.scrollIntoView({ behavior: "smooth", block: "start" });
+              feedCard.animate?.([{ opacity: .65 }, { opacity: 1 }], { duration: 450 });
+            } else {
+              // Video posts can be opened directly in the existing full-screen Reels viewer.
+              try {
+                await import("./reels.js");
+                const opener = window.InstaProReels?.openPost;
+                if (typeof opener === "function") {
+                  opener(postId, null);
+                } else if (fromUid && typeof window.openProfile === "function") {
+                  await window.openProfile(fromUid);
+                } else {
+                  alert("Yeh post abhi feed mein nahi mili. Feed refresh karke dobara try karein.");
+                }
+              } catch (error) {
+                console.error("Notification post open error:", error);
+                if (fromUid && typeof window.openProfile === "function") {
+                  try { await window.openProfile(fromUid); } catch (_) {}
+                } else {
+                  alert("Post open nahi ho payi. App refresh karke dobara try karein.");
+                }
+              }
+            }
           } else if (fromUid) {
-            document.dispatchEvent(
-              new CustomEvent("open-notification-profile", {
-                detail: { uid: fromUid }
-              })
-            );
+            try {
+              await import("./profile.js");
+              if (typeof window.openProfile === "function") {
+                await window.openProfile(fromUid);
+              } else {
+                document.dispatchEvent(new CustomEvent("open-notification-profile", { detail: { uid: fromUid } }));
+              }
+            } catch (error) {
+              console.error("Notification profile open error:", error);
+            }
           }
         };
       });
