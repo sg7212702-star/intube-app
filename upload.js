@@ -107,11 +107,13 @@ function openGallery(inputId) {
     return;
   }
 
-  // Reels picker is video-only; Post and Story may use photo or video.
+  // Posts support Instagram-style multi-photo selection; Reels remain video-only.
   const uploadType = input.dataset.instaProUploadType ||
     (inputId === "reelFile" ? "reel" : inputId === "storyFile" ? "story" : "post");
   input.setAttribute("accept", uploadType === "reel" ? "video/*" : "image/*,video/*");
-input.value = "";
+  if (uploadType === "post") input.multiple = true;
+  else input.multiple = false;
+  input.value = "";
 
 console.log("Gallery input:", input);
 console.log("Gallery input ID:", input.id);
@@ -138,14 +140,22 @@ function connectFileInput(inputId, type) {
 
   input.dataset.instaProUploadBound = "true";
   input.setAttribute("accept", "image/*,video/*");
+  if (type === "post") input.multiple = true;
 
   input.addEventListener("change", async () => {
-    const file = input.files?.[0];
+    const selectedFiles = Array.from(input.files || []);
+    const file = selectedFiles[0];
 
     if (!file) return;
 
     try {
       const chosenType = input.dataset.instaProUploadType || type;
+      if (chosenType === "post" && selectedFiles.length > 1 && selectedFiles.every(f => f.type.startsWith("image/"))) {
+        const editResult = await openMultiPhotoPostEditor(selectedFiles);
+        if (!editResult) return;
+        await handleMultiplePhotoFiles(editResult.files, editResult.caption);
+        return;
+      }
       delete input.dataset.instaProUploadType;
       if (chosenType === "story") {
         const editedFile = await openStoryEditor(file);
@@ -178,6 +188,92 @@ function connectFileInput(inputId, type) {
       input.value = "";
     }
   });
+}
+
+// Instagram-style multi-photo post editor: swipe previews, then add one shared caption.
+function openMultiPhotoPostEditor(files) {
+  return new Promise(resolve => {
+    document.getElementById("ip-multi-photo-editor")?.remove();
+    const modal = document.createElement("div");
+    modal.id = "ip-multi-photo-editor";
+    let index = 0;
+    const urls = files.map(file => URL.createObjectURL(file));
+    modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)";
+    modal.innerHTML = `
+      <header style="height:54px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #ffffff22">
+        <button type="button" data-act="cancel" style="border:0;background:none;color:#fff;font-size:28px">‹</button><b style="flex:1">New post</b><span id="ip-multi-count" style="font-size:13px;opacity:.8">1/${files.length}</span>
+      </header>
+      <div id="ip-multi-stage" style="position:relative;flex:1;min-height:0;display:flex;align-items:center;overflow:hidden;background:#080808">
+        <button type="button" data-act="prev" aria-label="Previous photo" style="position:absolute;left:10px;z-index:2;border:0;border-radius:50%;width:38px;height:38px;background:#0008;color:#fff;font-size:24px">‹</button>
+        <img id="ip-multi-preview" src="${urls[0]}" style="width:100%;height:100%;object-fit:contain" alt="Selected photo">
+        <button type="button" data-act="next" aria-label="Next photo" style="position:absolute;right:10px;z-index:2;border:0;border-radius:50%;width:38px;height:38px;background:#0008;color:#fff;font-size:24px">›</button>
+      </div>
+      <div style="padding:14px;display:flex;gap:6px;overflow-x:auto" id="ip-multi-thumbs">${urls.map((url,i)=>`<img data-index="${i}" src="${url}" alt="Photo ${i+1}" style="width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:6px;border:2px solid ${i===0?"#0095f6":"transparent"}">`).join("")}</div>
+      <textarea id="ip-multi-caption" placeholder="Write a caption…" maxlength="2200" style="margin:0 14px 14px;padding:12px;border-radius:12px;border:1px solid #ffffff30;background:#151515;color:#fff;resize:vertical;min-height:72px;font:inherit"></textarea>
+      <button type="button" data-act="share" style="margin:0 14px 16px;padding:14px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;font-size:16px">Share post (${files.length} photos)</button>`;
+    document.body.appendChild(modal);
+    const clean = result => { urls.forEach(url => URL.revokeObjectURL(url)); modal.remove(); resolve(result); };
+    const show = next => {
+      index = (next + files.length) % files.length;
+      modal.querySelector("#ip-multi-preview").src = urls[index];
+      modal.querySelector("#ip-multi-count").textContent = (index+1)+"/"+files.length;
+      modal.querySelectorAll("#ip-multi-thumbs img").forEach((img,i)=>img.style.borderColor=i===index?"#0095f6":"transparent");
+    };
+    modal.addEventListener("click", e => {
+      const thumb=e.target.closest("#ip-multi-thumbs img");
+      if(thumb){show(Number(thumb.dataset.index));return;}
+      const btn=e.target.closest("button[data-act]");
+      if(!btn)return;
+      if(btn.dataset.act==="cancel")clean(null);
+      if(btn.dataset.act==="prev")show(index-1);
+      if(btn.dataset.act==="next")show(index+1);
+      if(btn.dataset.act==="share")clean({files,caption:modal.querySelector("#ip-multi-caption").value.trim()});
+    });
+    modal.querySelector("#ip-multi-stage").addEventListener("touchstart",e=>{modal._touchX=e.changedTouches[0].clientX;},{passive:true});
+    modal.querySelector("#ip-multi-stage").addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-(modal._touchX||0);if(Math.abs(dx)>45)show(index+(dx<0?1:-1));},{passive:true});
+  });
+}
+
+async function handleMultiplePhotoFiles(files, caption) {
+  if(uploadInProgress){alert("Ek upload pehle se chal raha hai.");return;}
+  const user=auth.currentUser;
+  if(!user||user.isAnonymous){alert("Pehle Google account se login karein.");return;}
+  if(!files.length||files.some(f=>!f.type.startsWith("image/"))){alert("Multiple selection mein sirf photos select karein.");return;}
+  uploadInProgress=true;
+  const hud=document.createElement("div");
+  hud.id="instapro-multi-upload-hud";
+  hud.style.cssText="position:fixed;left:14px;right:14px;bottom:20px;z-index:2147483646;padding:16px;border-radius:16px;background:#181820;color:#fff;font:14px system-ui;box-shadow:0 8px 36px #0009";
+  hud.innerHTML='<b>Uploading photos…</b><div id="ip-multi-upload-status" style="margin-top:7px;opacity:.8">Preparing…</div>';
+  document.body.appendChild(hud);
+  try{
+    const mediaItems=[];
+    for(let i=0;i<files.length;i++){
+      hud.querySelector("#ip-multi-upload-status").textContent="Photo "+(i+1)+" of "+files.length+" uploading…";
+      const result=await uploadToCloudinary(files[i]);
+      mediaItems.push({url:result.secure_url,fileName:files[i].name||"",fileSize:Number(files[i].size||0),publicId:result.public_id||"",assetId:result.asset_id||"",width:Number(result.width||0),height:Number(result.height||0),format:result.format||""});
+    }
+    hud.querySelector("#ip-multi-upload-status").textContent="Publishing post to Firebase…";
+    const first=mediaItems[0];
+    const data={
+      uid:user.uid,userId:user.uid,email:user.email||"",
+      username:user.displayName||user.email?.split("@")[0]||"InstaPro User",
+      photo:user.photoURL||"",imageUrl:first.url,mediaUrl:first.url,url:first.url,
+      mediaUrls:mediaItems.map(item=>item.url),mediaItems,mediaCount:mediaItems.length,
+      type:"image",contentType:"image",mediaType:"image",postType:"post",isReel:false,
+      fileName:first.fileName,fileSize:first.fileSize,caption:caption||"",
+      likes:[],likesCount:0,comments:[],createdAt:serverTimestamp()
+    };
+    const saved=await addDoc(collection(db,"posts"),data);
+    hud.querySelector("#ip-multi-upload-status").textContent="Post shared successfully ✓";
+    window.dispatchEvent(new CustomEvent("instapro-upload-success",{detail:{id:saved.id,type:"post",mediaType:"image",mediaUrl:first.url,mediaUrls:data.mediaUrls}}));
+    await new Promise(resolve=>setTimeout(resolve,700));
+  }catch(error){
+    console.error("InstaPro multi-photo upload failed:",error);
+    alert("Photo post upload fail ho gaya: "+(error.message||"Unknown error"));
+  }finally{
+    hud.remove();
+    uploadInProgress=false;
+  }
 }
 
 // -------------------------------------
