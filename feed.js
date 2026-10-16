@@ -896,28 +896,29 @@ async function renderFeed() {
         `
         : "";
 
+      const carouselUrls = Array.isArray(post.mediaUrls)
+        ? post.mediaUrls.filter(url => typeof url === "string" && url.trim())
+        : Array.isArray(post.mediaItems)
+          ? post.mediaItems.map(item => typeof item === "string" ? item : item?.url).filter(url => typeof url === "string" && url.trim())
+          : [];
+      if (carouselUrls.length < 2 && mediaUrl) carouselUrls.length = 0;
       const mediaHTML = `
         <div class="ip-feed-media-wrap" style="position:relative;line-height:0">
           ${mediaType === "video"
             ? `
-              <video
-                class="ip-feed-media"
-                src="${escapeHTML(mediaUrl)}"
-                controls
-                playsinline
-                preload="metadata"
-                ${musicUrl ? "muted" : ""}
-              ></video>
+              <video class="ip-feed-media" src="${escapeHTML(mediaUrl)}" controls playsinline preload="metadata" ${musicUrl ? "muted" : ""}></video>
             `
-            : `
-              <img
-                class="ip-feed-media"
-                src="${escapeHTML(mediaUrl)}"
-                alt="Post by ${ownerName}"
-                loading="lazy"
-                onerror="this.style.background='#222'"
-              >
-            `}
+            : carouselUrls.length > 1
+              ? `
+                <div class="ip-feed-photo-carousel" data-photo-carousel style="display:flex;width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;line-height:0">
+                  ${carouselUrls.map((url,i)=>`<img class="ip-feed-media ip-feed-carousel-image" src="${escapeHTML(url)}" alt="Photo ${i+1} of ${carouselUrls.length} by ${ownerName}" loading="lazy" style="flex:0 0 100%;width:100%;min-width:100%;scroll-snap-align:start;object-fit:contain" onerror="this.style.background='#222'">`).join("")}
+                </div>
+                <span class="ip-feed-carousel-count" style="position:absolute;top:12px;right:12px;z-index:2;padding:5px 9px;border-radius:20px;background:#0009;color:#fff;font:12px system-ui;line-height:1.2">1/${carouselUrls.length}</span>
+                <div style="display:flex;justify-content:center;gap:4px;padding:8px 0;line-height:0;background:#000">${carouselUrls.map((_,i)=>`<span data-carousel-dot="${i}" style="width:5px;height:5px;border-radius:50%;background:${i===0?"#0095f6":"#777"};display:block"></span>`).join("")}</div>
+              `
+              : `
+                <img class="ip-feed-media" src="${escapeHTML(mediaUrl)}" alt="Post by ${ownerName}" loading="lazy" onerror="this.style.background='#222'">
+              `}
           ${musicHTML}
         </div>
       `;
