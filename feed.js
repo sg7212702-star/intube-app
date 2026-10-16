@@ -889,9 +889,8 @@ async function renderFeed() {
       const musicHTML = musicUrl
         ? `
           <audio class="ip-feed-music" src="${escapeHTML(musicUrl)}" loop preload="auto"></audio>
-          <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Turn post music on"
-            style="position:absolute;right:10px;bottom:10px;z-index:20;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.24);border-radius:50%;padding:0;background:rgba(20,20,20,.34);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:15px;line-height:1;box-shadow:0 1px 5px rgba(0,0,0,.14);cursor:pointer;transition:transform .16s ease,background .16s ease">
-            🔇
+          <button type="button" class="ip-feed-music-toggle" data-music-toggle aria-label="Turn post music on">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" fill="currentColor"/><path d="M15 9a5 5 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         `
         : "";
@@ -1115,7 +1114,9 @@ async function renderFeed() {
 
       const setSoundButton = () => {
         const muted = audio.muted;
-        button.innerHTML = muted ? '🔇' : '🔊';
+        button.innerHTML = muted
+          ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" fill="currentColor"/><path d="m16 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+          : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" fill="currentColor"/><path d="M15 9a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
         button.setAttribute("aria-label", muted ? "Turn post music on" : "Mute post music");
       };
 
@@ -1129,7 +1130,7 @@ async function renderFeed() {
             otherAudio.muted = true;
             const otherButton = otherCard.querySelector("[data-music-toggle]");
             if (otherButton) {
-              otherButton.innerHTML = '🔇 <span>Sound</span>';
+              otherButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" fill="currentColor"/><path d="m16 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
               otherButton.setAttribute("aria-label", "Turn post music on");
             }
           }
