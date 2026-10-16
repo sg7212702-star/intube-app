@@ -150,7 +150,7 @@ function settingsPanelMarkup(user, secretMode = false) {
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Custom background</div><div class="isp-desc">Used when Custom theme is selected.</div></div><input class="isp-color" id="ispSecretBackground" type="color" aria-label="Custom background"></div>
       <div class="isp-row" style="display:block"><div class="isp-label">Preview</div><div class="isp-custom-preview" id="ispSecretPreview" style="margin-top:8px">Insta Pro — Your personal style</div></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Reset appearance</div><div class="isp-desc">Restore default font, theme and colors.</div></div><button class="isp-action" id="ispSecretReset">Reset</button></div>` : ""}
-      <div class="isp-subtitle">Your account</div>
+      ${secretMode ? "" : `      <div class="isp-subtitle">Your account</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in account</div><div class="isp-desc">${escapeSettingsText(user?.email || user?.displayName || "Google account")}</div></div><button class="isp-action" id="ispProfile">Profile</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts</div><div class="isp-desc">Open your profile to view posts you saved.</div></div><button class="isp-action" id="ispSaved">Open</button></div>
       <div class="isp-subtitle" style="margin-top:18px">Creator tools</div>
@@ -171,6 +171,7 @@ function settingsPanelMarkup(user, secretMode = false) {
       <div class="isp-subtitle" style="margin-top:18px">More information</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Help and support</div><div class="isp-desc">For a problem, note the screen and error message.</div></div><button class="isp-action" id="ispHelp">Help</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Log out</div><div class="isp-desc">Sign out of the current Google account on this app.</div></div><button class="isp-action" id="ispLogout">Log out</button></div>
+      `}
       <div class="isp-status" id="ispStatus" aria-live="polite"></div>
     </div>`;
 }
@@ -394,6 +395,7 @@ async function openSettingsPanel(secretMode = false) {
     button.onclick = () => openSettingsCategory(button.dataset.category, user, panel);
   });
   panel.querySelector("#ispCreatorAnalytics").onclick = () => openCreatorAnalytics(user, panel);
+  if (!secretMode) {
   panel.querySelector("#ispProfile").onclick = async () => {
     close();
     try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); }
@@ -461,6 +463,7 @@ async function openSettingsPanel(secretMode = false) {
       location.reload();
     } catch (error) { status().textContent = "Logout nahi hua: " + error.message; }
   };
+  }
 
   try {
     if (settingsUnsubscribe) settingsUnsubscribe();
