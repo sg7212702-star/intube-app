@@ -608,23 +608,10 @@ function bindSideMenuItems() {
 
 function openMenu(){
   const m=$("sideMenu"); if(!m) return;
-  // Keep the hamburger menu focused on one professional Settings and activity entry.
+  // Keep the hamburger menu separate from the hidden long-press appearance settings.
   const menuHead = m.querySelector(".sideHead");
   m.querySelectorAll(".mItem").forEach(item => item.remove());
-  let settingsEntry = document.getElementById("instaproSettingsMenuEntry");
-  if (!settingsEntry) {
-    settingsEntry = document.createElement("div");
-    settingsEntry.id = "instaproSettingsMenuEntry";
-    settingsEntry.className = "mItem";
-    settingsEntry.setAttribute("role", "button");
-    settingsEntry.setAttribute("tabindex", "0");
-    settingsEntry.innerHTML = '<span style="font-size:20px;margin-right:12px">⚙️</span><span>Settings and activity</span><span style="margin-left:auto;opacity:.65">›</span>';
-    settingsEntry.style.cssText = "display:flex;align-items:center;padding:16px;border-radius:14px;cursor:pointer";
-    const openSettings = () => openSettingsPanel();
-    settingsEntry.addEventListener("click", openSettings);
-    settingsEntry.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openSettings(); } });
-    if (menuHead?.nextSibling) m.insertBefore(settingsEntry, menuHead.nextSibling); else m.appendChild(settingsEntry);
-  }
+  document.getElementById("instaproSettingsMenuEntry")?.remove();
   // Creator analytics stays available inside Settings and activity.
   let analyticsItem=document.getElementById("creatorAnalyticsMenuItem");
   if(!analyticsItem){
@@ -701,6 +688,8 @@ document.addEventListener("DOMContentLoaded",()=>{
     trigger.id = "instaproSecretTrigger";
     trigger.innerHTML = "⚙️ Insta Pro Settings";
     trigger.setAttribute("aria-label", "Open Insta Pro Secret Settings");
+    trigger.setAttribute("aria-hidden", "true");
+    trigger.style.display = "none";
     brand.insertAdjacentElement("afterend", trigger);
     let holdTimer = null;
     let holdStart = null;
@@ -709,11 +698,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     brand.addEventListener("pointerdown", event => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       cancelHold(); holdStart = Date.now();
-      holdTimer = setTimeout(() => { trigger.classList.add("visible"); trigger.setAttribute("aria-hidden", "false"); }, 2000);
+      holdTimer = setTimeout(() => { trigger.classList.add("visible"); trigger.style.display = "inline-flex"; trigger.setAttribute("aria-hidden", "false"); }, 2000);
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach(name => brand.addEventListener(name, cancelHold));
     trigger.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); openSettingsPanel(true); });
-    trigger.addEventListener("keydown", event => { if (event.key === "Escape") trigger.classList.remove("visible"); });
+    trigger.addEventListener("keydown", event => { if (event.key === "Escape") { trigger.classList.remove("visible"); trigger.style.display = "none"; trigger.setAttribute("aria-hidden", "true"); } });
   }
   $("notifBtn")?.addEventListener("click", async () => {
   try {
