@@ -712,16 +712,15 @@ document.addEventListener("DOMContentLoaded",()=>{
       trigger.setAttribute("aria-hidden", "false");
     };
     const startHold = event => {
-      if (event.type === "pointerdown" && (event.pointerType === "touch" || (event.pointerType === "mouse" && event.button !== 0))) return;
-      if (event.type === "touchstart") event.preventDefault();
+      if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) return;
       stopHold();
       holdTimer = setTimeout(revealTrigger, 2000);
     };
     brand.addEventListener("contextmenu", event => { event.preventDefault(); event.stopPropagation(); });
     brand.addEventListener("selectstart", event => event.preventDefault());
+    // Use Pointer Events only: mixing touchstart + pointerup cancels the timer on Android.
     brand.addEventListener("pointerdown", startHold);
-    brand.addEventListener("touchstart", startHold, { passive: false });
-    ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(name => brand.addEventListener(name, stopHold));
+    ["pointerup", "pointercancel", "pointerleave"].forEach(name => brand.addEventListener(name, stopHold));
     trigger.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
