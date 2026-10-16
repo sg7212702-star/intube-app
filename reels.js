@@ -1291,7 +1291,7 @@ function startReelsSystem() {
       })();
       const rawReels = snapshot.docs
         .filter(item => !deletedIds.has(String(item.id)))
-        .map(item => ({ id: item.id, ...item.data() }));
+        .map(item => ({ ...item.data(), id: item.id }));
       const privacyApi = window.InstaProPrivate;
       const viewerUid = currentUser()?.uid || "";
       const visibleReels = [];
