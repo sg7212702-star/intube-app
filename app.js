@@ -615,31 +615,7 @@ function openMenu(){
   const menuHead = m.querySelector(".sideHead");
   m.querySelectorAll(".mItem").forEach(item => item.remove());
   document.getElementById("instaproSettingsMenuEntry")?.remove();
-  // Creator analytics stays available inside Settings and activity.
-  let analyticsItem=document.getElementById("creatorAnalyticsMenuItem");
-  if(!analyticsItem){
-    analyticsItem=document.createElement("div");
-    analyticsItem.id="creatorAnalyticsMenuItem";
-    analyticsItem.className="mItem";
-    analyticsItem.setAttribute("role","button");
-    analyticsItem.setAttribute("tabindex","0");
-    analyticsItem.textContent="📊 Creator Analytics";
-    const openAnalytics=async()=>{
-      const { auth }=await import("./firebase.js");
-      const user=auth.currentUser;
-      if(!user||user.isAnonymous){alert("Creator analytics ke liye Google login karein.");return;}
-      m.classList.remove("show");
-      const overlay=document.getElementById("sideOverlay");
-      if(overlay){overlay.classList.remove("show");overlay.style.display="none";}
-      await openSettingsPanel();
-      const panel=document.getElementById("instaproSettingsPanel");
-      if(panel)openCreatorAnalytics(user,panel);
-    };
-    analyticsItem.addEventListener("click",openAnalytics);
-    analyticsItem.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openAnalytics();}});
-    m.appendChild(analyticsItem);
-  }
-  m.classList.add("show");
+  // Creator Analytics is not shown in the three-line menu.\n  document.getElementById("creatorAnalyticsMenuItem")?.remove();\n  m.classList.add("show");
   const sov=$("sideOverlay"); if(sov){ sov.style.display="block"; sov.classList.add("show"); }
   // Settings panel and menu actions are implemented in this file; do not import a missing settings.js.
 }
