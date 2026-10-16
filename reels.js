@@ -32,6 +32,8 @@ let reelsHistoryEntryAdded = false;
 let activeStoryOwners = new Set();
 let unsubscribeReelStories = null;
 let reelFollowCache = new Map();
+let reelFollowStateReady = false;
+let unsubscribeReelFollowState = null;
 const countedReelViewsThisSession = new Set();
 
 const escapeHTML = (value = "") =>
@@ -668,7 +670,7 @@ function renderReelsSlides(track) {
             <img class="${activeStoryOwners.has(post.uid || post.userId || post.authorId || post.ownerUid) ? "ipr-story-ring" : ""}" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}" src="${escapeHTML(photoURL(post))}" alt="Profile photo" loading="lazy">
             <div class="ipr-user-meta">
               <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))}</button>
-              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowCache.get(post.uid || post.userId || post.authorId || post.ownerUid) !== true ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
+              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowStateReady && reelFollowCache.get(String(post.uid || post.userId || post.authorId || post.ownerUid)) !== true ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
             </div>
           </div>
           <div class="ipr-caption">${escapeHTML(post.caption || "")}</div>
@@ -1251,20 +1253,39 @@ window.addEventListener("pagehide", () => {
     if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
   }, error => console.warn("Reel story ring listener:", error));
 
-  // Keep Reel Follow buttons in sync with the signed-in user's Firestore following list.
-  onAuthStateChanged(auth, async user => {
+  // Keep Reel Follow buttons synced to Firestore in real time.
+  // Hide Follow buttons until the current account's following list is known,
+  // so followed users never briefly show an incorrect Follow button.
+  onAuthStateChanged(auth, user => {
+    reelFollowStateReady = false;
     reelFollowCache = new Map();
-    if (user && !user.isAnonymous) {
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        const following = snap.exists() && Array.isArray(snap.data().following) ? snap.data().following : [];
-        reelFollowCache = new Map(following.map(uid => [String(uid), true]));
-      } catch (error) {
-        console.warn("Reel follow state:", error);
-      }
+    if (unsubscribeReelFollowState) {
+      unsubscribeReelFollowState();
+      unsubscribeReelFollowState = null;
     }
+
     const track = document.getElementById("ipReelsTrack");
     if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+
+    if (!user || user.isAnonymous) {
+      reelFollowStateReady = true;
+      if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+      return;
+    }
+
+    unsubscribeReelFollowState = onSnapshot(doc(db, "users", user.uid), snap => {
+      const following = snap.exists() && Array.isArray(snap.data().following)
+        ? snap.data().following.map(uid => String(uid))
+        : [];
+      reelFollowCache = new Map(following.map(uid => [uid, true]));
+      reelFollowStateReady = true;
+      if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+    }, error => {
+      console.warn("Reel follow state:", error);
+      // Keep Follow buttons hidden if state could not be verified.
+      reelFollowStateReady = false;
+      if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+    });
   });
 
   if (unsubscribeReels) {
