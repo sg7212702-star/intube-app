@@ -228,6 +228,16 @@ function installReelsStyles() {
     .ipr-action.ipr-more-reel {font-size:32px;line-height:1;color:#fff}
     .ipr-reel-more-menu {position:absolute;right:58px;bottom:104px;z-index:12;min-width:150px;padding:6px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(20,20,24,.82);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);box-shadow:0 8px 28px rgba(0,0,0,.35)}
     .ipr-reel-more-menu button {display:block;width:100%;padding:12px 14px;border:0;border-radius:9px;background:transparent;color:#ff7188;text-align:left;font-size:14px;font-weight:650}
+    /* Keep Reel profile details directly on the video; remove the glass box behind them. */
+    .ipr-bottom{
+      padding:0!important;
+      border:0!important;
+      border-radius:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      backdrop-filter:none!important;
+      -webkit-backdrop-filter:none!important;
+    }
     .ipr-bottom {
       position:absolute;left:15px;right:88px;bottom:calc(34px + env(safe-area-inset-bottom));
       z-index:8;text-shadow:0 1px 5px #000;
