@@ -156,7 +156,7 @@ function addStyles() {
     #ipProfileOverlay {
       position:fixed;
       inset:0;
-      z-index:9999;
+      z-index:100000;
       overflow:auto;
       color:#fff;
       background:
