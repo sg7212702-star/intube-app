@@ -1987,7 +1987,7 @@ ownerFields.forEach(field => {
           ownedPostsById.delete(id);
         }
       }
-      snapshot.docs.forEach(item => ownedPostsById.set(item.id, { id: item.id, ...item.data() }));
+      snapshot.docs.forEach(item => ownedPostsById.set(item.id, { ...item.data(), id: item.id }));
       ownerQueryReady++;
       refreshOwnedProfilePosts();
     },
