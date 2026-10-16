@@ -480,37 +480,11 @@ async function openSettingsCategory(category, user, panel) {
   }
 
   if (category === "Insta Pro Verified") {
-    const existing=await getDoc(doc(db,"users",me.uid,"verificationRequests","current"));
-    const request=existing.exists()?existing.data():{};
-    if(request.status==="approved") {
-      rows.innerHTML='<div class="isp-row"><div class="isp-copy"><div class="isp-label">Verification approved</div><div class="isp-desc">Aapki request approved hai. Badge display ke liye admin-controlled verified status chahiye.</div></div></div>';
-      return;
-    }
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Request verification</div><div class="isp-desc">Application submit karein. Blue badge automatic nahi milega; review/approval zaroori hai.</div></div></div>'
-      + '<label class="isp-row" style="display:block">Full name<input id="ipvFullName" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="100" required></label>'
-      + '<label class="isp-row" style="display:block">Username<input id="ipvUsername" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="40" required></label>'
-      + '<label class="isp-row" style="display:block">Category<select id="ipvCategory" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px"><option>Creator</option><option>Artist</option><option>Business</option><option>Public figure</option><option>Other</option></select></label>'
-      + '<label class="isp-row" style="display:block">Official website or public profile (optional)<input id="ipvWebsite" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="300" placeholder="https://…"></label>'
-      + '<label class="isp-row" style="display:block">Why should this account be verified?<textarea id="ipvReason" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px;min-height:90px" maxlength="1000" required></textarea></label>'
-      + '<div class="isp-row"><button class="isp-action" id="ipvSubmit">Submit verification request</button><span class="isp-desc" id="ipvExistingStatus"></span></div>';
-    panel.querySelector("#ipvFullName").value=request.fullName||profileName(user);
-    panel.querySelector("#ipvUsername").value=request.username||"";
-    panel.querySelector("#ipvCategory").value=request.category||"Creator";
-    panel.querySelector("#ipvWebsite").value=request.website||"";
-    panel.querySelector("#ipvReason").value=request.reason||"";
-    panel.querySelector("#ipvExistingStatus").textContent=request.status==="pending"?"Aapki request pending hai; resubmit karne se current request update hogi.":"";
-    panel.querySelector("#ipvSubmit").onclick=async()=>{
-      const fullName=panel.querySelector("#ipvFullName").value.trim(), username=panel.querySelector("#ipvUsername").value.trim().replace(/^@/,""), categoryValue=panel.querySelector("#ipvCategory").value, website=panel.querySelector("#ipvWebsite").value.trim(), reason=panel.querySelector("#ipvReason").value.trim();
-      if(!fullName||!username||!reason){status.textContent="Full name, username aur reason bharna zaroori hai.";return;}
-      if(website&&!/^https:\/\//i.test(website)){status.textContent="Website https:// se shuru honi chahiye.";return;}
-      const btn=panel.querySelector("#ipvSubmit");btn.disabled=true;status.textContent="Submitting…";
-      try{await setDoc(doc(db,"users",me.uid,"verificationRequests","current"),{uid:me.uid,email:me.email||"",fullName,username,category:categoryValue,website,reason,status:"pending",submittedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});status.textContent="Verification request submit ho gayi. Approval admin review ke baad hi hoga.";}
-      catch(e){status.textContent="Request submit nahi hui: "+e.message;}
-      finally{btn.disabled=false;}
-    };
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">🔵 Insta Pro Verified is ON</div><div class="isp-desc">Is app mein har account ko automatic Verified Badge milta hai — 0 followers, naya account, Personal, Creator ya Business. Koi application ya approval required nahi hai.</div></div><span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></div>'
+      + '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Badge kahan dikhega?</div><div class="isp-desc">Profile, Home Feed, Reels Feed aur comments mein username ke saath.</div></div></div>'
+      + '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Automatic eligibility</div><div class="isp-desc">Follower count check nahi hota. App ke sabhi accounts ko ek jaisa badge diya jata hai.</div></div></div>';
     return;
   }
-
   const options = SETTINGS_CATEGORY_OPTIONS[category] || [];
   const saved = currentAppSettings[category] || {};
   if (category === "Privacy") {
