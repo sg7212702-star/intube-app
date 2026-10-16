@@ -407,26 +407,8 @@
     document.body.style.overflow = "";
   }
 
-  // Capture file selection before upload.js can upload it. Continue sends it
-  // back through the existing upload handler, preserving its Firebase flow.
-  document.addEventListener("change", event => {
-    const input = event.target;
-    if (!(input instanceof HTMLInputElement)) return;
-    if (input.id !== "postFile" && input.id !== "storyFile") return;
-    if (input.dataset.ipeBypassEditor === "true") {
-      delete input.dataset.ipeBypassEditor;
-      return;
-    }
-    const file = input.files?.[0];
-    if (!file) return;
-    const desiredType = input.dataset.instaProUploadType || (input.id === "storyFile" ? "story" : "post");
-    // Story uploads use the dedicated Instagram-style Story editor in upload.js.
-    // Let the event continue so upload.js can open that editor instead of this legacy editor.
-    if (desiredType === "story") return;
-    event.stopImmediatePropagation();
-    event.preventDefault();
-    open(file, desiredType, input);
-  }, true);
+  // Legacy editor interception disabled: upload.js owns the Post, Story, and Reel editor flows.
+  // Keep the API available for compatibility, but do not intercept file input change events.
 
   window.InstaProEditor = { open, close };
   console.log("InstaPro Glass Editor initialized");
