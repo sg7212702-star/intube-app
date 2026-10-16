@@ -69,7 +69,22 @@ function openSheet(){
 
 
 let settingsUnsubscribe = null;
-let currentAppSettings = { theme: "dark", browserNotifications: false, dataSaver: false, reduceMotion: false };
+let currentAppSettings = { theme: "dark", browserNotifications: false, dataSaver: false, reduceMotion: false, fontFamily: "system", fontSize: 100, accentColor: "#ff2d7a", appBackground: "#000000" };
+
+function applyPersonalCustomization(settings = currentAppSettings) {
+  const root = document.documentElement;
+  const familyMap = { system: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', roboto: 'Roboto, "Segoe UI", sans-serif', serif: 'Georgia, "Times New Roman", serif', mono: 'ui-monospace, SFMono-Regular, Consolas, monospace' };
+  root.style.setProperty("--ip-user-font", familyMap[settings.fontFamily] || familyMap.system);
+  root.style.setProperty("--ip-user-font-size", Math.min(125, Math.max(85, Number(settings.fontSize) || 100)) + "%");
+  root.style.setProperty("--ip-accent", /^#[0-9a-f]{6}$/i.test(settings.accentColor || "") ? settings.accentColor : "#ff2d7a");
+  root.style.setProperty("--ip-user-background", /^#[0-9a-f]{6}$/i.test(settings.appBackground || "") ? settings.appBackground : "#000000");
+  document.body.style.fontFamily = root.style.getPropertyValue("--ip-user-font");
+  document.body.style.fontSize = root.style.getPropertyValue("--ip-user-font-size");
+  document.body.classList.toggle("instapro-amoled-mode", settings.theme === "amoled");
+  document.body.classList.toggle("instapro-custom-mode", settings.theme === "custom");
+  if (settings.theme === "custom") document.body.style.backgroundColor = settings.appBackground || "#000000";
+  else document.body.style.backgroundColor = settings.theme === "light" ? "#f4f4f7" : "#000000";
+}
 
 function installSettingsStyles() {
   if (document.getElementById("instapro-settings-style")) return;
@@ -94,6 +109,17 @@ function installSettingsStyles() {
     #instaproSettingsPanel .isp-switch.on:after{left:21px}
     #instaproSettingsPanel .isp-status{font-size:12px;opacity:.65;text-align:center;padding-top:10px;min-height:16px}
     body.instapro-light-mode{background:#f4f4f7!important;color:#161616!important}
+    body.instapro-amoled-mode,body.instapro-amoled-mode .app,body.instapro-amoled-mode .page{background:#000!important}
+    body.instapro-custom-mode,body.instapro-custom-mode .app,body.instapro-custom-mode .page{background:var(--ip-user-background,#000)!important}
+    body.instapro-custom-mode .topGlass,body.instapro-custom-mode .bottomGlass,body.instapro-custom-mode .sideGlass,body.instapro-custom-mode .sheetGlass{background:color-mix(in srgb,var(--ip-user-background,#000) 82%,transparent)!important}
+    body.instapro-light-mode .post,body.instapro-light-mode .storyGlass{background:rgba(255,255,255,.88)!important;color:#161616!important}
+    .logo{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+    #instaproSecretTrigger{display:none;border:1px solid color-mix(in srgb,var(--ip-accent,#ff2d7a) 55%,transparent);border-radius:12px;padding:7px 9px;background:rgba(20,20,28,.88);color:#fff;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+    #instaproSecretTrigger.visible{display:inline-flex;align-items:center;gap:5px}
+    #instaproSettingsPanel .isp-custom-select,#instaproSettingsPanel .isp-color{max-width:145px;width:42%;min-height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:inherit;padding:6px}
+    #instaproSettingsPanel .isp-color{padding:3px;height:38px}
+    #instaproSettingsPanel .isp-custom-range{width:42%;accent-color:var(--ip-accent,#ff2d7a)}
+    #instaproSettingsPanel .isp-custom-preview{border-radius:14px;padding:12px;border:1px solid var(--ip-accent,#ff2d7a);background:var(--ip-user-background,#000);font-family:var(--ip-user-font,inherit);font-size:var(--ip-user-font-size,100%)}
     body.instapro-light-mode #homePage,body.instapro-light-mode .page{color:#161616}
     body.instapro-light-mode .topGlass,body.instapro-light-mode .bottomGlass,body.instapro-light-mode .sideGlass,body.instapro-light-mode .sheetGlass{background:rgba(250,250,252,.96)!important;color:#161616!important}
     body.instapro-light-mode .mItem,body.instapro-light-mode .sOpt{color:#161616!important}
@@ -103,12 +129,20 @@ function installSettingsStyles() {
   document.head.appendChild(style);
 }
 
-function settingsPanelMarkup(user) {
+function settingsPanelMarkup(user, secretMode = false) {
   const theme = currentAppSettings.theme === "light";
   const notifications = currentAppSettings.browserNotifications === true;
   return `
     <div class="isp-card" role="dialog" aria-modal="true" aria-label="Settings and activity">
-      <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">Settings and activity</div><button id="ispClose" aria-label="Close">×</button></div>
+      <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">${secretMode ? "Insta Pro Secret Settings" : "Settings and activity"}</div><button id="ispClose" aria-label="Close">×</button></div>
+      ${secretMode ? `<div class="isp-subtitle">Personalize your app</div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">App theme</div><div class="isp-desc">Dark, Light, AMOLED black or custom background.</div></div><select class="isp-custom-select" id="ispSecretTheme" aria-label="App theme"><option value="dark">Dark</option><option value="light">Light</option><option value="amoled">AMOLED</option><option value="custom">Custom</option></select></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">App font</div><div class="isp-desc">Change text font across the app.</div></div><select class="isp-custom-select" id="ispSecretFont" aria-label="App font"><option value="system">System</option><option value="roboto">Roboto style</option><option value="serif">Serif</option><option value="mono">Monospace</option></select></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Font size</div><div class="isp-desc">Adjust text size from 85% to 125%.</div></div><input class="isp-custom-range" id="ispSecretFontSize" type="range" min="85" max="125" step="5" aria-label="Font size"><b id="ispSecretFontSizeValue">100%</b></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Accent / button color</div><div class="isp-desc">Customize highlights and accent color.</div></div><input class="isp-color" id="ispSecretAccent" type="color" aria-label="Accent color"></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Custom background</div><div class="isp-desc">Used when Custom theme is selected.</div></div><input class="isp-color" id="ispSecretBackground" type="color" aria-label="Custom background"></div>
+      <div class="isp-row" style="display:block"><div class="isp-label">Preview</div><div class="isp-custom-preview" id="ispSecretPreview" style="margin-top:8px">Insta Pro — Your personal style</div></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Reset appearance</div><div class="isp-desc">Restore default font, theme and colors.</div></div><button class="isp-action" id="ispSecretReset">Reset</button></div>` : ""}
       <div class="isp-subtitle">Your account</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in account</div><div class="isp-desc">${escapeSettingsText(user?.email || user?.displayName || "Google account")}</div></div><button class="isp-action" id="ispProfile">Profile</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Saved posts</div><div class="isp-desc">Open your profile to view posts you saved.</div></div><button class="isp-action" id="ispSaved">Open</button></div>
@@ -134,13 +168,58 @@ function settingsPanelMarkup(user) {
     </div>`;
 }
 
+function bindSecretCustomization(panel, getStatus) {
+  const theme = panel.querySelector("#ispSecretTheme");
+  const font = panel.querySelector("#ispSecretFont");
+  const size = panel.querySelector("#ispSecretFontSize");
+  const sizeValue = panel.querySelector("#ispSecretFontSizeValue");
+  const accent = panel.querySelector("#ispSecretAccent");
+  const background = panel.querySelector("#ispSecretBackground");
+  const preview = panel.querySelector("#ispSecretPreview");
+  const defaults = { theme: "dark", fontFamily: "system", fontSize: 100, accentColor: "#ff2d7a", appBackground: "#000000" };
+  const sync = () => {
+    if (theme) theme.value = currentAppSettings.theme || "dark";
+    if (font) font.value = currentAppSettings.fontFamily || "system";
+    if (size) size.value = String(currentAppSettings.fontSize || 100);
+    if (sizeValue) sizeValue.textContent = (currentAppSettings.fontSize || 100) + "%";
+    if (accent) accent.value = currentAppSettings.accentColor || "#ff2d7a";
+    if (background) background.value = currentAppSettings.appBackground || "#000000";
+    if (preview) { preview.style.borderColor = currentAppSettings.accentColor || "#ff2d7a"; preview.style.background = currentAppSettings.appBackground || "#000000"; preview.style.fontFamily = document.body.style.fontFamily; preview.style.fontSize = (currentAppSettings.fontSize || 100) + "%"; }
+  };
+  const save = async (key, value) => {
+    const old = currentAppSettings[key];
+    currentAppSettings[key] = value;
+    if (key === "theme") applyAppTheme(value);
+    applyPersonalCustomization(currentAppSettings);
+    sync();
+    getStatus().textContent = "Saving your personal appearance…";
+    try { await saveAppSetting(key, value); getStatus().textContent = "Saved for your account."; }
+    catch (error) { currentAppSettings[key] = old; applyAppTheme(currentAppSettings.theme); applyPersonalCustomization(currentAppSettings); sync(); getStatus().textContent = "Device par apply hua, Firebase save nahi hua: " + error.message; console.error("Secret appearance save failed:", error); }
+  };
+  theme?.addEventListener("change", () => save("theme", theme.value));
+  font?.addEventListener("change", () => save("fontFamily", font.value));
+  size?.addEventListener("input", () => { currentAppSettings.fontSize = Number(size.value); applyPersonalCustomization(currentAppSettings); sync(); });
+  size?.addEventListener("change", () => save("fontSize", Number(size.value)));
+  accent?.addEventListener("input", () => { currentAppSettings.accentColor = accent.value; applyPersonalCustomization(currentAppSettings); sync(); });
+  accent?.addEventListener("change", () => save("accentColor", accent.value));
+  background?.addEventListener("input", () => { currentAppSettings.appBackground = background.value; applyPersonalCustomization(currentAppSettings); sync(); });
+  background?.addEventListener("change", () => save("appBackground", background.value));
+  panel.querySelector("#ispSecretReset")?.addEventListener("click", async () => {
+    if (!confirm("Appearance ki sabhi personal settings default par reset karein?")) return;
+    for (const [key, value] of Object.entries(defaults)) await save(key, value);
+    getStatus().textContent = "Default appearance restored and saved.";
+  });
+  sync();
+}
+
 function escapeSettingsText(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 
 function applyAppTheme(theme) {
-  currentAppSettings.theme = theme === "light" ? "light" : "dark";
+  currentAppSettings.theme = ["light", "dark", "amoled", "custom"].includes(theme) ? theme : "dark";
   document.body.classList.toggle("instapro-light-mode", currentAppSettings.theme === "light");
+  applyPersonalCustomization(currentAppSettings);
   try { localStorage.setItem("instapro-theme", currentAppSettings.theme); } catch (_) {}
 }
 
@@ -282,7 +361,7 @@ async function openSettingsCategory(category, user, panel) {
   });
 }
 
-async function openSettingsPanel() {
+async function openSettingsPanel(secretMode = false) {
   installSettingsStyles();
   const { auth, db } = await import("./firebase.js");
   const user = auth.currentUser;
@@ -296,11 +375,12 @@ async function openSettingsPanel() {
     panel.id = "instaproSettingsPanel";
     document.body.appendChild(panel);
   }
-  panel.innerHTML = settingsPanelMarkup(user);
+  panel.innerHTML = settingsPanelMarkup(user, secretMode);
   panel.classList.add("open");
   const status = () => panel.querySelector("#ispStatus");
   const close = () => panel.classList.remove("open");
   panel.querySelector("#ispClose").onclick = close;
+  if (secretMode) bindSecretCustomization(panel, status);
   panel.querySelector("#ispBack").onclick = close;
   panel.onclick = event => { if (event.target === panel) close(); };
   panel.querySelectorAll(".isp-category").forEach(button => {
@@ -383,6 +463,19 @@ async function openSettingsPanel() {
       if (!saved) return;
       currentAppSettings = { ...currentAppSettings, ...saved };
       applyAppTheme(currentAppSettings.theme);
+      applyPersonalCustomization(currentAppSettings);
+      const secretTheme = panel.querySelector("#ispSecretTheme");
+      const secretFont = panel.querySelector("#ispSecretFont");
+      const secretSize = panel.querySelector("#ispSecretFontSize");
+      const secretSizeValue = panel.querySelector("#ispSecretFontSizeValue");
+      const secretAccent = panel.querySelector("#ispSecretAccent");
+      const secretBackground = panel.querySelector("#ispSecretBackground");
+      if (secretTheme) secretTheme.value = currentAppSettings.theme || "dark";
+      if (secretFont) secretFont.value = currentAppSettings.fontFamily || "system";
+      if (secretSize) secretSize.value = String(currentAppSettings.fontSize || 100);
+      if (secretSizeValue) secretSizeValue.textContent = (currentAppSettings.fontSize || 100) + "%";
+      if (secretAccent) secretAccent.value = currentAppSettings.accentColor || "#ff2d7a";
+      if (secretBackground) secretBackground.value = currentAppSettings.appBackground || "#000000";
       const themeButton = panel.querySelector("#ispTheme");
       const notifButton = panel.querySelector("#ispNotifications");
       const dataSaverButton = panel.querySelector("#ispDataSaver");
@@ -592,7 +685,29 @@ document.addEventListener("DOMContentLoaded",()=>{
   // TOP BUTTONS - FINAL
   $("menuBtn")?.addEventListener("click", openMenu);
   bindSideMenuItems();
-  try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); applyDataSaver(localStorage.getItem("instapro-data-saver") === "1"); applyReduceMotion(localStorage.getItem("instapro-reduce-motion") === "1"); } catch (_) {}
+  try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); applyDataSaver(localStorage.getItem("instapro-data-saver") === "1"); applyReduceMotion(localStorage.getItem("instapro-reduce-motion") === "1"); applyPersonalCustomization(currentAppSettings); } catch (_) {}
+  // Secret settings: hold the InstaPro logo for two seconds to reveal the private entry button.
+  const brand = document.querySelector(".topGlass .logo");
+  if (brand && !document.getElementById("instaproSecretTrigger")) {
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.id = "instaproSecretTrigger";
+    trigger.innerHTML = "⚙️ Insta Pro Settings";
+    trigger.setAttribute("aria-label", "Open Insta Pro Secret Settings");
+    brand.insertAdjacentElement("afterend", trigger);
+    let holdTimer = null;
+    let holdStart = null;
+    const cancelHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; holdStart = null; };
+    brand.addEventListener("contextmenu", event => event.preventDefault());
+    brand.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      cancelHold(); holdStart = Date.now();
+      holdTimer = setTimeout(() => { trigger.classList.add("visible"); trigger.setAttribute("aria-hidden", "false"); }, 2000);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(name => brand.addEventListener(name, cancelHold));
+    trigger.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); openSettingsPanel(true); });
+    trigger.addEventListener("keydown", event => { if (event.key === "Escape") trigger.classList.remove("visible"); });
+  }
   $("notifBtn")?.addEventListener("click", async () => {
   try {
     const m = await import("./notifications.js");
