@@ -49,7 +49,7 @@ function renderMenu(){
 }
 function renderSettings(){
  view="settings";const m=box();if(!m)return;
- m.innerHTML=head("Settings and privacy")+'<div class="ip-list"><p style="font-size:13px;opacity:.75;padding:8px">Preferences sync to Firebase in real time.</p>'+toggle("🌙","Dark mode","darkMode","Change app appearance")+toggle("🔔","Pause notifications","notificationsPaused","Save your notification preference")+row("👤","Account and login","account","Current account details")+row("🛡️","Privacy information","privacy","Limits of these settings")+'</div>';bind();
+ m.innerHTML=head("Settings and privacy")+'<div class="ip-list"><p style="font-size:13px;opacity:.75;padding:8px">Preferences sync to Firebase in real time.</p>'+toggle("🌙","Dark mode","darkMode","Change app appearance")+toggle("🔔","Pause notifications","notificationsPaused","Save your notification preference")+row("👤","Account and login","account","Current account details")+row("🔒","Private account","privateAccount","Turn private mode on/off and manage follow requests")+row("🛡️","Privacy information","privacy","Limits of these settings")+'</div>';bind();
 }
 async function action(a){
  const m=box();if(!m)return;
@@ -58,6 +58,7 @@ async function action(a){
  if(a==="dark"){state.darkMode=!state.darkMode;apply();renderMenu();return save("darkMode",state.darkMode);}
  if(a==="notifications")return renderSettings();
  if(a==="account"){const u=auth.currentUser;m.innerHTML=head("Account and login")+'<div class="ip-content"><b>'+esc(u?.displayName||"InstaPro User")+'</b><p>'+esc(u?.email||"Email unavailable")+'</p><small>UID: '+esc(u?.uid||"Not signed in")+'</small></div>';bind();return;}
+ if(a==="privateAccount"){const api=window.InstaProPrivate;if(api?.openPrivateSettings){closeMenu();api.openPrivateSettings();}else{alert("Private Account system load nahi hua. Page refresh karein.");}return;}
  if(a==="privacy"){m.innerHTML=head("Privacy information")+'<div class="ip-content">Settings switches save preferences in Firebase. Account privacy, blocking and content-access restrictions must also be enforced in app queries and Firestore Security Rules; this menu alone does not secure private content.</div>';bind();return;}
  if(a==="help"){m.innerHTML=head("Help")+'<div class="ip-content"><h3>InstaPro Help</h3><p>For help, note the error message and send it with a screenshot to the app developer.</p></div>';bind();return;}
  if(a==="logout"){if(!confirm("Kya aap logout karna chahte hain?"))return;try{await signOut(auth);location.href="login.html";}catch(e){alert("Logout fail: "+e.message);}return;}
