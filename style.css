@@ -354,3 +354,28 @@ border-radius: 24px;
 .instapro-feed-post{content-visibility:auto;contain-intrinsic-size:auto 760px;contain:layout style;overflow-anchor:none}
 .instapro-feed-post img.ip-feed-media{content-visibility:auto;}
 .instapro-feed-post img,.instapro-feed-post video{backface-visibility:hidden}
+
+
+/* Instagram-style live unread notification number */
+#notifBtn .dot{display:none!important}
+#notifBtn .notification-badge{
+  position:absolute;top:-5px;right:-5px;z-index:2;
+  min-width:18px;height:18px;padding:0 5px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #09090d;border-radius:999px;
+  background:linear-gradient(135deg,#ff304f,#ff176b 60%,#ff4d8d);
+  color:#fff;font-size:10px;line-height:1;font-weight:800;
+  font-family:Arial,sans-serif;letter-spacing:-.2px;
+  box-shadow:0 2px 8px rgba(255,23,107,.45);
+  transform-origin:center;
+}
+#notifBtn .notification-badge[hidden]{display:none!important}
+#notifBtn .notification-badge-pop{animation:ipNotifBadgePop .38s cubic-bezier(.2,.9,.25,1.35)}
+@keyframes ipNotifBadgePop{
+  0%{transform:scale(.45);opacity:.5}
+  65%{transform:scale(1.18);opacity:1}
+  100%{transform:scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  #notifBtn .notification-badge-pop{animation:none}
+}
