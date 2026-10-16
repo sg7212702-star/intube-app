@@ -56,7 +56,7 @@ function mount(target) {
   box.className="ipsg-wrap";
   box.innerHTML='<div class="ipsg-head"><div class="ipsg-title">Suggested for you</div><button class="ipsg-refresh" type="button">↻ Refresh</button></div><div class="ipsg-list"><div class="ipsg-empty">Loading suggestions…</div></div>';
   target.append(box);
-  box.querySelector(".ipsg-refresh").onclick=()=>{dismissed.clear();renderAll();};
+  box.querySelector(".ipsg-refresh").onclick=()=>{dismissed.clear(); if(refreshBusy)return; refreshBusy=true; showSuggestionState("Suggestions refresh ho rahe hain…"); const user=auth.currentUser; if(user&&!user.isAnonymous){startListeners(user);} else { showSuggestionState("Login status check ho raha hai…"); } setTimeout(()=>{refreshBusy=false;},1500); };
   return box;
 }
 function cardHTML(u) {
@@ -128,6 +128,15 @@ function init() {
   if((!home && !explore) || initialized) return;
   initialized = true;
 
+  // Never leave the Home section stuck on Loading if auth restoration or a listener stalls.
+  setTimeout(() => {
+    document.querySelectorAll(".ipsg-list").forEach(list => {
+      if (/Loading suggestions|Suggestions refresh ho rahe hain|Login status check ho raha hai/i.test(list.textContent || "")) {
+        list.innerHTML = '<div class="ipsg-error">Suggestions abhi load nahi hue. Refresh dabayein ya app ko dobara kholein.</div>';
+      }
+    });
+  }, 10000);
+
   // Firebase auth can still be restoring its persisted session during a refresh.
   // Keep the loading state temporary and handle signed-out/anonymous sessions explicitly.
   unsubAuth = auth.onAuthStateChanged(user => {
@@ -156,7 +165,7 @@ function startListeners(user = auth.currentUser) {
     const data=snap.exists()?snap.data():{};
     myFollowing=Array.isArray(data.following)?data.following:[];
     renderAll();
-  },e=>console.warn("Suggestion follow listener:",e));
+  },e=>{ console.error("Suggestion follow listener:",e); showSuggestionState("Following data load nahi hua. Refresh dabayein.", true); });
   unsubUsers=onSnapshot(query(collection(db,"users"),limit(100)),snap=>{
     usersCache=snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));
     renderAll();
