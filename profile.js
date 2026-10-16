@@ -1176,14 +1176,38 @@ async function deleteProfilePost(postId, viewer) {
   }
 
   try {
-    // Latest Firestore document se ownership verify karein.
-    const postRef = doc(db, "posts", postId);
-    const snap = await getDoc(postRef);
+    // First try the ID on the visible tile. Some older/cached tiles may carry a
+    // non-Firestore ID, so safely resolve by the exact media URL among this user's posts.
+    let postRef = doc(db, "posts", postId);
+    let snap = await getDoc(postRef);
     if (!snap.exists()) {
-      // Do not mark the ID deleted when its Firestore document cannot be found.
-      console.error("Profile delete: posts document not found", { postId, uid: user.uid });
-      alert("Yeh video posts/" + postId + " mein nahi mili. Video delete nahi hui. Upload record ID ki jaanch zaroori hai.");
-      return;
+      const cachedPost = [...profilePosts, ...ownedProfilePosts, ...repostedProfilePosts]
+        .find(item => String(item.id) === String(postId));
+      const cachedUrl = cachedPost ? postUrl(cachedPost) : "";
+      const matches = new Map();
+      if (cachedUrl) {
+        for (const field of ["uid", "userId", "authorId", "ownerUid"]) {
+          try {
+            const result = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid), limit(300)));
+            result.forEach(item => {
+              if (postUrl(item.data()) === cachedUrl) matches.set(item.id, item);
+            });
+          } catch (lookupError) {
+            console.warn("Profile delete fallback lookup failed:", field, lookupError);
+          }
+        }
+      }
+      if (matches.size !== 1) {
+        console.error("Profile delete: original Firestore record unresolved", {
+          requestedPostId: postId, uid: user.uid, mediaUrlFound: !!cachedUrl, matches: matches.size
+        });
+        alert(matches.size > 1
+          ? "Is video ki ek se zyada matching entries mili. Safety ke liye delete nahi ki."
+          : "Video ka asli Firestore record abhi nahi mila. Video delete nahi hui. Profile ko refresh karke dobara try karein; agar phir bhi ho to upload record ID/schema jaanchni hogi.");
+        return;
+      }
+      snap = [...matches.values()][0];
+      postRef = snap.ref;
     }
 
     const post = { id: snap.id, ...snap.data() };
