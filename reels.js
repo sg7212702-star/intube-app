@@ -255,10 +255,10 @@ function installReelsStyles() {
       margin-bottom:12px;font-size:14px;font-weight:bold;
     }
     .ipr-user img {width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.75);box-sizing:border-box}\n    .ipr-user img.ipr-story-ring {border:2px solid transparent;background:linear-gradient(#111,#111) padding-box,conic-gradient(#ffb347,#ff2d95,#8b5cf6,#ffb347) border-box;padding:2px}\n    .ipr-user-meta{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}\n    .ipr-author{border:0;background:transparent;color:#fff;font:inherit;font-weight:750;padding:5px 0;cursor:pointer;text-align:left;white-space:nowrap}\n    .ipr-follow{border:1px solid rgba(255,255,255,.78);background:transparent;color:#fff;border-radius:7px;padding:5px 13px;font-size:13px;font-weight:600;line-height:1.2;backdrop-filter:none;-webkit-backdrop-filter:none;cursor:pointer;white-space:nowrap}\n    .ipr-follow.is-following{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.5)}\n    .ipr-user img,.ipr-author,.ipr-follow{transition:transform .16s ease,filter .16s ease}\n    .ipr-user img:active,.ipr-author:active,.ipr-follow:active{transform:scale(.96)}
-    .ipr-like-faces{position:absolute;left:18px;bottom:18px;z-index:4;display:flex;align-items:flex-end;gap:22px;max-width:48%;pointer-events:auto}
-    .ipr-like-face{position:relative;width:58px;height:58px;flex:0 0 58px;border:0;padding:0;border-radius:50%;background:transparent;cursor:pointer;filter:drop-shadow(0 2px 5px rgba(0,0,0,.55))}
+    .ipr-like-faces{position:absolute;left:18px;bottom:94px;z-index:9;display:flex;align-items:flex-end;gap:12px;max-width:48%;pointer-events:auto}
+    .ipr-like-face{position:relative;width:38px;height:38px;flex:0 0 38px;border:0;padding:0;border-radius:50%;background:transparent;cursor:pointer;filter:drop-shadow(0 2px 5px rgba(0,0,0,.55))}
     .ipr-like-face img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,.85);box-sizing:border-box}
-    .ipr-like-face .ipr-like-badge{position:absolute;right:-5px;bottom:-3px;font-size:22px;line-height:1;text-shadow:0 1px 4px #000}
+    .ipr-like-face .ipr-like-badge{position:absolute;right:-4px;bottom:-3px;font-size:16px;line-height:1;text-shadow:0 1px 4px #000}
     .ipr-like-face:active{transform:scale(.94)}
     .ipr-caption {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
     /* Compact Instagram-DM-sized like animation, lifted above profile details */
