@@ -150,7 +150,7 @@ function connectFileInput(inputId, type) {
 
     try {
       const chosenType = input.dataset.instaProUploadType || type;
-      if (chosenType === "post" && selectedFiles.length > 1 && selectedFiles.every(f => f.type.startsWith("image/"))) {
+      if (chosenType === "post" && selectedFiles.every(f => f.type.startsWith("image/"))) {
         const editResult = await openMultiPhotoPostEditor(selectedFiles);
         if (!editResult) return;
         await handleMultiplePhotoFiles(editResult.files, editResult.caption);
@@ -198,6 +198,7 @@ function openMultiPhotoPostEditor(files) {
     modal.id = "ip-multi-photo-editor";
     let index = 0;
     let settled = false;
+    const edits = files.map(() => ({filter:"none",ratio:"original",rotation:0}));
     const urls = files.map(file => URL.createObjectURL(file));
     modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
     modal.innerHTML = `
@@ -222,6 +223,16 @@ function openMultiPhotoPostEditor(files) {
         #ip-multi-photo-editor .ipmp-thumb img{width:100%;height:100%;display:block;object-fit:cover}
         #ip-multi-photo-editor .ipmp-thumb span{position:absolute;right:3px;top:3px;background:#0095f6;color:#fff;border-radius:10px;font-size:10px;padding:1px 4px}
         #ip-multi-photo-editor .ipmp-divider{height:1px;background:#262626;flex:0 0 1px}
+        #ip-multi-photo-editor .ipmp-edit-label{font-size:12px;font-weight:700;padding:8px 14px 5px;color:#eee}
+        #ip-multi-photo-editor .ipmp-ratios{display:flex;gap:7px;padding:0 14px 8px;overflow-x:auto;flex:0 0 auto;scrollbar-width:none}
+        #ip-multi-photo-editor .ipmp-ratios button{flex:0 0 auto;border:1px solid #ffffff25;border-radius:18px;background:#ffffff0c;color:#eee;padding:7px 12px;font-size:11px}
+        #ip-multi-photo-editor .ipmp-ratios button.active{border-color:#0095f6;background:#12334b}
+        #ip-multi-photo-editor .ipmp-filters{display:flex;gap:9px;padding:3px 14px 10px;overflow-x:auto;flex:0 0 auto;scrollbar-width:none}
+        #ip-multi-photo-editor .ipmp-filters button{flex:0 0 56px;width:56px;padding:0;border:0;background:transparent;color:#ddd;font-size:10px;text-align:center;opacity:.82}
+        #ip-multi-photo-editor .ipmp-filters button span{display:block;width:50px;height:50px;margin:0 auto 4px;border:2px solid #ffffff25;border-radius:7px;background:#222}
+        #ip-multi-photo-editor .ipmp-filters button.active{opacity:1;font-weight:750}
+        #ip-multi-photo-editor .ipmp-filters button.active span{border-color:#0095f6}
+        #ip-multi-photo-editor .ipmp-rotate{margin-left:auto}
         #ip-multi-photo-editor .ipmp-caption-wrap{display:flex;gap:12px;padding:15px 16px 12px;min-height:104px;flex:0 0 auto}
         #ip-multi-photo-editor .ipmp-caption-label{font-size:13px;font-weight:600;white-space:nowrap;padding-top:3px}
         #ip-multi-photo-editor .ipmp-caption{flex:1;min-width:0;min-height:72px;max-height:130px;resize:vertical;border:0;outline:0;background:transparent;color:#fff;font:14px/1.5 inherit;font-family:inherit;font-size:14px;line-height:1.5}
@@ -249,6 +260,26 @@ function openMultiPhotoPostEditor(files) {
         ${urls.map((url,i)=>`<button type="button" class="ipmp-thumb ${i===0?"active":""}" data-index="${i}" aria-label="Show photo ${i+1}"><img src="${url}" alt=""><span>${i+1}</span></button>`).join("")}
       </div>
       <div class="ipmp-divider"></div>
+      <div class="ipmp-edit-label">Crop & rotate</div>
+      <div class="ipmp-ratios">
+        <button type="button" class="active" data-ratio="original">Original</button>
+        <button type="button" data-ratio="square">1:1</button>
+        <button type="button" data-ratio="portrait">4:5</button>
+        <button type="button" data-ratio="landscape">1.91:1</button>
+        <button type="button" class="ipmp-rotate" data-act="rotate">↻ Rotate</button>
+      </div>
+      <div class="ipmp-edit-label">Filters</div>
+      <div class="ipmp-filters" id="ipmp-filters">
+        <button type="button" class="active" data-filter="none"><span style="filter:none"></span>Normal</button>
+        <button type="button" data-filter="contrast(1.18) saturate(1.25)"><span style="filter:contrast(1.18) saturate(1.25)"></span>Clarendon</button>
+        <button type="button" data-filter="brightness(1.08) sepia(.12)"><span style="filter:brightness(1.08) sepia(.12)"></span>Gingham</button>
+        <button type="button" data-filter="grayscale(1)"><span style="filter:grayscale(1)"></span>B&W</button>
+        <button type="button" data-filter="sepia(.25) saturate(1.15)"><span style="filter:sepia(.25) saturate(1.15)"></span>Warm</button>
+        <button type="button" data-filter="contrast(1.3) saturate(1.35)"><span style="filter:contrast(1.3) saturate(1.35)"></span>Pop</button>
+        <button type="button" data-filter="sepia(.35) contrast(.9)"><span style="filter:sepia(.35) contrast(.9)"></span>Vintage</button>
+        <button type="button" data-filter="contrast(.82) brightness(1.12)"><span style="filter:contrast(.82) brightness(1.12)"></span>Fade</button>
+      </div>
+      <div class="ipmp-divider"></div>
       <div class="ipmp-caption-wrap">
         <div class="ipmp-caption-label">Caption</div>
         <textarea class="ipmp-caption" id="ip-multi-caption" placeholder="Write a caption for your photos…" maxlength="2200"></textarea>
@@ -272,6 +303,11 @@ function openMultiPhotoPostEditor(files) {
       count.textContent = (index + 1) + " / " + files.length;
       thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
       thumbs[index]?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
+      const cfg=edits[index];
+      modal.querySelectorAll("[data-ratio]").forEach(b=>b.classList.toggle("active",b.dataset.ratio===cfg.ratio));
+      modal.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===cfg.filter));
+      const current=track.querySelectorAll(".ipmp-slide img")[index];
+      if(current){current.style.filter=cfg.filter;current.style.transform="rotate("+cfg.rotation+"deg)";}
     };
     let scrollTimer;
     track.addEventListener("scroll",()=>{
@@ -286,12 +322,47 @@ function openMultiPhotoPostEditor(files) {
     modal.addEventListener("click",e=>{
       const thumb=e.target.closest(".ipmp-thumb");
       if(thumb){show(Number(thumb.dataset.index));return;}
+      const filterBtn=e.target.closest("button[data-filter]");
+      if(filterBtn){edits[index].filter=filterBtn.dataset.filter||"none";show(index);return;}
+      const ratioBtn=e.target.closest("button[data-ratio]");
+      if(ratioBtn){edits[index].ratio=ratioBtn.dataset.ratio;show(index);return;}
       const btn=e.target.closest("button[data-act]");
       if(!btn)return;
       if(btn.dataset.act==="cancel")clean(null);
       else if(btn.dataset.act==="prev")show(index-1);
       else if(btn.dataset.act==="next")show(index+1);
-      else if(btn.dataset.act==="share")clean({files,caption:modal.querySelector("#ip-multi-caption").value.trim()});
+      else if(btn.dataset.act==="rotate"){edits[index].rotation=(edits[index].rotation+90)%360;show(index);}
+      else if(btn.dataset.act==="share"){
+        const shareButtons=[...modal.querySelectorAll('[data-act="share"]')];
+        shareButtons.forEach(b=>{b.disabled=true;b.textContent="Applying edits…";});
+        try{
+          const edited=[];
+          for(let i=0;i<files.length;i++){
+            shareButtons.forEach(b=>b.textContent="Editing photo "+(i+1)+" of "+files.length+"…");
+            const src=URL.createObjectURL(files[i]),img=new Image();
+            try{
+              img.src=src;
+              if(img.decode)await img.decode();else await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;});
+              const cfg=edits[i],iw=img.naturalWidth||1080,ih=img.naturalHeight||1080,sw=cfg.rotation%180!==0;
+              const rw=sw?ih:iw,rh=sw?iw:ih,turned=document.createElement("canvas");
+              turned.width=rw;turned.height=rh;
+              const tc=turned.getContext("2d",{alpha:false});tc.fillStyle="#fff";tc.fillRect(0,0,rw,rh);
+              tc.save();tc.translate(rw/2,rh/2);tc.rotate(cfg.rotation*Math.PI/180);tc.filter=cfg.filter;tc.drawImage(img,-iw/2,-ih/2,iw,ih);tc.restore();
+              const target=cfg.ratio==="square"?1:cfg.ratio==="portrait"?4/5:cfg.ratio==="landscape"?1.91:rw/rh;
+              let cw=rw,ch=rh;if(rw/rh>target)cw=Math.max(1,Math.round(rh*target));else ch=Math.max(1,Math.round(rw/target));
+              const out=document.createElement("canvas");out.width=cw;out.height=ch;
+              out.getContext("2d",{alpha:false}).drawImage(turned,Math.max(0,Math.floor((rw-cw)/2)),Math.max(0,Math.floor((rh-ch)/2)),cw,ch,0,0,cw,ch);
+              const blob=await new Promise((ok,no)=>out.toBlob(b=>b?ok(b):no(new Error("Photo edit export failed")),"image/jpeg",.94));
+              edited.push(new File([blob],(files[i].name||("photo-"+(i+1))).replace(/\.[^.]+$/,"")+"-instapro.jpg",{type:"image/jpeg",lastModified:Date.now()}));
+            }finally{URL.revokeObjectURL(src);}
+          }
+          clean({files:edited,caption:modal.querySelector("#ip-multi-caption").value.trim()});
+        }catch(error){
+          console.error("InstaPro post editor export failed:",error);
+          alert("Photo edit apply nahi ho paya: "+(error.message||"Unknown error"));
+          shareButtons.forEach(b=>{b.disabled=false;b.textContent="Share "+files.length+" photos";});
+        }
+      }
     });
     modal.addEventListener("keydown",e=>{if(e.key==="Escape")clean(null);});
   });
