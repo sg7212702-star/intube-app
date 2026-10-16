@@ -669,7 +669,7 @@ function renderReelsSlides(track) {
           <div class="ipr-user">
             <img class="${activeStoryOwners.has(post.uid || post.userId || post.authorId || post.ownerUid) ? "ipr-story-ring" : ""}" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}" src="${escapeHTML(photoURL(post))}" alt="Profile photo" loading="lazy">
             <div class="ipr-user-meta">
-              <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))}</button>
+              <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></button>
               ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowStateReady && !reelFollowCache.has(String(post.uid || post.userId || post.authorId || post.ownerUid)) ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
             </div>
           </div>
@@ -1093,13 +1093,13 @@ function openReelComments(postId) {
           <div class="ipr-comment-row" data-comment-id="${escapeHTML(commentId)}">
             <img src="${escapeHTML(comment.photo || "https://www.gravatar.com/avatar/?d=mp")}" alt="">
             <div style="flex:1;min-width:0">
-              <strong>${escapeHTML(comment.username || "User")}</strong><br>
+              <strong>${escapeHTML(comment.username || "User")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong><br>
               <span>${escapeHTML(comment.text || "")}</span>
               <div style="display:flex;gap:14px;align-items:center;margin-top:6px;font-size:12px">
                 <button type="button" data-comment-like="${escapeHTML(commentId)}" style="border:0;background:none;color:${liked ? "#ff4d86" : "#bbb"};padding:2px 0;font:inherit;cursor:pointer">${liked ? "♥ Liked" : "♡ Like"}${likedBy.length ? " · "+likedBy.length : ""}</button>
                 <button type="button" data-comment-reply="${escapeHTML(commentId)}" data-reply-name="${escapeHTML(comment.username || "User")}" style="border:0;background:none;color:#bbb;padding:2px 0;font:inherit;cursor:pointer">Reply</button>
               </div>
-              ${replies.map(reply => `<div style="margin:9px 0 0 10px;padding-left:10px;border-left:2px solid #555"><strong>${escapeHTML(reply.username || "User")}</strong><br><span>${escapeHTML(reply.text || "")}</span></div>`).join("")}
+              ${replies.map(reply => `<div style="margin:9px 0 0 10px;padding-left:10px;border-left:2px solid #555"><strong>${escapeHTML(reply.username || "User")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong><br><span>${escapeHTML(reply.text || "")}</span></div>`).join("")}
               <form data-reply-form="${escapeHTML(commentId)}" style="display:none;gap:6px;margin-top:8px">
                 <input data-reply-input="${escapeHTML(commentId)}" maxlength="1000" placeholder="Reply to ${escapeHTML(comment.username || "User")}..." style="flex:1;min-width:0;background:#292929;color:white;border:1px solid #444;border-radius:18px;padding:8px 10px">
                 <button type="submit" style="border:0;border-radius:18px;padding:0 12px;background:#a855f7;color:white">Send</button>
