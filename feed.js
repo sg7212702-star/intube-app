@@ -1675,8 +1675,32 @@ function openCommentsPanel(postId) {
             const ref = doc(db, "posts", postId, "comments", button.dataset.feedCommentLike);
             const snap = await getDoc(ref);
             if (!snap.exists()) return;
-            const likedBy = Array.isArray(snap.data().likedBy) ? snap.data().likedBy : [];
-            await updateDoc(ref, { likedBy: likedBy.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid) });
+            const commentData = snap.data();
+            const likedBy = Array.isArray(commentData.likedBy) ? commentData.likedBy : [];
+            const alreadyLiked = likedBy.includes(user.uid);
+
+            // Save the like toggle first. Notify only when a new like is added,
+            // never when the user removes their like.
+            await updateDoc(ref, {
+              likedBy: alreadyLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+            });
+
+            const commentOwnerUid = String(
+              commentData.uid ||
+              commentData.userId ||
+              commentData.authorId ||
+              commentData.ownerUid ||
+              ""
+            );
+
+            if (!alreadyLiked && commentOwnerUid && commentOwnerUid !== user.uid) {
+              await createActivityNotification(commentOwnerUid, {
+                type: "comment_like",
+                message: "liked your comment",
+                postId,
+                commentId: button.dataset.feedCommentLike
+              });
+            }
           } catch (error) {
             console.error("Feed comment like error:", error);
             showMessage("Comment like save nahi hua. Firebase Rules check karein.");
