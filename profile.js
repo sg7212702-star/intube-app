@@ -1178,19 +1178,43 @@ async function deleteProfilePost(postId, viewer) {
   try {
     // First try the ID on the visible tile. Some older/cached tiles may carry a
     // non-Firestore ID, so safely resolve by the exact media URL among this user's posts.
-    let postRef = doc(db, "posts", postId);
+    let postRef = doc(db, "posts", String(postId));
     let snap = await getDoc(postRef);
     if (!snap.exists()) {
-      const cachedPost = [...profilePosts, ...ownedProfilePosts, ...repostedProfilePosts]
-        .find(item => String(item.id) === String(postId));
-      const cachedUrl = cachedPost ? postUrl(cachedPost) : "";
+      const cachedItems = [...profilePosts, ...ownedProfilePosts, ...repostedProfilePosts, ...savedProfilePosts];
+      const cachedPost = cachedItems.find(item =>
+        String(item.id) === String(postId) ||
+        String(item.firestoreId || item.postId || item.documentId || "") === String(postId)
+      );
+      const normalizeMedia = value => {
+        if (!value || typeof value !== "string") return "";
+        try {
+          const url = new URL(value);
+          const parts = url.pathname.split("/");
+          const uploadAt = parts.indexOf("upload");
+          if (uploadAt >= 0) {
+            const tail = parts.slice(uploadAt + 1);
+            while (tail.length && /^(w_|h_|c_|q_|f_|dpr_|ar_|g_|e_|fl_|t_)/i.test(tail[0])) tail.shift();
+            return url.hostname + "/upload/" + tail.join("/");
+          }
+          return url.hostname + url.pathname;
+        } catch (_) { return value.split("?")[0]; }
+      };
+      const cachedUrl = cachedPost ? normalizeMedia(postUrl(cachedPost)) : "";
       const matches = new Map();
+      // Query each known owner field, then validate owner and normalized media URL.
+      // This handles old profile tiles whose displayed ID isn't the Firestore document ID.
       if (cachedUrl) {
         for (const field of ["uid", "userId", "authorId", "ownerUid"]) {
           try {
             const result = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid)));
             result.forEach(item => {
-              if (postUrl(item.data()) === cachedUrl) matches.set(item.id, item);
+              const data = item.data();
+              const owner = String(data.uid || data.userId || data.authorId || data.ownerUid || "");
+              const mediaValues = [data.mediaUrl, data.mediaURL, data.imageUrl, data.imageURL, data.videoUrl, data.videoURL, data.url, data.image];
+              if (owner === user.uid && mediaValues.some(value => normalizeMedia(value) === cachedUrl)) {
+                matches.set(item.id, item);
+              }
             });
           } catch (lookupError) {
             console.warn("Profile delete fallback lookup failed:", field, lookupError);
@@ -1199,11 +1223,12 @@ async function deleteProfilePost(postId, viewer) {
       }
       if (matches.size !== 1) {
         console.error("Profile delete: original Firestore record unresolved", {
-          requestedPostId: postId, uid: user.uid, mediaUrlFound: !!cachedUrl, matches: matches.size
+          requestedPostId: String(postId), uid: user.uid, mediaUrlFound: !!cachedUrl, matches: matches.size,
+          cachedItemCount: cachedItems.length
         });
         alert(matches.size > 1
           ? "Is video ki ek se zyada matching entries mili. Safety ke liye delete nahi ki."
-          : "Video ka asli Firestore record abhi nahi mila. Video delete nahi hui. Profile ko refresh karke dobara try karein; agar phir bhi ho to upload record ID/schema jaanchni hogi.");
+          : "Firestore record nahi mila. Profile tile ki ID aur upload record abhi match nahi ho rahe. Console mein 'Profile delete' error details dekhein.");
         return;
       }
       snap = [...matches.values()][0];
