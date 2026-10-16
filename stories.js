@@ -586,6 +586,8 @@ function closeViewer() {
   if (viewer) {
     const video = viewer.querySelector("video");
     if (video) video.pause();
+    const audio = viewer.querySelector(".is-story-music-audio");
+    if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); }
     viewer.remove();
   }
   viewer = null;
@@ -617,6 +619,7 @@ function openStoryGroup(group, startIndex = 0) {
         <button class="is-close" aria-label="Close story" style="background:transparent!important;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
       </div>
       <div class="is-media" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+      <button class="is-music-toggle" type="button" aria-label="Play story music" title="Story music" style="display:none;position:absolute;top:72px;right:14px;z-index:12;border:1px solid #ffffff45;border-radius:22px;background:rgba(0,0,0,.45);color:#fff;padding:8px 11px;font-size:13px;backdrop-filter:blur(10px);">♫ Music</button>
       <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:4px;align-items:center;justify-content:space-around;">
@@ -675,6 +678,10 @@ function showAt(index) {
   const mediaBox = viewer.querySelector(".is-media");
   const oldMedia = mediaBox.querySelector("img,video");
   if (oldMedia?.tagName === "VIDEO") oldMedia.pause();
+  const previousAudio = viewer.querySelector(".is-story-music-audio");
+  if (previousAudio) { previousAudio.pause(); previousAudio.removeAttribute("src"); previousAudio.load(); previousAudio.remove(); }
+  const musicToggle = viewer.querySelector(".is-music-toggle");
+  if (musicToggle) { musicToggle.style.display = "none"; musicToggle.textContent = "♫ Music"; musicToggle.onclick = null; }
   mediaBox.innerHTML = "";
   const url = mediaUrl(story);
   const media = document.createElement(isVideo(story) ? "video" : "img");
@@ -689,6 +696,45 @@ function showAt(index) {
     media.onerror = () => { viewerTimer = setTimeout(() => showAt(currentIndex + 1), 2500); };
   }
   mediaBox.appendChild(media);
+
+  // Story music is stored separately as musicUrl; play it while this story is open.
+  const soundtrackUrl = story.musicUrl || story.soundtrackUrl || story.audioUrl || "";
+  if (soundtrackUrl) {
+    const audio = document.createElement("audio");
+    audio.className = "is-story-music-audio";
+    audio.src = soundtrackUrl;
+    audio.preload = "auto";
+    audio.loop = true;
+    audio.playsInline = true;
+    audio.style.display = "none";
+    viewer.appendChild(audio);
+    if (musicToggle) {
+      musicToggle.style.display = "block";
+      musicToggle.textContent = "♫ Music";
+      musicToggle.onclick = async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+          if (audio.paused) { await audio.play(); musicToggle.textContent = "♫ Music on"; }
+          else { audio.pause(); musicToggle.textContent = "♫ Music off"; }
+        } catch (error) {
+          console.warn("Story soundtrack playback failed:", error);
+          musicToggle.textContent = "▶ Tap for music";
+        }
+      };
+    }
+    audio.play().then(() => {
+      if (musicToggle?.isConnected) musicToggle.textContent = "♫ Music on";
+    }).catch(error => {
+      console.info("Story music autoplay was blocked; tap Music to play.", error);
+      if (musicToggle?.isConnected) musicToggle.textContent = "▶ Tap for music";
+    });
+    audio.addEventListener("error", () => {
+      console.warn("Story music URL failed to load:", soundtrackUrl);
+      if (musicToggle?.isConnected) musicToggle.textContent = "Music unavailable";
+    }, { once: true });
+  }
+
   // Instagram-style double-tap on the story media toggles the Firebase-backed like.
   let lastStoryTap = 0;
   let storyTapTimer = null;
