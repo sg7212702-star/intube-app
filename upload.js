@@ -147,14 +147,27 @@ function connectFileInput(inputId, type) {
       if (chosenType === "story") {
         const editedFile = await openStoryEditor(file);
         if (!editedFile) return;
-        await handleFile(editedFile, chosenType);
+        await handleFile(editedFile, "story");
       } else if (file.type.startsWith("video/")) {
-        const reelResult = await openPremiumReelEditor(file);
-        if (!reelResult) return;
-        window.__instaProReelCaption = reelResult.caption || "";
+        // Use the same full-screen video editor for Reels and video posts,
+        // but preserve the user's selected publishing destination.
+        const editResult = await openPremiumReelEditor(file);
+        if (!editResult) return;
         window.__instaProPendingMusicFile = null;
-        window.__instaProPendingMusicTrack = reelResult.musicTrack || null;
-        await handleFile(reelResult.file, "reel");
+        window.__instaProPendingMusicTrack = editResult.musicTrack || null;
+        if (chosenType === "reel") {
+          window.__instaProReelCaption = editResult.caption || "";
+          window.__instaProPostCaption = "";
+        } else {
+          window.__instaProPostCaption = editResult.caption || "";
+          window.__instaProReelCaption = "";
+        }
+        await handleFile(editResult.file, chosenType);
+      } else if (chosenType === "post") {
+        const editResult = await openPhotoPostEditor(file);
+        if (!editResult) return;
+        window.__instaProPostCaption = editResult.caption || "";
+        await handleFile(editResult.file, "post");
       } else {
         await handleFile(file, chosenType);
       }
@@ -795,6 +808,126 @@ function openStoryEditor(file) {
 }
 
 // -------------------------------------
+// INSTAGRAM-STYLE PHOTO POST EDITOR — image posts are edited before upload.
+function openPhotoPostEditor(file) {
+  return new Promise(resolve => {
+    document.getElementById("ip-post-photo-editor")?.remove();
+    const sourceUrl = URL.createObjectURL(file);
+    const modal = document.createElement("div");
+    modal.id = "ip-post-photo-editor";
+    modal.style.cssText = "position:fixed;inset:0;z-index:2147483002;background:#050507;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden";
+    modal.innerHTML = `
+      <style>
+        #ip-post-photo-editor *{box-sizing:border-box}
+        #ip-post-photo-editor .iph-head{height:54px;display:flex;align-items:center;gap:12px;padding:0 15px;border-bottom:1px solid #ffffff20;background:#111116}
+        #ip-post-photo-editor .iph-head button,#ip-post-photo-editor button{color:#fff;cursor:pointer}
+        #ip-post-photo-editor .iph-stage{position:relative;flex:1;min-height:180px;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden}
+        #ip-post-photo-editor .iph-stage img{max-width:100%;max-height:100%;object-fit:contain;transition:filter .15s}
+        #ip-post-photo-editor .iph-tools{display:flex;gap:8px;overflow:auto;padding:10px;background:#111116;scrollbar-width:none}
+        #ip-post-photo-editor .iph-tools button{flex-shrink:0;border:1px solid #ffffff20;border-radius:11px;background:#ffffff0c;padding:9px 12px;font-size:12px}
+        #ip-post-photo-editor .iph-tools button.active{border-color:#c084fc;background:#3b2356}
+        #ip-post-photo-editor .iph-bottom{padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#15151b}
+        #ip-post-photo-editor textarea{width:100%;resize:vertical;min-height:48px;max-height:100px;padding:11px;background:#ffffff0b;border:1px solid #ffffff20;border-radius:12px;color:#fff;font:inherit}
+        #ip-post-photo-editor .iph-publish{width:100%;height:46px;margin-top:10px;border:0;border-radius:13px;background:linear-gradient(100deg,#914cff,#ff398a);font-weight:850;font-size:15px}
+        #ip-post-photo-editor .iph-ratio{display:flex;gap:8px;padding:8px 12px;background:#101014}
+        #ip-post-photo-editor .iph-ratio button{border:1px solid #ffffff22;background:#ffffff0b;border-radius:9px;padding:7px 10px;font-size:11px}
+        #ip-post-photo-editor .iph-ratio button.active{border-color:#c084fc;background:#3b2356}
+      </style>
+      <div class="iph-head"><button type="button" data-act="cancel" style="border:0;background:none;font-size:26px">‹</button><b style="flex:1">New post</b><span style="font-size:10px;letter-spacing:1px;padding:5px 8px;border-radius:8px;background:linear-gradient(120deg,#8d5cff,#ff398a)">EDIT</span></div>
+      <div class="iph-stage"><img id="iph-image" alt="Post preview"></div>
+      <div class="iph-tools" aria-label="Photo filters">
+        <button type="button" class="active" data-filter="none">Normal</button>
+        <button type="button" data-filter="contrast(1.15) saturate(1.2)">Vivid</button>
+        <button type="button" data-filter="sepia(.25) saturate(1.15)">Warm</button>
+        <button type="button" data-filter="grayscale(1)">Mono</button>
+        <button type="button" data-filter="brightness(1.12) saturate(.82)">Fade</button>
+        <button type="button" data-filter="hue-rotate(25deg) saturate(1.25)">Dream</button>
+        <button type="button" data-filter="contrast(1.3) saturate(1.35)">Pop</button>
+        <button type="button" data-filter="sepia(.15) contrast(1.15)">Vintage</button>
+      </div>
+      <div class="iph-ratio">
+        <button type="button" class="active" data-ratio="original">Original</button>
+        <button type="button" data-ratio="square">1:1</button>
+        <button type="button" data-ratio="portrait">4:5</button>
+        <button type="button" data-act="rotate">↻ Rotate</button>
+      </div>
+      <div class="iph-bottom">
+        <textarea id="iph-caption" maxlength="2200" placeholder="Write a caption…  #hashtags  @mentions"></textarea>
+        <button type="button" class="iph-publish" data-act="next">Next →</button>
+        <div style="text-align:center;font-size:10px;color:#aaa;margin-top:6px">Edit · caption · share to InstaPro</div>
+      </div>`;
+    document.body.appendChild(modal);
+    const image = modal.querySelector("#iph-image");
+    const caption = modal.querySelector("#iph-caption");
+    let filter = "none", ratio = "original", rotation = 0, closed = false;
+    image.src = sourceUrl;
+    const finish = result => {
+      if (closed) return;
+      closed = true;
+      URL.revokeObjectURL(sourceUrl);
+      modal.remove();
+      resolve(result);
+    };
+    const updatePreview = () => {
+      image.style.filter = filter;
+      image.style.transform = "rotate(" + rotation + "deg)";
+      const stage = modal.querySelector(".iph-stage");
+      stage.style.aspectRatio = ratio === "square" ? "1 / 1" : ratio === "portrait" ? "4 / 5" : "auto";
+    };
+    modal.querySelectorAll("[data-filter]").forEach(button => button.addEventListener("click", () => {
+      filter = button.dataset.filter || "none";
+      modal.querySelectorAll("[data-filter]").forEach(item => item.classList.toggle("active", item === button));
+      updatePreview();
+    }));
+    modal.querySelectorAll("[data-ratio]").forEach(button => button.addEventListener("click", () => {
+      ratio = button.dataset.ratio;
+      modal.querySelectorAll("[data-ratio]").forEach(item => item.classList.toggle("active", item === button));
+      updatePreview();
+    }));
+    modal.querySelector('[data-act="rotate"]').addEventListener("click", () => { rotation = (rotation + 90) % 360; updatePreview(); });
+    modal.querySelector('[data-act="cancel"]').addEventListener("click", () => finish(null));
+    modal.querySelector('[data-act="next"]').addEventListener("click", async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "Preparing post…";
+      try {
+        await image.decode();
+        const iw = image.naturalWidth || 1080, ih = image.naturalHeight || 1080;
+        let cw = iw, ch = ih;
+        if (ratio === "square") cw = ch = Math.min(iw, ih);
+        if (ratio === "portrait") {
+          const target = 4 / 5;
+          if (iw / ih > target) cw = Math.round(ih * target);
+          else ch = Math.round(iw / target);
+        }
+        const swapped = rotation % 180 !== 0;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(2, swapped ? ch : cw);
+        canvas.height = Math.max(2, swapped ? cw : ch);
+        const ctx = canvas.getContext("2d", {alpha:false});
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.filter = filter;
+        const scale = Math.min(canvas.width / cw, canvas.height / ch);
+        ctx.drawImage(image, (iw - cw) / 2, (ih - ch) / 2, cw, ch, -cw * scale / 2, -ch * scale / 2, cw * scale, ch * scale);
+        ctx.restore();
+        const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error("Edited image export failed.")), "image/jpeg", .94));
+        const output = new File([blob], file.name.replace(/\.[^.]+$/, "") + "-instapro.jpg", {type:"image/jpeg", lastModified:Date.now()});
+        finish({file:output, caption:caption.value.trim()});
+      } catch (error) {
+        console.error("Photo editor export failed:", error);
+        button.disabled = false;
+        button.textContent = "Retry →";
+        alert("Photo edit export fail hua: " + (error.message || "Unknown error"));
+      }
+    });
+  });
+}
+
+// -------------------------------------
 // PREMIUM REELS EDITOR — gallery videos open here before uploading.
 function openPremiumReelEditor(file) {
   return new Promise(resolve => {
@@ -961,6 +1094,7 @@ const notice = window.InstaProUploadNotification;
     window.__instaProPendingMusicTrack = null;
     window.__instaProStoryCaption = "";
     window.__instaProReelCaption = "";
+    window.__instaProPostCaption = "";
     window.__instaProStoryOverlayText = "";
     window.__instaProStoryFilter = "Normal";
 
@@ -987,7 +1121,19 @@ const notice = window.InstaProUploadNotification;
       type: isVideo ? "video" : "image",
       contentType: isVideo ? "video" : "image",
       mediaType: isVideo ? "video" : "image",
-      caption: postType === "story" ? (window.__instaProStoryCaption || "") : postType === "reel" ? (window.__instaProReelCaption || "") : "",
+      fileName: file.name || "",
+      fileSize: Number(file.size || 0),
+      ...(result?.public_id ? { cloudinaryPublicId: result.public_id } : {}),
+      ...(result?.asset_id ? { cloudinaryAssetId: result.asset_id } : {}),
+      ...(result?.format ? { mediaFormat: result.format } : {}),
+      ...(result?.width ? { mediaWidth: Number(result.width) } : {}),
+      ...(result?.height ? { mediaHeight: Number(result.height) } : {}),
+      ...(result?.duration ? { mediaDuration: Number(result.duration) } : {}),
+      caption: postType === "story"
+        ? (window.__instaProStoryCaption || "")
+        : postType === "reel"
+          ? (window.__instaProReelCaption || "")
+          : (window.__instaProPostCaption || ""),
       ...(postType === "story" ? { storyText: window.__instaProStoryOverlayText || "", storyFilter: window.__instaProStoryFilter || "Normal" } : {}),
       postType: postType === "reel" ? "reel" : postType,
       isReel: postType === "reel",
@@ -1036,7 +1182,9 @@ const notice = window.InstaProUploadNotification;
     status.textContent =
       postType === "story"
         ? "Story successfully upload ho gayi! ✅"
-        : "Post successfully share ho gayi! ✅";
+        : postType === "reel"
+          ? "Reel successfully publish ho gayi! ✅"
+          : "Post successfully share ho gayi! ✅";
 
     if (notice) {
       notice.success();
