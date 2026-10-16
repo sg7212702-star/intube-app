@@ -290,12 +290,14 @@ const SETTINGS_CATEGORY_OPTIONS = {
 };
 
 async function openSettingsCategory(category, user, panel) {
-  const options = SETTINGS_CATEGORY_OPTIONS[category] || [];
-  const original = settingsPanelMarkup(user);
+  const { auth, db } = await import("./firebase.js");
+  const { doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where, limit, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  const me = auth.currentUser;
+  if (!me || me.uid !== user.uid) throw new Error("Login session badal gaya. Dobara login karein.");
   panel.innerHTML = `<div class="isp-card" role="dialog" aria-modal="true">
     <div class="isp-head"><button id="ispCategoryBack" aria-label="Back">‹</button><div class="isp-title">${escapeSettingsText(category)}</div><button id="ispCategoryClose" aria-label="Close">×</button></div>
-    <p class="isp-desc" style="margin:0 0 14px">Settings are saved to your InstaPro account.</p>
-    <div id="ispCategoryRows"></div><div class="isp-status" id="ispCategoryStatus" aria-live="polite"></div>
+    <p class="isp-desc" style="margin:0 0 14px">Changes aapke Insta Pro account mein save honge.</p>
+    <div id="ispCategoryRows"><div class="isp-row">Loading…</div></div><div class="isp-status" id="ispCategoryStatus" aria-live="polite"></div>
   </div>`;
   const close = () => panel.classList.remove("open");
   panel.querySelector("#ispCategoryClose").onclick = close;
@@ -303,71 +305,150 @@ async function openSettingsCategory(category, user, panel) {
   panel.onclick = event => { if (event.target === panel) close(); };
   const rows = panel.querySelector("#ispCategoryRows");
   const status = panel.querySelector("#ispCategoryStatus");
+  const buttonRow = (label, desc, actionLabel, id) => '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(desc) + '</div></div><button class="isp-action" id="' + id + '">' + escapeSettingsText(actionLabel) + '</button></div>';
+  const switchRow = (key, label, desc, enabled) => '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(desc) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
+  const setSwitches = (settings, apply) => {
+    rows.querySelectorAll("[data-setting-key]").forEach(button => {
+      button.onclick = async () => {
+        if (button.disabled) return;
+        button.disabled = true;
+        const key = button.dataset.settingKey;
+        const next = !button.classList.contains("on");
+        const previous = button.classList.contains("on");
+        button.classList.toggle("on", next);
+        button.setAttribute("aria-checked", String(next));
+        status.textContent = "Saving…";
+        try {
+          await apply(key, next, settings);
+          status.textContent = "Saved successfully.";
+        } catch (error) {
+          button.classList.toggle("on", previous);
+          button.setAttribute("aria-checked", String(previous));
+          status.textContent = "Save nahi hua: " + error.message;
+          console.error("Settings save failed:", error);
+        } finally { button.disabled = false; }
+      };
+    });
+  };
+
   if (category === "Blocked accounts") {
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">The block-list screen is not yet connected to a dedicated block-list collection.</div></div></div>';
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">Aapke blocked users yahan dikhte hain. Unblock karne par user dobara aapka profile dekh sakta hai, privacy rules ke mutabik.</div></div></div><div id="ispBlockedList" class="isp-desc">Blocked list load ho rahi hai…</div>';
+    try {
+      const snap = await getDocs(collection(db, "users", me.uid, "blockedUsers"));
+      const holder = rows.querySelector("#ispBlockedList");
+      if (snap.empty) holder.textContent = "Aapne abhi kisi account ko block nahi kiya.";
+      else {
+        holder.innerHTML = snap.docs.map(d => {
+          const x=d.data(), target=d.id;
+          return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(x.username || x.displayName || target) + '</div><div class="isp-desc">' + escapeSettingsText(x.email || x.reason || "Blocked account") + '</div></div><button class="isp-action" data-unblock="' + escapeSettingsText(target) + '">Unblock</button></div>';
+        }).join("");
+        holder.querySelectorAll("[data-unblock]").forEach(btn => btn.onclick = async () => {
+          btn.disabled=true; status.textContent="Unblocking…";
+          try { await deleteDoc(doc(db,"users",me.uid,"blockedUsers",btn.dataset.unblock)); btn.closest(".isp-row")?.remove(); status.textContent="Account unblocked."; if (!holder.querySelector(".isp-row")) holder.textContent="Aapki blocked list ab khaali hai."; }
+          catch(e) { status.textContent="Unblock nahi hua: "+e.message; btn.disabled=false; }
+        });
+      }
+    } catch(error) { rows.querySelector("#ispBlockedList").textContent="Blocked list load nahi hui: "+error.message; }
     return;
   }
+
   if (category === "Your activity") {
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Activity overview</div><div class="isp-desc">Open your profile to review your posts and saved content. A complete like/comment history needs dedicated activity records.</div></div><button class="isp-action" id="ispActivityProfile">Profile</button></div>';
-    panel.querySelector("#ispActivityProfile").onclick = async () => { close(); try { await import("./profile.js"); if (typeof window.openProfile === "function") await window.openProfile(user.uid); } catch (e) { status.textContent = e.message; } };
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Your profile and posts</div><div class="isp-desc">Apne published posts, reels aur profile ko dekhein.</div></div><button class="isp-action" id="ispActivityProfile">Open</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Account activity summary</div><div class="isp-desc" id="ispActivitySummary">Loading account activity…</div></div></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Account data</div><div class="isp-desc">Profile information and saved activity settings are stored with your account.</div></div><button class="isp-action" id="ispActivityData">View</button></div>';
+    panel.querySelector("#ispActivityProfile").onclick = async () => { close(); try { await import("./profile.js"); if (typeof window.openProfile==="function") await window.openProfile(user.uid); } catch(e) { alert("Profile open nahi hua: "+e.message); } };
+    panel.querySelector("#ispActivityData").onclick = async () => { try { const snap=await getDoc(doc(db,"users",me.uid)); const d=snap.exists()?snap.data():{}; status.textContent="Username: "+(d.username||"Not set")+" • Followers: "+(Array.isArray(d.followers)?d.followers.length:0)+" • Following: "+(Array.isArray(d.following)?d.following.length:0); } catch(e) { status.textContent="Account data load nahi hua: "+e.message; } };
+    try {
+      const snap=await getDoc(doc(db,"users",me.uid)); const d=snap.exists()?snap.data():{};
+      const summary=panel.querySelector("#ispActivitySummary");
+      summary.textContent="Followers: "+(Array.isArray(d.followers)?d.followers.length:0)+" • Following: "+(Array.isArray(d.following)?d.following.length:0)+" • Account created: "+(me.metadata?.creationTime?new Date(me.metadata.creationTime).toLocaleDateString():"available nahi");
+    } catch(e) { panel.querySelector("#ispActivitySummary").textContent="Activity summary load nahi hua: "+e.message; }
     return;
   }
-  if (category === "Account security") {
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in</div><div class="isp-desc">' + escapeSettingsText(user.email || user.displayName || "Google account") + '</div></div></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Log out</div><div class="isp-desc">Sign out of this device.</div></div><button class="isp-action" id="ispCategoryLogout">Log out</button></div>';
-    panel.querySelector("#ispCategoryLogout").onclick = async () => { if (!confirm("Log out of InstaPro?")) return; try { const {auth}=await import("./firebase.js"); const {signOut}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); await signOut(auth); location.reload(); } catch(e) { status.textContent = e.message; } };
+
+  if (category === "Data usage and media quality") {
+    const settings = { ...(currentAppSettings["Data usage and media quality"] || {}) };
+    rows.innerHTML = switchRow("dataSaver","Use less mobile data","Images lazy-load hongi aur videos metadata preload karenge.",settings.dataSaver ?? currentAppSettings.dataSaver ?? false)
+      + switchRow("highQualityUploads","Upload at highest quality","Upload workflow ko high-quality preference batata hai; source file quality bhi matter karti hai.",settings.highQualityUploads ?? true)
+      + switchRow("autoplayVideos","Autoplay videos","Feed videos ko autoplay karne ki preference.",settings.autoplayVideos ?? true)
+      + switchRow("preloadMedia","Preload media","Next media ko pehle se load karne ki preference.",settings.preloadMedia ?? false);
+    setSwitches(settings, async (key,next,old) => {
+      const updated={...old,[key]:next};
+      if(key==="dataSaver") { applyDataSaver(next); currentAppSettings.dataSaver=next; }
+      if(key==="autoplayVideos") document.documentElement.classList.toggle("instapro-no-autoplay",!next);
+      if(key==="preloadMedia") document.documentElement.classList.toggle("instapro-preload-media",next);
+      currentAppSettings["Data usage and media quality"]=updated;
+      await saveAppSetting("Data usage and media quality",updated);
+    });
     return;
   }
+
+  if (category === "Account type and tools") {
+    const snap=await getDoc(doc(db,"users",me.uid));
+    const profile=snap.exists()?snap.data():{};
+    const currentType=["personal","creator","business"].includes(profile.accountType)?profile.accountType:"personal";
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Account type</div><div class="isp-desc">Personal, Creator ya Business account choose karein.</div></div><select id="ispAccountType" class="isp-custom-select" aria-label="Account type"><option value="personal">Personal</option><option value="creator">Creator</option><option value="business">Business</option></select></div>'
+      + switchRow("showContactInfo","Show contact info","Profile par contact details dikhane ki preference.",profile.showContactInfo===true)
+      + buttonRow("Creator tools","Creator insights aur professional profile tools.","Open","ispCreatorTools")
+      + '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Account data</div><div class="isp-desc">Account type changes Firebase profile mein save hote hain.</div></div></div>';
+    const select=panel.querySelector("#ispAccountType"); select.value=currentType;
+    select.onchange=async()=>{ select.disabled=true; status.textContent="Saving account type…"; try { await setDoc(doc(db,"users",me.uid),{accountType:select.value,accountTypeUpdatedAt:serverTimestamp()},{merge:true}); status.textContent="Account type saved: "+select.value+". Professional tools depend on the enabled features in this app."; } catch(e) { select.value=currentType; status.textContent="Account type save nahi hua: "+e.message; } finally { select.disabled=false; } };
+    setSwitches({showContactInfo:profile.showContactInfo===true},async(key,next)=>{await setDoc(doc(db,"users",me.uid),{[key]:next,updatedAt:serverTimestamp()},{merge:true});});
+    panel.querySelector("#ispCreatorTools").onclick=()=>{ status.textContent="Creator tools: account type is "+(select.value||currentType)+". Detailed analytics will use real post insights when available."; };
+    return;
+  }
+
+  if (category === "Insta Pro Verified") {
+    const existing=await getDoc(doc(db,"users",me.uid,"verificationRequests","current"));
+    const request=existing.exists()?existing.data():{};
+    if(request.status==="approved") {
+      rows.innerHTML='<div class="isp-row"><div class="isp-copy"><div class="isp-label">Verification approved</div><div class="isp-desc">Aapki request approved hai. Badge display ke liye admin-controlled verified status chahiye.</div></div></div>';
+      return;
+    }
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Request verification</div><div class="isp-desc">Application submit karein. Blue badge automatic nahi milega; review/approval zaroori hai.</div></div></div>'
+      + '<label class="isp-row" style="display:block">Full name<input id="ipvFullName" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="100" required></label>'
+      + '<label class="isp-row" style="display:block">Username<input id="ipvUsername" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="40" required></label>'
+      + '<label class="isp-row" style="display:block">Category<select id="ipvCategory" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px"><option>Creator</option><option>Artist</option><option>Business</option><option>Public figure</option><option>Other</option></select></label>'
+      + '<label class="isp-row" style="display:block">Official website or public profile (optional)<input id="ipvWebsite" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px" maxlength="300" placeholder="https://…"></label>'
+      + '<label class="isp-row" style="display:block">Why should this account be verified?<textarea id="ipvReason" class="isp-custom-select" style="width:100%;max-width:none;margin-top:8px;min-height:90px" maxlength="1000" required></textarea></label>'
+      + '<div class="isp-row"><button class="isp-action" id="ipvSubmit">Submit verification request</button><span class="isp-desc" id="ipvExistingStatus"></span></div>';
+    panel.querySelector("#ipvFullName").value=request.fullName||profileName(user);
+    panel.querySelector("#ipvUsername").value=request.username||"";
+    panel.querySelector("#ipvCategory").value=request.category||"Creator";
+    panel.querySelector("#ipvWebsite").value=request.website||"";
+    panel.querySelector("#ipvReason").value=request.reason||"";
+    panel.querySelector("#ipvExistingStatus").textContent=request.status==="pending"?"Aapki request pending hai; resubmit karne se current request update hogi.":"";
+    panel.querySelector("#ipvSubmit").onclick=async()=>{
+      const fullName=panel.querySelector("#ipvFullName").value.trim(), username=panel.querySelector("#ipvUsername").value.trim().replace(/^@/,""), categoryValue=panel.querySelector("#ipvCategory").value, website=panel.querySelector("#ipvWebsite").value.trim(), reason=panel.querySelector("#ipvReason").value.trim();
+      if(!fullName||!username||!reason){status.textContent="Full name, username aur reason bharna zaroori hai.";return;}
+      if(website&&!/^https:\/\//i.test(website)){status.textContent="Website https:// se shuru honi chahiye.";return;}
+      const btn=panel.querySelector("#ipvSubmit");btn.disabled=true;status.textContent="Submitting…";
+      try{await setDoc(doc(db,"users",me.uid,"verificationRequests","current"),{uid:me.uid,email:me.email||"",fullName,username,category:categoryValue,website,reason,status:"pending",submittedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});status.textContent="Verification request submit ho gayi. Approval admin review ke baad hi hoga.";}
+      catch(e){status.textContent="Request submit nahi hui: "+e.message;}
+      finally{btn.disabled=false;}
+    };
+    return;
+  }
+
+  const options = SETTINGS_CATEGORY_OPTIONS[category] || [];
   const saved = currentAppSettings[category] || {};
   if (category === "Privacy") {
-    const privateOn = typeof saved.privateAccount === "boolean" ? saved.privateAccount : false;
-    const privacyOptions = [
-      ["privateAccount","Private account","Only approved followers should be able to see your private content.",privateOn],
-      ...options.filter(option => option[0] !== "privateAccount")
-    ];
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Follow requests</div><div class="isp-desc">Review, accept or reject pending requests for your private account.</div></div><button class="isp-action" id="ispManageFollowRequests">Manage</button></div>' + privacyOptions.map(([key,label,description,defaultValue]) => {
-      const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
-      return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
-    }).join("");
+    const userSnap=await getDoc(doc(db,"users",me.uid)); const userData=userSnap.exists()?userSnap.data():{};
+    const privacyOptions = options.map(option => option[0]==="privateAccount" ? [option[0],option[1],option[2],userData.isPrivate===true||userData.privateAccount===true] : option);
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Follow requests</div><div class="isp-desc">Pending requests ko manage karein.</div></div><button class="isp-action" id="ispManageFollowRequests">Manage</button></div>' + privacyOptions.map(([key,label,description,defaultValue]) => switchRow(key,label,description,typeof saved[key]==="boolean"?saved[key]:defaultValue)).join("");
+    panel.querySelector("#ispManageFollowRequests").onclick=()=>{const api=window.InstaProPrivate;if(api?.openPrivateSettings)api.openPrivateSettings();else status.textContent="Private account system load nahi hua. Refresh karein.";};
   } else {
-    rows.innerHTML = options.map(([key,label,description,defaultValue]) => {
-      const enabled = typeof saved[key] === "boolean" ? saved[key] : defaultValue;
-      return '<div class="isp-row"><div class="isp-copy"><div class="isp-label">' + escapeSettingsText(label) + '</div><div class="isp-desc">' + escapeSettingsText(description) + '</div></div><button class="isp-switch ' + (enabled ? "on" : "") + '" data-setting-key="' + key + '" role="switch" aria-checked="' + enabled + '" aria-label="' + escapeSettingsText(label) + '"></button></div>';
-    }).join("");
+    rows.innerHTML=options.map(([key,label,description,defaultValue])=>switchRow(key,label,description,typeof saved[key]==="boolean"?saved[key]:defaultValue)).join("");
   }
-  if (category === "Privacy") {
-    const manageRequests = rows.querySelector("#ispManageFollowRequests");
-    if (manageRequests) manageRequests.onclick = () => {
-      const api = window.InstaProPrivate;
-      if (api && typeof api.openPrivateSettings === "function") api.openPrivateSettings();
-      else status.textContent = "Private account system load nahi hua. Page refresh karein.";
-    };
-  }
-  rows.querySelectorAll("[data-setting-key]").forEach(button => {
-    button.onclick = async () => {
-      const key = button.dataset.settingKey;
-      const next = !button.classList.contains("on");
-      button.classList.toggle("on", next);
-      button.setAttribute("aria-checked", String(next));
-      currentAppSettings[category] = { ...(currentAppSettings[category] || {}), [key]: next };
-      status.textContent = "Saving…";
-      try {
-        await saveAppSetting(category, currentAppSettings[category]);
-        if (category === "Privacy" && key === "privateAccount") {
-          const { auth, db } = await import("./firebase.js");
-          const { doc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-          await setDoc(doc(db, "users", auth.currentUser.uid), { privateAccount: next, isPrivate: next, privacyUpdatedAt: serverTimestamp() }, { merge: true });
-          status.textContent = next ? "Private account enabled and saved. Content access enforcement depends on feed/profile privacy rules." : "Private account disabled and saved.";
-        } else status.textContent = "Saved.";
-      } catch (error) {
-        button.classList.toggle("on", !next);
-        button.setAttribute("aria-checked", String(!next));
-        currentAppSettings[category][key] = !next;
-        status.textContent = "Save failed: " + error.message;
-        console.error("Category setting save failed", error);
-      }
-    };
+  setSwitches(saved,async(key,next,old)=>{
+    const updated={...old,[key]:next}; currentAppSettings[category]=updated;
+    await saveAppSetting(category,updated);
+    if(category==="Privacy"&&key==="privateAccount") {
+      await setDoc(doc(db,"users",me.uid),{privateAccount:next,isPrivate:next,privacyUpdatedAt:serverTimestamp()},{merge:true});
+      status.textContent=next?"Private account enabled. Feed/profile enforcement still depends on their privacy-aware queries and Firestore rules.":"Private account disabled.";
+    }
   });
 }
+
+function profileName(user) { return user?.displayName || user?.email?.split("@")[0] || ""; }
 
 async function openSettingsPanel(secretMode = false) {
   installSettingsStyles();
@@ -614,7 +695,6 @@ function openMenu(){
   m.querySelectorAll(".mItem").forEach(item => item.remove());
   document.getElementById("instaproSettingsMenuEntry")?.remove();
   document.getElementById("creatorAnalyticsMenuItem")?.remove();
-
   const entries = [
     ["Your activity", "🕘", "Your activity"],
     ["Account privacy", "🔒", "Privacy"],
@@ -624,49 +704,30 @@ function openMenu(){
     ["Account type and tools", "🧰", "Account type and tools"],
     ["Insta Pro Verified", "✓", "Insta Pro Verified"]
   ];
-  entries.forEach(([label, icon, action]) => {
-    const item = document.createElement("div");
-    item.className = "mItem";
-    item.setAttribute("role", "button");
-    item.setAttribute("tabindex", "0");
-    item.textContent = icon + " " + label;
-    const activate = async () => {
-      const { auth } = await import("./firebase.js");
-      const user = auth.currentUser;
-      if (!user || user.isAnonymous) { alert("Is option ke liye pehle Google se login karein."); return; }
-      m.classList.remove("show");
-      const overlay = document.getElementById("sideOverlay");
-      if (overlay) { overlay.classList.remove("show"); overlay.style.display = "none"; }
-      await openSettingsPanel();
-      const panel = document.getElementById("instaproSettingsPanel");
-      if (!panel) return;
-      if (action === "Insta Pro Verified") {
-        panel.innerHTML = '<div class="isp-card" role="dialog" aria-modal="true"><div class="isp-head"><button id="ipvBack" aria-label="Back">‹</button><div class="isp-title">Insta Pro Verified</div><button id="ipvClose" aria-label="Close">×</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Verification</div><div class="isp-desc">Verification requests and badge approval are not connected yet.</div></div></div></div>';
-        panel.querySelector("#ipvClose").onclick = () => panel.classList.remove("open");
-        panel.querySelector("#ipvBack").onclick = () => openSettingsPanel();
-        return;
-      }
-      if (action === "Data usage and media quality" || action === "Account type and tools") {
-        const title = action;
-        panel.innerHTML = '<div class="isp-card" role="dialog" aria-modal="true"><div class="isp-head"><button id="menuSettingBack" aria-label="Back">‹</button><div class="isp-title"></div><button id="menuSettingClose" aria-label="Close">×</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label"></div><div class="isp-desc"></div></div></div></div>';
-        panel.querySelector(".isp-title").textContent = title;
-        panel.querySelector(".isp-label").textContent = action === "Data usage and media quality" ? "Media quality" : "Account type and tools";
-        panel.querySelector(".isp-desc").textContent = action === "Data usage and media quality" ? "Data saver is available in app settings; detailed upload quality controls are not connected yet." : "Account type tools are not connected to a dedicated account-type workflow yet.";
-        panel.querySelector("#menuSettingClose").onclick = () => panel.classList.remove("open");
-        panel.querySelector("#menuSettingBack").onclick = () => openSettingsPanel();
-        return;
-      }
-      const category = action === "Your activity" ? "Your activity" : action === "Privacy" ? "Privacy" : action === "Blocked accounts" ? "Blocked accounts" : "Messages and replies";
-      await openSettingsCategory(category, user, panel);
+  entries.forEach(([label,icon,action])=>{
+    const item=document.createElement("div");
+    item.className="mItem"; item.setAttribute("role","button"); item.setAttribute("tabindex","0");
+    item.textContent=icon+" "+label;
+    const activate=async()=>{
+      try {
+        const {auth}=await import("./firebase.js"); const user=auth.currentUser;
+        if(!user||user.isAnonymous){alert("Is option ke liye pehle Google se login karein.");return;}
+        m.classList.remove("show");
+        const overlay=document.getElementById("sideOverlay");
+        if(overlay){overlay.classList.remove("show");overlay.style.display="none";}
+        const routes={"Your activity":"Your activity","Account privacy":"Privacy","Blocked":"Blocked accounts","Message and story reply":"Messages and replies","Data usage and media quality":"Data usage and media quality","Account type and tools":"Account type and tools","Insta Pro Verified":"Insta Pro Verified"};
+        await openSettingsPanel();
+        const panel=document.getElementById("instaproSettingsPanel"); if(!panel)return;
+        await openSettingsCategory(routes[label],user,panel);
+      } catch(error) { console.error("Menu setting failed:",error); alert("Setting open nahi hui: "+error.message); }
     };
-    item.addEventListener("click", activate);
-    item.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+    item.addEventListener("click",activate);
+    item.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();activate();}});
     m.appendChild(item);
   });
   m.classList.add("show");
-  const sov=$("sideOverlay"); if(sov){ sov.style.display="block"; sov.classList.add("show"); }
+  const sov=$("sideOverlay"); if(sov){sov.style.display="block";sov.classList.add("show");}
 }
-
 function openPage(name){
   document.querySelectorAll(".page").forEach(p=>p.style.display="none");
   const home=document.getElementById("homePage");
