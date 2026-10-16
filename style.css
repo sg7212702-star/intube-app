@@ -332,6 +332,6 @@ border-radius: 24px;
 }
 
 
-/* Insta Pro Verified: all accounts receive the app's universal badge */
-.instapro-verified-badge{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:15px;height:15px;margin-left:3px;border-radius:50%;background:#168cff;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:900;line-height:1;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
-.ipr-author .instapro-verified-badge{width:14px;height:14px;font-size:9px}
+/* Insta Pro Verified: visible green check badge; override inherited dark/transparent text styles */
+.instapro-verified-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;vertical-align:middle;width:16px;height:16px;min-width:16px;margin-left:4px;border-radius:50%;background:#16a34a!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-family:Arial,sans-serif;font-size:11px;font-weight:900;line-height:1;flex:0 0 16px;opacity:1!important;visibility:visible!important;text-shadow:none!important;box-shadow:0 0 0 1px rgba(22,163,74,.25)}
+.ipr-author .instapro-verified-badge{width:15px;height:15px;min-width:15px;flex-basis:15px;font-size:10px}
