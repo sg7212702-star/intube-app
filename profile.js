@@ -736,6 +736,10 @@ function render(data = profileData, posts = profilePosts) {
             >
               📷 Change photo
             </button>
+            <button id="ippPrivacyToggle" class="ipp-btn" type="button">
+              ${data.isPrivate === true || data.privateAccount === true ? '🔒 Private account: ON' : '🌐 Private account: OFF'}
+            </button>
+            <button id="ippFollowRequests" class="ipp-btn" type="button">📩 Follow requests</button>
           ` : `
             <button
               id="ippFollow"
@@ -1423,6 +1427,45 @@ postTiles.forEach(tile => {
     "click",
     () => $("#ippPhotoInput")?.click()
   );
+
+  $("#ippPrivacyToggle", page)?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    const api = window.InstaProPrivate;
+    if (!api) { alert("Private account service load nahi hua. Page refresh karein."); return; }
+    button.disabled = true;
+    try {
+      const next = !(profileData.isPrivate === true || profileData.privateAccount === true);
+      await api.setAccountPrivacy(next);
+      profileData = { ...profileData, isPrivate: next, privateAccount: next };
+      render(profileData, profilePosts);
+    } catch (error) {
+      console.error("Private account update failed:", error);
+      alert("Privacy setting save nahi hui. Firebase Firestore Rules check karein.");
+    } finally { button.disabled = false; }
+  });
+
+  $("#ippFollowRequests", page)?.addEventListener("click", async () => {
+    const api = window.InstaProPrivate;
+    if (!api) { alert("Private account service load nahi hua."); return; }
+    let modal = document.getElementById("ippRequestsModal");
+    modal?.remove();
+    modal = document.createElement("div");
+    modal.id = "ippRequestsModal";
+    modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000b;display:flex;align-items:center;justify-content:center;padding:18px;color:#fff";
+    modal.innerHTML = '<section style="width:min(480px,100%);max-height:80vh;overflow:auto;background:#181818;border-radius:18px;padding:16px"><header style="display:flex;justify-content:space-between;align-items:center"><b>Follow requests</b><button id="ippRequestsClose" style="background:none;border:0;color:#fff;font-size:24px">×</button></header><div id="ippRequestsList" style="padding-top:12px">Loading…</div></section>';
+    document.body.appendChild(modal);
+    modal.querySelector("#ippRequestsClose").onclick = () => modal.remove();
+    modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+    const list = modal.querySelector("#ippRequestsList");
+    try {
+      const snap = await getDocs(collection(db, "users", myId(), "followRequests"));
+      const requests = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(x => x.status === "pending");
+      if (!requests.length) { list.textContent = "No pending requests."; return; }
+      list.innerHTML = requests.map(x => '<div style="display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #444"><span style="flex:1;overflow-wrap:anywhere">'+esc(x.fromUsername || x.fromUid || x.id)+'</span><button data-accept="'+esc(x.fromUid || x.id)+'">Confirm</button><button data-reject="'+esc(x.fromUid || x.id)+'">Delete</button></div>').join("");
+      list.querySelectorAll("[data-accept]").forEach(b => b.onclick = async () => { b.disabled=true; try { await api.respondFollowRequest(b.dataset.accept,true); b.closest("div").remove(); } catch(e) { console.error(e); alert("Request accept nahi hui. Rules check karein."); b.disabled=false; } });
+      list.querySelectorAll("[data-reject]").forEach(b => b.onclick = async () => { b.disabled=true; try { await api.respondFollowRequest(b.dataset.reject,false); b.closest("div").remove(); } catch(e) { console.error(e); alert("Request delete nahi hui. Rules check karein."); b.disabled=false; } });
+    } catch(error) { console.error("Follow request list failed:",error); list.textContent = "Requests load nahi hui. Firestore Rules check karein."; }
+  });
 
   $("#ippFollow", page)?.addEventListener(
     "click",
