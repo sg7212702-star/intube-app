@@ -347,6 +347,60 @@ function openMultiPhotoPostEditor(files) {
         thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
       },50);
     },{passive:true});
+    let songPicker=null;
+    const openSongPicker=()=>{
+      songPicker?.remove();
+      songPicker=document.createElement("section");
+      songPicker.id="ipmp-song-picker";
+      songPicker.style.cssText="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:#000;color:#fff;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);font-family:inherit;";
+      songPicker.innerHTML=`
+        <header style="height:56px;flex:0 0 56px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #262626">
+          <button type="button" data-picker-back style="border:0;background:transparent;color:#fff;font-size:30px;padding:0 8px 4px 0">‹</button>
+          <b style="font-size:17px;flex:1">Add music</b>
+        </header>
+        <form id="ipmp-song-search-form" style="display:flex;gap:8px;padding:14px 14px 10px">
+          <input id="ipmp-song-query" type="search" placeholder="Search songs, artists..." autocomplete="off" style="flex:1;min-width:0;padding:12px;border:1px solid #333;border-radius:10px;background:#171717;color:#fff;font:14px inherit">
+          <button type="submit" style="padding:0 15px;border:0;border-radius:10px;background:#0095f6;color:#fff;font-weight:700">Search</button>
+        </form>
+        <div id="ipmp-song-picker-status" style="padding:0 15px 10px;color:#aaa;font-size:12px">Search a song or artist to find music.</div>
+        <div id="ipmp-song-picker-results" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:0 12px 20px;display:flex;flex-direction:column;gap:8px"></div>`;
+      modal.appendChild(songPicker);
+      const input=songPicker.querySelector("#ipmp-song-query");
+      const status=songPicker.querySelector("#ipmp-song-picker-status");
+      const results=songPicker.querySelector("#ipmp-song-picker-results");
+      const back=()=>{songPicker?.querySelectorAll("audio").forEach(a=>a.pause());songPicker?.remove();songPicker=null;};
+      songPicker.querySelector("[data-picker-back]").addEventListener("click",back);
+      songPicker.querySelector("#ipmp-song-search-form").addEventListener("submit",async ev=>{
+        ev.preventDefault();
+        const query=input.value.trim();
+        if(!query){status.textContent="Song ya singer ka naam likhein.";input.focus();return;}
+        status.textContent="Searching songs…";results.replaceChildren();
+        try{
+          const response=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(query)+"&country=IN&media=music&entity=song&limit=40");
+          if(!response.ok)throw new Error("Search unavailable");
+          const data=await response.json();
+          const tracks=(data.results||[]).filter(t=>t.previewUrl).map(t=>({title:t.trackName||"Song",artistName:t.artistName||"Unknown artist",audioUrl:t.previewUrl,id:String(t.trackId||""),source:"itunes-preview",filePage:t.trackViewUrl||"",artworkUrl:t.artworkUrl100||""}));
+          if(!tracks.length){status.textContent="Koi playable preview nahi mila. Dusra naam search karein.";return;}
+          status.textContent=tracks.length+" songs found · Preview sun kar Use karein.";
+          tracks.forEach(song=>{
+            const row=document.createElement("article");
+            row.style.cssText="display:flex;align-items:center;gap:11px;padding:10px;border:1px solid #252525;border-radius:12px;background:#111";
+            if(song.artworkUrl){const cover=document.createElement("img");cover.src=song.artworkUrl;cover.alt="";cover.style.cssText="width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:8px;background:#222";row.appendChild(cover);}
+            const info=document.createElement("div");info.style.cssText="flex:1;min-width:0;overflow:hidden";
+            const title=document.createElement("div");title.textContent=song.title;title.style.cssText="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+            const artist=document.createElement("div");artist.textContent=song.artistName;artist.style.cssText="font-size:12px;color:#aaa;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+            info.append(title,artist);
+            const play=document.createElement("button");play.type="button";play.textContent="▶";play.setAttribute("aria-label","Preview song");play.style.cssText="flex:0 0 auto;padding:9px;border:1px solid #333;border-radius:50%;background:#222;color:#fff";
+            const use=document.createElement("button");use.type="button";use.textContent="Use";use.style.cssText="flex:0 0 auto;padding:9px 12px;border:0;border-radius:9px;background:#0095f6;color:#fff;font-weight:700";
+            const audio=new Audio(song.audioUrl);audio.preload="none";
+            play.addEventListener("click",async()=>{try{if(audio.paused){songPicker.querySelectorAll("audio").forEach(a=>{if(a!==audio)a.pause();});await audio.play();play.textContent="Ⅱ";}else{audio.pause();play.textContent="▶";}}catch(_){status.textContent="Preview nahi chal paya.";}});audio.addEventListener("ended",()=>play.textContent="▶");
+            use.addEventListener("click",()=>{songPicker.querySelectorAll("audio").forEach(a=>a.pause());selectedMusicFile=null;selectedMusicTrack=song;modal.querySelector("#ipmp-music-status").textContent="Selected: "+song.title+" — "+song.artistName;back();});
+            row.append(info,play,use);row.appendChild(audio);results.appendChild(row);
+          });
+        }catch(error){status.textContent="Music search abhi nahi chal paya. Internet check karke dobara try karein.";}
+      });
+      input.focus({preventScroll:true});
+    };
     modal.querySelector("#ipmp-music-file").addEventListener("change",event=>{
       const file=event.target.files?.[0];if(!file)return;
       if(!file.type.startsWith("audio/")&&!/\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i.test(file.name)){alert("Audio file select karein.");event.target.value="";return;}
@@ -364,30 +418,7 @@ function openMultiPhotoPostEditor(files) {
       if(!btn)return;
       if(btn.dataset.act==="cancel")clean(null);
       else if(btn.dataset.act==="choose-music"){modal.querySelector("#ipmp-music-file").click();}
-      else if(btn.dataset.act==="search-music"){
-        const query=modal.querySelector("#ipmp-music-search").value.trim();
-        const status=modal.querySelector("#ipmp-music-status"),results=modal.querySelector("#ipmp-music-results");
-        if(!query){status.textContent="Song ya singer ka naam likhein.";return;}
-        status.textContent="Searching songs…";results.replaceChildren();
-        try{
-          const response=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(query)+"&country=IN&media=music&entity=song&limit=20");
-          if(!response.ok)throw new Error("Music search unavailable");
-          const data=await response.json();
-          const tracks=(data.results||[]).filter(t=>t.previewUrl).map(t=>({title:t.trackName||"Song",artistName:t.artistName||"",audioUrl:t.previewUrl,id:String(t.trackId||""),source:"itunes-preview",filePage:t.trackViewUrl||""}));
-          if(!tracks.length){status.textContent="Playable preview nahi mila. Phone se audio choose karein.";return;}
-          status.textContent="Song choose karne ke liye Use dabayein. Preview aksar chhota sample hota hai.";
-          tracks.forEach(track=>{
-            const row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #ffffff20;border-radius:9px;background:#111";
-            const label=document.createElement("span");label.style.cssText="flex:1;min-width:0;font-size:12px";label.textContent=track.title+" — "+track.artistName;
-            const play=document.createElement("button");play.type="button";play.textContent="▶";play.style.cssText="padding:7px 9px;border:1px solid #333;border-radius:8px;background:#222;color:#fff";
-            const use=document.createElement("button");use.type="button";use.textContent="Use";use.style.cssText="padding:7px 10px;border:0;border-radius:8px;background:#0095f6;color:#fff";
-            const audio=new Audio(track.audioUrl);audio.preload="none";
-            play.addEventListener("click",async()=>{try{if(audio.paused){modal.querySelectorAll("audio").forEach(a=>{if(a!==audio)a.pause();});await audio.play();play.textContent="Ⅱ";}else{audio.pause();play.textContent="▶";}}catch(_){status.textContent="Preview nahi chal paya.";}});
-            use.addEventListener("click",()=>{modal.querySelectorAll("audio").forEach(a=>a.pause());selectedMusicFile=null;selectedMusicTrack=track;status.textContent="Selected: "+track.title+" — "+track.artistName;});
-            row.append(label,play,use);results.appendChild(row);
-          });
-        }catch(error){status.textContent="Music search nahi chal paya. Phone se audio choose karein.";}
-      }
+      else if(btn.dataset.act==="search-music"){openSongPicker();}
       else if(btn.dataset.act==="prev")show(index-1);
       else if(btn.dataset.act==="next")show(index+1);
       else if(btn.dataset.act==="rotate"){edits[index].rotation=(edits[index].rotation+90)%360;show(index);}
