@@ -680,43 +680,52 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("menuBtn")?.addEventListener("click", openMenu);
   bindSideMenuItems();
   try { applyAppTheme(localStorage.getItem("instapro-theme") || "dark"); applyDataSaver(localStorage.getItem("instapro-data-saver") === "1"); applyReduceMotion(localStorage.getItem("instapro-reduce-motion") === "1"); applyPersonalCustomization(currentAppSettings); } catch (_) {}
-  // Secret settings: hold the InstaPro logo for two seconds to reveal the private entry button.
+  // Secret settings: hidden until a genuine 2-second press on the brand.
   const brand = document.querySelector(".topGlass .logo");
-  // Reset any trigger left visible by repeated app initialization / stale DOM.
-  const previousSecretTrigger = document.getElementById("instaproSecretTrigger");
-  if (previousSecretTrigger) {
-    previousSecretTrigger.classList.remove("visible");
-    previousSecretTrigger.style.setProperty("display", "none", "important");
-    previousSecretTrigger.setAttribute("aria-hidden", "true");
-  }
-  if (brand && !document.getElementById("instaproSecretTrigger")) {
+  // Remove any stale/duplicate trigger so refresh can never reveal it by itself.
+  document.querySelectorAll("#instaproSecretTrigger").forEach(node => node.remove());
+  if (brand) {
     const trigger = document.createElement("button");
     trigger.type = "button";
     trigger.id = "instaproSecretTrigger";
-    trigger.innerHTML = "⚙️ Insta Pro Settings";
+    trigger.textContent = "⚙️ Insta Pro Settings";
     trigger.setAttribute("aria-label", "Open Insta Pro Secret Settings");
     trigger.setAttribute("aria-hidden", "true");
     trigger.style.setProperty("display", "none", "important");
+    trigger.style.visibility = "hidden";
+    trigger.style.pointerEvents = "none";
     brand.insertAdjacentElement("afterend", trigger);
     let holdTimer = null;
-    const cancelHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
-    brand.addEventListener("contextmenu", event => event.preventDefault());
-    brand.addEventListener("pointerdown", event => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      cancelHold();
+    let revealed = false;
+    const stopHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
+    const startHold = event => {
+      if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) return;
+      stopHold();
       holdTimer = setTimeout(() => {
+        revealed = true;
         trigger.classList.add("visible");
         trigger.style.setProperty("display", "inline-flex", "important");
+        trigger.style.visibility = "visible";
+        trigger.style.pointerEvents = "auto";
         trigger.setAttribute("aria-hidden", "false");
       }, 2000);
+    };
+    brand.addEventListener("contextmenu", event => event.preventDefault());
+    brand.addEventListener("pointerdown", startHold);
+    brand.addEventListener("touchstart", startHold, { passive: true });
+    ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(name => brand.addEventListener(name, stopHold));
+    trigger.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (revealed) openSettingsPanel(true);
     });
-    // Do not cancel on pointerleave: a slight finger movement must not break the long-press.
-    ["pointerup", "pointercancel"].forEach(name => brand.addEventListener(name, cancelHold));
-    trigger.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); openSettingsPanel(true); });
     trigger.addEventListener("keydown", event => {
       if (event.key === "Escape") {
+        revealed = false;
         trigger.classList.remove("visible");
         trigger.style.setProperty("display", "none", "important");
+        trigger.style.visibility = "hidden";
+        trigger.style.pointerEvents = "none";
         trigger.setAttribute("aria-hidden", "true");
       }
     });
