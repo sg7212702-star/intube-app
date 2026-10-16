@@ -1031,6 +1031,17 @@ async function renderFeed() {
         </div>
       `;
 
+      const photoCarousel = card.querySelector("[data-photo-carousel]");
+      if (photoCarousel) {
+        const countLabel = card.querySelector(".ip-feed-carousel-count");
+        const dots = card.querySelectorAll("[data-carousel-dot]");
+        photoCarousel.addEventListener("scroll", () => {
+          const width = photoCarousel.clientWidth || 1;
+          const activeIndex = Math.max(0, Math.min(dots.length - 1, Math.round(photoCarousel.scrollLeft / width)));
+          if (countLabel) countLabel.textContent = (activeIndex + 1) + "/" + dots.length;
+          dots.forEach((dot, i) => { dot.style.background = i === activeIndex ? "#0095f6" : "#777"; });
+        }, { passive: true });
+      }
       fragment.appendChild(card);
     }
 
