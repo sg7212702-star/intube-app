@@ -475,7 +475,8 @@ async function openSettingsPanel(secretMode = false) {
   panel.querySelectorAll(".isp-category").forEach(button => {
     button.onclick = () => openSettingsCategory(button.dataset.category, user, panel);
   });
-  panel.querySelector("#ispCreatorAnalytics").onclick = () => openCreatorAnalytics(user, panel);
+  const creatorAnalyticsButton = panel.querySelector("#ispCreatorAnalytics");
+  if (creatorAnalyticsButton) creatorAnalyticsButton.onclick = () => openCreatorAnalytics(user, panel);
   if (!secretMode) {
   panel.querySelector("#ispProfile").onclick = async () => {
     close();
