@@ -197,40 +197,103 @@ function openMultiPhotoPostEditor(files) {
     const modal = document.createElement("div");
     modal.id = "ip-multi-photo-editor";
     let index = 0;
+    let settled = false;
     const urls = files.map(file => URL.createObjectURL(file));
-    modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)";
+    modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
     modal.innerHTML = `
-      <header style="height:54px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #ffffff22">
-        <button type="button" data-act="cancel" style="border:0;background:none;color:#fff;font-size:28px">‹</button><b style="flex:1">New post</b><span id="ip-multi-count" style="font-size:13px;opacity:.8">1/${files.length}</span>
+      <style>
+        #ip-multi-photo-editor *{box-sizing:border-box}
+        #ip-multi-photo-editor .ipmp-top{height:54px;flex:0 0 54px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #262626}
+        #ip-multi-photo-editor button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+        #ip-multi-photo-editor .ipmp-back{width:34px;height:38px;border:0;background:transparent;color:#fff;font-size:32px;line-height:1}
+        #ip-multi-photo-editor .ipmp-next{border:0;background:transparent;color:#0095f6;font-weight:700;font-size:15px;padding:9px 0}
+        #ip-multi-photo-editor .ipmp-title{font-size:16px;font-weight:700;flex:1;text-align:left}
+        #ip-multi-photo-editor .ipmp-subtitle{font-size:12px;color:#a8a8a8;padding:13px 16px 8px}
+        #ip-multi-photo-editor .ipmp-stage{position:relative;width:100%;height:min(54dvh,540px);min-height:250px;flex:0 0 auto;background:#080808;overflow:hidden}
+        #ip-multi-photo-editor .ipmp-track{display:flex;flex-flow:row nowrap;width:100%;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x}
+        #ip-multi-photo-editor .ipmp-track::-webkit-scrollbar,#ip-multi-photo-editor .ipmp-thumbs::-webkit-scrollbar{display:none}
+        #ip-multi-photo-editor .ipmp-slide{display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 100%;width:100%;min-width:100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always}
+        #ip-multi-photo-editor .ipmp-slide img{display:block;width:100%;height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none}
+        #ip-multi-photo-editor .ipmp-counter{position:absolute;top:12px;right:12px;z-index:3;background:#262626d9;border:1px solid #ffffff1a;border-radius:20px;padding:6px 10px;font-size:12px;font-weight:600}
+        #ip-multi-photo-editor .ipmp-arrows{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#0008;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;z-index:2}
+        #ip-multi-photo-editor .ipmp-thumbs{display:flex;gap:8px;padding:13px 14px 12px;overflow-x:auto;flex:0 0 auto;scrollbar-width:none}
+        #ip-multi-photo-editor .ipmp-thumb{position:relative;width:60px;height:60px;flex:0 0 60px;padding:0;border:2px solid transparent;border-radius:8px;overflow:hidden;background:#171717}
+        #ip-multi-photo-editor .ipmp-thumb.active{border-color:#0095f6}
+        #ip-multi-photo-editor .ipmp-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+        #ip-multi-photo-editor .ipmp-thumb span{position:absolute;right:3px;top:3px;background:#0095f6;color:#fff;border-radius:10px;font-size:10px;padding:1px 4px}
+        #ip-multi-photo-editor .ipmp-divider{height:1px;background:#262626;flex:0 0 1px}
+        #ip-multi-photo-editor .ipmp-caption-wrap{display:flex;gap:12px;padding:15px 16px 12px;min-height:104px;flex:0 0 auto}
+        #ip-multi-photo-editor .ipmp-caption-label{font-size:13px;font-weight:600;white-space:nowrap;padding-top:3px}
+        #ip-multi-photo-editor .ipmp-caption{flex:1;min-width:0;min-height:72px;max-height:130px;resize:vertical;border:0;outline:0;background:transparent;color:#fff;font:14px/1.5 inherit;font-family:inherit;font-size:14px;line-height:1.5}
+        #ip-multi-photo-editor .ipmp-caption::placeholder{color:#8e8e8e}
+        #ip-multi-photo-editor .ipmp-hint{font-size:12px;color:#8e8e8e;padding:0 16px 12px}
+        #ip-multi-photo-editor .ipmp-share{margin:auto 14px 16px;padding:14px 16px;flex:0 0 auto;border:0;border-radius:10px;background:#0095f6;color:#fff;font-size:15px;font-weight:700}
+        #ip-multi-photo-editor .ipmp-share:active{opacity:.8}
+        @media(max-height:650px){#ip-multi-photo-editor .ipmp-stage{height:43dvh;min-height:190px}#ip-multi-photo-editor .ipmp-thumb{width:48px;height:48px;flex-basis:48px}#ip-multi-photo-editor .ipmp-thumbs{padding-top:9px;padding-bottom:9px}#ip-multi-photo-editor .ipmp-caption-wrap{min-height:80px;padding-top:10px}}
+      </style>
+      <header class="ipmp-top">
+        <button type="button" class="ipmp-back" data-act="cancel" aria-label="Go back">‹</button>
+        <div class="ipmp-title">New post</div>
+        <button type="button" class="ipmp-next" data-act="share">Share</button>
       </header>
-      <div id="ip-multi-stage" style="position:relative;flex:1;min-height:0;display:flex;align-items:center;overflow:hidden;background:#080808">
-        <button type="button" data-act="prev" aria-label="Previous photo" style="position:absolute;left:10px;z-index:2;border:0;border-radius:50%;width:38px;height:38px;background:#0008;color:#fff;font-size:24px">‹</button>
-        <img id="ip-multi-preview" src="${urls[0]}" style="width:100%;height:100%;object-fit:contain" alt="Selected photo">
-        <button type="button" data-act="next" aria-label="Next photo" style="position:absolute;right:10px;z-index:2;border:0;border-radius:50%;width:38px;height:38px;background:#0008;color:#fff;font-size:24px">›</button>
+      <div class="ipmp-subtitle">Swipe to preview your photos</div>
+      <section class="ipmp-stage" aria-label="Selected photos preview">
+        <div class="ipmp-track" id="ipmp-track">
+          ${urls.map((url,i)=>`<div class="ipmp-slide"><img src="${url}" alt="Selected photo ${i+1}" draggable="false"></div>`).join("")}
+        </div>
+        <span class="ipmp-counter" id="ipmp-counter">1 / ${files.length}</span>
+        <button type="button" class="ipmp-arrows" data-act="prev" aria-label="Previous photo" style="left:10px">‹</button>
+        <button type="button" class="ipmp-arrows" data-act="next" aria-label="Next photo" style="right:10px">›</button>
+      </section>
+      <div class="ipmp-thumbs" id="ipmp-thumbs" aria-label="Choose a photo">
+        ${urls.map((url,i)=>`<button type="button" class="ipmp-thumb ${i===0?"active":""}" data-index="${i}" aria-label="Show photo ${i+1}"><img src="${url}" alt=""><span>${i+1}</span></button>`).join("")}
       </div>
-      <div style="padding:14px;display:flex;gap:6px;overflow-x:auto" id="ip-multi-thumbs">${urls.map((url,i)=>`<img data-index="${i}" src="${url}" alt="Photo ${i+1}" style="width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:6px;border:2px solid ${i===0?"#0095f6":"transparent"}">`).join("")}</div>
-      <textarea id="ip-multi-caption" placeholder="Write a caption…" maxlength="2200" style="margin:0 14px 14px;padding:12px;border-radius:12px;border:1px solid #ffffff30;background:#151515;color:#fff;resize:vertical;min-height:72px;font:inherit"></textarea>
-      <button type="button" data-act="share" style="margin:0 14px 16px;padding:14px;border:0;border-radius:12px;background:#0095f6;color:#fff;font-weight:700;font-size:16px">Share post (${files.length} photos)</button>`;
+      <div class="ipmp-divider"></div>
+      <div class="ipmp-caption-wrap">
+        <div class="ipmp-caption-label">Caption</div>
+        <textarea class="ipmp-caption" id="ip-multi-caption" placeholder="Write a caption for your photos…" maxlength="2200"></textarea>
+      </div>
+      <div class="ipmp-hint">All ${files.length} photos will be shared together in one post.</div>
+      <button type="button" class="ipmp-share" data-act="share">Share ${files.length} photos</button>`;
     document.body.appendChild(modal);
-    const clean = result => { urls.forEach(url => URL.revokeObjectURL(url)); modal.remove(); resolve(result); };
-    const show = next => {
-      index = (next + files.length) % files.length;
-      modal.querySelector("#ip-multi-preview").src = urls[index];
-      modal.querySelector("#ip-multi-count").textContent = (index+1)+"/"+files.length;
-      modal.querySelectorAll("#ip-multi-thumbs img").forEach((img,i)=>img.style.borderColor=i===index?"#0095f6":"transparent");
+    const clean = result => {
+      if (settled) return;
+      settled = true;
+      urls.forEach(url => URL.revokeObjectURL(url));
+      modal.remove();
+      resolve(result);
     };
-    modal.addEventListener("click", e => {
-      const thumb=e.target.closest("#ip-multi-thumbs img");
+    const track = modal.querySelector("#ipmp-track");
+    const count = modal.querySelector("#ipmp-counter");
+    const thumbs = [...modal.querySelectorAll(".ipmp-thumb")];
+    const show = next => {
+      index = Math.max(0, Math.min(files.length - 1, next));
+      track.scrollTo({left:index * track.clientWidth,behavior:"smooth"});
+      count.textContent = (index + 1) + " / " + files.length;
+      thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
+      thumbs[index]?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
+    };
+    let scrollTimer;
+    track.addEventListener("scroll",()=>{
+      clearTimeout(scrollTimer);
+      scrollTimer=setTimeout(()=>{
+        const width=track.clientWidth||1;
+        index=Math.max(0,Math.min(files.length-1,Math.round(track.scrollLeft/width)));
+        count.textContent=(index+1)+" / "+files.length;
+        thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
+      },50);
+    },{passive:true});
+    modal.addEventListener("click",e=>{
+      const thumb=e.target.closest(".ipmp-thumb");
       if(thumb){show(Number(thumb.dataset.index));return;}
       const btn=e.target.closest("button[data-act]");
       if(!btn)return;
       if(btn.dataset.act==="cancel")clean(null);
-      if(btn.dataset.act==="prev")show(index-1);
-      if(btn.dataset.act==="next")show(index+1);
-      if(btn.dataset.act==="share")clean({files,caption:modal.querySelector("#ip-multi-caption").value.trim()});
+      else if(btn.dataset.act==="prev")show(index-1);
+      else if(btn.dataset.act==="next")show(index+1);
+      else if(btn.dataset.act==="share")clean({files,caption:modal.querySelector("#ip-multi-caption").value.trim()});
     });
-    modal.querySelector("#ip-multi-stage").addEventListener("touchstart",e=>{modal._touchX=e.changedTouches[0].clientX;},{passive:true});
-    modal.querySelector("#ip-multi-stage").addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-(modal._touchX||0);if(Math.abs(dx)>45)show(index+(dx<0?1:-1));},{passive:true});
+    modal.addEventListener("keydown",e=>{if(e.key==="Escape")clean(null);});
   });
 }
 
