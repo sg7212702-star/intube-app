@@ -1221,15 +1221,16 @@ async function deleteProfilePost(postId, viewer) {
     // Tombstone the ID before deleting so stale feed/profile caches cannot show a black Reel.
     try {
       const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
+      deleted.add(String(snap.id));
       deleted.add(String(postId));
       localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
     } catch (_) {}
-    window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(postId) } }));
+    window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(snap.id), requestedPostId: String(postId) } }));
     await deleteDoc(postRef);
     // Immediately purge deleted content from local profile caches; the realtime listener will confirm it.
     ownedProfilePosts = ownedProfilePosts.filter(item => String(item.id) !== String(postId));
     repostedProfilePosts = repostedProfilePosts.filter(item => String(item.id) !== String(postId));
-    profilePosts = profilePosts.filter(item => String(item.id) !== String(postId));
+    profilePosts = profilePosts.filter(item => String(item.id) !== String(snap.id) && String(item.id) !== String(postId));
     render(profileData, profilePosts);
     closePostViewer();
     alert("Post/Reel delete ho gayi.");
