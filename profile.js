@@ -2009,7 +2009,7 @@ postsUnsub = () => ownerQueryUnsubs.forEach(stop => stop());
     query(collection(db, "posts"), where("repostedBy", "array-contains", targetUid), limit(200)),
     snapshot => {
       repostedProfilePosts = snapshot.docs
-        .map(item => ({ id: item.id, ...item.data() }))
+        .map(item => ({ ...item.data(), id: item.id }))
         .filter(post => postOwner(post) !== targetUid);
       profilePosts = [...ownedProfilePosts, ...repostedProfilePosts];
       profilePosts.sort((a, b) => {
@@ -2039,7 +2039,7 @@ postsUnsub = () => ownerQueryUnsubs.forEach(stop => stop());
       };
 
       profileStories = snapshot.docs
-        .map(item => ({ id: item.id, ...item.data() }))
+        .map(item => ({ ...item.data(), id: item.id }))
         .filter(story => {
           const owner = String(
             story.uid || story.userId || story.authorId ||
