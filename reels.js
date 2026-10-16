@@ -608,7 +608,7 @@ function renderReelsSlides(track) {
           <button class="ipr-action ipr-icon-action" data-mute="${id}" aria-label="Toggle sound">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 4a5 5 0 0 1 0 6m3-9a9 9 0 0 1 0 12"/></svg><small>Sound</small>
           </button>
-          ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? '<button type="button" class="ipr-action ipr-more-reel" data-reel-more="${id}" aria-label="More Reel options">⋮<small>More</small></button>' : ""}
+          ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) === currentUser().uid ? `<button type="button" class="ipr-action ipr-more-reel" data-reel-more="${id}" aria-label="More Reel options">⋮<small>More</small></button>` : ""}
         </div>
 
         <div class="ipr-bottom">
