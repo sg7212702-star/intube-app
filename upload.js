@@ -330,7 +330,7 @@ function openMultiPhotoPostEditor(files) {
         thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
       },50);
     },{passive:true});
-    modal.addEventListener("click",e=>{
+    modal.addEventListener("click",async e=>{
       const thumb=e.target.closest(".ipmp-thumb");
       if(thumb){show(Number(thumb.dataset.index));return;}
       const filterBtn=e.target.closest("button[data-filter]");
