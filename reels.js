@@ -360,70 +360,111 @@ async function deleteOwnReel(postId) {
     showReelsMessage("Apni Reel delete karne ke liye login karein.");
     return;
   }
-  try {
-    let ref = getPostRef(postId);
-    let snap = await getDoc(ref);
 
-    // A stale/mismatched card ID can happen when a cached Reel is older than
-    // the Firestore record. Resolve only inside the signed-in user's own posts,
-    // matching the exact media URL; never delete another user's post.
+  const ownerOf = data => String(data.uid || data.userId || data.authorId || data.ownerUid || "");
+  const urlsOf = data => [...new Set([
+    data.mediaUrl, data.mediaURL, data.imageUrl, data.imageURL,
+    data.videoUrl, data.videoURL, data.url, data.image
+  ].filter(value => typeof value === "string" && value.trim()).map(value => value.trim()))];
+  const normalizedUrl = value => {
+    try {
+      const url = new URL(value);
+      // Cloudinary transformations can differ while referring to the same uploaded asset.
+      const parts = url.pathname.split("/");
+      const uploadAt = parts.indexOf("upload");
+      if (uploadAt >= 0) {
+        const afterUpload = parts.slice(uploadAt + 1);
+        while (afterUpload.length && /^(w_|h_|c_|q_|f_|dpr_|ar_|g_|e_|fl_|t_)/i.test(afterUpload[0])) afterUpload.shift();
+        return url.hostname + "/upload/" + afterUpload.join("/");
+      }
+      return url.hostname + url.pathname;
+    } catch (_) { return String(value || "").split("?")[0]; }
+  };
+
+  try {
+    let snap = await getDoc(getPostRef(String(postId)));
+    let ref = snap.ref;
+
     if (!snap.exists()) {
-      const cached = reelsData.find(item => String(item.id) === String(postId));
-      const cachedUrl = cached ? mediaURL(cached) : "";
-      if (cachedUrl) {
-        const ownerFields = ["uid", "userId", "authorId", "ownerUid"];
-        const found = new Map();
-        for (const field of ownerFields) {
-          try {
-            const ownSnap = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid)));
-            ownSnap.forEach(item => {
-              const data = item.data();
-              if (mediaURL(data) === cachedUrl) found.set(item.id, item);
-            });
-          } catch (lookupError) {
-            console.warn("Reel delete fallback lookup failed:", field, lookupError);
-          }
-        }
-        if (found.size === 1) {
-          const matched = [...found.values()][0];
-          ref = matched.ref;
-          snap = matched;
-        } else {
-          console.error("Reel delete: Firestore post ID not found or ambiguous", {
-            requestedPostId: postId, uid: user.uid, matches: found.size
-          });
-          showReelsMessage(found.size > 1
-            ? "Is video ki ek se zyada matching entries mili. Safety ke liye delete nahi ki."
-            : "Video ka asli Firestore record nahi mila. Delete nahi hui; upload record ID ki jaanch zaroori hai.");
-          return;
-        }
-      } else {
-        console.error("Reel delete: missing post document and cached media URL", { postId, uid: user.uid });
-        showReelsMessage("Video ka asli Firestore record nahi mila. Delete nahi hui; upload record ID ki jaanch zaroori hai.");
+      const cached = reelsData.find(item =>
+        String(item.id) === String(postId) ||
+        String(item.firestoreId || item.postId || "") === String(postId)
+      );
+      const cachedUrls = new Set(urlsOf(cached || {}).map(normalizedUrl));
+      if (!cachedUrls.size) {
+        showReelsMessage("Delete ke liye Reel ka media URL nahi mila. Profile refresh karke dobara try karein.");
         return;
       }
+
+      const found = new Map();
+      // Try every legacy owner field first; keep matching strictly to this user's uploads.
+      for (const field of ["uid", "userId", "authorId", "ownerUid"]) {
+        try {
+          const ownSnap = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid)));
+          ownSnap.forEach(item => {
+            const data = item.data();
+            if (ownerOf(data) === user.uid && urlsOf(data).some(url => cachedUrls.has(normalizedUrl(url)))) {
+              found.set(item.id, item);
+            }
+          });
+        } catch (lookupError) {
+          console.warn("Reel delete owner lookup failed:", field, lookupError);
+        }
+      }
+
+      // Last-resort lookup uses readable posts, but still verifies both owner UID and media URL.
+      if (found.size === 0) {
+        try {
+          const allPosts = await getDocs(collection(db, "posts"));
+          allPosts.forEach(item => {
+            const data = item.data();
+            if (ownerOf(data) === user.uid && urlsOf(data).some(url => cachedUrls.has(normalizedUrl(url)))) {
+              found.set(item.id, item);
+            }
+          });
+        } catch (lookupError) {
+          console.error("Reel delete full lookup failed:", lookupError);
+        }
+      }
+
+      if (found.size !== 1) {
+        console.error("Reel delete record resolution failed", {
+          requestedPostId: String(postId), uid: user.uid,
+          cachedHasUrl: cachedUrls.size > 0, matchingOwnRecords: found.size
+        });
+        showReelsMessage(found.size > 1
+          ? "Is media ki multiple matching entries hain; safety ke liye delete nahi ki. Profile refresh karke dobara try karein."
+          : "Firestore mein is Reel ka matching record nahi mila. Upload record ya Firebase Rules ki jaanch zaroori hai.");
+        return;
+      }
+      snap = [...found.values()][0];
+      ref = snap.ref;
     }
 
-    const post = { id: snap.id, ...snap.data() };
-    const ownerUid = post.uid || post.userId || post.authorId || post.ownerUid;
-    if (ownerUid !== user.uid) {
+    const post = snap.data();
+    if (ownerOf(post) !== user.uid) {
       showReelsMessage("Aap sirf apni Reel delete kar sakte hain.");
       return;
     }
     if (!confirm("Kya aap is Reel ko hamesha ke liye delete karna chahte hain?")) return;
+
     await deleteDoc(ref);
     try {
       const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
       deleted.add(String(snap.id));
+      deleted.add(String(postId));
       localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
     } catch (_) {}
+
     window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(snap.id) } }));
-    reelsData = reelsData.filter(item => String(item.id) !== String(snap.id));
+    reelsData = reelsData.filter(item => String(item.id) !== String(snap.id) && String(item.id) !== String(postId));
     closeReelsViewer();
-    showReelsMessage("Aapki Reel delete ho gayi.");
+    showReelsMessage("Aapki Reel Firestore se delete ho gayi.");
   } catch (error) {
     console.error("Reel delete error:", error);
-    showReelsMessage("Reel delete nahi hui. Firestore Rules mein owner delete permission check karein.");
+    showReelsMessage(error?.code === "permission-denied"
+      ? "Delete permission denied. Firebase Firestore Rules mein owner ko delete permission deni hogi."
+      : "Reel delete nahi hui: " + (error?.message || "Firestore error"));
   }
 }
 
