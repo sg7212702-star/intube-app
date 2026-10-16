@@ -736,10 +736,6 @@ function render(data = profileData, posts = profilePosts) {
             >
               📷 Change photo
             </button>
-            <button id="ippPrivacyToggle" class="ipp-btn" type="button">
-              ${data.isPrivate === true || data.privateAccount === true ? '🔒 Private account: ON' : '🌐 Private account: OFF'}
-            </button>
-            <button id="ippFollowRequests" class="ipp-btn" type="button">📩 Follow requests</button>
           ` : `
             <button
               id="ippFollow"
