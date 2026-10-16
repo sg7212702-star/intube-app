@@ -611,13 +611,60 @@ function bindSideMenuItems() {
 
 function openMenu(){
   const m=$("sideMenu"); if(!m) return;
-  // Keep the hamburger menu separate from the hidden long-press appearance settings.
-  const menuHead = m.querySelector(".sideHead");
   m.querySelectorAll(".mItem").forEach(item => item.remove());
   document.getElementById("instaproSettingsMenuEntry")?.remove();
-  // Creator Analytics is not shown in the three-line menu.\n  document.getElementById("creatorAnalyticsMenuItem")?.remove();\n  m.classList.add("show");
+  document.getElementById("creatorAnalyticsMenuItem")?.remove();
+
+  const entries = [
+    ["Your activity", "🕘", "Your activity"],
+    ["Account privacy", "🔒", "Privacy"],
+    ["Blocked", "🚫", "Blocked accounts"],
+    ["Message and story reply", "💬", "Messages and replies"],
+    ["Data usage and media quality", "📶", "Data usage and media quality"],
+    ["Account type and tools", "🧰", "Account type and tools"],
+    ["Insta Pro Verified", "✓", "Insta Pro Verified"]
+  ];
+  entries.forEach(([label, icon, action]) => {
+    const item = document.createElement("div");
+    item.className = "mItem";
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    item.textContent = icon + " " + label;
+    const activate = async () => {
+      const { auth } = await import("./firebase.js");
+      const user = auth.currentUser;
+      if (!user || user.isAnonymous) { alert("Is option ke liye pehle Google se login karein."); return; }
+      m.classList.remove("show");
+      const overlay = document.getElementById("sideOverlay");
+      if (overlay) { overlay.classList.remove("show"); overlay.style.display = "none"; }
+      await openSettingsPanel();
+      const panel = document.getElementById("instaproSettingsPanel");
+      if (!panel) return;
+      if (action === "Insta Pro Verified") {
+        panel.innerHTML = '<div class="isp-card" role="dialog" aria-modal="true"><div class="isp-head"><button id="ipvBack" aria-label="Back">‹</button><div class="isp-title">Insta Pro Verified</div><button id="ipvClose" aria-label="Close">×</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label">Verification</div><div class="isp-desc">Verification requests and badge approval are not connected yet.</div></div></div></div>';
+        panel.querySelector("#ipvClose").onclick = () => panel.classList.remove("open");
+        panel.querySelector("#ipvBack").onclick = () => openSettingsPanel();
+        return;
+      }
+      if (action === "Data usage and media quality" || action === "Account type and tools") {
+        const title = action;
+        panel.innerHTML = '<div class="isp-card" role="dialog" aria-modal="true"><div class="isp-head"><button id="menuSettingBack" aria-label="Back">‹</button><div class="isp-title"></div><button id="menuSettingClose" aria-label="Close">×</button></div><div class="isp-row"><div class="isp-copy"><div class="isp-label"></div><div class="isp-desc"></div></div></div></div>';
+        panel.querySelector(".isp-title").textContent = title;
+        panel.querySelector(".isp-label").textContent = action === "Data usage and media quality" ? "Media quality" : "Account type and tools";
+        panel.querySelector(".isp-desc").textContent = action === "Data usage and media quality" ? "Data saver is available in app settings; detailed upload quality controls are not connected yet." : "Account type tools are not connected to a dedicated account-type workflow yet.";
+        panel.querySelector("#menuSettingClose").onclick = () => panel.classList.remove("open");
+        panel.querySelector("#menuSettingBack").onclick = () => openSettingsPanel();
+        return;
+      }
+      const category = action === "Your activity" ? "Your activity" : action === "Privacy" ? "Privacy" : action === "Blocked accounts" ? "Blocked accounts" : "Messages and replies";
+      await openSettingsCategory(category, user, panel);
+    };
+    item.addEventListener("click", activate);
+    item.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+    m.appendChild(item);
+  });
+  m.classList.add("show");
   const sov=$("sideOverlay"); if(sov){ sov.style.display="block"; sov.classList.add("show"); }
-  // Settings panel and menu actions are implemented in this file; do not import a missing settings.js.
 }
 
 function openPage(name){
