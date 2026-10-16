@@ -240,7 +240,7 @@ function openMultiPhotoPostEditor(files) {
         #ip-multi-photo-editor .ipmp-hint{font-size:12px;color:#8e8e8e;padding:0 16px 12px}
         #ip-multi-photo-editor .ipmp-share{margin:auto 14px 16px;padding:14px 16px;flex:0 0 auto;border:0;border-radius:10px;background:#0095f6;color:#fff;font-size:15px;font-weight:700}
         #ip-multi-photo-editor .ipmp-share:active{opacity:.8}
-        @media(max-height:650px){#ip-multi-photo-editor .ipmp-stage{height:43dvh;min-height:190px}#ip-multi-photo-editor .ipmp-thumb{width:48px;height:48px;flex-basis:48px}#ip-multi-photo-editor .ipmp-thumbs{padding-top:9px;padding-bottom:9px}#ip-multi-photo-editor .ipmp-caption-wrap{min-height:80px;padding-top:10px}}
+        @media(max-height:850px){#ip-multi-photo-editor .ipmp-stage{height:29dvh;min-height:125px}#ip-multi-photo-editor .ipmp-thumb{width:44px;height:44px;flex-basis:44px}#ip-multi-photo-editor .ipmp-thumbs{padding-top:7px;padding-bottom:7px}#ip-multi-photo-editor .ipmp-caption-wrap{min-height:58px;padding-top:6px;padding-bottom:5px}#ip-multi-photo-editor .ipmp-caption{min-height:42px;max-height:58px}#ip-multi-photo-editor .ipmp-edit-label{padding-top:5px;padding-bottom:3px}#ip-multi-photo-editor .ipmp-filters{padding-bottom:6px}}
       </style>
       <header class="ipmp-top">
         <button type="button" class="ipmp-back" data-act="cancel" aria-label="Go back">‹</button>
