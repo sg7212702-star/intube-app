@@ -661,7 +661,7 @@ function render(data = profileData, posts = profilePosts) {
               font-weight:850;
               overflow-wrap:anywhere
             ">
-              ${esc(name)}
+              ${esc(name)} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span>
             </div>
 
             <div style="font-size:12px;opacity:.68;margin-top:4px">
@@ -995,7 +995,7 @@ async function openSelectedPost(post) {
     <div style="max-width:650px;margin:0 auto;padding-bottom:30px;">
       <div style="display:flex;align-items:center;gap:10px;padding:12px;">
         <img src="${esc(post.photo || post.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
-        <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "InstaPro User")}</strong><div style="font-size:11px;opacity:.6;">InstaPro</div></div>
+        <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "InstaPro User")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong><div style="font-size:11px;opacity:.6;">InstaPro</div></div>
         ${own ? '<button id="ippDeletePostTop" type="button" style="border:0;background:transparent;color:#ff6b8a;font-weight:700;">Delete</button>' : ""}
       </div>
       <div style="background:#080808;display:flex;align-items:center;justify-content:center;min-height:180px;max-height:72vh;">
@@ -1155,7 +1155,7 @@ async function openSelectedPost(post) {
     if (snapshot.empty) { list.innerHTML = '<p style="font-size:13px;opacity:.6;padding:8px 0;">No comments yet. Be the first to comment.</p>'; return; }
     list.innerHTML = snapshot.docs.map(item => {
       const comment = item.data();
-      return `<div style="display:flex;gap:8px;padding:8px 0;overflow-wrap:anywhere;"><img src="${esc(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><div style="font-size:13px;line-height:1.45;"><strong>${esc(comment.username || "user")}</strong> ${esc(comment.text || "")}</div></div>`;
+      return `<div style="display:flex;gap:8px;padding:8px 0;overflow-wrap:anywhere;"><img src="${esc(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><div style="font-size:13px;line-height:1.45;"><strong>${esc(comment.username || "user")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong> ${esc(comment.text || "")}</div></div>`;
     }).join("");
   }, error => {
     console.error("Profile comments listener:", error);
@@ -1812,7 +1812,7 @@ async function openFollowList(uid, type) {
       const photo = person.photoURL || person.profilePic || person.photoUrl || person.avatar || "";
       return `<button class="ipp-fl-row" type="button" data-follow-person="${esc(person.uid)}">
         <img src="${esc(photo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='100%25' height='100%25' fill='%23333'/%3E%3C/svg%3E")}" alt="">
-        <span><div class="ipp-fl-name">${esc(name)}</div><div class="ipp-fl-handle">@${esc(person.username || person.uid)}</div></span>
+        <span><div class="ipp-fl-name">${esc(name)} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></div><div class="ipp-fl-handle">@${esc(person.username || person.uid)}</div></span>
       </button>`;
     }).join("");
     list.querySelectorAll("[data-follow-person]").forEach(row => row.addEventListener("click", async () => {
