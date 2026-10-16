@@ -90,33 +90,39 @@ function postOwner(post) {
 function postUrl(post) {
   return post.mediaUrl ||
     post.mediaURL ||
-    post.imageUrl ||
-    post.imageURL ||
     post.videoUrl ||
     post.videoURL ||
+    post.imageUrl ||
+    post.imageURL ||
     post.url ||
     post.image ||
+    post.src ||
     "";
 }
 
+// Upload records from older and newer app versions use different Reel markers.
 function isReel(post) {
-  return String(
-    post.currentType || post.type || ""
-  ).toLowerCase() === "reel";
+  return post?.isReel === true ||
+    String(post?.postType || post?.currentType || post?.type || "").toLowerCase() === "reel";
 }
 
 function isVideo(post) {
   const type = String(
-    post.mediaType ||
-    post.resourceType ||
-    post.type ||
+    post?.mediaType ||
+    post?.contentType ||
+    post?.resourceType ||
+    post?.postType ||
+    post?.currentType ||
+    post?.type ||
     ""
   ).toLowerCase();
 
+  const url = postUrl(post);
   return type.includes("video") ||
     type === "reel" ||
     isReel(post) ||
-    /\.(mp4|webm|mov)(\?|$)/i.test(postUrl(post));
+    /\.(mp4|webm|mov|m4v|m3u8)(?:[?#]|$)/i.test(url) ||
+    /res\.cloudinary\.com\/[^/]+\/video\/upload\//i.test(url);
 }
 
 function stopListeners() {
