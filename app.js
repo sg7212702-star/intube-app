@@ -301,7 +301,7 @@ async function openSettingsCategory(category, user, panel) {
   </div>`;
   const close = () => panel.classList.remove("open");
   panel.querySelector("#ispCategoryClose").onclick = close;
-  panel.querySelector("#ispCategoryBack").onclick = () => openSettingsPanel();
+  panel.querySelector("#ispCategoryBack").onclick = () => { panel.classList.remove("open"); if (history.state?.instaproSettingsOverlay) history.back(); };
   panel.onclick = event => { if (event.target === panel) close(); };
   const rows = panel.querySelector("#ispCategoryRows");
   const status = panel.querySelector("#ispCategoryStatus");
@@ -531,6 +531,16 @@ async function openSettingsCategory(category, user, panel) {
   });
 }
 
+// Android/browser Back: dismiss the currently open settings overlay; never
+// rebuild the old Settings landing page when a menu category was open.
+if (!window.__instaproSettingsBackBound) {
+  window.__instaproSettingsBackBound = true;
+  window.addEventListener("popstate", () => {
+    const panel = document.getElementById("instaproSettingsPanel");
+    if (panel?.classList.contains("open")) panel.classList.remove("open");
+  });
+}
+
 function profileName(user) { return user?.displayName || user?.email?.split("@")[0] || ""; }
 
 async function openSettingsPanel(secretMode = false) {
@@ -547,10 +557,19 @@ async function openSettingsPanel(secretMode = false) {
     panel.id = "instaproSettingsPanel";
     document.body.appendChild(panel);
   }
+  const wasOpen = panel.classList.contains("open");
   panel.innerHTML = settingsPanelMarkup(user, secretMode);
   panel.classList.add("open");
+  // Keep the settings overlay inside the app's navigation stack so Android/browser
+  // Back closes it instead of restoring a previous, stale settings screen.
+  if (!wasOpen && !history.state?.instaproSettingsOverlay) {
+    history.pushState({ ...(history.state || {}), instaproSettingsOverlay: true }, "", location.href);
+  }
   const status = () => panel.querySelector("#ispStatus");
-  const close = () => panel.classList.remove("open");
+  const close = () => {
+    panel.classList.remove("open");
+    if (history.state?.instaproSettingsOverlay) history.back();
+  };
   panel.querySelector("#ispClose").onclick = close;
   if (secretMode) bindSecretCustomization(panel, status);
   panel.querySelector("#ispBack").onclick = close;
