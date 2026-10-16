@@ -698,21 +698,29 @@ document.addEventListener("DOMContentLoaded",()=>{
     let holdTimer = null;
     let revealed = false;
     const stopHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
-    const startHold = event => {
-      if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) return;
-      stopHold();
-      holdTimer = setTimeout(() => {
-        revealed = true;
-        trigger.classList.add("visible");
-        trigger.style.setProperty("display", "inline-flex", "important");
-        trigger.style.visibility = "visible";
-        trigger.style.pointerEvents = "auto";
-        trigger.setAttribute("aria-hidden", "false");
-      }, 2000);
+    // Disable Android text selection / Google Search popup while pressing the logo.
+    brand.style.setProperty("touch-action", "none", "important");
+    brand.style.setProperty("-webkit-touch-callout", "none", "important");
+    brand.style.setProperty("user-select", "none", "important");
+    brand.style.setProperty("-webkit-user-select", "none", "important");
+    const revealTrigger = () => {
+      revealed = true;
+      trigger.classList.add("visible");
+      trigger.style.setProperty("display", "inline-flex", "important");
+      trigger.style.visibility = "visible";
+      trigger.style.pointerEvents = "auto";
+      trigger.setAttribute("aria-hidden", "false");
     };
-    brand.addEventListener("contextmenu", event => event.preventDefault());
+    const startHold = event => {
+      if (event.type === "pointerdown" && (event.pointerType === "touch" || (event.pointerType === "mouse" && event.button !== 0))) return;
+      if (event.type === "touchstart") event.preventDefault();
+      stopHold();
+      holdTimer = setTimeout(revealTrigger, 2000);
+    };
+    brand.addEventListener("contextmenu", event => { event.preventDefault(); event.stopPropagation(); });
+    brand.addEventListener("selectstart", event => event.preventDefault());
     brand.addEventListener("pointerdown", startHold);
-    brand.addEventListener("touchstart", startHold, { passive: true });
+    brand.addEventListener("touchstart", startHold, { passive: false });
     ["pointerup", "pointercancel", "touchend", "touchcancel"].forEach(name => brand.addEventListener(name, stopHold));
     trigger.addEventListener("click", event => {
       event.preventDefault();
