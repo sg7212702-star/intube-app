@@ -154,7 +154,7 @@ function connectFileInput(inputId, type) {
         delete input.dataset.instaProUploadType;
         const editResult = await openMultiPhotoPostEditor(selectedFiles);
         if (!editResult) return;
-        await handleMultiplePhotoFiles(editResult.files, editResult.caption);
+        await handleMultiplePhotoFiles(editResult.files, editResult.caption, editResult.musicFile, editResult.musicTrack);
         return;
       }
       delete input.dataset.instaProUploadType;
@@ -199,6 +199,8 @@ function openMultiPhotoPostEditor(files) {
     modal.id = "ip-multi-photo-editor";
     let index = 0;
     let settled = false;
+    let selectedMusicFile = null;
+    let selectedMusicTrack = null;
     const edits = files.map(() => ({filter:"none",ratio:"original",rotation:0}));
     const urls = files.map(file => URL.createObjectURL(file));
     modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
@@ -281,6 +283,18 @@ function openMultiPhotoPostEditor(files) {
         <button type="button" data-filter="contrast(.82) brightness(1.12)"><span style="filter:contrast(.82) brightness(1.12)"></span>Fade</button>
       </div>
       <div class="ipmp-divider"></div>
+      <section class="ipmp-music">
+        <div style="font-size:13px;font-weight:700;margin-bottom:9px">♫ Add music to post</div>
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+          <button type="button" data-act="choose-music" style="padding:9px 11px;border:1px solid #ffffff30;border-radius:9px;background:#181818;color:#fff">＋ From phone</button>
+          <input id="ipmp-music-file" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" style="display:none">
+          <input id="ipmp-music-search" type="search" placeholder="Search song or singer" style="min-width:0;flex:1;padding:10px;border:1px solid #333;border-radius:9px;background:#111;color:#fff">
+          <button type="button" data-act="search-music" style="padding:10px 12px;border:0;border-radius:9px;background:#0095f6;color:#fff;font-weight:700">Search</button>
+        </div>
+        <div id="ipmp-music-status" style="font-size:11px;color:#aaa;margin-top:8px">Choose an audio file or search song previews.</div>
+        <div id="ipmp-music-results" style="display:grid;gap:6px;margin-top:7px"></div>
+      </section>
+      <div class="ipmp-divider"></div>
       <div class="ipmp-caption-wrap">
         <div class="ipmp-caption-label">Caption</div>
         <textarea class="ipmp-caption" id="ip-multi-caption" placeholder="Write a caption for your photos…" maxlength="2200"></textarea>
@@ -330,6 +344,12 @@ function openMultiPhotoPostEditor(files) {
         thumbs.forEach((thumb,i)=>thumb.classList.toggle("active",i===index));
       },50);
     },{passive:true});
+    modal.querySelector("#ipmp-music-file").addEventListener("change",event=>{
+      const file=event.target.files?.[0];if(!file)return;
+      if(!file.type.startsWith("audio/")&&!/\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i.test(file.name)){alert("Audio file select karein.");event.target.value="";return;}
+      selectedMusicFile=file;selectedMusicTrack={title:file.name.replace(/\.[^.]+$/,""),artistName:"",source:"device-library"};
+      modal.querySelector("#ipmp-music-status").textContent="Selected: "+file.name;
+    });
     modal.addEventListener("click",async e=>{
       const thumb=e.target.closest(".ipmp-thumb");
       if(thumb){show(Number(thumb.dataset.index));return;}
@@ -340,6 +360,31 @@ function openMultiPhotoPostEditor(files) {
       const btn=e.target.closest("button[data-act]");
       if(!btn)return;
       if(btn.dataset.act==="cancel")clean(null);
+      else if(btn.dataset.act==="choose-music"){modal.querySelector("#ipmp-music-file").click();}
+      else if(btn.dataset.act==="search-music"){
+        const query=modal.querySelector("#ipmp-music-search").value.trim();
+        const status=modal.querySelector("#ipmp-music-status"),results=modal.querySelector("#ipmp-music-results");
+        if(!query){status.textContent="Song ya singer ka naam likhein.";return;}
+        status.textContent="Searching songs…";results.replaceChildren();
+        try{
+          const response=await fetch("https://itunes.apple.com/search?term="+encodeURIComponent(query)+"&country=IN&media=music&entity=song&limit=20");
+          if(!response.ok)throw new Error("Music search unavailable");
+          const data=await response.json();
+          const tracks=(data.results||[]).filter(t=>t.previewUrl).map(t=>({title:t.trackName||"Song",artistName:t.artistName||"",audioUrl:t.previewUrl,id:String(t.trackId||""),source:"itunes-preview",filePage:t.trackViewUrl||""}));
+          if(!tracks.length){status.textContent="Playable preview nahi mila. Phone se audio choose karein.";return;}
+          status.textContent="Song choose karne ke liye Use dabayein. Preview aksar chhota sample hota hai.";
+          tracks.forEach(track=>{
+            const row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #ffffff20;border-radius:9px;background:#111";
+            const label=document.createElement("span");label.style.cssText="flex:1;min-width:0;font-size:12px";label.textContent=track.title+" — "+track.artistName;
+            const play=document.createElement("button");play.type="button";play.textContent="▶";play.style.cssText="padding:7px 9px;border:1px solid #333;border-radius:8px;background:#222;color:#fff";
+            const use=document.createElement("button");use.type="button";use.textContent="Use";use.style.cssText="padding:7px 10px;border:0;border-radius:8px;background:#0095f6;color:#fff";
+            const audio=new Audio(track.audioUrl);audio.preload="none";
+            play.addEventListener("click",async()=>{try{if(audio.paused){modal.querySelectorAll("audio").forEach(a=>{if(a!==audio)a.pause();});await audio.play();play.textContent="Ⅱ";}else{audio.pause();play.textContent="▶";}}catch(_){status.textContent="Preview nahi chal paya.";}});
+            use.addEventListener("click",()=>{modal.querySelectorAll("audio").forEach(a=>a.pause());selectedMusicFile=null;selectedMusicTrack=track;status.textContent="Selected: "+track.title+" — "+track.artistName;});
+            row.append(label,play,use);results.appendChild(row);
+          });
+        }catch(error){status.textContent="Music search nahi chal paya. Phone se audio choose karein.";}
+      }
       else if(btn.dataset.act==="prev")show(index-1);
       else if(btn.dataset.act==="next")show(index+1);
       else if(btn.dataset.act==="rotate"){edits[index].rotation=(edits[index].rotation+90)%360;show(index);}
@@ -367,7 +412,8 @@ function openMultiPhotoPostEditor(files) {
               edited.push(new File([blob],(files[i].name||("photo-"+(i+1))).replace(/\.[^.]+$/,"")+"-instapro.jpg",{type:"image/jpeg",lastModified:Date.now()}));
             }finally{URL.revokeObjectURL(src);}
           }
-          clean({files:edited,caption:modal.querySelector("#ip-multi-caption").value.trim()});
+          modal.querySelectorAll("audio").forEach(a=>a.pause());
+          clean({files:edited,caption:modal.querySelector("#ip-multi-caption").value.trim(),musicFile:selectedMusicFile,musicTrack:selectedMusicTrack});
         }catch(error){
           console.error("InstaPro post editor export failed:",error);
           alert("Photo edit apply nahi ho paya: "+(error.message||"Unknown error"));
@@ -379,7 +425,7 @@ function openMultiPhotoPostEditor(files) {
   });
 }
 
-async function handleMultiplePhotoFiles(files, caption) {
+async function handleMultiplePhotoFiles(files, caption, musicFile = null, musicTrack = null) {
   if(uploadInProgress){alert("Ek upload pehle se chal raha hai.");return;}
   const user=auth.currentUser;
   if(!user||user.isAnonymous){alert("Pehle Google account se login karein.");return;}
@@ -397,6 +443,14 @@ async function handleMultiplePhotoFiles(files, caption) {
       const result=await uploadToCloudinary(files[i]);
       mediaItems.push({url:result.secure_url,fileName:files[i].name||"",fileSize:Number(files[i].size||0),publicId:result.public_id||"",assetId:result.asset_id||"",width:Number(result.width||0),height:Number(result.height||0),format:result.format||""});
     }
+    let soundtrackUrl="";
+    if(musicFile){
+      hud.querySelector("#ip-multi-upload-status").textContent="Uploading song…";
+      const musicResult=await uploadToCloudinary(musicFile);
+      soundtrackUrl=musicResult.secure_url||"";
+    }else if(musicTrack?.audioUrl){
+      soundtrackUrl=musicTrack.audioUrl;
+    }
     hud.querySelector("#ip-multi-upload-status").textContent="Publishing post to Firebase…";
     const first=mediaItems[0];
     const data={
@@ -406,6 +460,7 @@ async function handleMultiplePhotoFiles(files, caption) {
       mediaUrls:mediaItems.map(item=>item.url),mediaItems,mediaCount:mediaItems.length,
       type:"image",contentType:"image",mediaType:"image",postType:"post",isReel:false,
       fileName:first.fileName,fileSize:first.fileSize,caption:caption||"",
+      ...(soundtrackUrl?{musicUrl:soundtrackUrl,musicName:musicTrack?.title||musicFile?.name||"Soundtrack",...(musicTrack?.artistName?{musicArtist:musicTrack.artistName}:{}),...(musicTrack?.id?{musicTrackId:musicTrack.id}:{}),...(musicTrack?.filePage?{musicSourcePage:musicTrack.filePage}:{})}:{}),
       likes:[],likesCount:0,comments:[],createdAt:serverTimestamp()
     };
     const saved=await addDoc(collection(db,"posts"),data);
