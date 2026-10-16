@@ -125,6 +125,17 @@ function installSettingsStyles() {
     #instaproSecretTrigger.visible{display:inline-flex;align-items:center;gap:5px}
     #instaproSettingsPanel .isp-custom-select,#instaproSettingsPanel .isp-color{max-width:145px;width:42%;min-height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:inherit;padding:6px}
     #instaproSettingsPanel .isp-color{padding:3px;height:38px}
+    #instaproSettingsPanel .isp-secret-card{max-height:80dvh;padding:12px 11px calc(14px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0}
+    #instaproSettingsPanel .isp-secret-card .isp-head{gap:7px;margin-bottom:10px}
+    #instaproSettingsPanel .isp-secret-card .isp-title{font-size:17px;line-height:1.2}
+    #instaproSettingsPanel .isp-secret-card .isp-head button{font-size:21px;padding:3px 6px}
+    #instaproSettingsPanel .isp-secret-card .isp-subtitle{font-size:10px;margin-bottom:5px}
+    #instaproSettingsPanel .isp-secret-card .isp-row{gap:8px;padding:9px 8px;margin:5px 0;border-radius:11px}
+    #instaproSettingsPanel .isp-secret-card .isp-label{font-size:13px}
+    #instaproSettingsPanel .isp-secret-card .isp-desc{font-size:10px;line-height:1.3;margin-top:2px}
+    #instaproSettingsPanel .isp-secret-card .isp-custom-select,#instaproSettingsPanel .isp-secret-card .isp-color{min-height:30px;padding:4px;font-size:12px}
+    #instaproSettingsPanel .isp-secret-card .isp-custom-preview{padding:8px;border-radius:10px}
+
     #instaproSettingsPanel .isp-custom-range{width:42%;accent-color:var(--ip-accent,#ff2d7a)}
     #instaproSettingsPanel .isp-custom-preview{border-radius:14px;padding:12px;border:1px solid var(--ip-accent,#ff2d7a);background:var(--ip-user-background,#000);font-family:var(--ip-user-font,inherit);font-size:var(--ip-user-font-size,100%)}
     body.instapro-light-mode #homePage,body.instapro-light-mode .page{color:#161616}
@@ -140,7 +151,7 @@ function settingsPanelMarkup(user, secretMode = false) {
   const theme = currentAppSettings.theme === "light";
   const notifications = currentAppSettings.browserNotifications === true;
   return `
-    <div class="isp-card" role="dialog" aria-modal="true" aria-label="Settings and activity">
+    <div class="isp-card ${secretMode ? "isp-secret-card" : ""}" role="dialog" aria-modal="true" aria-label="Settings and activity">
       <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">${secretMode ? "Insta Pro Secret Settings" : "Settings and activity"}</div><button id="ispClose" aria-label="Close">×</button></div>
       ${secretMode ? `<div class="isp-subtitle">Personalize your app</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">App theme</div><div class="isp-desc">Dark, Light, AMOLED black or custom background.</div></div><select class="isp-custom-select" id="ispSecretTheme" aria-label="App theme"><option value="dark">Dark</option><option value="light">Light</option><option value="amoled">AMOLED</option><option value="custom">Custom</option></select></div>
