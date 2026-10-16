@@ -8,6 +8,7 @@ import {
   onSnapshot,
   doc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
   arrayUnion,
@@ -360,13 +361,50 @@ async function deleteOwnReel(postId) {
     return;
   }
   try {
-    const ref = getPostRef(postId);
-    const snap = await getDoc(ref);
+    let ref = getPostRef(postId);
+    let snap = await getDoc(ref);
+
+    // A stale/mismatched card ID can happen when a cached Reel is older than
+    // the Firestore record. Resolve only inside the signed-in user's own posts,
+    // matching the exact media URL; never delete another user's post.
     if (!snap.exists()) {
-      showReelsMessage("Yeh Reel pehle hi delete ho chuki hai.");
-      return;
+      const cached = reelsData.find(item => String(item.id) === String(postId));
+      const cachedUrl = cached ? mediaURL(cached) : "";
+      if (cachedUrl) {
+        const ownerFields = ["uid", "userId", "authorId", "ownerUid"];
+        const found = new Map();
+        for (const field of ownerFields) {
+          try {
+            const ownSnap = await getDocs(query(collection(db, "posts"), where(field, "==", user.uid)));
+            ownSnap.forEach(item => {
+              const data = item.data();
+              if (mediaURL(data) === cachedUrl) found.set(item.id, item);
+            });
+          } catch (lookupError) {
+            console.warn("Reel delete fallback lookup failed:", field, lookupError);
+          }
+        }
+        if (found.size === 1) {
+          const matched = [...found.values()][0];
+          ref = matched.ref;
+          snap = matched;
+        } else {
+          console.error("Reel delete: Firestore post ID not found or ambiguous", {
+            requestedPostId: postId, uid: user.uid, matches: found.size
+          });
+          showReelsMessage(found.size > 1
+            ? "Is video ki ek se zyada matching entries mili. Safety ke liye delete nahi ki."
+            : "Video ka asli Firestore record nahi mila. Delete nahi hui; upload record ID ki jaanch zaroori hai.");
+          return;
+        }
+      } else {
+        console.error("Reel delete: missing post document and cached media URL", { postId, uid: user.uid });
+        showReelsMessage("Video ka asli Firestore record nahi mila. Delete nahi hui; upload record ID ki jaanch zaroori hai.");
+        return;
+      }
     }
-    const post = snap.data();
+
+    const post = { id: snap.id, ...snap.data() };
     const ownerUid = post.uid || post.userId || post.authorId || post.ownerUid;
     if (ownerUid !== user.uid) {
       showReelsMessage("Aap sirf apni Reel delete kar sakte hain.");
@@ -374,6 +412,13 @@ async function deleteOwnReel(postId) {
     }
     if (!confirm("Kya aap is Reel ko hamesha ke liye delete karna chahte hain?")) return;
     await deleteDoc(ref);
+    try {
+      const deleted = new Set(JSON.parse(localStorage.getItem("instapro-deleted-post-ids") || "[]").map(String));
+      deleted.add(String(snap.id));
+      localStorage.setItem("instapro-deleted-post-ids", JSON.stringify([...deleted].slice(-1000)));
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent("instapro:post-deleted", { detail: { postId: String(snap.id) } }));
+    reelsData = reelsData.filter(item => String(item.id) !== String(snap.id));
     closeReelsViewer();
     showReelsMessage("Aapki Reel delete ho gayi.");
   } catch (error) {
