@@ -834,6 +834,7 @@ async function renderFeed() {
       const ownerName = escapeHTML(
         profile.username || "InstaPro User"
       );
+      const ownerVerifiedName = ownerName + ' <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span>';
 
       const avatar = escapeHTML(
         profile.photoURL ||
@@ -940,7 +941,7 @@ async function renderFeed() {
               class="ip-feed-username"
               data-feed-action="profile"
               data-uid="${escapeHTML(ownerUid)}"
-            >${ownerName}</strong>
+            >${ownerVerifiedName}</strong>
 
             <span class="ip-feed-date">
               ${isReelPost && (reelMusicTitle || post.musicUrl) ? "♫ " + escapeHTML([reelMusicTitle || "Original audio", reelMusicArtist].filter(Boolean).join(" · ")) : escapeHTML(formatDate(post.createdAt || post.time))}
@@ -1012,7 +1013,7 @@ async function renderFeed() {
             post.caption
               ? `
                 <p class="ip-feed-caption">
-                  <strong>${ownerName}</strong>
+                  <strong>${ownerVerifiedName}</strong>
                   ${escapeHTML(post.caption)}
                 </p>
               `
