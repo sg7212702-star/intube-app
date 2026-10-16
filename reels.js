@@ -719,7 +719,24 @@ function renderReelsSlides(track) {
       if (!uid) return;
       try {
         if (typeof window.openProfile !== "function") await import("./profile.js");
+
         if (typeof window.openProfile === "function") {
+          // Close the full-screen Reels layer BEFORE opening the profile.
+          // This avoids the profile being trapped underneath the viewer on mobile.
+          const reelsViewer = document.getElementById("ipReelsViewer");
+          if (reelsViewer) {
+            reelsViewer.classList.remove("ipr-open");
+            reelsViewer.querySelectorAll("video").forEach(video => video.pause());
+            reelsViewer.querySelector("#iprCommentBox")?.classList.remove("ipr-comments-open");
+          }
+          if (reelsObserver) {
+            reelsObserver.disconnect();
+            reelsObserver = null;
+          }
+          reelsOpenedFromProfile = false;
+          reelsOpenedFromBottomTab = false;
+          document.body.style.overflow = "";
+
           await window.openProfile(uid);
         } else {
           console.error("Reel profile open failed: openProfile is unavailable.");
