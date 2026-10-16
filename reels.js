@@ -670,7 +670,7 @@ function renderReelsSlides(track) {
             <img class="${activeStoryOwners.has(post.uid || post.userId || post.authorId || post.ownerUid) ? "ipr-story-ring" : ""}" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}" src="${escapeHTML(photoURL(post))}" alt="Profile photo" loading="lazy">
             <div class="ipr-user-meta">
               <button class="ipr-author" type="button" data-open-reel-profile="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid || "")}">@${escapeHTML(username(post))}</button>
-              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowStateReady && reelFollowCache.get(String(post.uid || post.userId || post.authorId || post.ownerUid)) !== true ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
+              ${currentUser() && (post.uid || post.userId || post.authorId || post.ownerUid) && (post.uid || post.userId || post.authorId || post.ownerUid) !== currentUser().uid && reelFollowStateReady && !reelFollowCache.has(String(post.uid || post.userId || post.authorId || post.ownerUid)) ? `<button type="button" class="ipr-follow" data-follow-reel="${escapeHTML(post.uid || post.userId || post.authorId || post.ownerUid)}">Follow</button>` : ""}
             </div>
           </div>
           <div class="ipr-caption">${escapeHTML(post.caption || "")}</div>
@@ -1275,7 +1275,14 @@ window.addEventListener("pagehide", () => {
 
     unsubscribeReelFollowState = onSnapshot(doc(db, "users", user.uid), snap => {
       const following = snap.exists() && Array.isArray(snap.data().following)
-        ? snap.data().following.map(uid => String(uid))
+        ? snap.data().following.map(item => {
+            if (typeof item === "string" || typeof item === "number") return String(item);
+            if (item && typeof item === "object") {
+              const id = item.uid || item.userId || item.id || item.targetUid;
+              return id == null ? "" : String(id);
+            }
+            return "";
+          }).filter(Boolean)
         : [];
       reelFollowCache = new Map(following.map(uid => [uid, true]));
       reelFollowStateReady = true;
