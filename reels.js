@@ -1,5 +1,6 @@
 // reels.js — InstaPro Reels System
 import { db, auth } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
   collection,
@@ -1217,15 +1218,21 @@ window.addEventListener("pagehide", () => {
     if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
   }, error => console.warn("Reel story ring listener:", error));
 
-  const me = currentUser();
-  if (me && !me.isAnonymous) {
-    getDoc(doc(db, "users", me.uid)).then(snap => {
-      const following = snap.exists() && Array.isArray(snap.data().following) ? snap.data().following : [];
-      reelFollowCache = new Map(following.map(uid => [uid, true]));
-      const track = document.getElementById("ipReelsTrack");
-      if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
-    }).catch(error => console.warn("Reel follow state:", error));
-  }
+  // Keep Reel Follow buttons in sync with the signed-in user's Firestore following list.
+  onAuthStateChanged(auth, async user => {
+    reelFollowCache = new Map();
+    if (user && !user.isAnonymous) {
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const following = snap.exists() && Array.isArray(snap.data().following) ? snap.data().following : [];
+        reelFollowCache = new Map(following.map(uid => [String(uid), true]));
+      } catch (error) {
+        console.warn("Reel follow state:", error);
+      }
+    }
+    const track = document.getElementById("ipReelsTrack");
+    if (track && track.querySelector(".ipr-slide")) renderReelsSlides(track);
+  });
 
   if (unsubscribeReels) {
     unsubscribeReels();
