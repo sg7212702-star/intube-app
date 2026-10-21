@@ -252,7 +252,10 @@ function watchUserProfile(uid) {
         previous.photoUrl !== nextProfile.photoUrl ||
         previous.photo !== nextProfile.photo ||
         previous.profilePic !== nextProfile.profilePic ||
-        previous.bio !== nextProfile.bio;
+        previous.bio !== nextProfile.bio ||
+        previous.isPrivate !== nextProfile.isPrivate ||
+        previous.privateAccount !== nextProfile.privateAccount ||
+        JSON.stringify(previous.followers || []) !== JSON.stringify(nextProfile.followers || []);
 
       profileCache.set(uid, nextProfile);
 
