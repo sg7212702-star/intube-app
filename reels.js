@@ -1411,26 +1411,7 @@ function startReelsSystem() {
       const rawReels = snapshot.docs
         .filter(item => !deletedIds.has(String(item.id)))
         .map(item => ({ ...item.data(), id: item.id }));
-      const privacyApi = window.InstaProPrivate;
-      const viewerUid = currentUser()?.uid || "";
-      const visibleReels = [];
-      for (const reel of rawReels) {
-        const owner = reel.uid || reel.userId || reel.authorId || reel.ownerUid || "";
-        if (owner && owner !== viewerUid && privacyApi) {
-          try {
-            const privacy = await privacyApi.getAccountPrivacy(owner);
-            if (privacy.isPrivate && !(await privacyApi.canViewAccountContent(owner, viewerUid))) continue;
-          } catch (privacyError) {
-            console.warn("Could not verify Reel account privacy; hiding Reel:", privacyError);
-            continue;
-          }
-        } else if (owner && owner !== viewerUid && !privacyApi) {
-          // Fail closed until privacy helpers have initialized.
-          continue;
-        }
-        visibleReels.push(reel);
-      }
-      reelsData = rankReelsForViewer(visibleReels);
+      reelsData = rankReelsForViewer(rawReels);
       // If a Reel was deleted in Profile/another tab, immediately remove it from the open viewer too.
       const viewer = document.getElementById("ipReelsViewer");
       const track = viewer?.querySelector("#iprTrack");
