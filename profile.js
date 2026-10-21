@@ -565,9 +565,6 @@ function render(data = profileData, posts = profilePosts) {
 
   const uid = viewingUid;
   const own = myId() === uid;
-  // Unlock private media only after the owner approved this follower.
-  const approvedFollower = !!(!own && myId() && Array.isArray(data.followers) && data.followers.includes(myId()) && Array.isArray(viewerFollowing) && viewerFollowing.includes(uid));
-  const privateLocked = !own && (data.isPrivate === true || data.privateAccount === true) && !approvedFollower;
 
   const name =
     data.displayName ||
@@ -624,9 +621,9 @@ function render(data = profileData, posts = profilePosts) {
 
   // Instagram-style profile post count includes every uploaded media item,
   // including videos; the Reels tab count remains separate below.
-  const postCount = privateLocked ? 0 : ownPosts.length;
+  const postCount = ownPosts.length;
 
-  const reelCount = privateLocked ? 0 : ownPosts.filter(
+  const reelCount = ownPosts.filter(
     post => isVideo(post)
   ).length;
 
@@ -806,7 +803,7 @@ function render(data = profileData, posts = profilePosts) {
             class="ipp-tab ${activeTab === "reposts" ? "active" : ""}"
             data-tab="reposts"
           >
-            ↻ REPOSTS (${privateLocked ? 0 : ownReposts.length})
+            ↻ REPOSTS (${ownReposts.length})
           </button>
 
           <button
@@ -908,9 +905,7 @@ function render(data = profileData, posts = profilePosts) {
 
   let filtered = [];
 
-  if (privateLocked) {
-    grid.innerHTML = '<div class="ipp-empty" style="padding:38px 18px"><div style="font-size:42px">🔒</div><strong>This account is private</strong><p>Posts aur Reels dekhne ke liye follow request bhejein aur approval ka wait karein.</p></div>';
-  } else if (activeTab === "posts") {
+  if (activeTab === "posts") {
     filtered = ownPosts.filter(post => !isVideo(post));
   } else if (activeTab === "reels") {
     filtered = ownPosts.filter(post => isVideo(post));
@@ -1691,16 +1686,6 @@ async function toggleFollow() {
   }
 
   try {
-    // Private accounts must approve new followers before content is unlocked.
-    const privacyApi = window.InstaProPrivate;
-    if (privacyApi && !viewerFollowing.includes(targetUid)) {
-      const privacy = await privacyApi.getAccountPrivacy(targetUid);
-      if (privacy.isPrivate) {
-        const result = await privacyApi.requestFollow(targetUid);
-        if (button) button.textContent = result.status === "pending" ? "Requested ✓" : "Following ✓";
-        return;
-      }
-    }
     const [mineSnap, targetSnap] = await Promise.all([
       getDoc(doc(db, "users", followerUid)),
       getDoc(doc(db, "users", targetUid))
