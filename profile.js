@@ -565,7 +565,9 @@ function render(data = profileData, posts = profilePosts) {
 
   const uid = viewingUid;
   const own = myId() === uid;
-  const privateLocked = !own && (data.isPrivate === true || data.privateAccount === true) && !viewerFollowing.includes(uid);
+  // Unlock private media only after the owner approved this follower.
+  const approvedFollower = !!(!own && myId() && Array.isArray(data.followers) && data.followers.includes(myId()) && Array.isArray(viewerFollowing) && viewerFollowing.includes(uid));
+  const privateLocked = !own && (data.isPrivate === true || data.privateAccount === true) && !approvedFollower;
 
   const name =
     data.displayName ||
