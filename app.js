@@ -4,10 +4,7 @@ const $ = id => document.getElementById(id);
 // Load the standalone Music Library without changing index.html or style.css.
 import("./music.js").catch(error => console.error("Music Library failed to load:", error));
 
-// Private account settings, follow requests, and privacy helpers.
-import("./private.js").then(module => module.initPrivateAccountSystem()).catch(error => console.error("Private Account System failed to load:", error));
-
-// Instagram-style people suggestions on Home and Explore.
+ Instagram-style people suggestions on Home and Explore.
 import("./suggestions.js").then(module => module.initSuggestions()).catch(error => console.error("People suggestions failed to load:", error));
 
 // Keep every video in InstaPro at its original 1x playback speed.
@@ -280,7 +277,6 @@ const SETTINGS_CATEGORY_OPTIONS = {
     ["messageNotifications","Messages", "Notify me about messages", true]
   ],
   "Privacy": [
-    ["privateAccount","Private account", "Limit profile visibility to approved followers. Enforcement requires privacy-aware feed and profile queries.", false],
     ["activityStatus","Activity status", "Allow others to see when you are active.", true],
     ["storyReplies","Story replies", "Allow replies to stories.", true],
     ["mentions","Mentions", "Allow other users to mention you.", true]
@@ -499,32 +495,12 @@ async function openSettingsCategory(category, user, panel) {
   const options = SETTINGS_CATEGORY_OPTIONS[category] || [];
   const saved = currentAppSettings[category] || {};
   if (category === "Privacy") {
-    const userSnap=await getDoc(doc(db,"users",me.uid)); const userData=userSnap.exists()?userSnap.data():{};
-    // Account privacy ka asli source users/{uid} hai; purani settings cache ko
-    // private/public toggle ki state override nahi karne deni.
-    const privacyOptions = options.map(option => option[0]==="privateAccount"
-      ? [option[0], "Private account", "ON: sirf approved followers aapki private posts dekh sakte hain. OFF: account public rahega.", userData.isPrivate===true||userData.privateAccount===true]
-      : option);
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Follow requests</div><div class="isp-desc">Pending requests ko manage karein.</div></div><button class="isp-action" id="ispManageFollowRequests">Manage</button></div>' + privacyOptions.map(([key,label,description,defaultValue]) => switchRow(key,label,description,key==="privateAccount" ? defaultValue : (typeof saved[key]==="boolean" ? saved[key] : defaultValue))).join("");
-    panel.querySelector("#ispManageFollowRequests").onclick=()=>{const api=window.InstaProPrivate;if(api?.openPrivateSettings)api.openPrivateSettings();else status.textContent="Private account system load nahi hua. Refresh karein.";};
+    rows.innerHTML=options.map(([key,label,description,defaultValue])=>switchRow(key,label,description,typeof saved[key]==="boolean"?saved[key]:defaultValue)).join("");
   } else {
     rows.innerHTML=options.map(([key,label,description,defaultValue])=>switchRow(key,label,description,typeof saved[key]==="boolean"?saved[key]:defaultValue)).join("");
   }
   setSwitches(saved,async(key,next,old)=>{
     const updated={...old,[key]:next};
-    if(category==="Privacy"&&key==="privateAccount") {
-      // Save privacy first and use the user document as the single source of truth.
-      await setDoc(doc(db,"users",me.uid),{
-        privateAccount:next,
-        isPrivate:next,
-        privacyUpdatedAt:serverTimestamp()
-      },{merge:true});
-      currentAppSettings[category]=updated;
-      status.textContent=next
-        ? "Account PRIVATE ho gaya. Naye followers ki requests approve karni hongi."
-        : "Account PUBLIC ho gaya. Ab log seedha follow kar sakte hain.";
-      return;
-    }
     currentAppSettings[category]=updated;
     await saveAppSetting(category,updated);
   });
