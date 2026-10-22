@@ -163,7 +163,12 @@ function scheduleSuggestionPlacement(feedEl) {
     suggestionBox = existing[0] || suggestionBox;
     existing.slice(1).forEach(box => box.remove());
     if (!suggestionBox || !suggestionBox.isConnected) suggestionBox = mount(feedEl);
-    if (suggestionBox) placeSingleSuggestion(suggestionBox, feedEl);
+    if (suggestionBox) {
+      placeSingleSuggestion(suggestionBox, feedEl);
+      // The Firestore listeners may finish before feed posts exist. Render the cached users
+      // immediately when the panel is finally mounted, instead of waiting for Refresh.
+      renderAll();
+    }
   }, 250);
 }
 
