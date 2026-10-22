@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 import("./music.js").catch(error => console.error("Music Library failed to load:", error));
 
 // Keep the Home screen focused on the feed; do not inject the suggested-people panel on startup.
-import("./suggestions.js?v=feedfirstsingle20261022d").then(module => module.initSuggestions()).catch(error => console.error("People suggestions failed to load:", error));
+import("./suggestions.js?v=waitforfeed20261022e").then(module => module.initSuggestions()).catch(error => console.error("People suggestions failed to load:", error));
 
 // Keep every video in InstaPro at its original 1x playback speed.
 // This also applies to videos inserted later by Feed, Reels, Explore and Profile.
