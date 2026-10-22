@@ -510,7 +510,7 @@ function injectFeedStyles() {
     .ip-feed-reel-post .ip-feed-follow.following { background:rgba(0,0,0,.25);color:#fff; }
     .ip-feed-reel-post .ip-feed-more { color:#fff;font-size:28px; }
     .ip-feed-reel-musicline { display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:12px;line-height:19px; }
-    .ip-feed-reel-post .ip-feed-music-toggle { right:16px !important;bottom:92px !important;width:42px !important;height:42px !important;background:rgba(20,20,20,.62) !important;font-size:18px !important; }
+    .ip-feed-reel-post .ip-feed-music-toggle { right:16px !important;bottom:92px !important;width:32px !important;height:32px !important;background:rgba(20,20,20,.62) !important;font-size:18px !important; }
     /* Immersive Instagram-style vertical Reel cards inside Home Feed */
     .instapro-feed-post.ip-feed-reel-post {
       position: relative;
