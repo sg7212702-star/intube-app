@@ -809,8 +809,8 @@ function openStoryEditor(file) {
       st.addEventListener("input",update); en.addEventListener("input",update);
       audio.addEventListener("loadedmetadata", () => { const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 15; st.max = String(Math.max(0,duration-.5)); en.max = String(duration); en.value = String(Math.min(15,duration)); update(); }, {once:true}); st.addEventListener("input",update); en.addEventListener("input",update);
       panel.querySelector("[data-preview-trim]").textContent = "♫ Auto playing"; panel.querySelector("[data-preview-trim]").onclick = playSelectedSegment;
-      panel.querySelector("[data-close-trim]").onclick = () => { audio.pause(); panel.remove(); };
-      panel.querySelector("[data-done-trim]").onclick = async () => { window.__instaProStoryMusicArtwork = art; const tool=modal.querySelector('[data-act="music"]'); if(tool) tool.innerHTML = '<span>' + (art ? '<img src="' + art + '" style="width:24px;height:24px;border-radius:6px;object-fit:cover">' : "♫") + '</span><small>Music</small>'; panel.remove(); try { if(audio.paused) { audio.currentTime=Number(st.value)||0; await audio.play(); } } catch(err) { console.info("Story music preview may require a tap",err); } };
+      panel.querySelector("[data-close-trim]").onclick = () => { audio.pause(); audio.currentTime = 0; audio.src = ""; audio.load(); if(storyMusicPreview === audio) storyMusicPreview = null; panel.remove(); };
+      panel.querySelector("[data-done-trim]").onclick = async () => { window.__instaProStoryMusicStart = Number(st.value)||0; window.__instaProStoryMusicEnd = Number(en.value)||15; window.__instaProStoryMusicArtwork = art; const tool=modal.querySelector('[data-act="music"]'); if(tool) tool.innerHTML = '<span>' + (art ? '<img src="' + art + '" style="width:24px;height:24px;border-radius:6px;object-fit:cover">' : "♫") + '</span><small>Music</small>'; panel.remove(); try { if(audio.paused) { audio.currentTime=Number(st.value)||0; await audio.play(); } } catch(err) { console.info("Story music preview may require a tap",err); } };
     }
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
@@ -921,7 +921,7 @@ function openStoryEditor(file) {
       filterRow.appendChild(btn);
     });
     filterRow.firstElementChild?.click();
-    const close = (value) => { URL.revokeObjectURL(url); modal.remove(); resolve(value); };
+    const close = (value) => { if (storyMusicPreview) { storyMusicPreview.pause(); storyMusicPreview.currentTime = 0; storyMusicPreview.src = ""; storyMusicPreview.load(); storyMusicPreview = null; } URL.revokeObjectURL(url); modal.remove(); resolve(value); };
     modal.addEventListener("click", async (e) => {
       const stickerButton = e.target.closest("[data-sticker]");
       if (stickerButton) {
