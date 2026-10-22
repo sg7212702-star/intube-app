@@ -771,7 +771,6 @@ function showAt(index) {
       audio.addEventListener("loadedmetadata", () => { if (musicStart < audio.duration) audio.currentTime = musicStart; }, {once:true});
       audio.addEventListener("timeupdate", () => { if (musicEnd > musicStart && audio.currentTime >= musicEnd) { audio.currentTime = musicStart < audio.duration ? musicStart : 0; if (!audio.paused) audio.play().catch(()=>{}); } });
       musicToggle.onclick = async event => {
-      musicToggle.onclick = async event => {
         event.preventDefault();
         event.stopPropagation();
         try {
@@ -783,12 +782,26 @@ function showAt(index) {
         }
       };
     }
-    audio.play().then(() => {
-      if (musicToggle?.isConnected) musicToggle.style.opacity = "1";
-    }).catch(error => {
-      console.info("Story music autoplay was blocked; tap Music to play.", error);
-      if (musicToggle?.isConnected) musicToggle.title = "Tap for music";
-    });
+    const startStoryMusic = async () => {
+      try {
+        if (musicEnd > musicStart && (audio.currentTime < musicStart || audio.currentTime >= musicEnd)) {
+          audio.currentTime = musicStart < (Number.isFinite(audio.duration) ? audio.duration : musicEnd) ? musicStart : 0;
+        }
+        await audio.play();
+        if (musicToggle?.isConnected) {
+          musicToggle.style.opacity = "1";
+          musicToggle.title = "Tap to pause music";
+        }
+      } catch (error) {
+        // Mobile browsers may block autoplay until the user taps inside the Story viewer.
+        if (musicToggle?.isConnected) musicToggle.title = "Tap to play music";
+      }
+    };
+    audio.addEventListener("loadeddata", () => {
+      if (musicStart > 0 && musicStart < audio.duration) audio.currentTime = musicStart;
+    }, { once: true });
+    viewer.addEventListener("pointerdown", startStoryMusic, { once: true });
+    startStoryMusic();
     audio.addEventListener("error", () => {
       console.warn("Story music URL failed to load:", soundtrackUrl);
       if (musicToggle?.isConnected) musicToggle.title = "Music unavailable";
