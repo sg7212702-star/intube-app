@@ -629,12 +629,12 @@ function injectFeedStyles() {
       z-index:7 !important;
       right:12px !important;
       bottom:12px !important;
-      width:32px !important;
-      height:32px !important;
-      min-width:32px !important;
-      min-height:32px !important;
-      max-width:32px !important;
-      max-height:32px !important;
+      width:28px !important;
+      height:28px !important;
+      min-width:28px !important;
+      min-height:28px !important;
+      max-width:28px !important;
+      max-height:28px !important;
       padding:0 !important;
       margin:0 !important;
       box-sizing:border-box !important;
@@ -645,23 +645,23 @@ function injectFeedStyles() {
       border:0 !important;
       border-radius:50% !important;
       color:#fff !important;
-      background:rgba(26,26,26,.72) !important;
+      background:rgba(26,26,26,.48) !important;
       box-shadow:none !important;
       line-height:0 !important;
       font-size:0 !important;
-      flex:0 0 32px !important;
+      flex:0 0 28px !important;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
     }
     .instapro-feed-post button.ip-feed-music-toggle svg {
       display:block !important;
-      width:16px !important;
-      height:16px !important;
-      min-width:16px !important;
-      min-height:16px !important;
-      max-width:16px !important;
-      max-height:16px !important;
-      flex:0 0 16px !important;
+      width:14px !important;
+      height:14px !important;
+      min-width:14px !important;
+      min-height:14px !important;
+      max-width:14px !important;
+      max-height:14px !important;
+      flex:0 0 14px !important;
       pointer-events:none;
     }
     .instapro-feed-post button.ip-feed-music-toggle span { display:none !important; }
