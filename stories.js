@@ -621,7 +621,42 @@ function openStoryComments() {
   );
 }
 
+let storyFloatingHeartInterval = null;
+function stopStoryFloatingHearts() {
+  if (storyFloatingHeartInterval) clearInterval(storyFloatingHeartInterval);
+  storyFloatingHeartInterval = null;
+}
+function startStoryFloatingHearts() {
+  stopStoryFloatingHearts();
+  if (!viewer) return;
+  const stage = viewer.querySelector(".is-stage");
+  if (!stage) return;
+  let heartIndex = 0;
+  const heartColors = ["#ff3158", "#ff4fa3", "#ff4d4d", "#ff78c8", "#ff1744", "#ff9dce", "#e040fb", "#ff6b35"];
+  storyFloatingHeartInterval = setInterval(() => {
+    if (!viewer || !viewer.isConnected || !stage.isConnected) {
+      stopStoryFloatingHearts();
+      return;
+    }
+    const heart = document.createElement("span");
+    const color = heartColors[heartIndex++ % heartColors.length];
+    heart.textContent = ["♥", "❤", "💗", "♥", "💖"][heartIndex % 5];
+    heart.setAttribute("aria-hidden", "true");
+    heart.style.cssText = "position:absolute;left:" + (8 + Math.random() * 84) + "%;bottom:" + (12 + Math.random() * 22) + "%;z-index:4;pointer-events:none;color:" + color + ";font-size:" + (23 + Math.random() * 22) + "px;line-height:1;text-shadow:0 2px 12px " + color + "99;will-change:transform,opacity;opacity:0;";
+    stage.appendChild(heart);
+    const drift = (Math.random() - .5) * 90;
+    const rotate = (Math.random() - .5) * 50;
+    const duration = 1450 + Math.random() * 750;
+    if (heart.animate) heart.animate([
+      { transform:"translate3d(0,12px,0) scale(.45) rotate(0deg)", opacity:0 },
+      { transform:"translate3d(" + (drift * .25) + "px,-35px,0) scale(1.05) rotate(" + (rotate * .3) + "deg)", opacity:.95, offset:.22 },
+      { transform:"translate3d(" + drift + "px,-" + (stage.clientHeight * (.30 + Math.random() * .24)) + "px,0) scale(.72) rotate(" + rotate + "deg)", opacity:0 }
+    ], { duration, easing:"cubic-bezier(.18,.72,.28,1)", fill:"forwards" });
+    setTimeout(() => heart.remove(), duration + 100);
+  }, 480);
+}
 function closeViewer() {
+  stopStoryFloatingHearts();
   if (viewerTimer) clearTimeout(viewerTimer);
   if (stopStoryComments) stopStoryComments();
   stopStoryComments = null;
@@ -742,6 +777,7 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
   viewer.addEventListener("click", event => {
     if (event.target === viewer) closeViewer();
   });
+  startStoryFloatingHearts();
   showAt(Math.max(0, Math.min(startIndex, currentGroup.length - 1)));
 }
 function showAt(index) {
