@@ -810,7 +810,7 @@ function openStoryEditor(file) {
       audio.addEventListener("loadedmetadata", () => { const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 15; st.max = String(Math.max(0,duration-.5)); en.max = String(duration); en.value = String(Math.min(15,duration)); update(); }, {once:true}); st.addEventListener("input",update); en.addEventListener("input",update);
       panel.querySelector("[data-preview-trim]").textContent = "♫ Auto playing"; panel.querySelector("[data-preview-trim]").onclick = playSelectedSegment;
       panel.querySelector("[data-close-trim]").onclick = () => { audio.pause(); panel.remove(); };
-      panel.querySelector("[data-done-trim]").onclick = () => { audio.pause(); window.__instaProStoryMusicArtwork = art; const tool=modal.querySelector('[data-act="music"]'); if(tool) tool.innerHTML = '<span>' + (art ? '<img src="' + art + '" style="width:24px;height:24px;border-radius:6px;object-fit:cover">' : "♫") + '</span><small>Music</small>'; panel.remove(); };
+      panel.querySelector("[data-done-trim]").onclick = async () => { window.__instaProStoryMusicArtwork = art; const tool=modal.querySelector('[data-act="music"]'); if(tool) tool.innerHTML = '<span>' + (art ? '<img src="' + art + '" style="width:24px;height:24px;border-radius:6px;object-fit:cover">' : "♫") + '</span><small>Music</small>'; panel.remove(); try { if(audio.paused) { audio.currentTime=Number(st.value)||0; await audio.play(); } } catch(err) { console.info("Story music preview may require a tap",err); } };
     }
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
