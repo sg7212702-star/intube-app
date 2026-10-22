@@ -738,6 +738,22 @@ function showAt(index) {
   media.src = url;
   media.alt = "Story";
   media.style.cssText = "max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:transparent;";
+  const storyEffectFilters = {
+    "PREMIUM GLITCH 01":"contrast(1.35) saturate(1.7) hue-rotate(18deg)","PREMIUM GLITCH 02":"contrast(1.4) saturate(1.55) hue-rotate(315deg)","RGB SPLIT":"contrast(1.3) saturate(1.6) hue-rotate(35deg)","NEON CYBER":"brightness(1.08) contrast(1.5) saturate(1.8) hue-rotate(145deg)","CHROMA BURST":"contrast(1.45) saturate(1.9) hue-rotate(70deg)","VHS DREAM":"sepia(.16) contrast(1.25) saturate(1.6) hue-rotate(330deg)","LASER PINK":"contrast(1.35) saturate(1.7) hue-rotate(285deg)","ELECTRIC BLUE":"contrast(1.4) saturate(1.65) hue-rotate(175deg)","ACID RAINBOW":"contrast(1.25) saturate(2) hue-rotate(95deg)","PRISM GLITCH":"contrast(1.5) saturate(1.8) hue-rotate(220deg)","PIXEL PULSE":"contrast(1.35) saturate(1.5) hue-rotate(260deg)","HOLOGRAM":"brightness(1.12) contrast(1.25) saturate(1.65) hue-rotate(160deg)"
+  };
+  const chosenStoryEffect = String(story.storyFilter || "Normal");
+  if (storyEffectFilters[chosenStoryEffect]) {
+    media.style.filter = storyEffectFilters[chosenStoryEffect];
+    if (/GLITCH|RGB|VHS|PIXEL/i.test(chosenStoryEffect)) {
+      media.style.animation = "ipStoryGlitchPulse .24s steps(2,end) infinite";
+      if (!document.getElementById("ip-story-glitch-viewer-style")) {
+        const glitchStyle = document.createElement("style");
+        glitchStyle.id = "ip-story-glitch-viewer-style";
+        glitchStyle.textContent = "@keyframes ipStoryGlitchPulse{0%{transform:translate(0,0);filter:hue-rotate(0deg) saturate(1.5)}25%{transform:translate(-1px,1px);filter:hue-rotate(22deg) saturate(1.9)}50%{transform:translate(1px,-1px);filter:hue-rotate(-18deg) saturate(1.6)}75%{transform:translate(-1px,0);filter:hue-rotate(12deg) saturate(2)}100%{transform:translate(0,0);filter:hue-rotate(0deg) saturate(1.5)}}";
+        document.head.appendChild(glitchStyle);
+      }
+    }
+  }
   if (media.tagName === "VIDEO") {
     media.autoplay = true;
     media.playsInline = true;
