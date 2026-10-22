@@ -622,59 +622,60 @@ function injectFeedStyles() {
     .ip-feed-save-action { margin-left:auto; }
     @media (max-width:360px) { .ip-feed-actions { gap:13px; } .ip-feed-icon-action svg { width:25px; height:25px; } }
 
-    /* Force Instagram-sized sound control on regular posts and Reel posts. */
-    .instapro-feed-post button.ip-feed-music-toggle,
-    .instapro-feed-post .ip-feed-music-toggle {
-      position: absolute !important;
-      z-index: 6 !important;
-      right: 12px !important;
-      bottom: 12px !important;
-      width: 36px !important;
-      height: 36px !important;
-      min-width: 36px !important;
-      min-height: 36px !important;
-      max-width: 36px !important;
-      max-height: 36px !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      box-sizing: border-box !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      border: 0 !important;
-      border-radius: 50% !important;
-      color: #fff !important;
-      background: rgba(26,26,26,.68) !important;
-      box-shadow: 0 1px 4px rgba(0,0,0,.22) !important;
-      line-height: 1 !important;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+    /* Stable compact Instagram-like sound button: one fixed circular control per post. */
+    .instapro-feed-post .ip-feed-media-wrap { position:relative !important; }
+    .instapro-feed-post button.ip-feed-music-toggle {
+      position:absolute !important;
+      z-index:7 !important;
+      right:12px !important;
+      bottom:12px !important;
+      width:32px !important;
+      height:32px !important;
+      min-width:32px !important;
+      min-height:32px !important;
+      max-width:32px !important;
+      max-height:32px !important;
+      padding:0 !important;
+      margin:0 !important;
+      box-sizing:border-box !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      overflow:hidden !important;
+      border:0 !important;
+      border-radius:50% !important;
+      color:#fff !important;
+      background:rgba(26,26,26,.72) !important;
+      box-shadow:none !important;
+      line-height:0 !important;
+      font-size:0 !important;
+      flex:0 0 32px !important;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
     }
-    .instapro-feed-post .ip-feed-music-toggle svg {
-      display: block !important;
-      width: 18px !important;
-      height: 18px !important;
-      min-width: 18px !important;
-      min-height: 18px !important;
-      max-width: 18px !important;
-      max-height: 18px !important;
-      flex: 0 0 18px !important;
+    .instapro-feed-post button.ip-feed-music-toggle svg {
+      display:block !important;
+      width:16px !important;
+      height:16px !important;
+      min-width:16px !important;
+      min-height:16px !important;
+      max-width:16px !important;
+      max-height:16px !important;
+      flex:0 0 16px !important;
+      pointer-events:none;
     }
-    .instapro-feed-post .ip-feed-music-toggle:focus-visible {
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
-    .instapro-feed-post .ip-feed-music-toggle:active { transform: scale(.96); }
-    .ip-feed-reel-post .ip-feed-music-toggle {
-      right: 12px !important;
-      bottom: 92px !important;
-      width: 36px !important;
-      height: 36px !important;
-      min-width: 36px !important;
-      min-height: 36px !important;
-      max-width: 36px !important;
-      max-height: 36px !important;
-      background: rgba(20,20,20,.62) !important;
+    .instapro-feed-post button.ip-feed-music-toggle span { display:none !important; }
+    .instapro-feed-post button.ip-feed-music-toggle:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+    .instapro-feed-post button.ip-feed-music-toggle:active { transform:scale(.96); }
+    .instapro-feed-post.ip-feed-reel-post button.ip-feed-music-toggle {
+      right:12px !important;
+      bottom:92px !important;
+      width:32px !important;
+      height:32px !important;
+      min-width:32px !important;
+      min-height:32px !important;
+      max-width:32px !important;
+      max-height:32px !important;
     }
 
     .ip-feed-view-comments {
@@ -2144,7 +2145,7 @@ function instaProStopFeedMediaOnExit() {
     }
   });
   document.querySelectorAll("[data-music-toggle]").forEach(button => {
-    button.innerHTML = '🔇 <span>Sound</span>';
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" fill="currentColor"/><path d="M16 9 21 14M21 9 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     button.setAttribute("aria-label", "Turn post music on");
   });
 }
