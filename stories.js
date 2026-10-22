@@ -183,7 +183,7 @@ function setRingPreview(ring, story, label) {
       ring.prepend(image);
     }
     image.src = url;
-    image.style.cssText = "position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);object-fit:cover;border-radius:50%;z-index:0;display:block;";
+    image.style.cssText = "position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);object-fit:cover;border-radius:50%;z-index:0;display:block;pointer-events:none;";
     const plus = ring.querySelector("span");
     if (plus) plus.style.cssText = "position:absolute;right:-3px;bottom:-3px;z-index:3;background:#0095f6;color:#fff;border:2px solid #111;border-radius:50%;width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;";
   } else {
@@ -230,15 +230,36 @@ function renderStories() {
   setRingPreview(yourRing, ownGroup?.latest || null, "Your latest story");
   if (yourRing) {
     yourRing.title = ownGroup ? "View your story · + to add another" : "Add to your story";
-    yourRing.onclick = event => {
+    yourRing.style.cursor = "pointer";
+    yourRing.style.pointerEvents = "auto";
+    yourRing.style.touchAction = "manipulation";
+    yourRing.setAttribute("role", "button");
+    yourRing.setAttribute("tabindex", "0");
+    const handleYourStoryClick = event => {
       event.preventDefault();
       event.stopPropagation();
-      if (event.target.closest("span")) {
+      // The small blue + is for adding another story; the rest of the ring opens it.
+      if (event.target instanceof Element && event.target.closest("span")) {
         openUpload();
         return;
       }
-      if (ownGroup) openStoryGroup(ownGroup);
+      if (ownGroup?.stories?.length) openStoryGroup(ownGroup);
+      else openUpload();
     };
+    yourRing.onclick = handleYourStoryClick;
+    yourRing.onkeydown = event => {
+      if (event.key === "Enter" || event.key === " ") handleYourStoryClick(event);
+    };
+    const yourCaption = yourStoryItem?.querySelector("p");
+    if (yourCaption) {
+      yourCaption.style.cursor = "pointer";
+      yourCaption.onclick = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (ownGroup?.stories?.length) openStoryGroup(ownGroup);
+        else openUpload();
+      };
+    }
   }
 
   // Use a real flex row instead of display:contents for reliable mobile rendering.
