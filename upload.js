@@ -1118,7 +1118,10 @@ function openStoryEditor(file) {
               const finishMusicDrag=event=>{clearTimeout(pressTimer);pressTimer=null;activePointers.delete(event.pointerId);if(musicDrag?.moved||musicDrag?.pinch)sticker.dataset.dragged="1";if(activePointers.size===0){musicDrag=null;dragReady=false;}};
               sticker.addEventListener("pointerup",finishMusicDrag);sticker.addEventListener("pointercancel",finishMusicDrag);
               modal.appendChild(sticker);
-              // Start playing the selected song as soon as it is used in the Story editor.
+              const stickerRect=sticker.getBoundingClientRect(),modalRect=modal.getBoundingClientRect();
+              sticker.style.left=(stickerRect.left-modalRect.left+stickerRect.width/2)+"px";
+              sticker.style.top=(stickerRect.top-modalRect.top+stickerRect.height/2)+"px";
+              // Start the selected song as soon as Use is tapped.
               if(window.__instaProPendingMusicTrack?.audioUrl||window.__instaProPendingMusicTrack?.previewUrl){showStoryMusicTrim(window.__instaProPendingMusicTrack);}
               return;
             }
