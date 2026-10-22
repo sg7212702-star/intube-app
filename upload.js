@@ -1062,7 +1062,16 @@ function openStoryEditor(file) {
                 filePage: track.filePage || ""
               };
               closeMusicPicker(ev);
-              showStoryMusicTrim(window.__instaProPendingMusicTrack);
+              // Show the selected song as a tappable sticker on the photo; tapping it opens trim.
+              modal.querySelector("#ip-story-music-sticker")?.remove();
+              const sticker = document.createElement("button");
+              sticker.type = "button";
+              sticker.id = "ip-story-music-sticker";
+              sticker.style.cssText = "position:absolute;z-index:8;left:50%;top:48%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;max-width:82%;padding:8px 12px;border:0;border-radius:12px;background:#fff;color:#111;text-align:left;box-shadow:0 4px 18px #0007;touch-action:manipulation";
+              const artUrl = window.__instaProPendingMusicTrack.artworkUrl || "";
+              sticker.innerHTML = (artUrl ? '<img src="' + artUrl + '" style="width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:7px">' : '<span style="font-size:28px">♫</span>') + '<span style="min-width:0;display:block"><b style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + String(window.__instaProPendingMusicTrack.title).replace(/[&<>]/g,"") + '</b><small style="display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + String(window.__instaProPendingMusicTrack.artistName || "").replace(/[&<>]/g,"") + '</small><small style="display:block;font-size:10px;opacity:.7">Tap to adjust music ↔</small></span>';
+              sticker.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); showStoryMusicTrim(window.__instaProPendingMusicTrack); });
+              modal.querySelector("#ip-story-preview-wrap")?.appendChild(sticker);
               return;
             }
           });
