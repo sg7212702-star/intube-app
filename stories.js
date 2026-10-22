@@ -14,13 +14,9 @@ if (yourRing && !yourRing.dataset.storyTapFix) {
   yourRing.addEventListener("click", event => {
     event.preventDefault();
     event.stopImmediatePropagation();
-    const clickedPlus = event.target instanceof Element && event.target.closest("span");
-    if (clickedPlus) {
-      document.getElementById("optStory")?.click();
-      return;
-    }
     const myUid = auth.currentUser?.uid || signedInUser?.uid || "";
     const ownStories = groupsByUser(activeStories()).find(group => group.uid === myUid);
+    // If a story is already posted, tapping the ring opens it. Use the bottom + to add another story.
     if (ownStories?.stories?.length) openStoryGroup(ownStories);
     else document.getElementById("optStory")?.click();
   }, true);
