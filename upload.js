@@ -781,13 +781,30 @@ function openStoryEditor(file) {
       for(let i=0;i<46;i++){const bar=document.createElement("i");bar.style.cssText="display:block;flex:1;max-width:7px;border-radius:4px;background:#b9a0ff;height:"+ (12+Math.abs(Math.sin(i*2.31)*34)) +"px;opacity:.85";wave.appendChild(bar);}
       const updateWindow=()=>{const duration=Math.max(1,Number(en.max)||15),start=Number(st.value),end=Number(en.value);musicWindow.style.left=(start/duration*100)+"%";musicWindow.style.width=Math.max(5,(end-start)/duration*100)+"%";};
       const update = () => { if (Number(en.value) <= Number(st.value)) en.value = String(Math.min(Number(en.max), Number(st.value) + .5)); panel.querySelector("#ip-music-start-label").textContent = Number(st.value).toFixed(1)+"s"; panel.querySelector("#ip-music-end-label").textContent = Number(en.value).toFixed(1)+"s"; window.__instaProStoryMusicStart = Number(st.value); window.__instaProStoryMusicEnd = Number(en.value); updateWindow(); };
-      let dragX=0,dragStart=0,dragEnd=0;
-      const playSelectedSegment=async()=>{try{audio.pause();audio.currentTime=Number(st.value)||0;await audio.play();}catch(err){}};
+      let dragX=0,dragStart=0,dragEnd=0,playRequested=false;
+      const playSelectedSegment=async()=>{
+        if(!src){panel.querySelector("[data-preview-trim]").textContent="Audio unavailable";return;}
+        try {
+          playRequested=true;
+          if(audio.readyState<1){audio.load();return;}
+          audio.pause();
+          const duration=Number.isFinite(audio.duration)?audio.duration:Infinity;
+          audio.currentTime=Math.min(Number(st.value)||0,Math.max(0,duration-0.1));
+          await audio.play();
+          panel.querySelector("[data-preview-trim]").textContent="♫ Playing selected part";
+        } catch(err) {
+          panel.querySelector("[data-preview-trim]").textContent="Tap to play music";
+          console.warn("Story edit music preview failed",err);
+        }
+      };
+      audio.addEventListener("loadedmetadata",()=>{const duration=Number.isFinite(audio.duration)?audio.duration:15;en.max=String(Math.max(1,duration));st.max=String(Math.max(0,duration-.5));en.value=String(Math.min(Number(en.value),duration));update();if(playRequested)playSelectedSegment();});
       musicWindow.addEventListener("pointerdown",e=>{dragX=e.clientX;dragStart=Number(st.value);dragEnd=Number(en.value);musicWindow.setPointerCapture(e.pointerId);e.preventDefault();});
       musicWindow.addEventListener("pointermove",e=>{if(!musicWindow.hasPointerCapture(e.pointerId))return;const duration=Math.max(1,Number(en.max)||15),width=timeline.getBoundingClientRect().width,delta=(e.clientX-dragX)/width*duration,clip=Math.max(.5,dragEnd-dragStart),start=Math.max(0,Math.min(duration-clip,dragStart+delta));st.value=String(start);en.value=String(start+clip);update();playSelectedSegment();});
       musicWindow.addEventListener("pointerup",playSelectedSegment);
       audio.addEventListener("timeupdate",()=>{if(audio.currentTime>=Number(en.value)){audio.currentTime=Number(st.value)||0;audio.play().catch(()=>{});}});
       audio.addEventListener("ended",()=>{audio.currentTime=Number(st.value)||0;audio.play().catch(()=>{});});
+      panel.querySelector("[data-preview-trim]").onclick=playSelectedSegment;
+      audio.addEventListener("error",()=>{panel.querySelector("[data-preview-trim]").textContent="Song preview unavailable";});
       playSelectedSegment();
       st.addEventListener("input",update); en.addEventListener("input",update);
       audio.addEventListener("loadedmetadata", () => { const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 15; st.max = String(Math.max(0,duration-.5)); en.max = String(duration); en.value = String(Math.min(15,duration)); update(); }, {once:true}); st.addEventListener("input",update); en.addEventListener("input",update);
