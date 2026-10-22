@@ -704,19 +704,29 @@ function showAt(index) {
     audio.className = "is-story-music-audio";
     audio.src = soundtrackUrl;
     audio.preload = "auto";
-    audio.loop = true;
+    const musicStart = Math.max(0, Number(story.musicStartTime || 0));
+    const musicEnd = Number(story.musicEndTime || 0);
+    audio.loop = !(musicEnd > musicStart);
     audio.playsInline = true;
     audio.style.display = "none";
     viewer.appendChild(audio);
     if (musicToggle) {
-      musicToggle.style.display = "block";
-      musicToggle.textContent = "♫ Music";
+      const artwork = story.musicArtwork || "";
+      musicToggle.innerHTML = (artwork ? '<img src="' + artwork.replace(/"/g,"&quot;") + '" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:6px;margin-right:7px">' : '') + '<span>' + (story.musicName || "Music").replace(/[&<>]/g,"") + '</span>';
+      musicToggle.style.display = "flex";
+      musicToggle.style.alignItems = "center";
+      musicToggle.style.maxWidth = "min(72vw,280px)";
+      musicToggle.style.overflow = "hidden";
+      musicToggle.style.whiteSpace = "nowrap";
+      audio.addEventListener("loadedmetadata", () => { if (musicStart < audio.duration) audio.currentTime = musicStart; }, {once:true});
+      audio.addEventListener("timeupdate", () => { if (musicEnd > musicStart && audio.currentTime >= musicEnd) { audio.currentTime = musicStart < audio.duration ? musicStart : 0; if (!audio.paused) audio.play().catch(()=>{}); } });
+      musicToggle.onclick = async event => {
       musicToggle.onclick = async event => {
         event.preventDefault();
         event.stopPropagation();
         try {
-          if (audio.paused) { await audio.play(); musicToggle.textContent = "♫ Music on"; }
-          else { audio.pause(); musicToggle.textContent = "♫ Music off"; }
+          if (audio.paused) { if (musicEnd > musicStart && (audio.currentTime < musicStart || audio.currentTime >= musicEnd)) audio.currentTime = musicStart; await audio.play(); }
+          else { audio.pause(); }
         } catch (error) {
           console.warn("Story soundtrack playback failed:", error);
           musicToggle.textContent = "▶ Tap for music";
@@ -724,14 +734,14 @@ function showAt(index) {
       };
     }
     audio.play().then(() => {
-      if (musicToggle?.isConnected) musicToggle.textContent = "♫ Music on";
+      if (musicToggle?.isConnected) musicToggle.style.opacity = "1";
     }).catch(error => {
       console.info("Story music autoplay was blocked; tap Music to play.", error);
-      if (musicToggle?.isConnected) musicToggle.textContent = "▶ Tap for music";
+      if (musicToggle?.isConnected) musicToggle.title = "Tap for music";
     });
     audio.addEventListener("error", () => {
       console.warn("Story music URL failed to load:", soundtrackUrl);
-      if (musicToggle?.isConnected) musicToggle.textContent = "Music unavailable";
+      if (musicToggle?.isConnected) musicToggle.title = "Music unavailable";
     }, { once: true });
   }
 
