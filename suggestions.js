@@ -225,13 +225,6 @@ function startListeners(user = auth.currentUser) {
   });
 }
 export function initSuggestions() {
-  // Module imports with different cache-busting URLs share this global singleton.
-  if (window.__instaProSuggestionsInitStarted) return;
-  window.__instaProSuggestionsInitStarted = true;
-  init();
-}
-
-export function initSuggestions() {
   if (window.__instaProSuggestionsInitStarted) return;
   window.__instaProSuggestionsInitStarted = true;
   init();
