@@ -925,8 +925,9 @@ function showAt(index) {
     }, error => console.warn("Story stats listener error:", error));
   }
   if (!isVideo(story)) {
+    // Still photos stay visible for 30 seconds, like a full-length Story segment.
     let elapsed = 0;
-    const duration = 5000;
+    const duration = 30000;
     const start = Date.now();
     const fill = progress.children[index]?.firstElementChild;
     const animate = () => {
@@ -939,11 +940,22 @@ function showAt(index) {
     animate();
   } else {
     const fill = progress.children[index]?.firstElementChild;
-    media.ontimeupdate = () => {
-      if (fill && media.duration && Number.isFinite(media.duration)) fill.style.width = Math.min(100, media.currentTime / media.duration * 100) + "%";
+    const advanceWhenVideoEnds = () => {
+      if (viewer && currentIndex === index) showAt(index + 1);
     };
-    media.onended = () => showAt(index + 1);
-    viewerTimer = setTimeout(() => { if (viewer && currentIndex === index) showAt(index + 1); }, 30000);
+    media.ontimeupdate = () => {
+      if (fill && media.duration && Number.isFinite(media.duration) && media.duration > 0) {
+        fill.style.width = Math.min(100, media.currentTime / media.duration * 100) + "%";
+      }
+    };
+    // Video Stories follow their actual media duration; do not force-advance at 30 seconds.
+    media.onended = advanceWhenVideoEnds;
+    media.onerror = advanceWhenVideoEnds;
+    media.addEventListener("loadedmetadata", () => {
+      if (viewer && currentIndex === index && Number.isFinite(media.duration) && media.duration > 0 && fill) {
+        fill.style.width = Math.min(100, media.currentTime / media.duration * 100) + "%";
+      }
+    }, { once: true });
   }
 }
 
