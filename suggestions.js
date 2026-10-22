@@ -23,7 +23,7 @@ function styles() {
   .ipsg-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}.ipsg-title{font-size:16px;font-weight:800;flex:1}.ipsg-refresh{border:1px solid #ffffff25;border-radius:10px;background:#ffffff0d;color:inherit;padding:7px 10px}
   .ipsg-list{display:flex;gap:10px;overflow-x:auto;padding:2px 0 7px;scroll-snap-type:x proximity}
   .ipsg-card{flex:0 0 154px;min-width:0;text-align:center;padding:14px 10px;border:1px solid #ffffff1c;border-radius:16px;background:#ffffff08;scroll-snap-align:start}
-  .ipsg-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#333;border:2px solid #e879f9;margin:0 auto 9px;display:block}
+  .ipsg-wrap .ipsg-card img.ipsg-avatar{width:64px!important;height:64px!important;min-width:64px!important;min-height:64px!important;max-width:64px!important;max-height:64px!important;aspect-ratio:1/1;box-sizing:border-box;object-fit:cover;object-position:center;border-radius:50%!important;background:#333;border:2px solid #e879f9;margin:0 auto 9px;display:block;flex:0 0 64px}
   .ipsg-name{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ipsg-handle{font-size:11px;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 0 7px}
   .ipsg-mutual{font-size:10px;opacity:.7;min-height:14px;margin-bottom:8px}.ipsg-follow{width:100%;border:0;border-radius:10px;padding:9px 7px;background:linear-gradient(110deg,#8b5cf6,#ec4899);color:white;font-weight:800;font-size:12px}.ipsg-remove{border:0;background:transparent;color:inherit;opacity:.6;font-size:11px;padding:8px}
   .ipsg-empty{font-size:12px;opacity:.7;padding:15px 3px}.ipsg-error{font-size:12px;color:#ff9da9;padding:10px}
@@ -31,7 +31,7 @@ function styles() {
   document.head.appendChild(s);
 }
 function personName(u){return u.username || u.displayName || u.name || u.email?.split("@")[0] || "InstaPro user";}
-function personPhoto(u){return u.photoURL || u.photoUrl || u.profilePic || u.photo || u.avatar || "https://www.gravatar.com/avatar/?d=mp";}
+function personPhoto(u){return u.photoURL || u.photoUrl || u.profilePic || u.profilePhoto || u.profileImage || u.userPhoto || u.avatarUrl || u.avatar || u.photo || u.imageURL || u.imageUrl || "https://www.gravatar.com/avatar/?d=mp";}
 function uidOf(u){return u.uid || u.id || "";}
 function rankUsers() {
   const me = auth.currentUser?.uid;
@@ -62,7 +62,7 @@ function mount(target) {
 function cardHTML(u) {
   const name=personName(u), id=u.__uid;
   return `<article class="ipsg-card" data-suggest-card="${esc(id)}">
-    <img class="ipsg-avatar" src="${esc(personPhoto(u))}" alt="" loading="lazy" onerror="this.src='https://www.gravatar.com/avatar/?d=mp'">
+    <img class="ipsg-avatar" src="${esc(personPhoto(u))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://www.gravatar.com/avatar/?d=mp'">
     <div class="ipsg-name">${esc(name)}</div><div class="ipsg-handle">@${esc(String(u.username || id).replace(/^@/, ""))}</div>
     <div class="ipsg-mutual">${u.__mutual ? esc(u.__mutual)+" mutual connection"+(u.__mutual===1?"":"s") : "People you may know"}</div>
     <button type="button" class="ipsg-follow" data-suggest-follow="${esc(id)}">Follow</button>
