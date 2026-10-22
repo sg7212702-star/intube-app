@@ -40,6 +40,7 @@ const InstaProUploadNotification = (() => {
     const style = document.createElement("style");
     style.textContent = `
       #ipUploadNotice {
+        display: none !important;
         position: fixed;
         top: 15px;
         left: 12px;
@@ -150,7 +151,7 @@ const InstaProUploadNotification = (() => {
 
   function show() {
     init();
-    preparePhoneNotifications();
+    preparePhoneNotifications().then(ok => { if (ok) showPhoneNotification("Insta Pro upload", "Upload started… 0%", "instapro-upload-progress"); });
 
     container.style.display = "block";
 
@@ -176,6 +177,7 @@ const InstaProUploadNotification = (() => {
 
     container.querySelector(".ip-un-bar").style.width =
       `${value}%`;
+    if (value === 100 || value % 10 === 0) showPhoneNotification("Insta Pro upload", `Uploading… ${value}%`, "instapro-upload-progress");
   }
 
   function success() {
@@ -193,7 +195,7 @@ const InstaProUploadNotification = (() => {
     container.querySelector(".ip-un-bar").style.width = "100%";
     container.querySelector(".ip-un-close").style.display = "inline-block";
 
-    showPhoneNotification("Insta Pro", "Your post uploaded successfully.", "instapro-upload-success");
+    showPhoneNotification("Insta Pro", "Upload completed successfully.", "instapro-upload-progress");
     setTimeout(() => {
       if (container) container.style.display = "none";
     }, 4000);
@@ -211,7 +213,7 @@ const InstaProUploadNotification = (() => {
       message || "Please try again.";
 
     container.querySelector(".ip-un-close").style.display = "inline-block";
-    showPhoneNotification("Insta Pro", "Upload failed: " + (message || "Please try again."), "instapro-upload-error");
+    showPhoneNotification("Insta Pro", "Upload failed: " + (message || "Please try again."), "instapro-upload-progress");
   }
 
   return { show, progress, success, error };
