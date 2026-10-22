@@ -1477,8 +1477,6 @@ const notice = window.InstaProUploadNotification;
     window.__instaProPostCaption = "";
     window.__instaProStoryOverlayText = "";
     window.__instaProStoryFilter = "Normal";
-    window.__instaProStoryMusicStart = 0; window.__instaProStoryMusicEnd = 15; window.__instaProStoryMusicArtwork = "";
-
     // Firestore save starts
     status.textContent =
       "Firebase Firestore mein data save ho raha hai...";
@@ -1543,6 +1541,7 @@ const notice = window.InstaProUploadNotification;
       } : {}),
       createdAt: serverTimestamp()
     };
+    window.__instaProStoryMusicStart = 0; window.__instaProStoryMusicEnd = 15; window.__instaProStoryMusicArtwork = "";
 
     let savedDocument;
 
