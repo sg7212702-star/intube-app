@@ -1424,6 +1424,30 @@ function openPremiumReelEditor(file) {
 // MAIN UPLOAD HANDLER
 // -------------------------------------
 
+async function compressImageForUpload(file, maxBytes = 9 * 1024 * 1024) {
+  if (!file || !file.type.startsWith("image/") || file.size <= maxBytes) return file;
+  const bitmap = await createImageBitmap(file);
+  try {
+    const maxDimension = 2560;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d", { alpha: false });
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.88, 0.8, 0.72, 0.64, 0.56, 0.5]) {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (blob && blob.size <= maxBytes) {
+        const base = (file.name || "instapro-image").replace(/\.[^.]+$/, "");
+        return new File([blob], base + "-compressed.jpg", { type: "image/jpeg", lastModified: Date.now() });
+      }
+    }
+    throw new Error("Photo ko 10 MB se chhota nahi kar paye. Chhoti photo select karein.");
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 async function handleFile(file, postType) {
   if (!file) return;
 
@@ -1453,6 +1477,12 @@ async function handleFile(file, postType) {
   }
 
   uploadInProgress = true;
+
+  // Cloudinary image uploads are limited to 10 MiB; compress oversized photos before sending.
+  if (isImage && file.size > 9 * 1024 * 1024) {
+    try { file = await compressImageForUpload(file); }
+    catch (compressionError) { uploadInProgress = false; alert(compressionError.message || "Photo compress nahi ho payi."); return; }
+  }
 
   // Small live upload HUD: editor closes only after export; this remains visible
   // through Cloudinary transfer and Firestore publication, with real progress.
