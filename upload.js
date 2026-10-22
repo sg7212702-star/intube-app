@@ -1490,7 +1490,7 @@ async function handleFile(file, postType) {
   document.getElementById(uploadHudId)?.remove();
   const hud = document.createElement("div");
   hud.id = uploadHudId;
-  hud.style.cssText = "position:fixed;left:14px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:2147483646;padding:15px 16px;border:1px solid #ffffff24;border-radius:18px;background:rgba(18,18,25,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#fff;font:14px system-ui,sans-serif;box-shadow:0 14px 44px #0008";
+  hud.style.cssText = "display:none !important;position:fixed;left:14px;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:2147483646;padding:15px 16px;border:1px solid #ffffff24;border-radius:18px;background:rgba(18,18,25,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#fff;font:14px system-ui,sans-serif;box-shadow:0 14px 44px #0008";
   hud.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span id="ipuh-icon" style="width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(130deg,#914cff,#ff398a);font-size:18px">↑</span><div style="flex:1;min-width:0"><b id="ipuh-title" style="display:block;font-size:14px">Preparing upload…</b><small id="ipuh-message" style="display:block;opacity:.7;margin-top:3px;overflow-wrap:anywhere">Please keep InstaPro open.</small></div><b id="ipuh-percent" style="font-size:13px">0%</b></div><div style="height:5px;border-radius:9px;background:#ffffff20;margin-top:13px;overflow:hidden"><div id="ipuh-bar" style="height:100%;width:0%;border-radius:9px;background:linear-gradient(90deg,#914cff,#ff398a);transition:width .18s"></div></div>';
   document.body.appendChild(hud);
   const status = {
