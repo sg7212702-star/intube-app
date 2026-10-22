@@ -1067,11 +1067,16 @@ function openStoryEditor(file) {
               const sticker = document.createElement("button");
               sticker.type = "button";
               sticker.id = "ip-story-music-sticker";
-              sticker.style.cssText = "position:absolute;z-index:8;left:50%;top:48%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;max-width:82%;padding:8px 12px;border:0;border-radius:12px;background:#fff;color:#111;text-align:left;box-shadow:0 4px 18px #0007;touch-action:manipulation";
+              sticker.style.cssText = "position:absolute;z-index:2147483001;left:50%;top:48%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;max-width:82vw;padding:8px 12px;border:0;border-radius:12px;background:#fff;color:#111;text-align:left;box-shadow:0 4px 18px #0007;touch-action:none;user-select:none;cursor:move";
               const artUrl = window.__instaProPendingMusicTrack.artworkUrl || "";
               sticker.innerHTML = (artUrl ? '<img src="' + artUrl + '" style="width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:7px">' : '<span style="font-size:28px">♫</span>') + '<span style="min-width:0;display:block"><b style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + String(window.__instaProPendingMusicTrack.title).replace(/[&<>]/g,"") + '</b><small style="display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + String(window.__instaProPendingMusicTrack.artistName || "").replace(/[&<>]/g,"") + '</small><small style="display:block;font-size:10px;opacity:.7">Tap to adjust music ↔</small></span>';
-              sticker.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); showStoryMusicTrim(window.__instaProPendingMusicTrack); });
-              modal.querySelector("#ip-story-preview-wrap")?.appendChild(sticker);
+              sticker.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); if(sticker.dataset.dragged==="1"){sticker.dataset.dragged="";return;} showStoryMusicTrim(window.__instaProPendingMusicTrack); });
+              let musicDrag=null;
+              sticker.addEventListener("pointerdown",event=>{if(event.target.closest("button")&&event.target!==sticker)return;musicDrag={x:event.clientX,y:event.clientY,left:sticker.offsetLeft,top:sticker.offsetTop,moved:false};sticker.setPointerCapture(event.pointerId);event.preventDefault();});
+              sticker.addEventListener("pointermove",event=>{if(!musicDrag)return;const dx=event.clientX-musicDrag.x,dy=event.clientY-musicDrag.y;if(Math.abs(dx)+Math.abs(dy)>5)musicDrag.moved=true;if(musicDrag.moved){sticker.style.left=(musicDrag.left+dx)+"px";sticker.style.top=(musicDrag.top+dy)+"px";sticker.style.transform="none";sticker.dataset.dragged="1";}});
+              const finishMusicDrag=()=>{if(musicDrag){if(!musicDrag.moved)sticker.dataset.dragged="";musicDrag=null;}};
+              sticker.addEventListener("pointerup",finishMusicDrag);sticker.addEventListener("pointercancel",finishMusicDrag);
+              modal.appendChild(sticker);
               return;
             }
           });
