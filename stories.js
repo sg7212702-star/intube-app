@@ -661,8 +661,11 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
     <div class="is-stage">
       <div class="is-progress" style="position:absolute;top:12px;left:10px;right:10px;display:flex;gap:4px;z-index:5;"></div>
       <div class="is-head" style="position:absolute;top:24px;left:14px;right:14px;z-index:5;display:flex;align-items:center;gap:9px;text-shadow:0 1px 4px #000;">
-        <img class="is-avatar" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;">
-        <span class="is-name" style="font-size:14px;font-weight:600;flex:1;"></span><span class="is-time"></span>
+        <button class="is-profile-link" type="button" aria-label="Open profile" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0;border:0!important;background:transparent!important;padding:0!important;color:#fff!important;border-radius:24px!important;justify-content:flex-start!important;">
+          <img class="is-avatar" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;background:#333;flex-shrink:0;">
+          <span class="is-name" style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <span class="is-time" style="font-size:13px;opacity:.8;white-space:nowrap;"></span>
+        </button>
         <button class="is-add-story" aria-label="Add another story" title="Add another story" style="display:none;background:transparent!important;border:0;color:#fff;font-size:25px;padding:0 5px;">＋</button>
         <button class="is-close" aria-label="Close story" style="background:transparent!important;border:0;color:#fff;font-size:27px;padding:0 5px;">×</button>
       </div>
@@ -683,6 +686,15 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
     </div>`
   document.body.appendChild(viewer);
   viewer.querySelector(".is-close").onclick = closeViewer;
+  viewer.querySelector(".is-profile-link").onclick = (event) => {
+    event.stopPropagation();
+    const story = currentGroup?.[currentIndex];
+    const uid = story ? ownerId(story) : "";
+    if (!uid) return;
+    if (typeof window.openProfile === "function") window.openProfile(uid);
+    else if (typeof window.showProfile === "function") window.showProfile(uid);
+    else window.dispatchEvent(new CustomEvent("instapro:open-profile", { detail: { uid } }));
+  };
   viewer.querySelector(".is-add-story").onclick = openUpload;
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
   viewer.querySelector(".is-next").onclick = () => showAt(currentIndex + 1);
@@ -855,6 +867,8 @@ function showAt(index) {
   const photo = currentGroup[0]?.photo || story.photo || story.photoURL || "";
   if (photo) avatar.src = photo; else avatar.removeAttribute("src");
   viewer.querySelector(".is-name").textContent = currentGroup[0]?.name || ownerName(story);
+  const profileLink = viewer.querySelector(".is-profile-link");
+  if (profileLink) profileLink.setAttribute("aria-label", "Open " + (currentGroup[0]?.name || ownerName(story)) + " profile");
 
   const progress = viewer.querySelector(".is-progress");
   progress.innerHTML = "";
