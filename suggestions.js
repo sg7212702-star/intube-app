@@ -123,7 +123,21 @@ function init() {
   styles();
   const home=document.getElementById("homePage");
   const explore=document.getElementById("explorePage");
-  if(home) mount(home);
+  if(home) {
+    // Instagram-style recommendations: a compact row above the feed and another
+    // naturally placed between feed content and the end of the Home screen.
+    const topBox = mount(home);
+    const feedEl = document.getElementById("feed");
+    if (topBox && feedEl && topBox.parentElement === home) home.insertBefore(topBox, feedEl);
+
+    let bottomBox = home.querySelector(".ipsg-bottom-slot");
+    if (!bottomBox) {
+      bottomBox = document.createElement("div");
+      bottomBox.className = "ipsg-bottom-slot";
+      home.appendChild(bottomBox);
+    }
+    mount(bottomBox);
+  }
   if(explore) mount(explore);
   if((!home && !explore) || initialized) return;
   initialized = true;
