@@ -120,15 +120,15 @@ function showSuggestionState(message, isError=false) {
   });
 }
 let placementObserver = null;
+let duplicateGuardObserver = null;
 
 function placeSingleSuggestion(box, feedEl) {
   if (!box || !feedEl) return;
-  const posts = Array.from(feedEl.children).filter(el =>
-    el.matches(".instapro-feed-post, .post-card, [data-post-id]")
-  );
+  document.querySelectorAll(".ipsg-wrap").forEach(item => { if (item !== box) item.remove(); });
+  const posts = Array.from(feedEl.children).filter(el => el.matches(".instapro-feed-post, .post-card, [data-post-id]"));
   const anchor = posts.length >= 5 ? posts[4] : posts[posts.length - 1];
   if (anchor) {
-    if (anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
+    if (box.parentElement !== feedEl || anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
   } else if (box.parentElement !== feedEl) {
     feedEl.appendChild(box);
   }
@@ -138,31 +138,32 @@ function init() {
   styles();
   const home = document.getElementById("homePage");
   const feedEl = document.getElementById("feed");
-  const explore = document.getElementById("explorePage");
-  if (!home && !explore) return;
+  if (!home || !feedEl) return;
 
-  // Remove any duplicate panels left by earlier versions; keep exactly one.
   const existing = Array.from(document.querySelectorAll(".ipsg-wrap"));
-  const box = existing[0] || mount(feedEl || home);
+  const box = existing[0] || mount(feedEl);
   existing.slice(1).forEach(item => item.remove());
-  if (home && feedEl && box) placeSingleSuggestion(box, feedEl);
-  if (explore && !explore.querySelector(".ipsg-wrap")) mount(explore);
+  if (box) placeSingleSuggestion(box, feedEl);
 
-  if (home && feedEl && !placementObserver) {
+  if (!placementObserver) {
     placementObserver = new MutationObserver(() => {
-      const boxes = Array.from(document.querySelectorAll(".ipsg-wrap"));
-      const single = boxes[0];
-      boxes.slice(1).forEach(item => item.remove());
-      if (single && document.getElementById("homePage")?.classList.contains("active")) {
-        placeSingleSuggestion(single, feedEl);
-      }
+      const all = Array.from(document.querySelectorAll(".ipsg-wrap"));
+      const single = all[0] || (box && box.isConnected ? box : null);
+      all.slice(1).forEach(item => item.remove());
+      if (single && document.getElementById("homePage")?.classList.contains("active")) placeSingleSuggestion(single, feedEl);
     });
     placementObserver.observe(feedEl, { childList: true });
+  }
+  if (!duplicateGuardObserver) {
+    duplicateGuardObserver = new MutationObserver(() => {
+      const all = Array.from(document.querySelectorAll(".ipsg-wrap"));
+      all.slice(1).forEach(item => item.remove());
+    });
+    duplicateGuardObserver.observe(document.body, { childList: true, subtree: true });
   }
   if (initialized) return;
   initialized = true;
 
-  // Fetch suggestions whether or not a full account session has restored yet.
   unsubAuth = auth.onAuthStateChanged(user => {
     if (unsubMe) { unsubMe(); unsubMe = null; }
     if (unsubUsers) { unsubUsers(); unsubUsers = null; }
@@ -172,10 +173,7 @@ function init() {
         const data = snap.exists() ? snap.data() : {};
         myFollowing = Array.isArray(data.following) ? data.following : [];
         renderAll();
-      }, error => {
-        console.error("Suggestion follow listener:", error);
-        renderAll();
-      });
+      }, error => { console.error("Suggestion follow listener:", error); renderAll(); });
     }
     unsubUsers = onSnapshot(query(collection(db, "users"), limit(100)), snap => {
       usersCache = snap.docs.map(d => ({ id: d.id, uid: d.id, ...d.data() }));
