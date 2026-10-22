@@ -56,7 +56,7 @@ function mount(target) {
   box.className="ipsg-wrap";
   box.innerHTML='<div class="ipsg-head"><div class="ipsg-title">Suggested for you</div><button class="ipsg-refresh" type="button">↻ Refresh</button></div><div class="ipsg-list"><div class="ipsg-empty">Loading suggestions…</div></div>';
   target.append(box);
-  box.querySelector(".ipsg-refresh").onclick=()=>{dismissed.clear(); if(refreshBusy)return; refreshBusy=true; showSuggestionState("Suggestions refresh ho rahe hain…"); const user=auth.currentUser; if(user&&!user.isAnonymous){startListeners(user);} else { showSuggestionState("Login status check ho raha hai…"); } setTimeout(()=>{refreshBusy=false;},1500); };
+  box.querySelector(".ipsg-refresh").onclick=()=>{dismissed.clear(); if(refreshBusy)return; refreshBusy=true; showSuggestionState("Suggestions refresh ho rahe hain…"); const user=auth.currentUser; if(user&&!user.isAnonymous){startListeners(user);} else { unsubUsers?.(); unsubUsers=onSnapshot(query(collection(db,"users"),limit(100)),snap=>{usersCache=snap.docs.map(d=>({id:d.id,uid:d.id,...d.data()}));renderAll();},error=>{console.error("Suggestion refresh:",error);showSuggestionState("Suggestions load nahi hue. Firestore Rules check karein.",true);}); } setTimeout(()=>{refreshBusy=false;},1500); };
   return box;
 }
 function cardHTML(u) {
@@ -119,55 +119,85 @@ function showSuggestionState(message, isError=false) {
     list.innerHTML = '<div class="' + (isError ? 'ipsg-error' : 'ipsg-empty') + '">' + esc(message) + '</div>';
   });
 }
+let placementObserver = null;
+
+function placeSingleSuggestion(box, feedEl) {
+  if (!box || !feedEl) return;
+  const posts = Array.from(feedEl.children).filter(el =>
+    el.matches(".instapro-feed-post, .post-card, [data-post-id]")
+  );
+  const anchor = posts.length >= 5 ? posts[4] : posts[posts.length - 1];
+  if (anchor) {
+    if (anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
+  } else if (box.parentElement !== feedEl) {
+    feedEl.appendChild(box);
+  }
+}
+
 function init() {
   styles();
-  const home=document.getElementById("homePage");
-  const explore=document.getElementById("explorePage");
-  if(home) {
-    // Instagram-style recommendations: a compact row above the feed and another
-    // naturally placed between feed content and the end of the Home screen.
-    const topBox = mount(home);
-    const feedEl = document.getElementById("feed");
-    if (topBox && feedEl && topBox.parentElement === home) home.insertBefore(topBox, feedEl);
+  const home = document.getElementById("homePage");
+  const feedEl = document.getElementById("feed");
+  const explore = document.getElementById("explorePage");
+  if (!home && !explore) return;
 
-    let bottomBox = home.querySelector(".ipsg-bottom-slot");
-    if (!bottomBox) {
-      bottomBox = document.createElement("div");
-      bottomBox.className = "ipsg-bottom-slot";
-      home.appendChild(bottomBox);
-    }
-    mount(bottomBox);
-  }
-  if(explore) mount(explore);
-  if((!home && !explore) || initialized) return;
-  initialized = true;
+  // Remove any duplicate panels left by earlier versions; keep exactly one.
+  const existing = Array.from(document.querySelectorAll(".ipsg-wrap"));
+  const box = existing[0] || mount(feedEl || home);
+  existing.slice(1).forEach(item => item.remove());
+  if (home && feedEl && box) placeSingleSuggestion(box, feedEl);
+  if (explore && !explore.querySelector(".ipsg-wrap")) mount(explore);
 
-  // Never leave the Home section stuck on Loading if auth restoration or a listener stalls.
-  setTimeout(() => {
-    document.querySelectorAll(".ipsg-list").forEach(list => {
-      if (/Loading suggestions|Suggestions refresh ho rahe hain|Login status check ho raha hai/i.test(list.textContent || "")) {
-        list.innerHTML = '<div class="ipsg-error">Suggestions abhi load nahi hue. Refresh dabayein ya app ko dobara kholein.</div>';
+  if (home && feedEl && !placementObserver) {
+    placementObserver = new MutationObserver(() => {
+      const boxes = Array.from(document.querySelectorAll(".ipsg-wrap"));
+      const single = boxes[0];
+      boxes.slice(1).forEach(item => item.remove());
+      if (single && document.getElementById("homePage")?.classList.contains("active")) {
+        placeSingleSuggestion(single, feedEl);
       }
     });
-  }, 10000);
+    placementObserver.observe(feedEl, { childList: true });
+  }
+  if (initialized) return;
+  initialized = true;
 
-  // Firebase auth can still be restoring its persisted session during a refresh.
-  // Keep the loading state temporary and handle signed-out/anonymous sessions explicitly.
+  // Fetch suggestions whether or not a full account session has restored yet.
   unsubAuth = auth.onAuthStateChanged(user => {
     if (unsubMe) { unsubMe(); unsubMe = null; }
     if (unsubUsers) { unsubUsers(); unsubUsers = null; }
-    if (!user || user.isAnonymous) {
-      usersCache = [];
-      myFollowing = [];
-      showSuggestionState(user ? "Follow suggestions ke liye Google account se login karein." : "Login status check ho raha hai…");
-      return;
+    myFollowing = [];
+    if (user && !user.isAnonymous) {
+      unsubMe = onSnapshot(doc(db, "users", user.uid), snap => {
+        const data = snap.exists() ? snap.data() : {};
+        myFollowing = Array.isArray(data.following) ? data.following : [];
+        renderAll();
+      }, error => {
+        console.error("Suggestion follow listener:", error);
+        renderAll();
+      });
     }
-    startListeners(user);
+    unsubUsers = onSnapshot(query(collection(db, "users"), limit(100)), snap => {
+      usersCache = snap.docs.map(d => ({ id: d.id, uid: d.id, ...d.data() }));
+      renderAll();
+    }, error => {
+      console.error("Suggestion users listener:", error);
+      showSuggestionState("Suggestions load nahi hue. Firestore Rules check karein.", true);
+    });
   }, error => {
     console.error("Suggestion auth state error:", error);
-    showSuggestionState("Suggestions load nahi hue. Internet connection check karein.", true);
+    showSuggestionState("Suggestions load nahi hue. Internet ya Firebase Rules check karein.", true);
   });
+
+  setTimeout(() => {
+    document.querySelectorAll(".ipsg-list").forEach(list => {
+      if (/Loading suggestions|Login status check ho raha hai|Suggestions refresh ho rahe hain/i.test(list.textContent || "")) {
+        list.innerHTML = '<div class="ipsg-error">Suggestions load nahi hue. Refresh dabayein.</div>';
+      }
+    });
+  }, 10000);
 }
+export function initSuggestions() { init(); }
 function startListeners(user = auth.currentUser) {
   if(!user || user.isAnonymous) {
     showSuggestionState("Follow suggestions ke liye Google account se login karein.");
