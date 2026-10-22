@@ -122,24 +122,49 @@ function showSuggestionState(message, isError=false) {
 let placementObserver = null;
 let duplicateGuardObserver = null;
 let placementTimer = null;
+let suggestionBox = null;
+
+function feedPostCards(feedEl) {
+  return Array.from(feedEl.querySelectorAll(":scope > .instapro-feed-post"));
+}
 
 function placeSingleSuggestion(box, feedEl) {
   if (!box || !feedEl) return;
-  document.querySelectorAll(".ipsg-wrap").forEach(item => { if (item !== box) item.remove(); });
-  // Only place after the feed has rendered at least its first result/empty state.
-  const hasFeedContent = feedEl.querySelector(".instapro-feed-post") ||
-    /No Photo Posts Yet|Login required/i.test(feedEl.textContent || "");
-  if (!hasFeedContent) return;
-  const posts = Array.from(feedEl.children).filter(el => el.matches(".instapro-feed-post"));
-  if (posts.length >= 5) {
-    const anchor = posts[4];
-    if (box.parentElement !== feedEl || anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
-  } else if (posts.length) {
-    const anchor = posts[posts.length - 1];
-    if (box.parentElement !== feedEl || anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
-  } else if (box.parentElement !== feedEl) {
-    feedEl.appendChild(box);
+  document.querySelectorAll(".ipsg-wrap").forEach(item => {
+    if (item !== box) item.remove();
+  });
+
+  const posts = feedPostCards(feedEl);
+  // Do not show recommendations until the feed has real post content.
+  if (!posts.length) {
+    box.remove();
+    return;
   }
+
+  // One recommendation panel after post 5; if fewer posts exist, after the last post.
+  const anchor = posts[Math.min(4, posts.length - 1)];
+  if (anchor.nextElementSibling !== box || box.parentElement !== feedEl) {
+    feedEl.insertBefore(box, anchor.nextElementSibling);
+  }
+}
+
+function scheduleSuggestionPlacement(feedEl) {
+  clearTimeout(placementTimer);
+  placementTimer = setTimeout(() => {
+    if (!feedEl.isConnected) return;
+    const posts = feedPostCards(feedEl);
+    if (!posts.length) {
+      // Remove stale/early panel while feed is loading or empty.
+      document.querySelectorAll(".ipsg-wrap").forEach(box => box.remove());
+      suggestionBox = null;
+      return;
+    }
+    const existing = Array.from(document.querySelectorAll(".ipsg-wrap"));
+    suggestionBox = existing[0] || suggestionBox;
+    existing.slice(1).forEach(box => box.remove());
+    if (!suggestionBox || !suggestionBox.isConnected) suggestionBox = mount(feedEl);
+    if (suggestionBox) placeSingleSuggestion(suggestionBox, feedEl);
+  }, 250);
 }
 
 function init() {
@@ -148,28 +173,26 @@ function init() {
   const feedEl = document.getElementById("feed");
   if (!home || !feedEl) return;
 
+  // Clean up any panels left by an older cached version; never render two at once.
   const existing = Array.from(document.querySelectorAll(".ipsg-wrap"));
-  const box = existing[0] || mount(feedEl);
-  existing.slice(1).forEach(item => item.remove());
-  if (!box) return;
-
-  const schedulePlacement = () => {
-    clearTimeout(placementTimer);
-    placementTimer = setTimeout(() => placeSingleSuggestion(box, feedEl), 350);
-  };
-  schedulePlacement();
+  suggestionBox = existing[0] || null;
+  existing.slice(1).forEach(box => box.remove());
+  if (suggestionBox) suggestionBox.remove();
+  suggestionBox = null;
 
   if (!placementObserver) {
-    placementObserver = new MutationObserver(schedulePlacement);
-    placementObserver.observe(feedEl, { childList: true });
+    placementObserver = new MutationObserver(() => scheduleSuggestionPlacement(feedEl));
+    placementObserver.observe(feedEl, { childList: true, subtree: true });
   }
   if (!duplicateGuardObserver) {
     duplicateGuardObserver = new MutationObserver(() => {
       const all = Array.from(document.querySelectorAll(".ipsg-wrap"));
-      all.slice(1).forEach(item => item.remove());
+      all.slice(1).forEach(box => box.remove());
     });
     duplicateGuardObserver.observe(document.body, { childList: true, subtree: true });
   }
+  scheduleSuggestionPlacement(feedEl);
+
   if (initialized) return;
   initialized = true;
 
