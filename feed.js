@@ -622,6 +622,52 @@ function injectFeedStyles() {
     .ip-feed-save-action { margin-left:auto; }
     @media (max-width:360px) { .ip-feed-actions { gap:13px; } .ip-feed-icon-action svg { width:25px; height:25px; } }
 
+    /* Instagram-sized sound control for feed media */
+    .instapro-feed-post .ip-feed-music-toggle {
+      position: absolute;
+      z-index: 6;
+      right: 12px;
+      bottom: 12px;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(26,26,26,.68);
+      box-shadow: 0 1px 4px rgba(0,0,0,.22);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .instapro-feed-post .ip-feed-music-toggle svg {
+      display: block;
+      width: 19px;
+      height: 19px;
+      flex: 0 0 19px;
+    }
+    .instapro-feed-post .ip-feed-music-toggle:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .instapro-feed-post .ip-feed-music-toggle:active {
+      transform: scale(.96);
+    }
+    .ip-feed-reel-post .ip-feed-music-toggle {
+      right: 16px !important;
+      bottom: 92px !important;
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+      background: rgba(20,20,20,.62) !important;
+      font-size: 16px !important;
+    }
+
     .ip-feed-view-comments {
       display: block;
       padding: 10px 0 4px;
