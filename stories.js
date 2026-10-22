@@ -9,6 +9,35 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 const otherStoriesBox = document.getElementById("otherStories");
 const yourRing = document.getElementById("addStoryBtn");
 const yourStoryItem = yourRing?.closest(".sItem");
+if (yourRing && !yourRing.dataset.storyTapFix) {
+  yourRing.dataset.storyTapFix = "1";
+  yourRing.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const clickedPlus = event.target instanceof Element && event.target.closest("span");
+    if (clickedPlus) {
+      document.getElementById("optStory")?.click();
+      return;
+    }
+    const myUid = auth.currentUser?.uid || signedInUser?.uid || "";
+    const ownStories = groupsByUser(activeStories()).find(group => group.uid === myUid);
+    if (ownStories?.stories?.length) openStoryGroup(ownStories);
+    else document.getElementById("optStory")?.click();
+  }, true);
+  yourRing.style.position = "relative";
+  yourRing.style.zIndex = "5";
+  yourRing.style.pointerEvents = "auto";
+  yourRing.style.touchAction = "manipulation";
+  yourRing.querySelector("span")?.style.setProperty("pointer-events", "auto");
+  yourStoryItem?.querySelector("p")?.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const myUid = auth.currentUser?.uid || signedInUser?.uid || "";
+    const ownStories = groupsByUser(activeStories()).find(group => group.uid === myUid);
+    if (ownStories?.stories?.length) openStoryGroup(ownStories);
+    else document.getElementById("optStory")?.click();
+  }, true);
+}
 let expiryTimer = null;
 let stopCurrentStory = null;
 let currentLiked = false;
