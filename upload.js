@@ -206,6 +206,7 @@ function openMultiPhotoPostEditor(files) {
     modal.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);";
     modal.innerHTML = `
       <style>
+        @keyframes ipStoryGlitchPulse{0%{transform:translate(0,0);filter:hue-rotate(0deg) saturate(1.5)}25%{transform:translate(-1px,1px);filter:hue-rotate(22deg) saturate(1.9)}50%{transform:translate(1px,-1px);filter:hue-rotate(-18deg) saturate(1.6)}75%{transform:translate(-1px,0);filter:hue-rotate(12deg) saturate(2)}100%{transform:translate(0,0);filter:hue-rotate(0deg) saturate(1.5)}}
         #ip-multi-photo-editor *{box-sizing:border-box}
         #ip-multi-photo-editor #ipmp-music-results{max-height:min(26dvh,220px);overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;padding:0 2px 6px;}
         #ip-multi-photo-editor #ipmp-music-results button{flex:0 0 auto;touch-action:manipulation;}
@@ -598,7 +599,8 @@ const STORY_FILTERS = [
   ["Rose","sepia(.12) hue-rotate(325deg) saturate(1.15)"],["Lavender","hue-rotate(18deg) saturate(.85)"],
   ["Mint","hue-rotate(35deg) saturate(.9)"],["Ocean","hue-rotate(165deg) saturate(1.1)"],
   ["Sunset","sepia(.18) hue-rotate(-18deg) saturate(1.3)"],["Cinematic","contrast(1.25) saturate(.85) brightness(.95)"],
-  ["Glow","brightness(1.18) saturate(1.15)"],["Deep","brightness(.88) contrast(1.2)"]
+  ["Glow","brightness(1.18) saturate(1.15)"],["Deep","brightness(.88) contrast(1.2)"],
+  ["PREMIUM GLITCH 01","contrast(1.35) saturate(1.7) hue-rotate(18deg)"],["PREMIUM GLITCH 02","contrast(1.4) saturate(1.55) hue-rotate(315deg)"],["RGB SPLIT","contrast(1.3) saturate(1.6) hue-rotate(35deg)"],["NEON CYBER","brightness(1.08) contrast(1.5) saturate(1.8) hue-rotate(145deg)"],["CHROMA BURST","contrast(1.45) saturate(1.9) hue-rotate(70deg)"],["VHS DREAM","sepia(.16) contrast(1.25) saturate(1.6) hue-rotate(330deg)"],["LASER PINK","contrast(1.35) saturate(1.7) hue-rotate(285deg)"],["ELECTRIC BLUE","contrast(1.4) saturate(1.65) hue-rotate(175deg)"],["ACID RAINBOW","contrast(1.25) saturate(2) hue-rotate(95deg)"],["PRISM GLITCH","contrast(1.5) saturate(1.8) hue-rotate(220deg)"],["PIXEL PULSE","contrast(1.35) saturate(1.5) hue-rotate(260deg)"],["HOLOGRAM","brightness(1.12) contrast(1.25) saturate(1.65) hue-rotate(160deg)"]
 ];
 
 function openStoryEditor(file) {
@@ -914,6 +916,7 @@ function openStoryEditor(file) {
       btn.addEventListener("click", () => {
         selectedFilter = i;
         preview.style.filter = filter;
+        preview.style.animation = /GLITCH|RGB|VHS|PIXEL/i.test(name) ? "ipStoryGlitchPulse .24s steps(2,end) infinite" : "none";
         filterRow.querySelectorAll("button").forEach(b => { b.style.opacity = ".78"; b.classList.remove("active"); });
         btn.style.opacity = "1";
         btn.classList.add("active");
