@@ -980,24 +980,9 @@ if (otherStoriesBox) {
     const now = Date.now();
     const rawStories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(story => expiry(story) > now && mediaUrl(story));
-    const privacyApi = window.InstaProPrivate;
-    const viewerUid = (signedInUser || auth.currentUser)?.uid || "";
-    allStories = [];
-    for (const story of rawStories) {
-      const owner = ownerId(story);
-      if (owner && owner !== viewerUid && privacyApi) {
-        try {
-          const privacy = await privacyApi.getAccountPrivacy(owner);
-          if (privacy.isPrivate && !(await privacyApi.canViewAccountContent(owner, viewerUid))) continue;
-        } catch (privacyError) {
-          console.warn("Could not verify Story account privacy; hiding Story:", privacyError);
-          continue;
-        }
-      } else if (owner && owner !== viewerUid && !privacyApi) {
-        continue;
-      }
-      allStories.push(story);
-    }
+    // Account-private gating was removed from Insta Pro. Do not hide other users' public stories
+    // just because the legacy privacy module is unavailable or throws an error.
+    allStories = rawStories;
     renderStories();
     refreshExpiry();
   }, error => {
