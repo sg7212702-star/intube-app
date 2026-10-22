@@ -5,6 +5,35 @@
 const InstaProUploadNotification = (() => {
   let container;
 
+  let notificationPermissionRequested = false;
+  let serviceWorkerRegistration = null;
+
+  async function preparePhoneNotifications() {
+    if (!("Notification" in window)) return false;
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission === "denied" || notificationPermissionRequested) return false;
+    notificationPermissionRequested = true;
+    try {
+      const permission = await Notification.requestPermission();
+      return permission === "granted";
+    } catch (_) { return false; }
+  }
+
+  async function showPhoneNotification(title, body, tag = "instapro-upload") {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      if ("serviceWorker" in navigator) {
+        serviceWorkerRegistration = serviceWorkerRegistration || await navigator.serviceWorker.register("./sw.js");
+        await serviceWorkerRegistration.showNotification(title, {
+          body, icon: "./assets/icon-192.png", badge: "./assets/icon-192.png",
+          tag, renotify: true, vibrate: [200, 100, 200]
+        });
+      } else {
+        new Notification(title, { body, tag });
+      }
+    } catch (err) { console.info("Phone notification unavailable", err); }
+  }
+
   function init() {
     if (container) return;
 
@@ -121,6 +150,7 @@ const InstaProUploadNotification = (() => {
 
   function show() {
     init();
+    preparePhoneNotifications();
 
     container.style.display = "block";
 
@@ -163,6 +193,7 @@ const InstaProUploadNotification = (() => {
     container.querySelector(".ip-un-bar").style.width = "100%";
     container.querySelector(".ip-un-close").style.display = "inline-block";
 
+    showPhoneNotification("Insta Pro", "Your post uploaded successfully.", "instapro-upload-success");
     setTimeout(() => {
       if (container) container.style.display = "none";
     }, 4000);
@@ -180,6 +211,7 @@ const InstaProUploadNotification = (() => {
       message || "Please try again.";
 
     container.querySelector(".ip-un-close").style.display = "inline-block";
+    showPhoneNotification("Insta Pro", "Upload failed: " + (message || "Please try again."), "instapro-upload-error");
   }
 
   return { show, progress, success, error };
