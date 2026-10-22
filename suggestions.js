@@ -121,13 +121,21 @@ function showSuggestionState(message, isError=false) {
 }
 let placementObserver = null;
 let duplicateGuardObserver = null;
+let placementTimer = null;
 
 function placeSingleSuggestion(box, feedEl) {
   if (!box || !feedEl) return;
   document.querySelectorAll(".ipsg-wrap").forEach(item => { if (item !== box) item.remove(); });
-  const posts = Array.from(feedEl.children).filter(el => el.matches(".instapro-feed-post, .post-card, [data-post-id]"));
-  const anchor = posts.length >= 5 ? posts[4] : posts[posts.length - 1];
-  if (anchor) {
+  // Only place after the feed has rendered at least its first result/empty state.
+  const hasFeedContent = feedEl.querySelector(".instapro-feed-post") ||
+    /No Photo Posts Yet|Login required/i.test(feedEl.textContent || "");
+  if (!hasFeedContent) return;
+  const posts = Array.from(feedEl.children).filter(el => el.matches(".instapro-feed-post"));
+  if (posts.length >= 5) {
+    const anchor = posts[4];
+    if (box.parentElement !== feedEl || anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
+  } else if (posts.length) {
+    const anchor = posts[posts.length - 1];
     if (box.parentElement !== feedEl || anchor.nextElementSibling !== box) feedEl.insertBefore(box, anchor.nextElementSibling);
   } else if (box.parentElement !== feedEl) {
     feedEl.appendChild(box);
@@ -143,15 +151,16 @@ function init() {
   const existing = Array.from(document.querySelectorAll(".ipsg-wrap"));
   const box = existing[0] || mount(feedEl);
   existing.slice(1).forEach(item => item.remove());
-  if (box) placeSingleSuggestion(box, feedEl);
+  if (!box) return;
+
+  const schedulePlacement = () => {
+    clearTimeout(placementTimer);
+    placementTimer = setTimeout(() => placeSingleSuggestion(box, feedEl), 350);
+  };
+  schedulePlacement();
 
   if (!placementObserver) {
-    placementObserver = new MutationObserver(() => {
-      const all = Array.from(document.querySelectorAll(".ipsg-wrap"));
-      const single = all[0] || (box && box.isConnected ? box : null);
-      all.slice(1).forEach(item => item.remove());
-      if (single && document.getElementById("homePage")?.classList.contains("active")) placeSingleSuggestion(single, feedEl);
-    });
+    placementObserver = new MutationObserver(schedulePlacement);
     placementObserver.observe(feedEl, { childList: true });
   }
   if (!duplicateGuardObserver) {
@@ -189,13 +198,12 @@ function init() {
 
   setTimeout(() => {
     document.querySelectorAll(".ipsg-list").forEach(list => {
-      if (/Loading suggestions|Login status check ho raha hai|Suggestions refresh ho rahe hain/i.test(list.textContent || "")) {
+      if (/Loading suggestions/i.test(list.textContent || "")) {
         list.innerHTML = '<div class="ipsg-error">Suggestions load nahi hue. Refresh dabayein.</div>';
       }
     });
   }, 10000);
 }
-export function initSuggestions() { init(); }
 function startListeners(user = auth.currentUser) {
   if(!user || user.isAnonymous) {
     showSuggestionState("Follow suggestions ke liye Google account se login karein.");
@@ -216,5 +224,15 @@ function startListeners(user = auth.currentUser) {
     document.querySelectorAll(".ipsg-list").forEach(list=>list.innerHTML='<div class="ipsg-error">Suggestions load nahi hue. Firestore Rules check karein.</div>');
   });
 }
-export function initSuggestions(){init();}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+export function initSuggestions() {
+  // Module imports with different cache-busting URLs share this global singleton.
+  if (window.__instaProSuggestionsInitStarted) return;
+  window.__instaProSuggestionsInitStarted = true;
+  init();
+}
+
+export function initSuggestions() {
+  if (window.__instaProSuggestionsInitStarted) return;
+  window.__instaProSuggestionsInitStarted = true;
+  init();
+}
