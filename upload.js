@@ -764,6 +764,25 @@ function openStoryEditor(file) {
     `;
     modal.appendChild(premiumStyle);
     document.body.appendChild(modal);
+    let storyMusicPreview = null; let storyMusicArtwork = "";
+    function showStoryMusicTrim(track, localFile = null) {
+      modal.querySelector("#ip-story-music-trim")?.remove();
+      if (storyMusicPreview) { storyMusicPreview.pause(); storyMusicPreview = null; }
+      const src = localFile ? URL.createObjectURL(localFile) : (track?.audioUrl || track?.previewUrl || "");
+      const panel = document.createElement("section"); panel.id = "ip-story-music-trim";
+      panel.style.cssText = "position:absolute;z-index:20;left:10px;right:10px;bottom:112px;max-height:48vh;overflow:auto;padding:14px;border:1px solid #ffffff35;border-radius:20px;background:rgba(15,15,20,.98);color:#fff";
+      const title = String(track?.title || track?.trackName || localFile?.name || "Selected song").replace(/[&<>]/g, "");
+      const artist = String(track?.artistName || "Adjust song clip").replace(/[&<>]/g, "");
+      const art = track?.artworkUrl || track?.artworkUrl100 || ""; storyMusicArtwork = art;
+      panel.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><img src="' + art + '" style="width:52px;height:52px;border-radius:9px;object-fit:cover;background:#333" onerror="this.style.display=\'none\'"><div style="flex:1"><b>' + title + '</b><small style="display:block;opacity:.7">' + artist + '</small></div><button type="button" data-close-trim>×</button></div><p style="font-size:12px">Song clip start aur end choose karein</p><label style="font-size:12px">Start <span id="ip-music-start-label">0.0s</span></label><input id="ip-music-start" type="range" min="0" max="15" step=".1" value="0" style="width:100%"><label style="font-size:12px">End <span id="ip-music-end-label">15.0s</span></label><input id="ip-music-end" type="range" min="1" max="15" step=".1" value="15" style="width:100%"><div style="display:flex;gap:8px;margin-top:8px"><button type="button" data-preview-trim style="flex:1;padding:10px">▶ Preview</button><button type="button" data-done-trim style="flex:1;padding:10px">Done ✓</button></div><small style="opacity:.65">Catalog songs may provide only a short preview sample.</small>';
+      modal.appendChild(panel); const audio = new Audio(src); storyMusicPreview = audio; audio.preload = "metadata";
+      const st = panel.querySelector("#ip-music-start"), en = panel.querySelector("#ip-music-end");
+      const update = () => { if (Number(en.value) <= Number(st.value)) en.value = String(Math.min(Number(en.max), Number(st.value) + .5)); panel.querySelector("#ip-music-start-label").textContent = Number(st.value).toFixed(1)+"s"; panel.querySelector("#ip-music-end-label").textContent = Number(en.value).toFixed(1)+"s"; window.__instaProStoryMusicStart = Number(st.value); window.__instaProStoryMusicEnd = Number(en.value); };
+      audio.addEventListener("loadedmetadata", () => { const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 15; st.max = String(Math.max(0,duration-.5)); en.max = String(duration); en.value = String(Math.min(15,duration)); update(); }, {once:true}); st.addEventListener("input",update); en.addEventListener("input",update);
+      panel.querySelector("[data-preview-trim]").onclick = async () => { try { audio.pause(); audio.currentTime = Number(st.value); await audio.play(); audio.ontimeupdate = () => { if(audio.currentTime >= Number(en.value)) { audio.pause(); panel.querySelector("[data-preview-trim]").textContent = "▶ Preview"; } }; panel.querySelector("[data-preview-trim]").textContent = "Ⅱ Playing"; } catch(e) { alert("Song preview play nahi ho paya."); } };
+      panel.querySelector("[data-close-trim]").onclick = () => { audio.pause(); panel.remove(); };
+      panel.querySelector("[data-done-trim]").onclick = () => { audio.pause(); window.__instaProStoryMusicArtwork = art; const tool=modal.querySelector('[data-act="music"]'); if(tool) tool.innerHTML = '<span>' + (art ? '<img src="' + art + '" style="width:24px;height:24px;border-radius:6px;object-fit:cover">' : "♫") + '</span><small>Music</small>'; panel.remove(); };
+    }
     const preview = modal.querySelector("#ip-story-preview");
     if (isVideo) { preview.src = url; preview.muted = true; } else preview.src = url;
     const textPanel = modal.querySelector(".ips-text-panel");
@@ -974,7 +993,9 @@ function openStoryEditor(file) {
             window.__instaProPendingMusicFile = trackFile;
             window.__instaProPendingMusicTrack = {title:trackFile.name.replace(/\.[^.]+$/, ""),artistName:"",source:"device-library"};
             const status = modal.querySelector("#ip-story-music-status");
-            if(status) status.textContent = "Selected: " + trackFile.name + " — Story share karne par audio file upload hogi.";
+            if(status) status.textContent = "Selected: " + trackFile.name + " — song trim karein.";
+            window.__instaProStoryMusicStart = 0; window.__instaProStoryMusicEnd = 15;
+            showStoryMusicTrim(window.__instaProPendingMusicTrack, trackFile);
           });
         }
         let panel = modal.querySelector("#ip-story-music-panel");
@@ -1028,13 +1049,15 @@ function openStoryEditor(file) {
                 title: track.trackName || track.title || "Selected song",
                 artistName: track.artistName || "",
                 audioUrl: track.previewUrl,
+                artworkUrl: track.artworkUrl100 || track.artworkUrl || "",
                 id: String(track.trackId || track.id || ""),
-                source: "commons-free",
+                source: "itunes-preview",
                 license: track.license || "",
                 licenseUrl: track.licenseUrl || "",
                 filePage: track.filePage || ""
               };
               closeMusicPicker(ev);
+              showStoryMusicTrim(window.__instaProPendingMusicTrack);
               return;
             }
           });
@@ -1119,6 +1142,9 @@ function openStoryEditor(file) {
           window.__instaProStoryTexts = textItems.filter(n=>n.isConnected).map(n=>({text:n.textContent,x:n.style.left||"50%",y:n.style.top||"44%",size:n.style.fontSize||"32px",color:n.style.color||"#fff",align:n.style.textAlign||"center",background:n.dataset.bg||"none",font:n.style.fontFamily||"sans-serif"}));
           window.__instaProStoryStickers = stickerState.filter(n=>n.isConnected).map(n=>({text:n.dataset.sticker,x:n.style.left||"50%",y:n.style.top||"42%",size:n.style.fontSize||"42px"}));
           window.__instaProStoryFilter = STORY_FILTERS[selectedFilter][0];
+          window.__instaProStoryMusicStart = Number(window.__instaProStoryMusicStart || 0);
+          window.__instaProStoryMusicEnd = Number(window.__instaProStoryMusicEnd || 15);
+          window.__instaProStoryMusicArtwork = window.__instaProStoryMusicArtwork || window.__instaProPendingMusicTrack?.artworkUrl || "";
           close(outputFile);
         } catch (err) { alert("Effect apply nahi hua: " + err.message); }
       }
@@ -1451,6 +1477,7 @@ const notice = window.InstaProUploadNotification;
     window.__instaProPostCaption = "";
     window.__instaProStoryOverlayText = "";
     window.__instaProStoryFilter = "Normal";
+    window.__instaProStoryMusicStart = 0; window.__instaProStoryMusicEnd = 15; window.__instaProStoryMusicArtwork = "";
 
     // Firestore save starts
     status.textContent =
@@ -1499,7 +1526,8 @@ const notice = window.InstaProUploadNotification;
         ...(soundtrackTrack?.language ? { musicLanguage: soundtrackTrack.language } : {}),
         ...(soundtrackTrack?.license ? { musicLicense: soundtrackTrack.license } : {}),
         ...(soundtrackTrack?.licenseUrl ? { musicLicenseUrl: soundtrackTrack.licenseUrl } : {}),
-        ...(soundtrackTrack?.filePage ? { musicSourcePage: soundtrackTrack.filePage } : {})
+        ...(soundtrackTrack?.filePage ? { musicSourcePage: soundtrackTrack.filePage } : {}),
+        ...(postType === "story" ? { musicStartTime: Number(window.__instaProStoryMusicStart || 0), musicEndTime: Number(window.__instaProStoryMusicEnd || 15), ...(window.__instaProStoryMusicArtwork || soundtrackTrack?.artworkUrl ? { musicArtwork: window.__instaProStoryMusicArtwork || soundtrackTrack?.artworkUrl } : {}) } : {})
       } : {}),
       likes: [],
       likesCount: 0,
