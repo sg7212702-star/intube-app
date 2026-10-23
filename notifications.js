@@ -483,9 +483,18 @@ function renderNotificationBadge(count) {
   const safeCount = Math.max(0, Number(count) || 0);
   badge.textContent = safeCount > 99 ? "99+" : String(safeCount);
   badge.hidden = safeCount === 0;
-  badge.classList.toggle("notification-badge-pop", safeCount > lastUnreadCount);
   if (safeCount > lastUnreadCount) {
-    window.setTimeout(() => badge.classList.remove("notification-badge-pop"), 450);
+    // Restart the badge animation even when several activities arrive quickly.
+    badge.classList.remove("notification-badge-pop");
+    button.classList.remove("notification-activity-pulse");
+    void badge.offsetWidth;
+    void button.offsetWidth;
+    badge.classList.add("notification-badge-pop");
+    button.classList.add("notification-activity-pulse");
+    window.setTimeout(() => {
+      badge.classList.remove("notification-badge-pop");
+      button.classList.remove("notification-activity-pulse");
+    }, 850);
   }
   lastUnreadCount = safeCount;
 }
