@@ -95,7 +95,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithCredential, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
   getDoc,
@@ -202,14 +202,25 @@ $("signupBtn").onclick = async () => {
   }
 };
 
-// Google login: popup first, redirect fallback for browsers that block popups.
+// Android APK uses native Google Sign-In to avoid WebView sessionStorage state errors.
+// The website keeps the existing Firebase popup flow unchanged.
 $("googleBtn").onclick = async () => {
   try {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
     $("googleBtn").disabled = true;
     $("googleBtn").textContent = "Opening Google...";
-    const result = await signInWithPopup(auth, provider);
+    const isNativeAndroid = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    let result;
+    if (isNativeAndroid && typeof window.instaproNativeGoogleSignIn === "function") {
+      const nativeResult = await window.instaproNativeGoogleSignIn();
+      const idToken = nativeResult?.credential?.idToken;
+      if (!idToken) throw new Error("Google se ID token nahi mila. Firebase Android setup aur SHA-1 check karein.");
+      const credential = GoogleAuthProvider.credential(idToken);
+      result = await signInWithCredential(auth, credential);
+    } else {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      result = await signInWithPopup(auth, provider);
+    }
     await finishLogin(result.user);
   } catch (error) {
     $("googleBtn").disabled = false;
