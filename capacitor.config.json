@@ -1,0 +1,12 @@
+{
+  "appId": "com.instapro.social",
+  "appName": "InstaPro",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
