@@ -541,6 +541,97 @@ function addStyles() {
       #ipProfileOverlay .ipp-avatar{width:110px!important;height:110px!important;flex-basis:110px!important}
     }
 
+    /* Premium colourful profile controls with a soft pink reflective glow */
+    #ipProfileOverlay .ipp-top #ippBack,
+    #ipProfileOverlay .ipp-top #ippRefresh,
+    #ipProfileOverlay .ipp-top #ippInitialBack,
+    #ipProfileOverlay .ipp-actions .ipp-btn,
+    #ipProfileOverlay .ipp-modal button,
+    #ipProfileOverlay .ipp-btn {
+      position:relative!important;
+      isolation:isolate!important;
+      overflow:hidden!important;
+      color:#fff!important;
+      border:1px solid rgba(255,164,220,.48)!important;
+      border-radius:13px!important;
+      background:linear-gradient(135deg,rgba(255,255,255,.17) 0%,rgba(255,70,163,.23) 35%,rgba(128,75,255,.22) 72%,rgba(255,255,255,.08) 100%)!important;
+      box-shadow:0 5px 18px rgba(255,45,145,.16),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,77,171,.2)!important;
+      text-shadow:0 1px 8px rgba(255,102,190,.24)!important;
+      transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;
+      -webkit-tap-highlight-color:transparent!important;
+    }
+    #ipProfileOverlay .ipp-top #ippBack::after,
+    #ipProfileOverlay .ipp-top #ippRefresh::after,
+    #ipProfileOverlay .ipp-top #ippInitialBack::after,
+    #ipProfileOverlay .ipp-actions .ipp-btn::after,
+    #ipProfileOverlay .ipp-modal button::after,
+    #ipProfileOverlay .ipp-btn::after {
+      content:""!important;
+      position:absolute!important;
+      inset:0!important;
+      z-index:-1!important;
+      pointer-events:none!important;
+      border-radius:inherit!important;
+      background:linear-gradient(110deg,transparent 12%,rgba(255,255,255,.22) 45%,rgba(255,135,207,.14) 52%,transparent 82%)!important;
+      opacity:.85!important;
+    }
+    #ipProfileOverlay .ipp-btn:hover,
+    #ipProfileOverlay .ipp-actions .ipp-btn:hover,
+    #ipProfileOverlay .ipp-modal button:hover {
+      filter:brightness(1.18)!important;
+      box-shadow:0 7px 23px rgba(255,45,145,.28),0 0 12px rgba(255,117,198,.16),inset 0 1px 0 rgba(255,255,255,.3)!important;
+    }
+    #ipProfileOverlay .ipp-btn:active,
+    #ipProfileOverlay .ipp-actions .ipp-btn:active,
+    #ipProfileOverlay .ipp-modal button:active {
+      transform:scale(.965)!important;
+      box-shadow:0 2px 10px rgba(255,45,145,.24),inset 0 1px 5px rgba(0,0,0,.22)!important;
+    }
+    #ipProfileOverlay .ipp-actions .ipp-primary,
+    #ipProfileOverlay .ipp-actions #ippFollow,
+    #ipProfileOverlay .ipp-actions #ippEdit,
+    #ipProfileOverlay .ipp-actions #ippSave {
+      background:linear-gradient(115deg,#ff3d9a 0%,#ed3dbe 42%,#9257ff 100%)!important;
+      border:1px solid rgba(255,210,239,.7)!important;
+      box-shadow:0 6px 22px rgba(255,48,153,.32),0 0 16px rgba(255,91,184,.15),inset 0 1px 0 rgba(255,255,255,.32)!important;
+      font-weight:750!important;
+    }
+    #ipProfileOverlay .ipp-top #ippBack,
+    #ipProfileOverlay .ipp-top #ippRefresh,
+    #ipProfileOverlay .ipp-top #ippInitialBack {
+      min-height:36px!important;
+      border-radius:11px!important;
+    }
+    #ipProfileOverlay .ipp-stat {
+      border:1px solid rgba(255,111,190,.22)!important;
+      border-radius:15px!important;
+      background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,55,153,.075),rgba(130,80,255,.055))!important;
+      box-shadow:0 4px 15px rgba(255,45,145,.07),inset 0 1px 0 rgba(255,255,255,.09)!important;
+    }
+    #ipProfileOverlay .ipp-stat strong{color:#fff!important;text-shadow:0 0 12px rgba(255,105,190,.3)!important}
+    #ipProfileOverlay .ipp-stat span{color:#ffc7e7!important}
+    #ipProfileOverlay .ipp-stat:hover{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,55,153,.16),rgba(130,80,255,.1))!important}
+    #ipProfileOverlay .ipp-tab{transition:color .18s ease,background .18s ease,box-shadow .18s ease!important}
+    #ipProfileOverlay .ipp-tab.active{
+      color:#ffb9df!important;
+      border-bottom:2px solid #ff4fa8!important;
+      background:linear-gradient(180deg,rgba(255,70,163,.13),transparent 90%)!important;
+      text-shadow:0 0 12px rgba(255,90,180,.55)!important;
+      box-shadow:0 3px 12px -8px #ff4fa8!important;
+    }
+    #ipProfileOverlay .ipp-tabs{border-top-color:rgba(255,104,186,.2)!important;border-bottom-color:rgba(255,104,186,.24)!important}
+    #ipProfileOverlay .ipp-highlightBubble i{
+      border:1px solid rgba(255,137,203,.65)!important;
+      background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,59,157,.17),rgba(125,75,255,.14))!important;
+      box-shadow:0 4px 15px rgba(255,45,145,.16),inset 0 1px 0 rgba(255,255,255,.18)!important;
+    }
+    #ipProfileOverlay .ipp-input:focus{
+      border-color:#ff65b5!important;
+      box-shadow:0 0 0 3px rgba(255,74,167,.16),0 0 15px rgba(255,74,167,.1)!important;
+      outline:none!important;
+    }
+    #ipProfileOverlay .ipp-btn:disabled{filter:saturate(.55)!important;opacity:.62!important}
+
   `;
 
   document.head.appendChild(style);
