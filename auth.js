@@ -42,9 +42,9 @@ async function saveUserProfile(user) {
     username: existing.username || fallbackUsername,
     name: existing.name || existing.displayName || fallbackName,
     displayName: existing.displayName || existing.name || fallbackName,
-    photoURL: existing.photoURL || existing.photo || existing.avatar || user.photoURL || "",
-    photo: existing.photo || existing.photoURL || existing.avatar || user.photoURL || "",
-    avatar: existing.avatar || existing.photoURL || existing.photo || user.photoURL || "",
+    photoURL: existing.photoURL || existing.photoUrl || existing.profilePic || existing.photo || existing.avatar || user.photoURL || "",
+    photo: existing.profilePic || existing.photo || existing.photoURL || existing.photoUrl || existing.avatar || user.photoURL || "",
+    avatar: existing.avatar || existing.profilePic || existing.photoURL || existing.photoUrl || existing.photo || user.photoURL || "",
     bio: typeof existing.bio === "string" ? existing.bio : "",
     // Follow logic requires arrays of UIDs, not numeric counters.
     followers: Array.isArray(existing.followers) ? existing.followers : [],
