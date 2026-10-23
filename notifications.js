@@ -164,6 +164,19 @@ export function openNotif() {
     notificationsQuery,
 
     (snapshot) => {
+      // Opening the Notifications page marks existing unread items as read,
+      // so the badge clears. Future notifications can then animate from zero.
+      snapshot.docs.forEach((item) => {
+        const data = item.data();
+        if (data.read === false || data.read == null) {
+          updateDoc(doc(db, "users", user.uid, "notifications", item.id), {
+            read: true
+          }).catch((error) => {
+            console.error("Mark notification as read error:", error);
+          });
+        }
+      });
+
       if (snapshot.empty) {
         list.innerHTML = `
           <div style="
