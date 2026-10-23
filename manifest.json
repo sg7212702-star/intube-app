@@ -2,7 +2,7 @@
   "id": "/intube-app/",
   "name": "InstaPro",
   "short_name": "InstaPro",
-  "description": "InstaPro is a social networking app for sharing photos, videos, stories and reels, discovering creators, and connecting with friends.",
+  "description": "Insta Pro is a social networking app for sharing photos, videos, stories and reels, discovering creators, and connecting with friends on Android.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
