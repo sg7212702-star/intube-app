@@ -1,0 +1,20 @@
+{
+  "id": "/intube-app/",
+  "name": "InstaPro",
+  "short_name": "InstaPro",
+  "description": "InstaPro is a social networking app for sharing photos, videos, stories and reels, discovering creators, and connecting with friends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "./instapro-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
