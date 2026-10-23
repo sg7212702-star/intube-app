@@ -766,13 +766,22 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
   document.body.appendChild(viewer);
   viewer.querySelector(".is-close").onclick = closeViewer;
   viewer.querySelector(".is-profile-link").onclick = (event) => {
+    event.preventDefault();
     event.stopPropagation();
     const story = currentGroup?.[currentIndex];
     const uid = story ? ownerId(story) : "";
-    if (!uid) return;
-    if (typeof window.openProfile === "function") window.openProfile(uid);
-    else if (typeof window.showProfile === "function") window.showProfile(uid);
-    else window.dispatchEvent(new CustomEvent("instapro:open-profile", { detail: { uid } }));
+    if (!uid) {
+      console.warn("Story profile navigation: story owner UID missing.", story);
+      return;
+    }
+    // The story viewer has a higher z-index than the profile overlay.
+    // Close it first so the requested profile is immediately visible.
+    closeViewer();
+    requestAnimationFrame(() => {
+      if (typeof window.openProfile === "function") window.openProfile(uid);
+      else if (typeof window.showProfile === "function") window.showProfile(uid);
+      else window.dispatchEvent(new CustomEvent("instapro:open-profile", { detail: { uid } }));
+    });
   };
   viewer.querySelector(".is-add-story").onclick = openUpload;
   viewer.querySelector(".is-prev").onclick = () => showAt(currentIndex - 1);
