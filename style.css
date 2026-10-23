@@ -360,6 +360,34 @@ body{-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto}
 .instapro-feed-post img,.instapro-feed-post video{backface-visibility:visible}
 
 
+
+/* Fresh activity animation: number pops in and notification icon briefly pulses. */
+#notifBtn{position:relative;overflow:visible}
+#notifBtn .notification-badge{will-change:transform,opacity}
+#notifBtn .notification-badge-pop{animation:ipNotifBadgePop .52s cubic-bezier(.2,.9,.25,1.35) both}
+#notifBtn.notification-activity-pulse svg{animation:ipNotifHeartPulse .72s ease-in-out both;transform-origin:50% 50%}
+#notifBtn.notification-activity-pulse{box-shadow:0 0 0 0 rgba(255,45,122,.55);animation:ipNotifButtonGlow .72s ease-out both}
+@keyframes ipNotifBadgePop{
+  0%{transform:scale(.25) rotate(-12deg);opacity:0}
+  55%{transform:scale(1.25) rotate(4deg);opacity:1}
+  78%{transform:scale(.92)}
+  100%{transform:scale(1) rotate(0)}
+}
+@keyframes ipNotifHeartPulse{
+  0%,100%{transform:scale(1)}
+  28%{transform:scale(1.22)}
+  52%{transform:scale(.92)}
+  72%{transform:scale(1.1)}
+}
+@keyframes ipNotifButtonGlow{
+  0%{box-shadow:0 0 0 0 rgba(255,45,122,.5)}
+  70%{box-shadow:0 0 0 9px rgba(255,45,122,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,45,122,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  #notifBtn .notification-badge-pop,#notifBtn.notification-activity-pulse,#notifBtn.notification-activity-pulse svg{animation:none!important}
+}
+
 /* Instagram-style live unread notification number */
 #notifBtn .dot{display:none!important}
 #notifBtn .notification-badge{
