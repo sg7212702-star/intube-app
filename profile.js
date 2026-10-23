@@ -1566,158 +1566,150 @@ postTiles.forEach(tile => {
 }
 function showEdit(data) {
   const page = $("#ipProfileOverlay");
+  if (!page || myId() !== viewingUid) {
+    alert("Apna profile edit karne ke liye login karein.");
+    return;
+  }
 
-  const modal = document.createElement("div");
-  modal.className = "ipp-modal";
+  // Open the editor as a dedicated full-screen page, not a small popup.
+  page.querySelector(".ipp-editor-page")?.remove();
+  const editor = document.createElement("section");
+  editor.className = "ipp-modal ipp-editor-page";
+  editor.setAttribute("role", "dialog");
+  editor.setAttribute("aria-modal", "true");
+  editor.setAttribute("aria-label", "Edit profile");
 
-  modal.innerHTML = `
-    <div class="ipp-modalCard ipp-glass">
+  const currentPhoto = photoFor(data);
+  editor.innerHTML = `
+    <div class="ipp-editor-shell">
+      <header class="ipp-editor-header">
+        <button type="button" class="ipp-editor-back" id="ippCancel" aria-label="Back">‹</button>
+        <div><strong>Edit profile</strong><small>Personalise your InstaPro profile</small></div>
+        <button type="button" class="ipp-editor-save" id="ippSave">Save</button>
+      </header>
 
-      <h3 style="margin:0 0 16px">
-        Edit profile
-      </h3>
+      <div class="ipp-editor-content">
+        <section class="ipp-editor-hero">
+          <div class="ipp-editor-avatar-wrap">
+            <img id="ippEditorAvatar" src="${esc(currentPhoto)}" alt="Profile photo">
+            <span>✦</span>
+          </div>
+          <h2>Make it yours</h2>
+          <p>Update your photo and the details people see on your profile.</p>
+          <button type="button" class="ipp-editor-photo" id="ippEditorPhoto">✧ Change profile photo</button>
+        </section>
 
-      <label>Name</label>
-      <input
-        class="ipp-input"
-        id="ippName"
-        maxlength="60"
-        value="${esc(data.displayName || data.name || "")}"
-      >
+        <div class="ipp-editor-section-title">BASIC INFORMATION</div>
+        <label class="ipp-editor-field"><span>Full name</span><input class="ipp-input" id="ippName" maxlength="60" autocomplete="name" placeholder="Your name" value="${esc(data.displayName || data.name || "")}"></label>
+        <label class="ipp-editor-field"><span>Username</span><div class="ipp-editor-username"><b>@</b><input class="ipp-input" id="ippUsername" maxlength="30" autocomplete="username" placeholder="username" value="${esc(String(data.username || "").replace(/^@/, ""))}"></div><small>3–30 characters. Letters, numbers, dots and underscores.</small></label>
+        <label class="ipp-editor-field"><span>Bio</span><textarea class="ipp-input" id="ippBio" maxlength="160" rows="4" placeholder="Tell people a little about yourself…">${esc(data.bio || "")}</textarea><small class="ipp-editor-counter" id="ippBioCount">0 / 160</small></label>
 
-      <label>Username</label>
-      <input
-        class="ipp-input"
-        id="ippUsername"
-        maxlength="30"
-        value="${esc(data.username || "")}"
-      >
-
-      <label>Bio</label>
-      <textarea
-        class="ipp-input"
-        id="ippBio"
-        maxlength="160"
-        rows="3"
-      >${esc(data.bio || "")}</textarea>
-
-      <label>Category</label>
-      <input
-        class="ipp-input"
-        id="ippCategory"
-        maxlength="40"
-        value="${esc(data.category || "Creator")}"
-      >
-
-      <label>Website</label>
-      <input
-        class="ipp-input"
-        id="ippWebsite"
-        maxlength="180"
-        value="${esc(data.website || "")}"
-      >
-
-      <div
-        id="ippEditStatus"
-        style="font-size:12px;opacity:.8;margin:4px 0 12px"
-      ></div>
-
-      <div style="display:flex;gap:9px">
-
-        <button
-          id="ippCancel"
-          class="ipp-btn"
-          style="flex:1"
-        >
-          Cancel
-        </button>
-
-        <button
-          id="ippSave"
-          class="ipp-btn ipp-primary"
-          style="flex:1"
-        >
-          Save changes
-        </button>
-
+        <div class="ipp-editor-section-title">PROFILE DETAILS</div>
+        <label class="ipp-editor-field"><span>Category</span><input class="ipp-input" id="ippCategory" maxlength="40" placeholder="Creator, Artist, Blogger…" value="${esc(data.category || "Creator")}"></label>
+        <label class="ipp-editor-field"><span>Website</span><input class="ipp-input" id="ippWebsite" maxlength="180" type="url" inputmode="url" placeholder="https://yourwebsite.com" value="${esc(data.website || "")}"></label>
+        <div id="ippEditStatus" class="ipp-editor-status" role="status" aria-live="polite"></div>
+        <button type="button" class="ipp-editor-save-bottom" id="ippSaveBottom">Save changes</button>
+        <p class="ipp-editor-footnote">Your profile details update live after saving.</p>
       </div>
-
     </div>
   `;
 
-  page.appendChild(modal);
+  const editorStyles = document.createElement("style");
+  editorStyles.id = "ippEditorPageStyle";
+  editorStyles.textContent = `
+    #ipProfileOverlay .ipp-editor-page{position:fixed!important;inset:0!important;z-index:10050!important;display:block!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:0!important;align-items:stretch!important;justify-content:flex-start!important;background:#08070d!important;background-image:radial-gradient(ellipse at 10% 0%,rgba(255,49,153,.2),transparent 38%),radial-gradient(ellipse at 100% 30%,rgba(130,75,255,.17),transparent 40%)!important;backdrop-filter:blur(22px)!important;-webkit-backdrop-filter:blur(22px)!important}
+    #ipProfileOverlay .ipp-editor-shell{width:100%;max-width:720px;min-height:100%;margin:0 auto;background:rgba(10,9,17,.84);border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06)}
+    #ipProfileOverlay .ipp-editor-header{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:13px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:rgba(12,10,20,.92);border-bottom:1px solid rgba(255,255,255,.1);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+    #ipProfileOverlay .ipp-editor-header>div{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+    #ipProfileOverlay .ipp-editor-header strong{font-size:18px;font-weight:800;color:#fff}
+    #ipProfileOverlay .ipp-editor-header small{font-size:11px;color:#b9aebe}
+    #ipProfileOverlay .ipp-editor-back,#ipProfileOverlay .ipp-editor-save{display:grid;place-items:center;min-width:42px;height:42px;border:1px solid rgba(255,255,255,.14);border-radius:14px;color:#fff;background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.04));font-size:27px;cursor:pointer}
+    #ipProfileOverlay .ipp-editor-save{padding:0 17px;background:linear-gradient(110deg,#ff3d9a,#b44bff);border-color:rgba(255,205,239,.65);font-size:14px;font-weight:800;box-shadow:0 5px 18px rgba(255,50,160,.22)}
+    #ipProfileOverlay .ipp-editor-content{padding:22px 18px calc(32px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+    #ipProfileOverlay .ipp-editor-hero{display:flex;align-items:center;flex-direction:column;text-align:center;padding:12px 10px 28px}
+    #ipProfileOverlay .ipp-editor-avatar-wrap{position:relative;width:102px;height:102px;padding:3px;border-radius:50%;background:linear-gradient(135deg,#ffb347,#ff3d9a,#965bff);box-shadow:0 0 28px rgba(255,57,163,.24)}
+    #ipProfileOverlay .ipp-editor-avatar-wrap img{display:block;width:100%;height:100%;object-fit:cover;border:3px solid #100d17;border-radius:50%;background:#222}
+    #ipProfileOverlay .ipp-editor-avatar-wrap span{position:absolute;right:-3px;bottom:1px;display:grid;place-items:center;width:29px;height:29px;border:2px solid #100d17;border-radius:50%;background:linear-gradient(135deg,#ff3d9a,#9257ff);font-size:14px}
+    #ipProfileOverlay .ipp-editor-hero h2{margin:16px 0 5px;font-size:22px;letter-spacing:-.4px}
+    #ipProfileOverlay .ipp-editor-hero p{max-width:310px;margin:0;color:#b9b1c4;font-size:13px;line-height:1.55}
+    #ipProfileOverlay .ipp-editor-photo{margin-top:15px;padding:11px 17px;border:1px solid rgba(255,112,190,.42);border-radius:13px;background:linear-gradient(110deg,rgba(255,61,154,.17),rgba(146,87,255,.16));color:#ffc5e5;font-weight:750}
+    #ipProfileOverlay .ipp-editor-section-title{margin:8px 0 15px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);color:#ff9bd0;font-size:11px;font-weight:850;letter-spacing:1.4px}
+    #ipProfileOverlay .ipp-editor-field{display:block;margin:0 0 19px}
+    #ipProfileOverlay .ipp-editor-field>span{display:block;margin:0 0 8px;color:#f4edf7;font-size:13px;font-weight:750}
+    #ipProfileOverlay .ipp-editor-field .ipp-input{display:block;width:100%;min-height:48px;margin:0;padding:13px 14px;border:1px solid rgba(255,255,255,.13);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;font:inherit;font-size:14px;outline:none}
+    #ipProfileOverlay .ipp-editor-field textarea.ipp-input{resize:vertical;min-height:100px;line-height:1.5}
+    #ipProfileOverlay .ipp-editor-field .ipp-input::placeholder{color:#81798a}
+    #ipProfileOverlay .ipp-editor-field small{display:block;margin:7px 2px 0;color:#91899c;font-size:11px;line-height:1.45}
+    #ipProfileOverlay .ipp-editor-username{display:flex;align-items:center;gap:7px;padding-left:13px;border:1px solid rgba(255,255,255,.13);border-radius:14px;background:rgba(255,255,255,.055)}
+    #ipProfileOverlay .ipp-editor-username>b{color:#ff9bd0;font-size:15px}
+    #ipProfileOverlay .ipp-editor-username .ipp-input{border:0;background:transparent;padding-left:0}
+    #ipProfileOverlay .ipp-editor-counter{text-align:right!important}
+    #ipProfileOverlay .ipp-editor-status{min-height:20px;margin:5px 0 12px;color:#ffc5e5;font-size:12px;line-height:1.5}
+    #ipProfileOverlay .ipp-editor-save-bottom{width:100%;min-height:50px;border:1px solid rgba(255,205,239,.65);border-radius:15px;background:linear-gradient(110deg,#ff3d9a,#ed3dbe 45%,#9257ff);color:#fff;font-size:15px;font-weight:850;box-shadow:0 8px 24px rgba(255,48,153,.22);cursor:pointer}
+    #ipProfileOverlay .ipp-editor-footnote{text-align:center;color:#8f8798;font-size:11px;margin:13px 0 0}
+    #ipProfileOverlay .ipp-editor-page button:active{transform:scale(.98)}
+    @media(min-width:600px){#ipProfileOverlay .ipp-editor-content{padding-top:30px}}
+  `;
+  document.head.querySelector("#ippEditorPageStyle")?.remove();
+  document.head.appendChild(editorStyles);
+  page.appendChild(editor);
 
-  $("#ippCancel", modal).onclick = () =>
-    modal.remove();
-
-  modal.addEventListener("click", event => {
-    if (event.target === modal) modal.remove();
+  const closeEditor = () => {
+    editor.remove();
+    document.head.querySelector("#ippEditorPageStyle")?.remove();
+  };
+  $("#ippCancel", editor).onclick = closeEditor;
+  $("#ippEditorPhoto", editor).onclick = () => $("#ippPhotoInput")?.click();
+  editor.querySelector("#ippBio").addEventListener("input", event => {
+    $("#ippBioCount", editor).textContent = `${event.target.value.length} / 160`;
   });
-
-  $("#ippSave", modal).onclick = async () => {
-    const status = $("#ippEditStatus", modal);
-
-    const name = $("#ippName", modal)
-      .value.trim();
-
-    const username = $("#ippUsername", modal)
-      .value.trim()
-      .replace(/^@/, "")
-      .replace(/\s+/g, "")
-      .toLowerCase();
-
-    const bio = $("#ippBio", modal)
-      .value.trim();
-
-    const category = $("#ippCategory", modal)
-      .value.trim();
-
-    const website = $("#ippWebsite", modal)
-      .value.trim();
+  $("#ippBioCount", editor).textContent = `${$("#ippBio", editor).value.length} / 160`;
+  const save = async () => {
+    const status = $("#ippEditStatus", editor);
+    const saveButtons = [$("#ippSave", editor), $("#ippSaveBottom", editor)];
+    const name = $("#ippName", editor).value.trim();
+    const username = $("#ippUsername", editor).value.trim().replace(/^@/, "").replace(/\s+/g, "").toLowerCase();
+    const bio = $("#ippBio", editor).value.trim();
+    const category = $("#ippCategory", editor).value.trim();
+    const website = $("#ippWebsite", editor).value.trim();
 
     if (!name) {
       status.textContent = "Name is required.";
+      $("#ippName", editor).focus();
       return;
     }
-
-    if (
-      username &&
-      !/^[a-z0-9._]{3,30}$/.test(username)
-    ) {
-      status.textContent =
-        "Username 3–30 characters ka hona chahiye.";
+    if (username && !/^[a-z0-9._]{3,30}$/.test(username)) {
+      status.textContent = "Username 3–30 characters ka hona chahiye; sirf letters, numbers, dots aur underscores use karein.";
+      $("#ippUsername", editor).focus();
       return;
     }
-
-    status.textContent = "Saving to Firebase…";
-
+    if (website && !/^https?:\/\//i.test(website)) {
+      status.textContent = "Website mein https:// ya http:// shamil karein.";
+      $("#ippWebsite", editor).focus();
+      return;
+    }
+    saveButtons.forEach(button => { button.disabled = true; button.textContent = "Saving…"; });
+    status.textContent = "Saving your profile securely…";
     try {
-      await setDoc(
-        doc(db, "users", viewingUid),
-        {
-          name,
-          displayName: name,
-          username: username ||
-            name.toLowerCase().replace(/\s+/g, ""),
-          bio,
-          category,
-          website,
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      modal.remove();
-
+      await setDoc(doc(db, "users", viewingUid), {
+        name,
+        displayName: name,
+        username: username || name.toLowerCase().replace(/\s+/g, ""),
+        bio,
+        category,
+        website,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      closeEditor();
     } catch (error) {
       console.error("Edit profile failed:", error);
-
-      status.textContent =
-        "Save failed. Login aur Firestore Rules check karein.";
+      status.textContent = "Save nahi hua. Internet aur Firestore Rules check karke dobara try karein.";
+      saveButtons.forEach((button, index) => { button.disabled = false; button.textContent = index === 0 ? "Save" : "Save changes"; });
     }
   };
+  $("#ippSave", editor).onclick = save;
+  $("#ippSaveBottom", editor).onclick = save;
 }
-
 async function uploadProfilePhoto(file) {
   if (!file || !file.type.startsWith("image/")) {
     throw new Error("Please select an image.");
