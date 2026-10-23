@@ -174,5 +174,12 @@
 <script type="module" src="chat.js?v=20261015fix2"></script>
 <script type="module" src="notifications.js?v=notifreadclear20261023a"></script>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('InstaPro service worker registration failed:', err));
+  });
+}
+</script>
 </body>
 </html>
