@@ -89,6 +89,10 @@ async function toggleStoryLike() {
   const user = signedInUser || auth.currentUser;
   const story = currentGroup[currentIndex];
   if (!user || user.isAnonymous) { alert("Story like karne ke liye Google login karein."); return; }
+  if (ownerId(story) && ownerId(story) === user.uid) {
+    alert("Aap apni story ko like nahi kar sakte.");
+    return;
+  }
   const btn = viewer?.querySelector(".is-like");
   if (btn) btn.disabled = true;
   try {
@@ -369,8 +373,12 @@ async function openStoryViewers(){
       return;
     }
     const latest=latestSnap.data();
-    const viewIds=Array.isArray(latest.seenBy)?latest.seenBy:[];
-    const likedIds=Array.isArray(latest.likedBy)?latest.likedBy:[];
+    const ownerUid=ownerId(story);
+    const rawViewIds=Array.isArray(latest.seenBy)?latest.seenBy:[];
+    const rawLikedIds=Array.isArray(latest.likedBy)?latest.likedBy:[];
+    // The story owner must never appear in their own viewers/likers list.
+    const viewIds=rawViewIds.filter(uid=>uid && uid!==ownerUid);
+    const likedIds=rawLikedIds.filter(uid=>uid && uid!==ownerUid);
     story.seenBy=viewIds;
     story.likedBy=likedIds;
     const ids=[...new Set([...viewIds,...likedIds])];
