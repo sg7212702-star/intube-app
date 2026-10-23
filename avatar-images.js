@@ -3,7 +3,7 @@
 // request with a WebView referrer. Retry once without a referrer before fallback.
 (() => {
   const FALLBACK = "https://www.gravatar.com/avatar/?d=mp";
-  const RETRIED = "data-instapro-avatar-retried";
+  const RETRIED = "instaproAvatarRetried";
   const isAvatar = img => {
     if (!(img instanceof HTMLImageElement)) return false;
     const marker = [
