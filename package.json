@@ -1,0 +1,19 @@
+{
+  "name": "instapro-android-wrapper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android packaging wrapper for InstaPro",
+  "scripts": {
+    "build:android": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/android": "^6.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1"
+  },
+  "dependencies_android": {
+    "@capacitor/android": "^6.2.1"
+  }
+}
