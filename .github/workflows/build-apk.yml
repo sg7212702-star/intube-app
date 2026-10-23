@@ -36,6 +36,9 @@ jobs:
       - name: Install packaging tools
         run: npm install
 
+      - name: Bundle native Google sign-in bridge
+        run: npm run bundle:native-auth
+
       - name: Prepare web assets
         run: |
           mkdir -p www
@@ -43,6 +46,19 @@ jobs:
 
       - name: Add Android project
         run: npx cap add android
+
+      - name: Configure Firebase Android
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "Missing GOOGLE_SERVICES_JSON_BASE64 repository secret."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+          node -e "const fs=require('fs'); const p='android/build.gradle'; let s=fs.readFileSync(p,'utf8'); if(!s.includes('com.google.gms:google-services')) { s=s.replace(/dependencies\\s*\\{/, 'dependencies {\\n        classpath \'com.google.gms:google-services:4.4.2\''); fs.writeFileSync(p,s); }"
+          node -e "const fs=require('fs'); const p='android/app/build.gradle'; let s=fs.readFileSync(p,'utf8'); if(!s.includes('com.google.gms.google-services')) { s += '\\napply plugin: \'com.google.gms.google-services\'\\n'; fs.writeFileSync(p,s); }"
+          node -e "const fs=require('fs'); const p='android/variables.gradle'; if(fs.existsSync(p)){let s=fs.readFileSync(p,'utf8'); if(!s.includes('rgcfaIncludeGoogle')) {s += '\\next.rgcfaIncludeGoogle = true\\n'; fs.writeFileSync(p,s);} }"
 
       - name: Sync web app into Android
         run: npx cap sync android
