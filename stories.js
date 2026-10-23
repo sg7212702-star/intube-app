@@ -959,11 +959,26 @@ function showAt(index) {
   });
 
   const avatar = viewer.querySelector(".is-avatar");
-  const photo = currentGroup[0]?.photo || story.photo || story.photoURL || "";
-  if (photo) avatar.src = photo; else avatar.removeAttribute("src");
-  viewer.querySelector(".is-name").textContent = currentGroup[0]?.name || ownerName(story);
   const profileLink = viewer.querySelector(".is-profile-link");
-  if (profileLink) profileLink.setAttribute("aria-label", "Open " + (currentGroup[0]?.name || ownerName(story)) + " profile");
+  const storyOwnerUid = ownerId(story);
+  const renderStoryIdentity = (profile = {}) => {
+    // Firestore users/{uid} is authoritative; story-upload/Auth snapshots are only fallbacks.
+    const name = profile.username || profile.displayName || profile.name || currentGroup[0]?.name || ownerName(story);
+    const photo = profile.photoURL || profile.photoUrl || profile.profilePic || profile.photo || profile.avatar || currentGroup[0]?.photo || story.photo || story.photoURL || "";
+    if (photo) avatar.src = photo;
+    else avatar.removeAttribute("src");
+    viewer.querySelector(".is-name").textContent = name;
+    if (profileLink) profileLink.setAttribute("aria-label", "Open " + name + " profile");
+  };
+  renderStoryIdentity();
+  // Resolve the latest saved profile so a story never displays the Google account identity
+  // when the user has edited their InstaPro name or profile photo.
+  if (storyOwnerUid) {
+    getDoc(doc(db, "users", storyOwnerUid)).then(snapshot => {
+      if (!viewer?.isConnected || ownerId(currentGroup[currentIndex] || {}) !== storyOwnerUid) return;
+      if (snapshot.exists()) renderStoryIdentity(snapshot.data());
+    }).catch(error => console.warn("Story owner profile lookup failed:", error));
+  }
 
   const progress = viewer.querySelector(".is-progress");
   progress.innerHTML = "";
