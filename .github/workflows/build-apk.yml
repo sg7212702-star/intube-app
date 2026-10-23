@@ -1,4 +1,5 @@
 name: Build InstaPro Android APK
+# Rebuild after stable signing secret setup
 
 on:
   workflow_dispatch:
