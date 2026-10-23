@@ -4,6 +4,8 @@ import { auth, db } from "./firebase.js";
 
 import {
   collection,
+  doc,
+  getDoc,
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -18,6 +20,26 @@ const CLOUDINARY_UPLOAD_PRESET = "intube_free";
 const $ = (id) => document.getElementById(id);
 
 let uploadInProgress = false;
+
+// The saved InstaPro profile is the source of truth for public identity.
+// Never publish Google's account name/photo into new posts or stories when a profile exists.
+async function getInstaProIdentity(user) {
+  const fallbackName = user?.displayName || user?.email?.split("@")[0] || "InstaPro User";
+  const fallbackPhoto = user?.photoURL || "";
+  if (!user?.uid) return { username: fallbackName, displayName: fallbackName, photo: fallbackPhoto, photoURL: fallbackPhoto };
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    const profile = snap.exists() ? snap.data() : {};
+    const username = profile.username || profile.displayName || profile.name || fallbackName;
+    const displayName = profile.displayName || profile.name || username;
+    const photo = profile.photoURL || profile.photoUrl || profile.profilePic || profile.photo || profile.avatar || fallbackPhoto;
+    return { username, displayName, photo, photoURL: photo };
+  } catch (error) {
+    console.warn("Could not load saved InstaPro profile before upload:", error);
+    return { username: fallbackName, displayName: fallbackName, photo: fallbackPhoto, photoURL: fallbackPhoto };
+  }
+}
+
 
 // -------------------------------------
 // SAFE UPLOAD INITIALIZATION
@@ -474,10 +496,11 @@ async function handleMultiplePhotoFiles(files, caption, musicFile = null, musicT
     }
     hud.querySelector("#ip-multi-upload-status").textContent="Publishing post to Firebase…";
     const first=mediaItems[0];
+    const identity=await getInstaProIdentity(user);
     const data={
       uid:user.uid,userId:user.uid,email:user.email||"",
-      username:user.displayName||user.email?.split("@")[0]||"InstaPro User",
-      photo:user.photoURL||"",imageUrl:first.url,mediaUrl:first.url,url:first.url,
+      username:identity.username,displayName:identity.displayName,
+      photo:identity.photo,photoURL:identity.photoURL,imageUrl:first.url,mediaUrl:first.url,url:first.url,
       mediaUrls:mediaItems.map(item=>item.url),mediaItems,mediaCount:mediaItems.length,
       type:"image",contentType:"image",mediaType:"image",postType:"post",isReel:false,
       fileName:first.fileName,fileSize:first.fileSize,caption:caption||"",
@@ -1583,15 +1606,15 @@ const notice = window.InstaProUploadNotification;
       notice.progress(100);
     }
 
+    const identity = await getInstaProIdentity(user);
     const data = {
       uid: user.uid,
       userId: user.uid,
       email: user.email || "",
-      username:
-        user.displayName ||
-        user.email?.split("@")[0] ||
-        "InstaPro User",
-      photo: user.photoURL || "",
+      username: identity.username,
+      displayName: identity.displayName,
+      photo: identity.photo,
+      photoURL: identity.photoURL,
       imageUrl: mediaUrl,
       mediaUrl: mediaUrl,
       url: mediaUrl,
