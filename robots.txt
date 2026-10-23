@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sg7212702-star.github.io/intube-app/sitemap.xml
