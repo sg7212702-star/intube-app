@@ -60,6 +60,26 @@ jobs:
           node -e "const fs=require('fs'); const p='android/app/build.gradle'; let s=fs.readFileSync(p,'utf8'); if(!s.includes('com.google.gms.google-services')) { s += '\\napply plugin: \'com.google.gms.google-services\'\\n'; fs.writeFileSync(p,s); }"
           node -e "const fs=require('fs'); const p='android/variables.gradle'; if(fs.existsSync(p)){let s=fs.readFileSync(p,'utf8'); if(!s.includes('rgcfaIncludeGoogle')) {s += '\\next.rgcfaIncludeGoogle = true\\n'; fs.writeFileSync(p,s);} }"
 
+
+      - name: Configure stable Android signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Missing ANDROID_KEYSTORE_BASE64 repository secret. Add the stable keystore secret before building."
+            exit 1
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/instapro-debug.keystore
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'android/app/build.gradle';
+          let s = fs.readFileSync(p, 'utf8');
+          if (!s.includes('instaproStableDebug')) {
+            s += `\n\nandroid {\n    signingConfigs {\n        instaproStableDebug {\n            storeFile file('instapro-debug.keystore')\n            storePassword 'android'\n            keyAlias 'instaprodebug'\n            keyPassword 'android'\n        }\n    }\n    buildTypes {\n        debug {\n            signingConfig signingConfigs.instaproStableDebug\n        }\n    }\n}\n`;
+            fs.writeFileSync(p, s);
+          }
+          NODE
+
       - name: Sync web app into Android
         run: npx cap sync android
 
