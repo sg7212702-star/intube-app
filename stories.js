@@ -875,7 +875,22 @@ function showAt(index) {
       musicToggle.style.overflow = "hidden";
       musicToggle.style.whiteSpace = "nowrap";
       audio.addEventListener("loadedmetadata", () => { if (musicStart < audio.duration) audio.currentTime = musicStart; }, {once:true});
-      audio.addEventListener("timeupdate", () => { if (musicEnd > musicStart && audio.currentTime >= musicEnd) { audio.currentTime = musicStart < audio.duration ? musicStart : 0; if (!audio.paused) audio.play().catch(()=>{}); } });
+      audio.addEventListener("timeupdate", () => {
+        if (musicEnd > musicStart && audio.currentTime >= musicEnd - 0.08) {
+          audio.currentTime = musicStart < audio.duration ? musicStart : 0;
+          if (!audio.paused) audio.play().catch(()=>{});
+        }
+      });
+      // Search-library tracks can be short preview clips. Keep the selected music
+      // segment repeating for the full Story image duration instead of stopping at audio end.
+      audio.addEventListener("ended", () => {
+        if (!viewer.isConnected || !viewer.contains(audio)) return;
+        const restartAt = musicStart < audio.duration ? musicStart : 0;
+        try { audio.currentTime = restartAt; } catch (_) {}
+        audio.play().catch(() => {
+          if (musicToggle?.isConnected) musicToggle.title = "Tap to resume music";
+        });
+      });
       musicToggle.onclick = async event => {
         event.preventDefault();
         event.stopPropagation();
