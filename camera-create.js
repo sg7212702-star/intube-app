@@ -33,17 +33,19 @@ function buildCamera() {
   #ipCamClose{font-size:34px}
   #ipCameraCreate.reelMode .ipCamTools{top:38%;bottom:220px;left:18px;gap:clamp(18px,3vh,30px);justify-content:flex-start}
   #ipCameraCreate.reelMode .ipCamTool{width:46px;justify-content:center}
-  #ipCameraCreate.reelMode .ipCamTool span:last-child{display:none}
-  #ipCameraCreate.reelMode .ipCamTools{top:36%;bottom:clamp(150px,21%,220px);left:18px;right:auto;gap:14px;align-items:flex-start;z-index:8}
-  #ipCameraCreate.reelMode .ipCamTool{width:48px;height:48px;min-height:48px;padding:0;justify-content:center;background:transparent;border:0;box-shadow:none;color:#fff}
-  #ipCameraCreate.reelMode .ipCamTool .ico{font-size:32px;width:44px;line-height:1;text-shadow:0 1px 4px #000}
+  #ipCameraCreate.reelMode .ipCamTools{top:34%;bottom:clamp(175px,23%,250px);left:14px;right:auto;gap:clamp(10px,2.2vh,20px);align-items:flex-start;z-index:8;max-height:none;overflow:visible}
+  #ipCameraCreate.reelMode .ipCamTool{width:auto;height:42px;min-height:42px;padding:0;gap:12px;justify-content:flex-start;background:transparent;border:0;box-shadow:none;color:#fff;font-size:16px;white-space:nowrap}
+  #ipCameraCreate.reelMode .ipCamTool .ico{font-size:32px;width:44px;line-height:1;text-shadow:0 1px 4px #000;flex:0 0 44px}
   #ipCameraCreate.reelMode .ipCamTool[data-tool="create"] .ico{font-size:36px;font-weight:700}
   #ipCameraCreate.reelMode .ipCamTool[data-tool="boomerang"] .ico{font-size:38px}
   #ipCameraCreate.reelMode .ipCamTool[data-tool="layout"] .ico{font-size:30px}
   #ipCameraCreate.reelMode .ipCamTool[data-tool="handsfree"] .ico{font-size:30px}
   #ipCameraCreate.reelMode .ipCamTool[data-tool="close"]{display:none}
-  #ipCameraCreate.reelMode .ipReelAudio{top:clamp(105px,15%,180px);background:rgba(0,0,0,.58);padding:14px 26px}
+  #ipCameraCreate.reelMode .ipReelAudio{top:clamp(105px,15%,180px);background:rgba(0,0,0,.58);padding:12px 26px;border:0}
   #ipCameraCreate.reelMode .ipCamModes{z-index:12;position:relative}
+  #ipCameraCreate.reelMode .ipCamTop #ipCamFlash{display:none}
+  #ipCameraCreate.reelMode .ipCamTop{justify-content:space-between}
+  #ipCameraCreate.reelMode .ipCamTop #ipCamSettings{margin-left:auto}
   #ipCameraCreate.reelMode .ipCamControls{z-index:10;position:relative}
   .ipReelAudio{position:absolute;top:clamp(110px,16%,190px);left:50%;transform:translateX(-50%);z-index:4;border:0;border-radius:28px;background:rgba(0,0,0,.58);color:white;padding:14px 24px;font-size:16px;font-weight:600;white-space:nowrap}
   .ipReelTopExtras{display:none;position:absolute;top:calc(env(safe-area-inset-top) + 20px);left:50%;transform:translateX(-50%);z-index:4;gap:12px}
@@ -53,7 +55,7 @@ function buildCamera() {
   #ipCameraCreate.reelMode .ipReelEffects{display:flex}
   .ipReelEffects button{border:2px solid rgba(255,255,255,.7);border-radius:50%;width:58px;height:58px;background:rgba(255,255,255,.15);color:#fff;font-size:24px}
   #ipCamToast{position:absolute;top:20%;left:24%;right:8%;text-align:center;font-size:13px;color:white;z-index:5;text-shadow:0 1px 4px #000;pointer-events:none}
-  @media(max-height:760px){.ipCamTools{top:26%;bottom:220px;gap:4px}.ipCamTool .ico{font-size:25px;width:44px}.ipCamTool{gap:10px;font-size:14px}.ipCamControls{margin-bottom:18px}#ipCamGallery{width:50px;height:50px}#ipCamCapture{width:78px;height:78px}.ipCamModes button{font-size:14px;letter-spacing:2px}}
+  @media(max-height:760px){.ipCamTools{top:26%;bottom:220px;gap:4px}.ipCamTool .ico{font-size:25px;width:44px}.ipCamTool{gap:10px;font-size:14px}.ipCamControls{margin-bottom:18px}#ipCamGallery{width:50px;height:50px}#ipCamCapture{width:78px;height:78px}.ipCamModes button{font-size:14px;letter-spacing:2px}#ipCameraCreate.reelMode .ipCamTools{top:31%;bottom:180px;gap:8px}#ipCameraCreate.reelMode .ipCamTool{height:36px;min-height:36px;font-size:14px}#ipCameraCreate.reelMode .ipCamTool .ico{font-size:28px}}
   `;
   document.head.appendChild(style);
   cameraOverlay = document.createElement("div");
