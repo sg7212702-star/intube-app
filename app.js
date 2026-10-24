@@ -889,13 +889,23 @@ document.addEventListener("DOMContentLoaded",()=>{
       savedTarget.style.display = savedPage === "chat" ? "flex" : "block";
     }
   } catch (_) {}
-  // HOME ADD (+) BUTTON: open the create sheet.
+  // HOME ADD (+) BUTTON: open the camera directly when the camera module is loaded.
   const addButton = $("addBtn");
   if (addButton) {
     addButton.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
-      openSheet();
+      if (typeof window.openInstaProCamera === "function") {
+        const oldSheet = $("createSheet");
+        if (oldSheet) oldSheet.classList.remove("show");
+        ["overlay", "sheetOverlay"].forEach(id => {
+          const overlay = $(id);
+          if (overlay) { overlay.classList.remove("show"); overlay.style.display = "none"; }
+        });
+        window.openInstaProCamera();
+      } else {
+        openSheet();
+      }
     });
   }
 
