@@ -682,6 +682,36 @@ function startStoryFloatingHearts() {
     setTimeout(() => heart.remove(), duration + 100);
   }, 480);
 }
+function triggerStoryLikeHeartBurst(button) {
+  if (!button || !button.isConnected) return;
+  button.querySelectorAll(".is-activity-heart").forEach(node => node.remove());
+  const colors = ["#ff375f", "#ff4fa3", "#ff6bcb", "#b44aff", "#5b8cff", "#31c8ff", "#ff9f43", "#ffda55", "#ff65a3", "#c77dff"];
+  const hearts = ["♥", "❤", "💗", "💖", "💕", "♥", "💓", "💘", "💜", "💙"];
+  for (let i = 0; i < 10; i++) {
+    const heart = document.createElement("span");
+    heart.className = "is-activity-heart";
+    heart.setAttribute("aria-hidden", "true");
+    heart.textContent = hearts[i];
+    const color = colors[i];
+    const drift = (Math.random() - 0.5) * 74;
+    const rise = 58 + Math.random() * 45;
+    const size = 13 + Math.random() * 13;
+    const delay = i * 48;
+    heart.style.color = color;
+    heart.style.fontSize = size + "px";
+    heart.style.marginLeft = ((Math.random() - 0.5) * 24) + "px";
+    heart.style.textShadow = "0 1px 8px " + color + "88";
+    button.appendChild(heart);
+    if (heart.animate) {
+      heart.animate([
+        { transform: "translate(-50%, 5px) scale(.25) rotate(-18deg)", opacity: 0, offset: 0 },
+        { transform: "translate(calc(-50% + " + (drift * .18) + "px), -10px) scale(1.15) rotate(8deg)", opacity: 1, offset: .22 },
+        { transform: "translate(calc(-50% + " + drift + "px), -" + rise + "px) scale(.55) rotate(" + (drift > 0 ? 24 : -24) + "deg)", opacity: 0, offset: 1 }
+      ], { duration: 1150 + Math.random() * 250, delay, easing: "cubic-bezier(.18,.72,.28,1)", fill: "forwards" });
+    }
+    setTimeout(() => heart.remove(), 1550 + delay);
+  }
+}
 function closeViewer() {
   stopStoryFloatingHearts();
   if (viewerTimer) clearTimeout(viewerTimer);
@@ -723,16 +753,14 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
     const reactionStyle = document.createElement("style");
     reactionStyle.id = "instapro-story-like-pop-style";
     reactionStyle.textContent = `
-      .instapro-story-viewer .is-viewers{position:relative!important;overflow:visible!important}
-      .instapro-story-viewer .is-viewers .is-like-pop{position:absolute;left:50%;top:-8px;transform:translate(-50%,0) scale(.15);opacity:0;pointer-events:none;font-family:Arial,sans-serif;font-size:29px;line-height:1;z-index:30;filter:drop-shadow(0 2px 8px rgba(255,40,120,.65))}
-      .instapro-story-viewer .is-viewers.is-liked-activity .is-like-pop{animation:instaStoryHeartPop 1.45s cubic-bezier(.18,.8,.25,1) both}
-      .instapro-story-viewer .is-viewers.is-liked-activity .is-tool-icon{animation:instaActivityPulse .85s ease-out both}
-      @keyframes instaStoryHeartPop{0%{opacity:0;transform:translate(-50%,8px) scale(.15) rotate(-18deg)}18%{opacity:1;transform:translate(-50%,-12px) scale(1.3) rotate(8deg)}38%{opacity:1;transform:translate(-50%,-24px) scale(1) rotate(-5deg)}72%{opacity:.95;transform:translate(-50%,-43px) scale(.82) rotate(8deg)}100%{opacity:0;transform:translate(-50%,-62px) scale(.45) rotate(15deg)}}
-      @keyframes instaActivityPulse{0%{transform:scale(1);color:#fff}35%{transform:scale(1.5);color:#ff3b86;text-shadow:0 0 12px #ff3b86}70%{transform:scale(.9);color:#ffb4d2}100%{transform:scale(1);color:#fff}}
-      .instapro-story-viewer .is-viewers .is-like-spark{position:absolute;left:50%;top:2px;pointer-events:none;z-index:29;font-size:12px;opacity:0}
-      .instapro-story-viewer .is-viewers.is-liked-activity .is-like-spark{animation:instaStorySpark 1.1s ease-out both}
-      @keyframes instaStorySpark{0%{opacity:0;transform:translate(-50%,0) scale(.2)}25%{opacity:1;transform:translate(calc(-50% + var(--dx)), -15px) scale(1.2)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)), -38px) scale(.5)}}
-      @media(prefers-reduced-motion:reduce){.instapro-story-viewer .is-viewers.is-liked-activity .is-like-pop,.instapro-story-viewer .is-viewers.is-liked-activity .is-tool-icon,.instapro-story-viewer .is-viewers.is-liked-activity .is-like-spark{animation:none!important}}
+      .instapro-story-viewer .is-stage{overflow:hidden!important}
+      .instapro-story-viewer .is-footer{overflow:visible!important}
+      .instapro-story-viewer .is-viewers{position:relative!important;overflow:visible!important;isolation:isolate}
+      .instapro-story-viewer .is-viewers .is-tool-icon{transform-origin:center}
+      .instapro-story-viewer .is-viewers.is-liked-activity .is-tool-icon{animation:instaActivityPulse .7s ease-out both}
+      @keyframes instaActivityPulse{0%{transform:scale(1);color:#fff}35%{transform:scale(1.35);color:#ff3b86;text-shadow:0 0 12px #ff3b86}70%{transform:scale(.94);color:#ffb4d2}100%{transform:scale(1);color:#fff}}
+      .instapro-story-viewer .is-activity-heart{position:absolute;left:50%;top:-5px;z-index:40;pointer-events:none;font-family:Arial,sans-serif;line-height:1;will-change:transform,opacity;filter:drop-shadow(0 2px 5px rgba(255,40,120,.38))}
+      @media(prefers-reduced-motion:reduce){.instapro-story-viewer .is-viewers.is-liked-activity .is-tool-icon{animation:none!important}}
     `;
     document.head.appendChild(reactionStyle);
   }
@@ -753,7 +781,7 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
       <button class="is-prev" aria-label="Previous story" style="position:absolute;left:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <button class="is-next" aria-label="Next story" style="position:absolute;right:0;top:15%;bottom:15%;width:35%;border:0;background:transparent!important;"></button>
       <div class="is-footer" style="position:absolute;bottom:18px;left:14px;right:14px;z-index:6;display:flex;gap:4px;align-items:center;justify-content:space-around;">
-        <button class="is-viewers" aria-label="Activity and story viewers" title="Activity" style="display:none;"><span class="is-like-pop" aria-hidden="true">💖</span><span class="is-like-spark" style="--dx:-22px" aria-hidden="true">✨</span><span class="is-like-spark" style="--dx:22px" aria-hidden="true">💗</span><span class="is-tool-icon">◉</span><span class="is-tool-label">Activity <b class="is-view-count">0</b></span></button>
+        <button class="is-viewers" aria-label="Activity and story viewers" title="Activity" style="display:none;"><span class="is-tool-icon">◉</span><span class="is-tool-label">Activity <b class="is-view-count">0</b></span></button>
         <button class="is-highlight" aria-label="Add story to highlights" title="Highlight" style="display:none;"><span class="is-tool-icon">♡</span><span class="is-tool-label">Highlight</span></button>
         <button class="is-share" aria-label="Send story in DM" title="Send"><span class="is-tool-icon">➤</span><span class="is-tool-label">Send</span></button>
         <button class="is-mention" aria-label="Mention someone" title="Mention" style="display:none;"><span class="is-tool-icon">@</span><span class="is-tool-label">Mention</span></button>
@@ -813,7 +841,6 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
   viewer.addEventListener("click", event => {
     if (event.target === viewer) closeViewer();
   });
-  startStoryFloatingHearts();
   showAt(Math.max(0, Math.min(startIndex, currentGroup.length - 1)));
 }
 function showAt(index) {
@@ -1011,16 +1038,13 @@ function showAt(index) {
   if(viewersButton){viewersButton.style.setProperty("display",isOwnStory?"flex":"none","important");viewersButton.querySelector(".is-view-count").textContent=String(Array.isArray(story.seenBy)?story.seenBy.length:0);
     const hasStoryLikes = Array.isArray(story.likedBy) && story.likedBy.length > 0;
     viewersButton.classList.toggle("is-liked-activity", hasStoryLikes);
-    if (hasStoryLikes) {
+    if (hasStoryLikes && isOwnStory) {
       viewersButton.setAttribute("aria-label", "Activity — story has likes");
-      // Replay the small heart burst when this story is opened.
-      viewersButton.querySelectorAll(".is-like-pop,.is-like-spark,.is-tool-icon").forEach(node => {
-        node.style.animation = "none";
-        void node.offsetWidth;
-        node.style.animation = "";
-      });
+      // Instagram-style multicolour hearts rise from directly above the viewers button.
+      triggerStoryLikeHeartBurst(viewersButton);
     } else {
       viewersButton.setAttribute("aria-label", "Activity and story viewers");
+      viewersButton.querySelectorAll(".is-activity-heart").forEach(node => node.remove());
     }}
   const repliesAllowed=(story.privacy?.replies||"everyone")!=="off";
   if(replyInput&&!isOwnStory)replyInput.disabled=!repliesAllowed;
