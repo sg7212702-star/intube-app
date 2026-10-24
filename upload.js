@@ -1147,8 +1147,9 @@ function openStoryEditor(file) {
               const stickerRect=sticker.getBoundingClientRect(),modalRect=modal.getBoundingClientRect();
               sticker.style.left=(stickerRect.left-modalRect.left+stickerRect.width/2)+"px";
               sticker.style.top=(stickerRect.top-modalRect.top+stickerRect.height/2)+"px";
-              // Start the selected song as soon as Use is tapped.
-              if(window.__instaProPendingMusicTrack?.audioUrl||window.__instaProPendingMusicTrack?.previewUrl){showStoryMusicTrim(window.__instaProPendingMusicTrack);}
+              // Keep the selected song sticker visible after Use.
+              // Open the trim/timeline panel only when the user taps the sticker.
+              // This avoids the music panel unexpectedly covering the story editor.
               return;
             }
           });
