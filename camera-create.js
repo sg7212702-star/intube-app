@@ -31,21 +31,22 @@ function buildCamera() {
   .ipCamModes button.active:after{content:"";position:absolute;left:2px;right:2px;bottom:0;height:2px;border-radius:2px;background:#fff}
   .ipCamModes button:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:3px}
   #ipCamClose{font-size:34px}
-  #ipCameraCreate.reelMode .ipCamTools{top:38%;bottom:220px;left:18px;gap:clamp(18px,3vh,30px);justify-content:flex-start}
   #ipCameraCreate.reelMode .ipCamTool{width:46px;justify-content:center}
-  #ipCameraCreate.reelMode .ipCamTools{top:34%;bottom:clamp(175px,23%,250px);left:14px;right:auto;gap:clamp(10px,2.2vh,20px);align-items:flex-start;z-index:8;max-height:none;overflow:visible}
-  #ipCameraCreate.reelMode .ipCamTool{width:auto;height:42px;min-height:42px;padding:0;gap:12px;justify-content:flex-start;background:transparent;border:0;box-shadow:none;color:#fff;font-size:16px;white-space:nowrap}
-  #ipCameraCreate.reelMode .ipCamTool .ico{font-size:32px;width:44px;line-height:1;text-shadow:0 1px 4px #000;flex:0 0 44px}
-  #ipCameraCreate.reelMode .ipCamTool[data-tool="create"] .ico{font-size:36px;font-weight:700}
-  #ipCameraCreate.reelMode .ipCamTool[data-tool="boomerang"] .ico{font-size:38px}
-  #ipCameraCreate.reelMode .ipCamTool[data-tool="layout"] .ico{font-size:30px}
-  #ipCameraCreate.reelMode .ipCamTool[data-tool="handsfree"] .ico{font-size:30px}
-  #ipCameraCreate.reelMode .ipCamTool[data-tool="close"]{display:none}
+  #ipCameraCreate.reelMode .ipCamTools{display:none}
   #ipCameraCreate.reelMode .ipReelAudio{top:clamp(105px,15%,180px);background:rgba(0,0,0,.58);padding:12px 26px;border:0}
   #ipCameraCreate.reelMode .ipCamModes{z-index:12;position:relative}
   #ipCameraCreate.reelMode .ipCamTop #ipCamFlash{display:none}
   #ipCameraCreate.reelMode .ipCamTop{justify-content:space-between}
   #ipCameraCreate.reelMode .ipCamTop #ipCamSettings{margin-left:auto}
+  .ipReelSide{display:none;position:absolute;left:clamp(22px,5vw,38px);top:42%;transform:translateY(-5%);z-index:9;flex-direction:column;align-items:center;gap:clamp(18px,3.4vh,30px)}
+  #ipCameraCreate.reelMode .ipReelSide{display:flex}
+  .ipReelSide button{width:38px;height:42px;padding:0;border:0;background:transparent;color:#fff;font-size:34px;line-height:1;text-shadow:0 1px 4px #000;display:flex;align-items:center;justify-content:center}
+  .ipReelSide button:last-child{font-size:22px;font-weight:700;border:2px solid #fff;border-radius:50%;width:44px;height:44px}
+  #ipCameraCreate.reelMode .ipCamBottom{bottom:calc(env(safe-area-inset-bottom) + 20px)}
+  #ipCameraCreate.reelMode .ipCamControls{margin-bottom:clamp(22px,4vh,38px)}
+  #ipCameraCreate.reelMode #ipCamGallery{border-radius:14px}
+  #ipCameraCreate.reelMode .ipReelTopExtras{top:calc(env(safe-area-inset-top) + 18px);left:50%;gap:10px}
+  #ipCameraCreate.reelMode .ipReelTopExtras button{width:58px;height:58px}
   #ipCameraCreate.reelMode .ipCamControls{z-index:10;position:relative}
   .ipReelAudio{position:absolute;top:clamp(110px,16%,190px);left:50%;transform:translateX(-50%);z-index:4;border:0;border-radius:28px;background:rgba(0,0,0,.58);color:white;padding:14px 24px;font-size:16px;font-weight:600;white-space:nowrap}
   .ipReelTopExtras{display:none;position:absolute;top:calc(env(safe-area-inset-top) + 20px);left:50%;transform:translateX(-50%);z-index:4;gap:12px}
@@ -66,6 +67,7 @@ function buildCamera() {
     <div class="ipReelTopExtras"><button id="ipReelMute" aria-label="Flash">ϟ̸</button><button id="ipReelSpeed" aria-label="Recording speed">1×</button><button id="ipReelTimer" aria-label="Timer">◷</button></div>
     <button class="ipReelAudio" id="ipReelAudio" type="button">♫ &nbsp; Add audio</button>
     <div class="ipReelEffects"><button id="ipReelEffect1" aria-label="Effects">✦</button><button id="ipReelEffect2" aria-label="Gallery effects">◉</button></div>
+    <div class="ipReelSide"><button id="ipReelSideAudio" aria-label="Audio">♫</button><button id="ipReelSideEffects" aria-label="Effects">✣</button><button id="ipReelSideTag" aria-label="Tag people">▧</button><button id="ipReelSideEdit" aria-label="Edit effects">⚒</button><button id="ipReelSideDuration" aria-label="Recording duration">60</button></div>
     <div class="ipCamTools">
       <button class="ipCamTool" data-tool="create"><span class="ico">Aa</span><span>Create</span></button>
       <button class="ipCamTool" data-tool="boomerang"><span class="ico">∞</span><span>Boomerang</span></button>
@@ -93,6 +95,12 @@ function buildCamera() {
   $c("ipReelTimer").onclick = () => toast("Timer selected. Tap the capture button to record.");
   $c("ipReelAudio").onclick = () => toast("Add audio is not connected to a music library yet.");
   $c("ipReelEffect1").onclick = () => toast("Effects library is not connected yet.");
+  $c("ipReelSideAudio").onclick = () => $c("ipReelAudio").click();
+  $c("ipReelSideEffects").onclick = () => $c("ipReelEffect1").click();
+  $c("ipReelSideTag").onclick = () => toast("People tagging is available after selecting a Reel.");
+  $c("ipReelSideEdit").onclick = () => $c("ipReelEffect2").click();
+  $c("ipReelSideDuration").onclick = () => { const b=$c("ipReelSideDuration"); b.textContent=b.textContent==="60"?"90":"60"; toast("Reel duration: "+b.textContent+" seconds."); };
+
   $c("ipReelEffect2").onclick = () => toast("Choose a photo or video from Gallery for effects.");
   $c("ipCamGallery").onclick = () => galleryInput.click();
   galleryInput.onchange = () => { const files = [...(galleryInput.files || [])]; if(files.length) sendFiles(files); galleryInput.value = ""; };
