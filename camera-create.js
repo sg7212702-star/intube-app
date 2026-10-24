@@ -66,10 +66,13 @@ function buildCamera() {
 }
 function toast(message) { const el=$c("ipCamToast"); if(!el)return; el.textContent=message; clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.textContent="",2400); }
 function setMode(mode) {
-  activeMode=mode;
-  cameraOverlay.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
-  if(mode==="LIVE") toast("Live streaming setup is not available yet. Choose Post, Story or Reel.");
-  else if(mode==="REEL") toast("Tap capture to start recording; tap again to finish.");
+  activeMode = mode;
+  cameraOverlay.classList.toggle("reelMode", mode === "REEL");
+  $c("ipReelAudio").style.display = mode === "REEL" ? "block" : "none";
+  cameraOverlay.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+  if (mode === "REEL") toast("Reels camera ready. Tap the centre button to record.");
+  else if (mode === "STORY") toast("Story mode: take a photo or record a clip.");
+  else if (mode === "POST") toast("Post mode: take a photo or choose media from Gallery.");
 }
 async function startCamera() {
   if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
