@@ -755,10 +755,10 @@ function startFeed() {
     unsubscribeFeed = null;
   }
 
-  const postsQuery = query(
-    collection(db, FEED_COLLECTION),
-    orderBy("createdAt", "desc")
-  );
+  // Read the full posts collection and sort locally. Firestore orderBy("createdAt")
+  // silently omits older documents that do not have that field, which can make the
+  // feed look stale or incomplete after scrolling.
+  const postsQuery = query(collection(db, FEED_COLLECTION));
 
   unsubscribeFeed = onSnapshot(
     postsQuery,
@@ -767,7 +767,16 @@ function startFeed() {
       currentPosts = snapshot.docs.map(item => ({
         id: item.id,
         ...item.data()
-      }));
+      })).sort((a, b) => {
+        const toMillis = value => {
+          if (value?.toMillis) return value.toMillis();
+          if (value?.toDate) return value.toDate().getTime();
+          if (typeof value === "number") return value;
+          if (typeof value === "string") return Date.parse(value) || 0;
+          return 0;
+        };
+        return toMillis(b.createdAt || b.time || b.timestamp) - toMillis(a.createdAt || a.time || a.timestamp);
+      });
 
       profileCache.clear();
 
