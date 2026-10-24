@@ -403,9 +403,14 @@ async function openStoryViewers(){
     body.querySelectorAll("[data-story-viewer-uid]").forEach(row=>{
       row.addEventListener("click",()=>{
         const targetUid=row.getAttribute("data-story-viewer-uid");
-        panel.remove();
-        if(typeof window.openProfile==="function") window.openProfile(targetUid);
-        else alert("Profile system abhi load nahi hua. Dobara try karein.");
+        // Remove the full Story Viewer before opening the profile. The viewer uses
+        // z-index 1000000, so leaving it open covers the profile until Back is pressed.
+        closeViewer();
+        requestAnimationFrame(() => {
+          if(typeof window.openProfile==="function") window.openProfile(targetUid);
+          else if(typeof window.showProfile==="function") window.showProfile(targetUid);
+          else window.dispatchEvent(new CustomEvent("instapro:open-profile",{detail:{uid:targetUid}}));
+        });
       });
     });
   }catch(e){console.error("Story viewer list refresh error:",e);panel.querySelector(".isp-body").textContent="Viewer list load nahi hui. Firestore Rules check karein.";}
