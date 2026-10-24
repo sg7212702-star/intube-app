@@ -685,31 +685,41 @@ function startStoryFloatingHearts() {
 function triggerStoryLikeHeartBurst(button) {
   if (!button || !button.isConnected) return;
   button.querySelectorAll(".is-activity-heart").forEach(node => node.remove());
-  const colors = ["#ff375f", "#ff4fa3", "#ff6bcb", "#b44aff", "#5b8cff", "#31c8ff", "#ff9f43", "#ffda55", "#ff65a3", "#c77dff"];
-  const hearts = ["♥", "❤", "💗", "💖", "💕", "♥", "💓", "💘", "💜", "💙"];
-  for (let i = 0; i < 10; i++) {
+
+  // Instagram-inspired activity: small hearts launch one after another, not as a burst.
+  const colors = ["#ff3040", "#ff4f9a", "#c44dff", "#ff6b5f", "#e83e8c", "#ff8b45", "#a855f7", "#ff3d67"];
+  const totalHearts = 8;
+  for (let i = 0; i < totalHearts; i++) {
     const heart = document.createElement("span");
     heart.className = "is-activity-heart";
     heart.setAttribute("aria-hidden", "true");
-    heart.textContent = hearts[i];
-    const color = colors[i];
-    const drift = (Math.random() - 0.5) * 74;
-    const rise = 58 + Math.random() * 45;
-    const size = 13 + Math.random() * 13;
-    const delay = i * 48;
+    heart.textContent = "♥";
+    const color = colors[i % colors.length];
+    const drift = (Math.random() - 0.5) * 34;
+    const rise = 62 + Math.random() * 24;
+    const size = 15 + Math.random() * 5;
+    const delay = i * 175;
+
     heart.style.color = color;
     heart.style.fontSize = size + "px";
-    heart.style.marginLeft = ((Math.random() - 0.5) * 24) + "px";
-    heart.style.textShadow = "0 1px 8px " + color + "88";
+    heart.style.marginLeft = ((Math.random() - 0.5) * 10) + "px";
+    heart.style.textShadow = "0 1px 7px " + color + "66";
     button.appendChild(heart);
+
     if (heart.animate) {
       heart.animate([
-        { transform: "translate(-50%, 5px) scale(.25) rotate(-18deg)", opacity: 0, offset: 0 },
-        { transform: "translate(calc(-50% + " + (drift * .18) + "px), -10px) scale(1.15) rotate(8deg)", opacity: 1, offset: .22 },
-        { transform: "translate(calc(-50% + " + drift + "px), -" + rise + "px) scale(.55) rotate(" + (drift > 0 ? 24 : -24) + "deg)", opacity: 0, offset: 1 }
-      ], { duration: 1150 + Math.random() * 250, delay, easing: "cubic-bezier(.18,.72,.28,1)", fill: "forwards" });
+        { transform: "translate(-50%, 4px) scale(.35)", opacity: 0, offset: 0 },
+        { transform: "translate(calc(-50% + " + (drift * .15) + "px), -8px) scale(1.08)", opacity: 1, offset: .2 },
+        { transform: "translate(calc(-50% + " + drift + "px), -" + rise + "px) scale(.72)", opacity: .85, offset: .68 },
+        { transform: "translate(calc(-50% + " + (drift * 1.2) + "px), -" + (rise + 15) + "px) scale(.45)", opacity: 0, offset: 1 }
+      ], {
+        duration: 1050,
+        delay,
+        easing: "cubic-bezier(.22,.68,.35,1)",
+        fill: "forwards"
+      });
     }
-    setTimeout(() => heart.remove(), 1550 + delay);
+    setTimeout(() => heart.remove(), 1150 + delay);
   }
 }
 function closeViewer() {
