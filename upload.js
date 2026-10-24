@@ -1599,8 +1599,10 @@ const notice = window.InstaProUploadNotification;
     window.__instaProPendingMusicTrack = null;
     window.__instaProStoryCaption = "";
     const reelTitle = postType === "reel" ? (window.__instaProReelTitle || "") : "";
+    const reelCaption = postType === "reel" ? (window.__instaProReelCaption || "") : "";
     const reelHashtags = postType === "reel" ? (window.__instaProReelHashtags || "") : "";
     const reelTaggedPeople = postType === "reel" ? (window.__instaProReelTaggedPeople || "") : "";
+    const reelCaptionWithHashtags = [reelCaption, reelHashtags].filter(Boolean).join("\n\n");
     window.__instaProReelTitle = "";
     window.__instaProReelHashtags = "";
     window.__instaProReelTaggedPeople = "";
@@ -1642,7 +1644,7 @@ const notice = window.InstaProUploadNotification;
       caption: postType === "story"
         ? (window.__instaProStoryCaption || "")
         : postType === "reel"
-          ? (window.__instaProReelCaption || "")
+          ? reelCaptionWithHashtags
           : (window.__instaProPostCaption || ""),
       ...(postType === "story" ? { storyText: window.__instaProStoryOverlayText || "", storyFilter: window.__instaProStoryFilter || "Normal" } : {}),
       ...(postType === "reel" ? {
