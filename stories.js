@@ -748,6 +748,19 @@ function closeViewer() {
 }
 function openStoryGroup(group, startIndex = 0) {
   if (!group?.stories?.length) return;
+  // Stop any post/Reel soundtrack before Story audio or video starts.
+  try {
+    if (typeof window.InstaProFeed?.pauseForStory === "function") {
+      window.InstaProFeed.pauseForStory();
+    } else {
+      document.querySelectorAll(".ip-feed-music, video.ip-feed-media").forEach(media => {
+        media.pause();
+        if (media.matches(".ip-feed-music")) media.muted = true;
+      });
+    }
+  } catch (error) {
+    console.warn("Could not pause feed media before story:", error);
+  }
   closeViewer();
   currentGroup = group.stories.slice();
   currentIndex = 0;
