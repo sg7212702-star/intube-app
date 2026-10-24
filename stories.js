@@ -81,7 +81,7 @@ async function sendReplyToDM(text) {
   await addDoc(collection(db, "chats", chatId, "messages"), {
     text, message: text, senderUid: user.uid, receiverUid, uid: user.uid,
     createdAt: serverTimestamp(), read: false, messageType: "story_reply",
-    storyId: story.id, storyMediaUrl: mediaUrl(story), storyOwnerUid: receiverUid
+    storyId: story.id, storyMediaUrl: mediaUrl(story), storyMediaType: isVideo(story) ? "video" : "image", storyOwnerUid: receiverUid, storyOwnerName: ownerName(story)
   });
   await notifyStoryOwner(receiverUid, "story_reply", "replied to your story", story);
 }
