@@ -24,6 +24,39 @@ function setInstaProNormalVideoSpeed(event) {
 document.addEventListener("loadedmetadata", setInstaProNormalVideoSpeed, true);
 document.addEventListener("play", setInstaProNormalVideoSpeed, true);
 
+// Instagram-style shared media focus: only one feed/reel/story audio source at a time.
+// A post's video and its separate soundtrack may play together inside the same card.
+function instaProMediaOwner(media) {
+  return media?.closest?.(".instapro-feed-post, .ipr-slide, .storyViewer, #storyViewer, #storyModal, .story-viewer, [data-story-id]") || media?.closest?.(".page") || null;
+}
+function instaProPauseCompetingMedia(activeMedia) {
+  const owner = instaProMediaOwner(activeMedia);
+  document.querySelectorAll("video, audio").forEach(other => {
+    if (other === activeMedia) return;
+    if (owner && instaProMediaOwner(other) === owner) return;
+    if (!other.paused) other.pause();
+    if (other instanceof HTMLAudioElement) {
+      other.muted = true;
+      try { other.currentTime = 0; } catch (_) {}
+    }
+  });
+}
+document.addEventListener("play", event => {
+  const media = event.target;
+  if (media instanceof HTMLMediaElement) instaProPauseCompetingMedia(media);
+}, true);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) return;
+  document.querySelectorAll("video, audio").forEach(media => {
+    if (!media.paused) media.pause();
+    if (media instanceof HTMLAudioElement) {
+      media.muted = true;
+      try { media.currentTime = 0; } catch (_) {}
+    }
+  });
+});
+
+
 // Shared transparent-glass layer for all InstaPro pages and in-app sheets.
 function installGlobalGlassStyles() {
   if (document.getElementById("instapro-global-glass-style")) return;
@@ -831,6 +864,16 @@ function openPage(name){
     try { sessionStorage.setItem("instapro-last-page", name); } catch (_) {}
   }
   closeAll();
+  // Release audio from the page being hidden when switching Home/Reels/Profile.
+  document.querySelectorAll("video, audio").forEach(media => {
+    if (!target?.contains(media) && !(name === "home" && home?.contains(media))) {
+      if (!media.paused) media.pause();
+      if (media instanceof HTMLAudioElement) {
+        media.muted = true;
+        try { media.currentTime = 0; } catch (_) {}
+      }
+    }
+  });
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
