@@ -14,21 +14,21 @@ function buildCamera() {
   #ipCamShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.42),transparent 24%,transparent 68%,rgba(0,0,0,.68))}
   .ipCamTop{position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:22px;right:22px;display:flex;align-items:center;justify-content:space-between;z-index:3}
   .ipCamIcon{border:0;background:transparent;color:white;font-size:35px;line-height:1;padding:4px;text-shadow:0 1px 4px #222}
-  .ipCamTools{position:absolute;left:20px;top:40%;transform:translateY(-5%);display:flex;flex-direction:column;gap:24px;z-index:3}
-  .ipCamTool{display:flex;align-items:center;gap:24px;border:0;background:transparent;color:white;text-align:left;font-size:17px;font-weight:600;padding:0;text-shadow:0 1px 4px #111}
-  .ipCamTool .ico{font-size:35px;width:76px;text-align:center;line-height:1}
+  .ipCamTools{position:absolute;left:clamp(12px,4vw,24px);top:clamp(150px,34%,360px);bottom:clamp(220px,27%,330px);display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(4px,1.2vh,16px);z-index:3;max-height:55%;overflow:hidden}
+  .ipCamTool{display:flex;align-items:center;gap:clamp(12px,4vw,24px);border:0;background:transparent;color:white;text-align:left;font-size:clamp(14px,2.5vh,18px);font-weight:650;padding:2px 0;text-shadow:0 1px 4px #111;min-height:0;flex:0 1 auto}
+  .ipCamTool .ico{font-size:clamp(27px,4.8vh,36px);width:clamp(42px,11vw,62px);text-align:center;line-height:1;flex-shrink:0}\n  .ipCamTool.selected{opacity:1}\n  .ipCamTool.selected .ico{filter:drop-shadow(0 0 5px rgba(255,255,255,.65))}
   .ipCamBottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 24px);z-index:4}
-  .ipCamControls{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:42px}
-  #ipCamGallery{width:62px;height:62px;border-radius:14px;object-fit:cover;border:2px solid #aaa;background:#222;position:absolute;left:32px;bottom:4px}
-  #ipCamCapture{width:106px;height:106px;border:6px solid #eee;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 4px #111;position:relative}
+  .ipCamControls{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;justify-items:center;gap:0;margin:0 auto clamp(24px,4vh,42px);max-width:560px;padding:0 18px}
+  #ipCamGallery{width:62px;height:62px;border-radius:14px;object-fit:cover;border:2px solid rgba(255,255,255,.8);background:rgba(20,20,20,.65);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;position:static;justify-self:start;overflow:hidden}
+  #ipCamCapture{width:clamp(78px,14vw,106px);height:clamp(78px,14vw,106px);border:6px solid #eee;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 4px #111;position:relative}
   #ipCamCapture:after{content:"";position:absolute;inset:8px;border-radius:50%;border:2px solid rgba(0,0,0,.55)}
   #ipCamCapture.recording{background:#f33}
-  .ipCamModes{display:flex;justify-content:center;align-items:center;gap:20px;white-space:nowrap;overflow-x:auto;padding:0 22px;scrollbar-width:none}
+  .ipCamModes{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,24px);white-space:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none}
   .ipCamModes button{color:#bbb;background:transparent;border:0;font-size:17px;letter-spacing:3px;padding:5px 0;font-weight:500}
   .ipCamModes button.active{color:#fff;font-weight:800}
   #ipCamClose{font-size:34px}
-  #ipCamToast{position:absolute;top:25%;left:20%;right:10%;text-align:center;font-size:13px;color:white;z-index:5;text-shadow:0 1px 4px #000}
-  @media(max-height:650px){.ipCamTools{top:29%;gap:14px}.ipCamTool .ico{font-size:28px;width:54px}.ipCamTool{gap:12px;font-size:15px}.ipCamControls{margin-bottom:22px}#ipCamCapture{width:82px;height:82px}}
+  #ipCamToast{position:absolute;top:20%;left:24%;right:8%;text-align:center;font-size:13px;color:white;z-index:5;text-shadow:0 1px 4px #000;pointer-events:none}
+  @media(max-height:760px){.ipCamTools{top:26%;bottom:220px;gap:4px}.ipCamTool .ico{font-size:25px;width:44px}.ipCamTool{gap:10px;font-size:14px}.ipCamControls{margin-bottom:18px}#ipCamGallery{width:50px;height:50px}#ipCamCapture{width:78px;height:78px}.ipCamModes button{font-size:14px;letter-spacing:2px}}
   `;
   document.head.appendChild(style);
   cameraOverlay = document.createElement("div");
@@ -45,7 +45,7 @@ function buildCamera() {
       <button class="ipCamTool" data-tool="close"><span class="ico">⌃</span><span>Close</span></button>
     </div>
     <div id="ipCamToast"></div>
-    <div class="ipCamBottom"><div class="ipCamControls"><img id="ipCamGallery" alt="Open gallery"><button id="ipCamCapture" aria-label="Take photo or start recording"></button><button class="ipCamIcon" id="ipCamFlip" aria-label="Flip camera">⇄</button></div><div class="ipCamModes"><button data-mode="POST">POST</button><button data-mode="STORY" class="active">STORY</button><button data-mode="REEL">REEL</button><button data-mode="LIVE">LIVE</button></div></div>
+    <div class="ipCamBottom"><div class="ipCamControls"><button id="ipCamGallery" aria-label="Open gallery" type="button">▧</button><button id="ipCamCapture" aria-label="Take photo or start recording"></button><button class="ipCamIcon" id="ipCamFlip" aria-label="Flip camera">⇄</button></div><div class="ipCamModes"><button data-mode="POST">POST</button><button data-mode="STORY" class="active">STORY</button><button data-mode="REEL">REEL</button><button data-mode="LIVE">LIVE</button></div></div>
     <input id="ipCamGalleryInput" type="file" accept="image/*,video/*" multiple style="display:none">
   `;
   document.body.appendChild(cameraOverlay);
@@ -93,7 +93,7 @@ function closeCamera() {
 }
 function openCamera() {
   buildCamera(); cameraOverlay.classList.add("open"); document.body.style.overflow="hidden"; setMode("STORY");
-  const thumb=$c("ipCamGallery"); thumb.src=""; startCamera();
+  startCamera();
 }
 function runTool(tool) {
   if(tool==="close"){closeCamera();return;}
