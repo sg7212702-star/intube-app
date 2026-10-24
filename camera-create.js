@@ -25,8 +25,8 @@ function buildCamera() {
   #ipCamCapture{width:clamp(78px,14vw,106px);height:clamp(78px,14vw,106px);border:6px solid #eee;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 4px #111;position:relative}
   #ipCamCapture:after{content:"";position:absolute;inset:8px;border-radius:50%;border:2px solid rgba(0,0,0,.55)}
   #ipCamCapture.recording{background:#f33}
-  .ipCamModes{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,24px);white-space:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none}
-  .ipCamModes button{color:#bdbdbd;background:transparent;border:0;font-size:16px;letter-spacing:2.5px;padding:8px 2px;font-weight:500;position:relative;transition:color .18s,transform .18s}
+  .ipCamModes{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,24px);white-space:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none;position:relative;z-index:20;pointer-events:auto;touch-action:manipulation}
+  .ipCamModes button{pointer-events:auto;touch-action:manipulation;cursor:pointer;color:#bdbdbd;background:transparent;border:0;font-size:16px;letter-spacing:2.5px;padding:8px 2px;font-weight:500;position:relative;transition:color .18s,transform .18s}
   .ipCamModes button.active{color:#fff;font-weight:800;transform:scale(1.04)}
   .ipCamModes button.active:after{content:"";position:absolute;left:2px;right:2px;bottom:0;height:2px;border-radius:2px;background:#fff}
   .ipCamModes button:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:3px}
@@ -84,8 +84,33 @@ function buildCamera() {
   $c("ipReelEffect2").onclick = () => toast("Choose a photo or video from Gallery for effects.");
   $c("ipCamGallery").onclick = () => galleryInput.click();
   galleryInput.onchange = () => { const files = [...(galleryInput.files || [])]; if(files.length) sendFiles(files); galleryInput.value = ""; };
-  cameraOverlay.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => setMode(btn.dataset.mode));
-  cameraOverlay.querySelectorAll("[data-tool]").forEach(btn => btn.onclick = () => runTool(btn.dataset.tool));
+  // Robust delegated mode handling for mobile touch browsers.
+  if (!cameraOverlay.dataset.modeEventsBound) {
+    cameraOverlay.dataset.modeEventsBound = "1";
+    const handleModePress = event => {
+      const btn = event.target.closest && event.target.closest("[data-mode]");
+      if (!btn || !cameraOverlay.contains(btn)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setMode(btn.dataset.mode);
+    };
+    cameraOverlay.addEventListener("click", handleModePress, true);
+    cameraOverlay.addEventListener("pointerup", event => {
+      const btn = event.target.closest && event.target.closest("[data-mode]");
+      if (!btn || !cameraOverlay.contains(btn)) return;
+      event.preventDefault();
+      setMode(btn.dataset.mode);
+    }, true);
+  }
+  cameraOverlay.querySelectorAll("[data-tool]").forEach(btn => {
+    btn.type = "button";
+    btn.onclick = () => runTool(btn.dataset.tool);
+  });
+  cameraOverlay.querySelectorAll("[data-mode]").forEach(btn => {
+    btn.type = "button";
+    btn.style.pointerEvents = "auto";
+    btn.style.touchAction = "manipulation";
+  });
   captureButton.onclick = capture;
 }
 function toast(message) { const el=$c("ipCamToast"); if(!el)return; el.textContent=message; clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.textContent="",2400); }
