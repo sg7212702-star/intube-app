@@ -140,7 +140,7 @@ function sendFiles(files) {
     closeCamera(); input.dispatchEvent(new Event("change",{bubbles:true}));
   } catch(e){toast("Could not open editor. Please select the file again.");console.error(e);}
 }
-function initInstaProCameraCreate() {
+window.openInstaProCamera = openCamera;\nfunction initInstaProCameraCreate() {
   buildCamera();
   // Capture the plus-button event before older handlers can open the Post/Story/Reels chooser.
   const plus = $c("addBtn");
