@@ -140,11 +140,28 @@ function sendFiles(files) {
     closeCamera(); input.dispatchEvent(new Event("change",{bubbles:true}));
   } catch(e){toast("Could not open editor. Please select the file again.");console.error(e);}
 }
-document.addEventListener("DOMContentLoaded",()=>{
+function initInstaProCameraCreate() {
   buildCamera();
-  // Open full-screen camera directly from the bottom plus button, without changing existing upload handlers.
-  const plus=$c("addBtn");
-  if(plus){plus.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();openCamera();},true);}
-  // Keep the existing post/story/reel chooser functional as a fallback entry point.
-  document.addEventListener("keydown",e=>{if(e.key==="Escape" && cameraOverlay?.classList.contains("open"))closeCamera();});
-});
+  // Capture the plus-button event before older handlers can open the Post/Story/Reels chooser.
+  const plus = $c("addBtn");
+  if (plus && plus.dataset.ipCameraBound !== "1") {
+    plus.dataset.ipCameraBound = "1";
+    plus.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      openCamera();
+    }, true);
+  }
+  if (!document.documentElement.dataset.ipCameraEscapeBound) {
+    document.documentElement.dataset.ipCameraEscapeBound = "1";
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && cameraOverlay?.classList.contains("open")) closeCamera();
+    });
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initInstaProCameraCreate, { once: true });
+} else {
+  initInstaProCameraCreate();
+}
