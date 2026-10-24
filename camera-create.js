@@ -51,6 +51,9 @@ function buildCamera() {
   cameraOverlay.innerHTML = `
     <video id="ipCamPreview" autoplay playsinline muted></video><div id="ipCamShade"></div>
     <div class="ipCamTop"><button class="ipCamIcon" id="ipCamClose" aria-label="Close">×</button><button class="ipCamIcon" id="ipCamFlash" aria-label="Flash">ϟ̸</button><button class="ipCamIcon" id="ipCamSettings" aria-label="Camera settings">⚙</button></div>
+    <div class="ipReelTopExtras"><button id="ipReelMute" aria-label="Flash">ϟ̸</button><button id="ipReelSpeed" aria-label="Recording speed">1×</button><button id="ipReelTimer" aria-label="Timer">◷</button></div>
+    <button class="ipReelAudio" id="ipReelAudio" type="button">♫ &nbsp; Add audio</button>
+    <div class="ipReelEffects"><button id="ipReelEffect1" aria-label="Effects">✦</button><button id="ipReelEffect2" aria-label="Gallery effects">◉</button></div>
     <div class="ipCamTools">
       <button class="ipCamTool" data-tool="create"><span class="ico">Aa</span><span>Create</span></button>
       <button class="ipCamTool" data-tool="boomerang"><span class="ico">∞</span><span>Boomerang</span></button>
