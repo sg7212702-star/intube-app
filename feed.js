@@ -2140,6 +2140,11 @@ window.InstaProFeed = {
 
   closeComments() {
     closeCommentsPanel();
+  },
+
+  // Story Viewer must take audio focus away from feed posts.
+  pauseForStory() {
+    instaProStopFeedMediaOnExit();
   }
 };
 
