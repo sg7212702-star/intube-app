@@ -24,8 +24,8 @@ function buildCamera() {
   #ipCamCapture:after{content:"";position:absolute;inset:8px;border-radius:50%;border:2px solid rgba(0,0,0,.55)}
   #ipCamCapture.recording{background:#f33}
   .ipCamModes{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,24px);white-space:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none}
-  .ipCamModes button{color:#bbb;background:transparent;border:0;font-size:17px;letter-spacing:3px;padding:5px 0;font-weight:500}
-  .ipCamModes button.active{color:#fff;font-weight:800}
+  .ipCamModes button{color:#bdbdbd;background:transparent;border:0;font-size:16px;letter-spacing:2.5px;padding:8px 2px;font-weight:500;position:relative;transition:color .18s,transform .18s}
+  .ipCamModes button.active{color:#fff;font-weight:800;transform:scale(1.04)}\n  .ipCamModes button.active:after{content:"";position:absolute;left:2px;right:2px;bottom:0;height:2px;border-radius:2px;background:#fff}\n  .ipCamModes button:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:3px}
   #ipCamClose{font-size:34px}
   #ipCamToast{position:absolute;top:20%;left:24%;right:8%;text-align:center;font-size:13px;color:white;z-index:5;text-shadow:0 1px 4px #000;pointer-events:none}
   @media(max-height:760px){.ipCamTools{top:26%;bottom:220px;gap:4px}.ipCamTool .ico{font-size:25px;width:44px}.ipCamTool{gap:10px;font-size:14px}.ipCamControls{margin-bottom:18px}#ipCamGallery{width:50px;height:50px}#ipCamCapture{width:78px;height:78px}.ipCamModes button{font-size:14px;letter-spacing:2px}}
@@ -45,7 +45,7 @@ function buildCamera() {
       <button class="ipCamTool" data-tool="close"><span class="ico">⌃</span><span>Close</span></button>
     </div>
     <div id="ipCamToast"></div>
-    <div class="ipCamBottom"><div class="ipCamControls"><button id="ipCamGallery" aria-label="Open gallery" type="button">▧</button><button id="ipCamCapture" aria-label="Take photo or start recording"></button><button class="ipCamIcon" id="ipCamFlip" aria-label="Flip camera">⇄</button></div><div class="ipCamModes"><button data-mode="POST">POST</button><button data-mode="STORY" class="active">STORY</button><button data-mode="REEL">REEL</button><button data-mode="LIVE">LIVE</button></div></div>
+    <div class="ipCamBottom"><div class="ipCamControls"><button id="ipCamGallery" aria-label="Open gallery" type="button">▧</button><button id="ipCamCapture" aria-label="Take photo or start recording"></button><button class="ipCamIcon" id="ipCamFlip" aria-label="Flip camera">⇄</button></div><div class="ipCamModes"><button data-mode="POST">POST</button><button data-mode="STORY" class="active">STORY</button><button data-mode="REEL">REEL</button></div></div>
     <input id="ipCamGalleryInput" type="file" accept="image/*,video/*" multiple style="display:none">
   `;
   document.body.appendChild(cameraOverlay);
