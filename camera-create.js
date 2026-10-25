@@ -114,10 +114,9 @@ function buildCamera() {
   $c("ipReelSideAudio").onclick = () => $c("ipReelAudio").click();
   $c("ipReelSideEffects").onclick = () => { const tray=cameraOverlay.querySelector(".ipReelEffects"); tray.scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"}); tray.querySelector("[data-filter]").click(); };
   $c("ipReelSideTag").onclick = () => toast("People tagging is available after selecting a Reel.");
-  $c("ipReelSideEdit").onclick = () => $c("ipReelEffect2").click();
+  $c("ipReelSideEdit").onclick = () => { const tray=cameraOverlay.querySelector(".ipReelEffects"); tray.scrollTo({left:tray.scrollWidth,behavior:"smooth"}); const filters=tray.querySelectorAll("[data-filter]"); if(filters.length>1) filters[1].click(); };
   $c("ipReelSideDuration").onclick = () => { const b=$c("ipReelSideDuration"); b.textContent=b.textContent==="60"?"90":"60"; toast("Reel duration: "+b.textContent+" seconds."); };
 
-  $c("ipReelEffect2").onclick = () => toast("Choose a photo or video from Gallery for effects.");
   $c("ipCamGallery").onclick = () => galleryInput.click();
   galleryInput.onchange = () => { const files = [...(galleryInput.files || [])]; if(files.length) sendFiles(files); galleryInput.value = ""; };
   // Robust delegated mode handling for mobile touch browsers.
