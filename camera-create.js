@@ -45,10 +45,10 @@ function buildCamera() {
   .ipCamFilter.active .ipCamSwatch{border:2px solid #ff2a6d;box-shadow:0 0 0 2px #fff}
   .ipCamOriginal{background:linear-gradient(135deg,#181818,#383838)}.ipCamWarm{background:linear-gradient(135deg,#ffd16b,#f07824 60%,#8e3a18)}.ipCamCool{background:linear-gradient(135deg,#b5efff,#338cde 55%,#2d3c99)}.ipCamMono{background:linear-gradient(135deg,#fff,#777 55%,#222)}.ipCamVintage{background:linear-gradient(135deg,#e6c08b,#98613d 55%,#49301f)}
   .ipCamCaptureRow{z-index:10}
-  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:calc(78px + env(safe-area-inset-bottom));height:74px}.ipCamFilter{height:64px}.ipCamSwatch{width:42px;height:42px}#modeBar{top:98px}.ipCamUtility{top:50px}}
+  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:calc(225px + env(safe-area-inset-bottom));height:76px}.ipCamFilter{height:64px}.ipCamSwatch{width:42px;height:42px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   #ipCamToast{position:absolute;z-index:12;left:50%;bottom:225px;transform:translateX(-50%);max-width:90%;padding:10px 14px;border-radius:18px;background:#232323f2;font-size:13px;text-align:center;pointer-events:none}
   #ipCamGalleryInput{display:none}
-  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:105px}#modeBar{top:98px}.ipCamUtility{top:50px}}
+  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:225px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   `;
   document.head.appendChild(style);
   cameraOverlay = document.createElement("div");
@@ -82,13 +82,7 @@ function buildCamera() {
     <div class="ipCamToolSet" id="postTools" hidden>
       <button class="ipCamTool" data-tool="post-media" aria-label="Choose post media"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/></svg></button>
     </div>
-    <div id="filterBar">
-      <button class="ipCamFilter active" data-filter="original"><span class="ipCamSwatch ipCamOriginal"></span><span>Original</span></button>
-      <button class="ipCamFilter" data-filter="warm"><span class="ipCamSwatch ipCamWarm"></span><span>Warm</span></button>
-      <button class="ipCamFilter" data-filter="cool"><span class="ipCamSwatch ipCamCool"></span><span>Cool</span></button>
-      <button class="ipCamFilter" data-filter="mono"><span class="ipCamSwatch ipCamMono"></span><span>Mono</span></button>
-      <button class="ipCamFilter" data-filter="vintage"><span class="ipCamSwatch ipCamVintage"></span><span>Vintage</span></button>
-    </div>
+    <div id="filterBar" aria-label="Swipe horizontally to browse Reel effects"></div>
     <div id="ipCamToast"></div>
     <div class="ipCamBottom">
       <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button></div>
@@ -167,11 +161,11 @@ function startRecording(){
     renderCanvas.width=preview.videoWidth||720;
     renderCanvas.height=preview.videoHeight||1280;
     const ctx=renderCanvas.getContext("2d",{alpha:false});
-    const filterValues={original:"none",warm:"sepia(0.4) saturate(1.3)",cool:"hue-rotate(180deg) saturate(0.8)",mono:"grayscale(1)",vintage:"sepia(0.8) contrast(0.9)"};
+    
     const drawFrame=()=>{
       if(!ctx||!preview.videoWidth)return;
       ctx.save();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);
-      ctx.filter="none";
+      ctx.filter=activeMode==="REEL"?effectFilter(selectedFilter):"none";
       if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}
       ctx.drawImage(preview,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();
       renderFrame=requestAnimationFrame(drawFrame);
