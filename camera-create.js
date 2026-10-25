@@ -158,7 +158,9 @@ async function startCamera() {
   if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access is not supported in this app.");
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1080},height:{ideal:1920}},audio:true});
+    const nextStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1080},height:{ideal:1920}},audio:true});
+    if(activeMode==="REEL"){nextStream.getTracks().forEach(track=>track.stop());return;}
+    stream=nextStream;
     preview.srcObject=stream; cameraReady=true;
     const track=stream.getVideoTracks()[0]; const caps=track.getCapabilities?.()||{};
     $c("ipCamFlash").style.opacity=caps.torch? "1":".65";
