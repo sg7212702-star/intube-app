@@ -28,11 +28,6 @@ function buildCamera() {
   .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center}
   #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:0;touch-action:pan-y}
   #recordBtn.recording{background:#ff2a6d}
-  .ipCamLenses{position:absolute;left:calc(50% + 60px);top:50%;transform:translateY(-50%);display:flex;gap:10px;align-items:center}
-  .ipCamLens{width:48px;height:48px;border-radius:50%;padding:3px;border:0;background:linear-gradient(135deg,#27d6ff,#6656ff,#e13cff,#2ce5ed)}
-  .ipCamLens span{display:block;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 25%,#71f5ff,#2864ee 48%,#271c88);border:2px solid #111}
-  .ipCamAvatarLens{width:48px;height:48px;border-radius:50%;background:#bcecff;border:2px solid #e9f9ff;display:grid;place-items:center;color:#fff}
-  .ipCamAvatarLens svg{width:28px;height:28px;stroke:currentColor;fill:none}
   .ipCamUtility{position:absolute;top:56px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
   .ipCamGallery{width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
   .ipCamFlip{width:38px;height:38px;background:transparent;color:#fff;border:0;font-size:28px}
@@ -93,7 +88,7 @@ function buildCamera() {
     </div>
     <div id="ipCamToast"></div>
     <div class="ipCamBottom">
-      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button><div class="ipCamLenses"><button class="ipCamLens" id="ipCamLens" aria-label="Lens"><span></span></button><button class="ipCamAvatarLens" id="ipCamAvatarLens" aria-label="Avatar lens">♙</button></div></div>
+      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button></div>
       <div class="ipCamUtility"><button class="ipCamGallery" id="ipCamGallery" aria-label="Gallery">▧</button><button class="ipCamFlip" id="ipCamFlip" aria-label="Flip camera">⇄</button></div>
       <div id="modeBar"><button class="mode" data-mode="POST">POST</button><button class="mode active" data-mode="STORY">STORY</button><button class="mode" data-mode="REEL">REEL</button></div>
     </div>
@@ -111,13 +106,10 @@ function buildCamera() {
   $c("ipCamGallery").onclick=()=>galleryInput.click();
   galleryInput.onchange=()=>{const files=[...(galleryInput.files||[])];if(files.length)sendFiles(files);galleryInput.value="";};
   $c("effectsBtn").onclick=()=>toast("Filters are not available in camera mode.");
-  $c("ipCamLens").onclick=()=>toast("Filters are not available in camera mode.");
-  $c("ipCamAvatarLens").onclick=()=>toast("Avatar lens selected.");
   cameraOverlay.querySelectorAll("[data-tool]").forEach(btn=>{btn.type="button";btn.onclick=()=>runTool(btn.dataset.tool);});
   cameraOverlay.querySelectorAll("[data-mode]").forEach(btn=>{btn.type="button";btn.onclick=e=>{e.preventDefault();e.stopPropagation();setMode(btn.dataset.mode);};});
   cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>{btn.type="button";btn.onclick=()=>selectFilter(btn.dataset.filter);});
   captureButton.addEventListener("touchstart",e=>{recordSwipeStartX=e.touches[0]?.clientX??null;},{passive:true});
-  captureButton.addEventListener("touchmove",e=>{if(recordSwipeStartX===null||!e.touches.length)return;const dx=e.touches[0].clientX-recordSwipeStartX;if(Math.abs(dx)>40){toggleFilters(true);const bar=$c("filterBar");bar.scrollBy({left:dx<0?90:-90,behavior:"smooth"});const opts=[...bar.querySelectorAll("[data-filter]")];const i=opts.findIndex(b=>b.dataset.filter===selectedFilter);const j=Math.max(0,Math.min(opts.length-1,i+(dx<0?1:-1)));selectFilter(opts[j].dataset.filter);opts[j].scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});recordSwipeStartX=e.touches[0].clientX;lastFilterSwipeAt=Date.now();}},{passive:true});
   captureButton.addEventListener("touchend",()=>recordSwipeStartX=null,{passive:true});
   captureButton.addEventListener("touchcancel",()=>recordSwipeStartX=null,{passive:true});
   captureButton.onclick=()=>{if(Date.now()-lastFilterSwipeAt<500)return;capture();};
@@ -129,21 +121,19 @@ function setMode(mode){
   cameraOverlay.querySelectorAll("#modeBar .mode").forEach(btn=>btn.classList.toggle("active",btn.dataset.mode===mode));
   $c("storyTools").hidden=mode!=="STORY";$c("reelTools").hidden=mode!=="REEL";$c("postTools").hidden=mode!=="POST";
   $c("ipCamAudio").style.display=mode==="REEL"?"block":"none";
-  // Filters are not available in Story or Reel mode.
+  // All camera filters and the two lens/filter circles are removed from every mode.
   const filterBar=$c("filterBar");
   filterBar.style.display="none";
-  if(mode!=="POST"){
-    selectedFilter="original";
-    if(preview)preview.style.filter="none";
-    cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="original"));
-    toggleFilters(false);
-  }
+  selectedFilter="original";
+  if(preview)preview.style.filter="none";
+  cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="original"));
+  toggleFilters(false);
   if(mode==="REEL")toast("Reel mode ready. Same camera stream is running.");
   else if(mode==="STORY")toast("Story mode ready.");
   else toast("Post mode ready.");
 }
 function toggleFilters(force){  const bar=$c("filterBar");bar.classList.remove("visible");bar.style.display="none";return;const yes=typeof force==="boolean"?force:!bar.classList.contains("visible");  bar.classList.toggle("visible",yes);$c("effectsBtn").classList.toggle("active",yes);$c("effectsBtn").setAttribute("aria-expanded",String(yes));$c("ipCamLens")?.classList.toggle("active",yes);  if(yes){const chosen=bar.querySelector("[data-filter=\""+selectedFilter+"\"]");chosen?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});bar.setAttribute("aria-label","Swipe left or right to browse filters");}}
-function selectFilter(name){const values={original:"none",warm:"sepia(0.4) saturate(1.3)",cool:"hue-rotate(180deg) saturate(0.8)",mono:"grayscale(1)",vintage:"sepia(0.8) contrast(0.9)"};if(!(name in values))return;selectedFilter=name;preview.style.filter=values[name];cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));}
+function selectFilter(name){selectedFilter="original";if(preview)preview.style.filter="none";cameraOverlay?.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="original"));}
 async function startCamera(){
   try{
     if(!navigator.mediaDevices?.getUserMedia)throw new Error("Camera API unavailable");
@@ -160,7 +150,7 @@ function runTool(tool){activeTool=tool;if(tool==="post-media"){galleryInput.clic
 function capture(){
   if(activeMode==="REEL"||activeTool==="handsfree"){if(recorder?.state==="recording"){recorder.stop();captureButton.classList.remove("recording");return;}startRecording();return;}
   if(!cameraReady||!preview.videoWidth){toast("Camera unavailable. Use Gallery below.");return;}
-  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter=getComputedStyle(preview).filter||"none";ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
+  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter="none";ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
 }
 function startRecording(){
   if(!stream||!window.MediaRecorder){toast("Video recording is not supported. Select a video from Gallery.");return;}
@@ -177,7 +167,7 @@ function startRecording(){
     const drawFrame=()=>{
       if(!ctx||!preview.videoWidth)return;
       ctx.save();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);
-      ctx.filter=filterValues[selectedFilter]||"none";
+      ctx.filter="none";
       if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}
       ctx.drawImage(preview,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();
       renderFrame=requestAnimationFrame(drawFrame);
