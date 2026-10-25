@@ -38,17 +38,17 @@ function buildCamera() {
   #modeBar .mode{height:28px;border:0;background:transparent;color:#929292;letter-spacing:2px;padding:0 1px;font-size:12px}
   #modeBar .mode.active{color:#fff;font-weight:900;position:relative}#modeBar .mode.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:22px;height:2px;background:#fff;border-radius:2px}
   /* Instagram-style filter carousel, permanently visible above the shutter */
-  #filterBar{display:none;position:absolute;z-index:9;left:0;right:0;bottom:calc(245px + env(safe-area-inset-bottom));width:100%;height:86px;padding:5px 12px;background:linear-gradient(transparent,rgba(0,0,0,.42));gap:12px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto}
+  #filterBar{display:none;position:absolute;z-index:11;left:calc(50% + 52px);right:8px;bottom:calc(158px + env(safe-area-inset-bottom));width:auto;height:76px;padding:2px 4px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.32));gap:9px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto}
   #filterBar::-webkit-scrollbar{display:none;width:0;height:0}#filterBar.visible{display:flex}
-  .ipCamFilter{flex:0 0 58px;width:58px;min-width:58px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:10px;font-weight:600;text-shadow:0 1px 3px #000}
-  .ipCamSwatch{width:48px;height:48px;border-radius:13px;border:2px solid #ffffff70;display:block;box-shadow:0 0 0 1px #0004 inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
+  .ipCamFilter{flex:0 0 54px;width:54px;min-width:54px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000}
+  .ipCamSwatch{width:44px;height:44px;border-radius:50%;border:2px solid #ffffff70;display:block;box-shadow:0 0 0 1px #0004 inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .ipCamFilter.active .ipCamSwatch{border:2px solid #ff2a6d;box-shadow:0 0 0 2px #fff}
   .ipCamOriginal{background:linear-gradient(135deg,#181818,#383838)}.ipCamWarm{background:linear-gradient(135deg,#ffd16b,#f07824 60%,#8e3a18)}.ipCamCool{background:linear-gradient(135deg,#b5efff,#338cde 55%,#2d3c99)}.ipCamMono{background:linear-gradient(135deg,#fff,#777 55%,#222)}.ipCamVintage{background:linear-gradient(135deg,#e6c08b,#98613d 55%,#49301f)}
   .ipCamCaptureRow{z-index:10}
-  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:calc(225px + env(safe-area-inset-bottom));height:76px}.ipCamFilter{height:64px}.ipCamSwatch{width:42px;height:42px}#modeBar{top:98px}.ipCamUtility{top:50px}}
+  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:calc(143px + env(safe-area-inset-bottom));height:70px;left:calc(50% + 48px);right:6px}.ipCamFilter{height:66px}.ipCamSwatch{width:40px;height:40px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   #ipCamToast{position:absolute;z-index:12;left:50%;bottom:225px;transform:translateX(-50%);max-width:90%;padding:10px 14px;border-radius:18px;background:#232323f2;font-size:13px;text-align:center;pointer-events:none}
   #ipCamGalleryInput{display:none}
-  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:225px}#modeBar{top:98px}.ipCamUtility{top:50px}}
+  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   `;
   document.head.appendChild(style);
   cameraOverlay = document.createElement("div");
