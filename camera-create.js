@@ -2,6 +2,7 @@
 const $c = (id) => document.getElementById(id);
 let stream = null, recorder = null, recordedChunks = [], activeMode = "STORY", activeTool = "", flashOn = false, facing = "environment", cameraReady = false;
 let cameraOverlay, preview, captureButton, timerEl, galleryInput;
+let freshReelFrame = null;
 
 function buildCamera() {
   if ($c("ipCameraCreate")) return;
@@ -172,14 +173,65 @@ function buildCamera() {
   captureButton.onclick = event => { if (ignoreNextRecordClick) { ignoreNextRecordClick = false; event.preventDefault(); return; } capture(); };
 }
 function toast(message) { const el=$c("ipCamToast"); if(!el)return; el.textContent=message; clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.textContent="",2400); }
+function stopFreshReelCamera() {
+  if (!freshReelFrame) return;
+  try { freshReelFrame.contentWindow.postMessage({source:"instapro-camera-host",type:"shutdown"}, location.origin); } catch (_) {}
+  freshReelFrame.remove();
+  freshReelFrame = null;
+}
+function showFreshReelCamera() {
+  if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+  cameraReady = false;
+  if (!freshReelFrame) {
+    freshReelFrame = document.createElement("iframe");
+    freshReelFrame.title = "Fresh Reel camera";
+    freshReelFrame.setAttribute("allow", "camera; microphone");
+    freshReelFrame.setAttribute("allowfullscreen", "");
+    Object.assign(freshReelFrame.style, {position:"absolute",inset:"0",width:"100%",height:"100%",border:"0",background:"#000",zIndex:"100",display:"block"});
+    freshReelFrame.src = "./reel.html?v=freshreel20261025a";
+    cameraOverlay.appendChild(freshReelFrame);
+  } else {
+    freshReelFrame.style.display = "block";
+  }
+}
+window.addEventListener("message", event => {
+  if (event.origin !== location.origin || !freshReelFrame || event.source !== freshReelFrame.contentWindow) return;
+  const data = event.data || {};
+  if (data.source !== "instapro-fresh-reel") return;
+  if (data.type === "close") {
+    stopFreshReelCamera();
+    closeCamera();
+  } else if (data.type === "mode" && ["STORY","LIVE"].includes(data.mode)) {
+    setMode(data.mode);
+  } else if (data.type === "recorded" && data.blob) {
+    const type = data.mimeType || data.blob.type || "video/webm";
+    const ext = type.includes("mp4") ? "mp4" : "webm";
+    const file = new File([data.blob], "instapro-reel-" + Date.now() + "." + ext, {type});
+    stopFreshReelCamera();
+    sendFiles([file]);
+  } else if (data.type === "selected-file" && data.file) {
+    stopFreshReelCamera();
+    sendFiles([data.file]);
+  }
+});
 function setMode(mode) {
+  const wasFreshReel = !!freshReelFrame;
   activeMode = mode;
-  cameraOverlay.classList.toggle("reelMode", mode === "REEL");
-  $c("ipReelAudio").style.display = mode === "REEL" ? "block" : "none";
   cameraOverlay.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
-  if (mode === "REEL") toast("Reels camera ready. Tap the centre button to record.");
-  else if (mode === "STORY") toast("Story mode: take a photo or record a clip.");
+  if (mode === "REEL") {
+    cameraOverlay.classList.add("reelMode");
+    showFreshReelCamera();
+    return;
+  }
+  cameraOverlay.classList.remove("reelMode");
+  $c("ipReelAudio").style.display = "none";
+  if (wasFreshReel) {
+    stopFreshReelCamera();
+    if (cameraOverlay.classList.contains("open")) startCamera();
+  }
+  if (mode === "STORY") toast("Story mode: take a photo or record a clip.");
   else if (mode === "POST") toast("Post mode: take a photo or choose media from Gallery.");
+  else if (mode === "LIVE") toast("Live streaming is not configured yet.");
 }
 async function startCamera() {
   if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
@@ -196,6 +248,7 @@ async function startCamera() {
   }
 }
 function closeCamera() {
+  stopFreshReelCamera();
   cameraOverlay?.classList.remove("open");
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
   if(recorder?.state==="recording"){try{recorder.stop();}catch(_){}}
