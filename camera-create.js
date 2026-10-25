@@ -28,6 +28,11 @@ function buildCamera() {
   .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center}
   #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:0;touch-action:pan-y}
   #recordBtn.recording{background:#ff2a6d}
+  .ipCamLenses{position:absolute;left:calc(50% + 60px);top:50%;transform:translateY(-50%);display:flex;gap:10px;align-items:center}
+  .ipCamLens{width:48px;height:48px;border-radius:50%;padding:3px;border:0;background:linear-gradient(135deg,#27d6ff,#6656ff,#e13cff,#2ce5ed)}
+  .ipCamLens span{display:block;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 25%,#71f5ff,#2864ee 48%,#271c88);border:2px solid #111}
+  .ipCamAvatarLens{width:48px;height:48px;border-radius:50%;background:#bcecff;border:2px solid #e9f9ff;display:grid;place-items:center;color:#fff}
+  .ipCamAvatarLens svg{width:28px;height:28px;stroke:currentColor;fill:none}
   .ipCamUtility{position:absolute;top:56px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
   .ipCamGallery{width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
   .ipCamFlip{width:38px;height:38px;background:transparent;color:#fff;border:0;font-size:28px}
@@ -88,7 +93,7 @@ function buildCamera() {
     </div>
     <div id="ipCamToast"></div>
     <div class="ipCamBottom">
-      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button></div>
+      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button><div class="ipCamLenses"><button class="ipCamLens" id="ipCamLens" aria-label="Lens"><span></span></button><button class="ipCamAvatarLens" id="ipCamAvatarLens" aria-label="Avatar lens">♙</button></div></div>
       <div class="ipCamUtility"><button class="ipCamGallery" id="ipCamGallery" aria-label="Gallery">▧</button><button class="ipCamFlip" id="ipCamFlip" aria-label="Flip camera">⇄</button></div>
       <div id="modeBar"><button class="mode" data-mode="POST">POST</button><button class="mode active" data-mode="STORY">STORY</button><button class="mode" data-mode="REEL">REEL</button></div>
     </div>
