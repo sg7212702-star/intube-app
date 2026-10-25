@@ -110,14 +110,14 @@ function buildCamera() {
   $c("ipCamAudio").onclick=()=>toast("Audio picker is not connected yet.");
   $c("ipCamGallery").onclick=()=>galleryInput.click();
   galleryInput.onchange=()=>{const files=[...(galleryInput.files||[])];if(files.length)sendFiles(files);galleryInput.value="";};
-  $c("effectsBtn").onclick=()=>toast("Filters are not available in Reel mode.");
-  $c("ipCamLens").onclick=()=>{if(activeMode==="POST"){toggleFilters(true);$c("filterBar").scrollBy({left:100,behavior:"smooth"});}else{toast("Filters are not available in "+activeMode+" mode.");}};
+  $c("effectsBtn").onclick=()=>toast("Filters are not available in camera mode.");
+  $c("ipCamLens").onclick=()=>toast("Filters are not available in camera mode.");
   $c("ipCamAvatarLens").onclick=()=>toast("Avatar lens selected.");
   cameraOverlay.querySelectorAll("[data-tool]").forEach(btn=>{btn.type="button";btn.onclick=()=>runTool(btn.dataset.tool);});
   cameraOverlay.querySelectorAll("[data-mode]").forEach(btn=>{btn.type="button";btn.onclick=e=>{e.preventDefault();e.stopPropagation();setMode(btn.dataset.mode);};});
   cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>{btn.type="button";btn.onclick=()=>selectFilter(btn.dataset.filter);});
   captureButton.addEventListener("touchstart",e=>{recordSwipeStartX=e.touches[0]?.clientX??null;},{passive:true});
-  captureButton.addEventListener("touchmove",e=>{if(activeMode!=="POST"||recordSwipeStartX===null||!e.touches.length)return;const dx=e.touches[0].clientX-recordSwipeStartX;if(Math.abs(dx)>40){toggleFilters(true);const bar=$c("filterBar");bar.scrollBy({left:dx<0?90:-90,behavior:"smooth"});const opts=[...bar.querySelectorAll("[data-filter]")];const i=opts.findIndex(b=>b.dataset.filter===selectedFilter);const j=Math.max(0,Math.min(opts.length-1,i+(dx<0?1:-1)));selectFilter(opts[j].dataset.filter);opts[j].scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});recordSwipeStartX=e.touches[0].clientX;lastFilterSwipeAt=Date.now();}},{passive:true});
+  captureButton.addEventListener("touchmove",e=>{if(recordSwipeStartX===null||!e.touches.length)return;const dx=e.touches[0].clientX-recordSwipeStartX;if(Math.abs(dx)>40){toggleFilters(true);const bar=$c("filterBar");bar.scrollBy({left:dx<0?90:-90,behavior:"smooth"});const opts=[...bar.querySelectorAll("[data-filter]")];const i=opts.findIndex(b=>b.dataset.filter===selectedFilter);const j=Math.max(0,Math.min(opts.length-1,i+(dx<0?1:-1)));selectFilter(opts[j].dataset.filter);opts[j].scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});recordSwipeStartX=e.touches[0].clientX;lastFilterSwipeAt=Date.now();}},{passive:true});
   captureButton.addEventListener("touchend",()=>recordSwipeStartX=null,{passive:true});
   captureButton.addEventListener("touchcancel",()=>recordSwipeStartX=null,{passive:true});
   captureButton.onclick=()=>{if(Date.now()-lastFilterSwipeAt<500)return;capture();};
@@ -131,7 +131,7 @@ function setMode(mode){
   $c("ipCamAudio").style.display=mode==="REEL"?"block":"none";
   // Filters are not available in Story or Reel mode.
   const filterBar=$c("filterBar");
-  filterBar.style.display=mode==="POST"?"flex":"none";
+  filterBar.style.display="none";
   if(mode!=="POST"){
     selectedFilter="original";
     if(preview)preview.style.filter="none";
@@ -142,7 +142,7 @@ function setMode(mode){
   else if(mode==="STORY")toast("Story mode ready.");
   else toast("Post mode ready.");
 }
-function toggleFilters(force){  const bar=$c("filterBar");if(activeMode!=="POST"){bar.classList.remove("visible");bar.style.display="none";return;}const yes=typeof force==="boolean"?force:!bar.classList.contains("visible");  bar.classList.toggle("visible",yes);$c("effectsBtn").classList.toggle("active",yes);$c("effectsBtn").setAttribute("aria-expanded",String(yes));$c("ipCamLens")?.classList.toggle("active",yes);  if(yes){const chosen=bar.querySelector("[data-filter=\""+selectedFilter+"\"]");chosen?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});bar.setAttribute("aria-label","Swipe left or right to browse filters");}}
+function toggleFilters(force){  const bar=$c("filterBar");bar.classList.remove("visible");bar.style.display="none";return;const yes=typeof force==="boolean"?force:!bar.classList.contains("visible");  bar.classList.toggle("visible",yes);$c("effectsBtn").classList.toggle("active",yes);$c("effectsBtn").setAttribute("aria-expanded",String(yes));$c("ipCamLens")?.classList.toggle("active",yes);  if(yes){const chosen=bar.querySelector("[data-filter=\""+selectedFilter+"\"]");chosen?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});bar.setAttribute("aria-label","Swipe left or right to browse filters");}}
 function selectFilter(name){const values={original:"none",warm:"sepia(0.4) saturate(1.3)",cool:"hue-rotate(180deg) saturate(0.8)",mono:"grayscale(1)",vintage:"sepia(0.8) contrast(0.9)"};if(!(name in values))return;selectedFilter=name;preview.style.filter=values[name];cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));}
 async function startCamera(){
   try{
