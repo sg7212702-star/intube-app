@@ -131,7 +131,7 @@ function setMode(mode){
   else if(mode==="STORY")toast("Story mode ready.");
   else toast("Post mode ready.");
 }
-function toggleFilters(force){const bar=$c("filterBar"),yes=typeof force==="boolean"?force:!bar.classList.contains("visible");bar.classList.toggle("visible",yes);$c("effectsBtn").classList.toggle("active",yes);$c("effectsBtn").setAttribute("aria-expanded",String(yes));if(yes)bar.querySelector('[data-filter="'+selectedFilter+'"]')?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});}
+function toggleFilters(force){const bar=$c("filterBar"),yes=typeof force==="boolean"?force:!bar.classList.contains("visible");bar.classList.toggle("visible",yes);$c("effectsBtn").classList.toggle("active",yes);$c("effectsBtn").setAttribute("aria-expanded",String(yes));$c("ipCamLens")?.classList.toggle("active",yes);if(yes){bar.querySelector('[data-filter="'+selectedFilter+'"]')?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});bar.setAttribute("aria-label","Swipe horizontally to browse camera filters");}}
 function selectFilter(name){const values={original:"none",warm:"sepia(0.4) saturate(1.3)",cool:"hue-rotate(180deg) saturate(0.8)",mono:"grayscale(1)",vintage:"sepia(0.8) contrast(0.9)"};if(!(name in values))return;selectedFilter=name;preview.style.filter=values[name];cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));}
 async function startCamera(){
   try{
@@ -153,7 +153,45 @@ function capture(){
 }
 function startRecording(){
   if(!stream||!window.MediaRecorder){toast("Video recording is not supported. Select a video from Gallery.");return;}
-  try{recordedChunks=[];const mime=["video/mp4;codecs=h264","video/webm;codecs=vp8","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data?.size)recordedChunks.push(e.data);};recorder.onstop=()=>{captureButton.classList.remove("recording");if(!recordedChunks.length)return;const type=recorder.mimeType||"video/webm";const ext=type.includes("mp4")?"mp4":"webm";sendFiles([new File(recordedChunks,"instapro-"+activeMode.toLowerCase()+"-"+Date.now()+"."+ext,{type})]);};recorder.start();captureButton.classList.add("recording");toast("Recording… tap the centre button to finish.");}catch(e){toast("Recording could not start. Please use Gallery.");console.warn(e);}
+  if(!cameraReady||!preview.videoWidth){toast("Camera is still starting. Please try again.");return;}
+  let outputStream=null, renderCanvas=null, renderFrame=0;
+  try{
+    recordedChunks=[];
+    // Render the live preview through a canvas so the selected filter is baked into the saved Reel/Story.
+    renderCanvas=document.createElement("canvas");
+    renderCanvas.width=preview.videoWidth||720;
+    renderCanvas.height=preview.videoHeight||1280;
+    const ctx=renderCanvas.getContext("2d",{alpha:false});
+    const filterValues={original:"none",warm:"sepia(0.4) saturate(1.3)",cool:"hue-rotate(180deg) saturate(0.8)",mono:"grayscale(1)",vintage:"sepia(0.8) contrast(0.9)"};
+    const drawFrame=()=>{
+      if(!ctx||!preview.videoWidth)return;
+      ctx.save();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);
+      ctx.filter=filterValues[selectedFilter]||"none";
+      if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}
+      ctx.drawImage(preview,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();
+      renderFrame=requestAnimationFrame(drawFrame);
+    };
+    drawFrame();
+    outputStream=renderCanvas.captureStream(30);
+    stream.getAudioTracks().forEach(t=>outputStream.addTrack(t));
+    const mime=["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4;codecs=h264"].find(t=>MediaRecorder.isTypeSupported(t));
+    recorder=new MediaRecorder(outputStream,mime?{mimeType:mime}:undefined);
+    recorder.ondataavailable=e=>{if(e.data?.size)recordedChunks.push(e.data);};
+    recorder.onstop=()=>{
+      cancelAnimationFrame(renderFrame);
+      outputStream?.getTracks().forEach(t=>t.stop());
+      captureButton.classList.remove("recording");
+      if(!recordedChunks.length)return;
+      const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";
+      sendFiles([new File(recordedChunks,"instapro-"+activeMode.toLowerCase()+"-"+Date.now()+"."+ext,{type})]);
+    };
+    recorder.start();captureButton.classList.add("recording");
+    toast("Recording with "+selectedFilter+" filter… tap the centre button to finish.");
+  }catch(e){
+    if(renderFrame)cancelAnimationFrame(renderFrame);
+    outputStream?.getTracks().forEach(t=>t.stop());
+    toast("Recording could not start. Please use Gallery.");console.warn(e);
+  }
 }
 function sendFiles(files){
   const isVideo=files.some(f=>f.type.startsWith("video/"));let inputId=activeMode==="REEL"?"reelFile":activeMode==="STORY"?"storyFile":"postFile";if(activeMode==="POST"&&isVideo)inputId="postFile";const input=$c(inputId);if(!input){toast("Upload option is unavailable. Please try again.");return;}
