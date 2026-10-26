@@ -124,11 +124,11 @@ function setMode(mode){
    selectedFilter="original";
    if(preview)preview.style.filter="none";
    cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="original"));
-   filterBar.style.display=mode==="REEL"?"flex":"none";
-   toggleFilters(mode==="REEL");
-  if(mode==="REEL")toast("Reel mode ready. Same camera stream is running.");
-  else if(mode==="STORY")toast("Story mode ready.");
-  else toast("Post mode ready.");
+   filterBar.style.display="flex";
+   toggleFilters(true);
+  if(mode==="REEL")toast("Reel mode ready. Swipe effects below.");
+  else if(mode==="STORY")toast("Story mode ready. Swipe effects below.");
+  else toast("Post mode ready. Swipe effects below.");
 }
 function toggleFilters(force){const bar=$c("filterBar");const yes=typeof force==="boolean"?force:bar.style.display!=="flex";bar.style.display=yes?"flex":"none";$c("effectsBtn")?.classList.toggle("active",yes);$c("effectsBtn")?.setAttribute("aria-expanded",String(yes));if(yes){const chosen=bar.querySelector('[data-filter="'+selectedFilter+'"]');chosen?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});}}
  function selectFilter(name){selectedFilter=name;if(preview)preview.style.filter=effectFilter(name);cameraOverlay?.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));}
