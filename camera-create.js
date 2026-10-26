@@ -14,6 +14,8 @@ function buildCamera() {
   style.textContent = `
   #ipCameraCreate{position:fixed;inset:0;z-index:200000;display:none;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;isolation:isolate}
   #ipCameraCreate.open{display:block}#ipCameraCreate *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* User requested removal: hide the recording shutter and all filter UI completely. */
+  #ipCameraCreate .ipCamCaptureRow,#ipCameraCreate #filterBar{display:none!important;visibility:hidden!important;pointer-events:none!important}
   #ipCameraCreate video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;background:#000}
   #ipCamShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0006,transparent 24%,transparent 70%,#0005)}
   .ipCamTop{position:absolute;z-index:5;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center}
