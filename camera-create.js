@@ -180,16 +180,22 @@ function startRecording(){
     recordedChunks=[];
     // Render the live preview through a canvas so the selected filter is baked into the saved Reel/Story.
     renderCanvas=document.createElement("canvas");
-    renderCanvas.width=preview.videoWidth||720;
-    renderCanvas.height=preview.videoHeight||1280;
+    renderCanvas.width=720;
+    renderCanvas.height=1280; // Always export Reels in 9:16 portrait format.
     const ctx=renderCanvas.getContext("2d",{alpha:false});
     
     const drawFrame=()=>{
       if(!ctx||!preview.videoWidth)return;
       ctx.save();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);
       ctx.filter=effectFilter(selectedFilter);
+      // Center-crop the camera source to 9:16 so recorded Reels are portrait,
+      // without stretching the user's face or body.
+      const targetRatio=9/16, sourceRatio=preview.videoWidth/preview.videoHeight;
+      let sx=0,sy=0,sw=preview.videoWidth,sh=preview.videoHeight;
+      if(sourceRatio>targetRatio){sw=preview.videoHeight*targetRatio;sx=(preview.videoWidth-sw)/2;}
+      else if(sourceRatio<targetRatio){sh=preview.videoWidth/targetRatio;sy=(preview.videoHeight-sh)/2;}
       if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}
-      ctx.drawImage(preview,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();
+      ctx.drawImage(preview,sx,sy,sw,sh,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();
       renderFrame=requestAnimationFrame(drawFrame);
     };
     drawFrame();
