@@ -28,8 +28,8 @@ function buildCamera() {
   .ipCamTool .num{position:absolute;font-size:12px;font-weight:800}
   .ipCamBottom{position:absolute;z-index:4;left:0;right:0;bottom:0;height:205px;background:#000;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
   .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center}
-  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:0;touch-action:manipulation;display:block;overflow:visible;position:relative;opacity:1;pointer-events:auto}#recordFilterPreview{display:none!important}#recordBtn.recording{background:#fff}
-  #recordBtn.recording{background:#ff2a6d}
+  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:transparent!important;border:0!important;box-shadow:none!important;padding:0;touch-action:manipulation;display:block;overflow:visible;position:relative;opacity:1;pointer-events:auto}#recordFilterPreview{display:none!important}#recordBtn.recording{background:#fff}
+  #recordBtn.recording{background:transparent!important;border:0!important;box-shadow:none!important}
   .ipCamLenses{display:none}
   .ipCamUtility{position:absolute;top:86px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;z-index:35}
   .ipCamGallery{width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
