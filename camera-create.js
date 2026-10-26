@@ -109,7 +109,7 @@ function buildCamera() {
   const center=$c("whiteRingCenter");
   center.innerHTML='<div class="center-effect"></div>';
   function updateCenter(){const cx=window.innerWidth/2;let best=null,min=Infinity;filterBar.querySelectorAll(".filter").forEach(el=>{const r=el.getBoundingClientRect();const d=Math.abs(cx-(r.left+r.width/2));if(d<min){min=d;best=el;}});if(!best)return;filterBar.querySelectorAll(".filter").forEach(el=>el.classList.toggle("active",el===best));selectFilter(best.dataset.filter);const swatch=center.querySelector(".center-effect");if(swatch){swatch.style.background=best.style.backgroundImage||"linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)";swatch.style.filter=effectFilter(best.dataset.filter);} }
-  filterBar.addEventListener("scroll",()=>requestAnimationFrame(updateCenter),{passive:true});
+  let filterScrollTimer=0;filterBar.addEventListener("scroll",()=>{requestAnimationFrame(updateCenter);clearTimeout(filterScrollTimer);filterScrollTimer=setTimeout(updateCenter,90);},{passive:true});filterBar.addEventListener("scrollend",updateCenter,{passive:true});
   filterBar.addEventListener("click",e=>{const el=e.target.closest(".filter");if(el){el.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});selectFilter(el.dataset.filter);requestAnimationFrame(updateCenter);}});
   window.addEventListener("resize",updateCenter,{passive:true});
   setTimeout(()=>{const first=filterBar.querySelector(".filter");first?.scrollIntoView({block:"nearest",inline:"center"});updateCenter();},100);
@@ -171,9 +171,10 @@ function runTool(tool){activeTool=tool;if(tool==="post-media"){galleryInput.clic
 function capture(){
   if(activeMode==="REEL"||activeTool==="handsfree"){if(recorder?.state==="recording"){recorder.stop();captureButton.classList.remove("recording");return;}startRecording();return;}
   if(!cameraReady||!preview.videoWidth){toast("Camera unavailable. Use Gallery below.");return;}
-  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter=effectFilter(selectedFilter);ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
+  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter=effectFilter(recordingFilter);ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
 }
 function startRecording(){
+  const recordingFilter=selectedFilter; // Lock the filter highlighted in the white selection ring when recording starts.
   if(!stream||!window.MediaRecorder){toast("Video recording is not supported. Select a video from Gallery.");return;}
   if(!cameraReady||!preview.videoWidth){toast("Camera is still starting. Please try again.");return;}
   let outputStream=null, renderCanvas=null, renderFrame=0;
