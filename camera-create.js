@@ -38,12 +38,12 @@ function buildCamera() {
   #modeBar .mode{height:28px;border:0;background:transparent;color:#929292;letter-spacing:2px;padding:0 1px;font-size:12px}
   #modeBar .mode.active{color:#fff;font-weight:900;position:relative}#modeBar .mode.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:22px;height:2px;background:#fff;border-radius:2px}
   /* Instagram-style filter carousel, permanently visible above the shutter */
-  #filterTray{position:fixed;bottom:28px;left:0;width:100%;height:85px;display:flex;gap:16px;align-items:center;overflow-x:auto;overflow-y:hidden;padding:0 50vw;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:2;touch-action:pan-x;overscroll-behavior-x:contain;background:transparent}
+  #filterTray{position:absolute;bottom:calc(150px + env(safe-area-inset-bottom));left:0;right:0;width:100%;height:90px;box-sizing:border-box;display:flex;gap:16px;align-items:center;overflow-x:auto;overflow-y:visible;padding:0 50vw;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:30;touch-action:pan-x;overscroll-behavior-x:contain;background:linear-gradient(0deg,rgba(0,0,0,.25),transparent);pointer-events:auto}
 #filterTray::-webkit-scrollbar{display:none}
 #filterTray .filter{flex:0 0 54px;width:54px;height:54px;border-radius:50%;scroll-snap-align:center;flex-shrink:0;border:2px solid #555;transition:transform .2s,border .2s;display:block;padding:0;position:relative;overflow:visible;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
-#filterTray .filter.active{flex:0 0 66px;width:66px;height:66px;border:3px solid #fff;transform:scale(1.1)}
-#whiteRing{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;border:4px solid #fff;border-radius:50%;z-index:10;background:transparent;pointer-events:none}
-#whiteRingCenter{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
+#filterTray .filter.active{flex:0 0 66px;width:66px;height:66px;border:3px solid #fff;transform:scale(1.1);z-index:2}
+#whiteRing{position:absolute;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;border:4px solid #fff;border-radius:50%;z-index:10;background:transparent;pointer-events:none}
+#whiteRingCenter{position:absolute;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
 #whiteRingCenter .center-effect{width:60px;height:60px;border-radius:50%;background-size:cover;background-position:center;filter:var(--center-filter,none)}
 #filterTray .filter-label{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
   #filterBar{display:none!important}
