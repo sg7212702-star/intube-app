@@ -92,19 +92,30 @@ function buildCamera() {
   preview=$c("ipCamPreview");captureButton=$c("recordBtn");galleryInput=$c("ipCamGalleryInput");
   const filterBar=$c("filterBar");
   filterBar.innerHTML=REEL_EFFECTS.map(([id,label,filter])=>'<button type="button" class="ipCamFilter'+(id==="original"?' active':'')+'" data-filter="'+id+'" aria-label="'+label+' effect"><span class="ipCamSwatch '+(id==="original"?"ipCamOriginal":id==="warm"?"ipCamWarm":id==="cool"?"ipCamCool":id==="mono"?"ipCamMono":id==="vintage"?"ipCamVintage":"")+'" style="filter:'+filter+'"></span><span>'+label+'</span></button>').join("");
-  let filterScrollTick=0;
+  let filterScrollTick=0,filterSnapTimer=0;
+  function syncFilterToCenter(snapAfterScroll=false){
+    const rect=filterBar.getBoundingClientRect();
+    const center=rect.left+rect.width/2;
+    let closest=null,dist=Infinity;
+    filterBar.querySelectorAll("[data-filter]").forEach(btn=>{
+      const r=btn.getBoundingClientRect();
+      const d=Math.abs((r.left+r.width/2)-center);
+      if(d<dist){dist=d;closest=btn;}
+    });
+    if(!closest)return;
+    selectFilter(closest.dataset.filter,false);
+    if(snapAfterScroll){
+      const target=closest.offsetLeft+closest.offsetWidth/2-filterBar.clientWidth/2;
+      filterBar.scrollTo({left:Math.max(0,Math.min(target,filterBar.scrollWidth-filterBar.clientWidth)),behavior:"smooth"});
+    }
+  }
   filterBar.addEventListener("scroll",()=>{
     if(filterScrollTick)cancelAnimationFrame(filterScrollTick);
-    filterScrollTick=requestAnimationFrame(()=>{
-      const center=filterBar.getBoundingClientRect().left+filterBar.clientWidth/2;
-      let closest=null,dist=Infinity;
-      filterBar.querySelectorAll("[data-filter]").forEach(btn=>{
-        const r=btn.getBoundingClientRect(),d=Math.abs((r.left+r.width/2)-center);
-        if(d<dist){dist=d;closest=btn;}
-      });
-      if(closest)selectFilter(closest.dataset.filter,false);
-    });
+    filterScrollTick=requestAnimationFrame(()=>syncFilterToCenter(false));
+    clearTimeout(filterSnapTimer);
+    filterSnapTimer=setTimeout(()=>syncFilterToCenter(true),140);
   },{passive:true});
+  filterBar.addEventListener("scrollend",()=>syncFilterToCenter(true),{passive:true});
   $c("ipCamClose").onclick=closeCamera;
   $c("ipCamFlip").onclick=async()=>{facing=facing==="user"?"environment":"user";await startCamera();};
   $c("ipCamFlash").onclick=async()=>{flashOn=!flashOn;const track=stream?.getVideoTracks?.()[0];try{if(track?.getCapabilities?.().torch)await track.applyConstraints({advanced:[{torch:flashOn}]});else{flashOn=false;toast("Flash is not supported by this camera.");}}catch(_){flashOn=false;toast("Flash is not supported by this camera.");}};
