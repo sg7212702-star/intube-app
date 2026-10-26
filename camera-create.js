@@ -160,7 +160,7 @@ async function startCamera(){
     const old=stream;stream=null;if(old)old.getTracks().forEach(t=>t.stop());
     const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},aspectRatio:{ideal:9/16},width:{ideal:720},height:{ideal:1280},resizeMode:{ideal:"crop-and-scale"}},audio:true});
     if(!cameraOverlay?.classList.contains("open")){next.getTracks().forEach(t=>t.stop());return;}
-    stream=next;preview.srcObject=stream;preview.style.transform=facing==="user"?"scaleX(-1)":"scaleX(1)";cameraReady=true;await preview.play().catch(()=>{});
+    stream=next;preview.srcObject=stream;preview.style.transform=facing==="user"?"scaleX(-1)":"scaleX(1)";preview.style.objectFit="cover";preview.style.objectPosition="50% 50%";const videoTrack=stream.getVideoTracks()[0];try{const caps=videoTrack?.getCapabilities?.();if(caps?.zoom){const minZoom=Number.isFinite(caps.zoom.min)?caps.zoom.min:1;await videoTrack.applyConstraints({advanced:[{zoom:minZoom}]});}}catch(_){}cameraReady=true;await preview.play().catch(()=>{});
   }catch(e){cameraReady=false;toast("Camera permission needed. You can still choose media from Gallery.");console.warn("Insta Pro camera:",e);}
 }
 function stopCamera(){if(window.__ipFilterThumbTimer){clearInterval(window.__ipFilterThumbTimer);window.__ipFilterThumbTimer=null;}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}cameraReady=false;if(preview)preview.srcObject=null;}
