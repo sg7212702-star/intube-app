@@ -1,7 +1,7 @@
 // Insta Pro camera: single-page POST / STORY / REEL modes; one camera stream only.
 const $c = id => document.getElementById(id);
 let cameraOverlay, preview, captureButton, galleryInput;
-let stream = null, recorder = null, recordedChunks = [], activeMode = "STORY";
+let stream = null, recorder = null, recordedChunks = [], activeMode = "STORY", recordingStartedAt = 0, recordingClock = null;
 let activeTool = "", facing = "user", cameraReady = false, flashOn = false;
 let recordSwipeStartX = null, lastFilterSwipeAt = 0, selectedFilter = "original";
 const REEL_EFFECTS = [["original","Original","none"],["warm","Warm","sepia(.22) saturate(1.25)"],["cool","Cool","hue-rotate(18deg) saturate(1.15)"],["mono","Mono","grayscale(1)"],["vintage","Vintage","sepia(.55) contrast(.92) saturate(.85)"],["dream","Dream","brightness(1.12) saturate(1.25)"],["glow","Glow","brightness(1.12) contrast(.9) saturate(1.35)"],["gold","Golden","sepia(.28) saturate(1.6) hue-rotate(-8deg)"],["rose","Rose","sepia(.18) saturate(1.25) hue-rotate(320deg)"],["lavender","Lavender","hue-rotate(255deg) saturate(.8) brightness(1.08)"],["mint","Mint","hue-rotate(75deg) saturate(.8)"],["sunset","Sunset","sepia(.25) saturate(1.55) hue-rotate(-12deg) contrast(1.08)"],["cinema","Cinema","contrast(1.25) saturate(.85) brightness(.92)"],["fade","Fade","contrast(.82) brightness(1.08) saturate(.8)"],["vivid","Vivid","saturate(1.8) contrast(1.08)"],["noir","Noir","grayscale(1) contrast(1.35)"],["soft","Soft","brightness(1.08) contrast(.88) saturate(1.05)"],["ice","Ice","hue-rotate(165deg) saturate(.7) brightness(1.08)"],["peach","Peach","sepia(.2) saturate(1.2) hue-rotate(340deg) brightness(1.05)"],["retro","Retro","sepia(.35) contrast(1.1) saturate(.9)"],["pop","Pop","saturate(1.65) contrast(1.2)"]];
@@ -95,7 +95,7 @@ function buildCamera() {
     <div id="whiteRing" aria-hidden="true"></div><div id="whiteRingCenter" aria-hidden="true"></div>
     <div id="ipCamToast"></div>
     <div class="ipCamBottom">
-      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record video"></button></div>
+      <div class="ipCamCaptureRow"><div id="ipCamRecordingTimer" aria-live="off">00:00</div><button id="recordBtn" aria-label="Record video"></button></div>
       <div class="ipCamUtility"><button class="ipCamGallery" id="ipCamGallery" aria-label="Gallery">▧</button><button class="ipCamFlip" id="ipCamFlip" aria-label="Flip camera">⇄</button></div>
       <div id="modeBar"><button class="mode" data-mode="POST">POST</button><button class="mode active" data-mode="STORY">STORY</button><button class="mode" data-mode="REEL">REEL</button></div>
     </div>
@@ -119,7 +119,7 @@ function buildCamera() {
   $c("ipCamFlash").onclick=async()=>{flashOn=!flashOn;const track=stream?.getVideoTracks?.()[0];try{if(track?.getCapabilities?.().torch)await track.applyConstraints({advanced:[{torch:flashOn}]});else{flashOn=false;toast("Flash is not supported by this camera.");}}catch(_){flashOn=false;toast("Flash is not supported by this camera.");}};
   $c("ipCamSettings").onclick=()=>toast("Camera settings are controlled by your device and browser.");
   $c("ipCamZoom").onclick=()=>toast("Zoom depends on camera support.");
-  $c("ipCamTimer").onclick=()=>toast("Timer off.");
+  $c("ipCamTimer").onclick=()=>toast("Recording timer appears above the record button while recording.");
   $c("ipCamAudio").onclick=()=>toast("Audio picker is not connected yet.");
   $c("ipCamGallery").onclick=()=>galleryInput.click();
   galleryInput.onchange=()=>{const files=[...(galleryInput.files||[])];if(files.length)sendFiles(files);galleryInput.value="";};
@@ -132,7 +132,7 @@ function buildCamera() {
   captureButton.addEventListener("touchcancel",()=>recordSwipeStartX=null,{passive:true});
   captureButton.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(Date.now()-lastFilterSwipeAt<500)return;capture();});
 }
-function toast(message){const el=$c("ipCamToast");if(!el)return;el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent="",2200);}
+function updateRecordingClock(){const el=$c("ipCamRecordingTimer");if(!el||!recordingStartedAt)return;const sec=Math.floor((Date.now()-recordingStartedAt)/1000);el.textContent=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");}\nfunction stopRecordingClock(){if(recordingClock){clearInterval(recordingClock);recordingClock=null;}recordingStartedAt=0;const el=$c("ipCamRecordingTimer");if(el){el.classList.remove("visible");el.textContent="00:00";}}\nfunction toast(message){const el=$c("ipCamToast");if(!el)return;el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent="",2200);}
 function setMode(mode){
   if(!["POST","STORY","REEL"].includes(mode))return;
   activeMode=mode;activeTool="";
@@ -166,7 +166,7 @@ async function startCamera(){
   }catch(e){cameraReady=false;toast("Camera permission needed. You can still choose media from Gallery.");console.warn("Insta Pro camera:",e);}
 }
 function stopCamera(){if(window.__ipFilterThumbTimer){clearInterval(window.__ipFilterThumbTimer);window.__ipFilterThumbTimer=null;}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}cameraReady=false;if(preview)preview.srcObject=null;}
-function closeCamera(){cameraOverlay?.classList.remove("open");if(recorder?.state==="recording"){try{recorder.stop();}catch(_){}}stopCamera();document.body.style.overflow="";}
+function closeCamera(){cameraOverlay?.classList.remove("open");if(recorder?.state==="recording"){try{recorder.stop();}catch(_){}}else stopRecordingClock();stopCamera();document.body.style.overflow="";}
 function openCamera(){buildCamera();cameraOverlay.classList.add("open");document.body.style.overflow="hidden";setMode("STORY");startCamera();}
 function runTool(tool){activeTool=tool;if(tool==="post-media"){galleryInput.click();return;}if(tool==="music"){$c("ipCamAudio").click();return;}if(tool==="effects"){toggleFilters();return;}if(tool==="duration"){toast("Reel duration: 15 seconds.");return;}if(tool==="avatar"||tool==="draw"||tool==="boomerang"||tool==="layout"||tool==="create")toast(tool.charAt(0).toUpperCase()+tool.slice(1)+" tool selected.");if(tool==="handsfree"){toast("Hands-free recording started.");startRecording();}}
 function capture(){
