@@ -3,7 +3,7 @@ const $c = id => document.getElementById(id);
 let cameraOverlay, preview, captureButton, galleryInput;
 let stream = null, recorder = null, recordedChunks = [], activeMode = "STORY";
 let activeTool = "", facing = "user", cameraReady = false, flashOn = false;
-let recordSwipeStartX = null, lastFilterSwipeAt = 0, selectedFilter = "original";
+let selectedFilter = "original";
 const REEL_EFFECTS = [["original","Original","none"],["warm","Warm","sepia(.22) saturate(1.25)"],["cool","Cool","hue-rotate(18deg) saturate(1.15)"],["mono","Mono","grayscale(1)"],["vintage","Vintage","sepia(.55) contrast(.92) saturate(.85)"],["dream","Dream","brightness(1.12) saturate(1.25)"],["glow","Glow","brightness(1.12) contrast(.9) saturate(1.35)"],["gold","Golden","sepia(.28) saturate(1.6) hue-rotate(-8deg)"],["rose","Rose","sepia(.18) saturate(1.25) hue-rotate(320deg)"],["lavender","Lavender","hue-rotate(255deg) saturate(.8) brightness(1.08)"],["mint","Mint","hue-rotate(75deg) saturate(.8)"],["sunset","Sunset","sepia(.25) saturate(1.55) hue-rotate(-12deg) contrast(1.08)"],["cinema","Cinema","contrast(1.25) saturate(.85) brightness(.92)"],["fade","Fade","contrast(.82) brightness(1.08) saturate(.8)"],["vivid","Vivid","saturate(1.8) contrast(1.08)"],["noir","Noir","grayscale(1) contrast(1.35)"],["soft","Soft","brightness(1.08) contrast(.88) saturate(1.05)"],["ice","Ice","hue-rotate(165deg) saturate(.7) brightness(1.08)"],["peach","Peach","sepia(.2) saturate(1.2) hue-rotate(340deg) brightness(1.05)"],["retro","Retro","sepia(.35) contrast(1.1) saturate(.9)"],["pop","Pop","saturate(1.65) contrast(1.2)"]];
 const effectFilter = name => REEL_EFFECTS.find(effect => effect[0] === name)?.[2] || "none";
 
@@ -27,10 +27,9 @@ function buildCamera() {
   .ipCamTool svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}.ipCamTool.active{outline:1.5px solid #fff}
   .ipCamTool .num{position:absolute;font-size:12px;font-weight:800}
   .ipCamBottom{position:absolute;z-index:4;left:0;right:0;bottom:0;height:205px;background:#000;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center}
+  .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center;z-index:10}
   #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:0;touch-action:pan-y}
   #recordBtn.recording{background:#ff2a6d}
-  .ipCamLenses{display:none}
   .ipCamUtility{position:absolute;top:56px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
   .ipCamGallery{width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
   .ipCamFlip{width:38px;height:38px;background:transparent;color:#fff;border:0;font-size:28px}
@@ -39,16 +38,14 @@ function buildCamera() {
   #modeBar .mode.active{color:#fff;font-weight:900;position:relative}#modeBar .mode.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:22px;height:2px;background:#fff;border-radius:2px}
   /* Instagram-style filter carousel, permanently visible above the shutter */
   #filterBar{display:none;position:absolute;z-index:11;left:0;right:0;bottom:calc(205px + env(safe-area-inset-bottom));width:100%;height:82px;padding:4px 12px;gap:10px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto;background:linear-gradient(0deg,rgba(0,0,0,.22),transparent)}
-  #filterBar::-webkit-scrollbar{display:none;width:0;height:0}#filterBar.visible{display:flex}
+  #filterBar::-webkit-scrollbar{display:none;width:0;height:0}
   .ipCamFilter{flex:0 0 48px;width:48px;min-width:48px;height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000;transition:flex-basis .15s,width .15s,min-width .15s}
   .ipCamSwatch{width:40px;height:40px;border-radius:50%;border:2px solid #ffffff70;display:block;box-shadow:0 0 0 1px #0004 inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .ipCamFilter.active{flex-basis:62px;width:62px;min-width:62px}.ipCamFilter.active .ipCamSwatch{width:58px;height:58px;border:2px solid #fff;box-shadow:0 0 0 2px #b52aff}
   .ipCamOriginal{background:linear-gradient(135deg,#181818,#383838)}.ipCamWarm{background:linear-gradient(135deg,#ffd16b,#f07824 60%,#8e3a18)}.ipCamCool{background:linear-gradient(135deg,#b5efff,#338cde 55%,#2d3c99)}.ipCamMono{background:linear-gradient(135deg,#fff,#777 55%,#222)}.ipCamVintage{background:linear-gradient(135deg,#e6c08b,#98613d 55%,#49301f)}
-  .ipCamCaptureRow{z-index:10}
   @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:calc(190px + env(safe-area-inset-bottom));height:72px;padding-left:8px;padding-right:8px}.ipCamFilter{height:66px}.ipCamSwatch{width:38px;height:38px}.ipCamFilter.active .ipCamSwatch{width:52px;height:52px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   #ipCamToast{position:absolute;z-index:12;left:50%;bottom:225px;transform:translateX(-50%);max-width:90%;padding:10px 14px;border-radius:18px;background:#232323f2;font-size:13px;text-align:center;pointer-events:none}
   #ipCamGalleryInput{display:none}
-  @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#modeBar{top:98px}.ipCamUtility{top:50px}}
   `;
   document.head.appendChild(style);
   cameraOverlay = document.createElement("div");
@@ -108,10 +105,7 @@ function buildCamera() {
   cameraOverlay.querySelectorAll("[data-tool]").forEach(btn=>{btn.type="button";btn.onclick=()=>runTool(btn.dataset.tool);});
   cameraOverlay.querySelectorAll("[data-mode]").forEach(btn=>{btn.type="button";btn.onclick=e=>{e.preventDefault();e.stopPropagation();setMode(btn.dataset.mode);};});
   cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>{btn.type="button";btn.onclick=()=>selectFilter(btn.dataset.filter);});
-  captureButton.addEventListener("touchstart",e=>{recordSwipeStartX=e.touches[0]?.clientX??null;},{passive:true});
-  captureButton.addEventListener("touchend",()=>recordSwipeStartX=null,{passive:true});
-  captureButton.addEventListener("touchcancel",()=>recordSwipeStartX=null,{passive:true});
-  captureButton.onclick=()=>{if(Date.now()-lastFilterSwipeAt<500)return;capture();};
+  captureButton.onclick=()=>capture();
 }
 function toast(message){const el=$c("ipCamToast");if(!el)return;el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent="",2200);}
 function setMode(mode){
@@ -197,5 +191,5 @@ function sendFiles(files){
   try{const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=activeMode.toLowerCase();closeCamera();input.dispatchEvent(new Event("change",{bubbles:true}));}catch(e){toast("Could not open editor. Please select the file again.");console.error(e);}
 }
 window.openInstaProCamera=openCamera;
-function initInstaProCameraCreate(){buildCamera();const plus=$c("addBtn");if(plus&&plus.dataset.ipCameraBound!=="1"){plus.dataset.ipCameraBound="1";plus.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openCamera();},true);}if(!document.documentElement.dataset.ipCameraEscapeBound){document.documentElement.dataset.ipCameraEscapeBound="1";document.documentElement.dataset.ipCameraEscapeBound="1";document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cameraOverlay?.classList.contains("open"))closeCamera();});}}
+function initInstaProCameraCreate(){buildCamera();const plus=$c("addBtn");if(plus&&plus.dataset.ipCameraBound!=="1"){plus.dataset.ipCameraBound="1";plus.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openCamera();},true);}if(!document.documentElement.dataset.ipCameraEscapeBound){document.documentElement.dataset.ipCameraEscapeBound="1";document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cameraOverlay?.classList.contains("open"))closeCamera();});}}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initInstaProCameraCreate,{once:true});else initInstaProCameraCreate();
