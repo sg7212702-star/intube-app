@@ -42,8 +42,8 @@ function buildCamera() {
 #filterTray::-webkit-scrollbar{display:none}
 #filterTray .filter{flex:0 0 54px;width:54px;height:54px;border-radius:50%;scroll-snap-align:center;flex-shrink:0;border:2px solid #555;transition:transform .2s,border .2s;display:block;padding:0;position:relative;overflow:visible;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
 #filterTray .filter.active{flex:0 0 66px;width:66px;height:66px;border:3px solid #fff;transform:scale(1.1);z-index:2}
-#whiteRing{position:absolute;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;border:4px solid #fff;border-radius:50%;z-index:10;background:transparent;pointer-events:none}
-#whiteRingCenter{position:absolute;bottom:85px;left:50%;transform:translateX(-50%);width:78px;height:78px;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
+#whiteRing{position:absolute;bottom:125px;left:50%;transform:translateX(-50%);width:78px;height:78px;border:4px solid #fff;border-radius:50%;z-index:10;background:transparent;pointer-events:none}
+#whiteRingCenter{position:absolute;bottom:125px;left:50%;transform:translateX(-50%);width:78px;height:78px;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
 #whiteRingCenter .center-effect{width:60px;height:60px;border-radius:50%;background-size:cover;background-position:center;filter:var(--center-filter,none)}
 #filterTray .filter-label{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
   #filterBar{display:none!important}
