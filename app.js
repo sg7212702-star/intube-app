@@ -891,22 +891,32 @@ document.addEventListener("DOMContentLoaded",()=>{
   } catch (_) {}
   // HOME ADD (+) BUTTON: open the camera directly when the camera module is loaded.
   const addButton = $("addBtn");
-  if (addButton) {
+  if (addButton && addButton.dataset.ipDirectCameraBound !== "1") {
+    addButton.dataset.ipDirectCameraBound = "1";
+    // Always open the single-page camera. Never fall back to the old create/gallery sheet.
     addButton.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
-      if (typeof window.openInstaProCamera === "function") {
+      event.stopImmediatePropagation();
+      const hideOldSheet = () => {
         const oldSheet = $("createSheet");
         if (oldSheet) oldSheet.classList.remove("show");
         ["overlay", "sheetOverlay"].forEach(id => {
           const overlay = $(id);
           if (overlay) { overlay.classList.remove("show"); overlay.style.display = "none"; }
         });
+      };
+      hideOldSheet();
+      if (typeof window.openInstaProCamera === "function") {
         window.openInstaProCamera();
       } else {
-        openSheet();
+        // Module startup can lag briefly on a slow phone; retry instead of showing the old sheet.
+        setTimeout(() => {
+          hideOldSheet();
+          if (typeof window.openInstaProCamera === "function") window.openInstaProCamera();
+        }, 180);
       }
-    });
+    }, true);
   }
 
   // TOP BUTTONS - FINAL
