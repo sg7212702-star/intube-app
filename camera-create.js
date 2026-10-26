@@ -47,7 +47,7 @@ function buildCamera() {
 #whiteRingCenter{position:absolute;bottom:calc(125px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:70px;height:70px;z-index:9;display:none;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
 #whiteRingCenter .center-effect{width:60px;height:60px;border-radius:50%;background-size:cover;background-position:center;filter:var(--center-filter,none)}
 #filterTray .filter-label{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
-  #filterBar{display:none!important}
+  #filterBar,.ipCamFilter,.ipCamSwatch{display:none!important}
   .ipCamFilter{flex:0 0 54px;width:54px;min-width:54px;height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000;transition:flex-basis .15s,width .15s,min-width .15s}
   .ipCamSwatch{width:48px;height:48px;border-radius:50%;border:2px solid #ffffff70;display:block;box-shadow:0 0 0 1px #0004 inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .ipCamFilter.active{flex-basis:72px;width:72px;min-width:72px}.ipCamFilter.active .ipCamSwatch{width:64px;height:64px;border:2px solid #fff;box-shadow:0 0 0 2px #b52aff}
