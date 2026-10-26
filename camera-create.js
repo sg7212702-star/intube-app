@@ -42,8 +42,8 @@ function buildCamera() {
 #filterTray::-webkit-scrollbar{display:none}
 #filterTray .filter{flex:0 0 54px;width:54px;height:54px;border-radius:50%;scroll-snap-align:center;flex-shrink:0;border:2px solid #555;transition:transform .2s,border .2s;display:block;padding:0;position:relative;overflow:visible;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .filter-reference{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;overflow:hidden}.filter-label{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000;pointer-events:none}#filterTray .filter{margin-bottom:16px}
-#filterTray .filter.active{flex:0 0 66px;width:66px;height:66px;border:3px solid #fff;transform:none;z-index:2}
-#whiteRing{position:absolute;bottom:calc(125px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:78px;height:78px;border:4px solid #fff;border-radius:50%;z-index:31;background:transparent;pointer-events:none}
+#filterTray .filter.active{flex:0 0 54px;width:54px;height:54px;border:2px solid #fff;transform:none;z-index:2}
+#whiteRing{position:absolute;bottom:calc(125px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:78px;height:78px;box-sizing:border-box;border:4px solid #fff;border-radius:50%;z-index:31;background:transparent;pointer-events:none}
 #whiteRingCenter{position:absolute;bottom:calc(125px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:70px;height:70px;z-index:9;display:none;align-items:center;justify-content:center;pointer-events:none;border-radius:50%;overflow:hidden}
 #whiteRingCenter .center-effect{width:60px;height:60px;border-radius:50%;background-size:cover;background-position:center;filter:var(--center-filter,none)}
 #filterTray .filter-label{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
@@ -107,7 +107,7 @@ function buildCamera() {
   startFilterReferenceThumbnails();
   const center=$c("whiteRingCenter");
   center.innerHTML='<div class="center-effect"></div>';
-  function updateCenter(){const cx=window.innerWidth/2;let best=null,min=Infinity;filterBar.querySelectorAll(".filter").forEach(el=>{const r=el.getBoundingClientRect();const d=Math.abs(cx-(r.left+r.width/2));if(d<min){min=d;best=el;}});if(!best)return;filterBar.querySelectorAll(".filter").forEach(el=>el.classList.toggle("active",el===best));selectFilter(best.dataset.filter);const swatch=center.querySelector(".center-effect");if(swatch){swatch.style.background=best.style.backgroundImage||"linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)";swatch.style.filter=effectFilter(best.dataset.filter);}}
+  function updateCenter(){const cx=window.innerWidth/2;let best=null,min=Infinity;filterBar.querySelectorAll(".filter").forEach(el=>{const r=el.getBoundingClientRect();const d=Math.abs(cx-(r.left+r.width/2));if(d<min){min=d;best=el;}});if(!best)return;filterBar.querySelectorAll(".filter").forEach(el=>el.classList.toggle("active",el===best));selectFilter(best.dataset.filter);const swatch=center.querySelector(".center-effect");if(swatch){swatch.style.background=best.style.backgroundImage||"linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)";swatch.style.filter=effectFilter(best.dataset.filter);} }
   filterBar.addEventListener("scroll",()=>requestAnimationFrame(updateCenter),{passive:true});
   filterBar.addEventListener("click",e=>{const el=e.target.closest(".filter");if(el){el.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});selectFilter(el.dataset.filter);requestAnimationFrame(updateCenter);}});
   window.addEventListener("resize",updateCenter,{passive:true});
