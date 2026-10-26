@@ -171,7 +171,7 @@ function runTool(tool){activeTool=tool;if(tool==="post-media"){galleryInput.clic
 function capture(){
   if(activeMode==="REEL"||activeTool==="handsfree"){if(recorder?.state==="recording"){recorder.stop();captureButton.classList.remove("recording");return;}startRecording();return;}
   if(!cameraReady||!preview.videoWidth){toast("Camera unavailable. Use Gallery below.");return;}
-  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter=effectFilter(recordingFilter);ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
+  const canvas=document.createElement("canvas");canvas.width=preview.videoWidth;canvas.height=preview.videoHeight;const ctx=canvas.getContext("2d");if(facing==="user"){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.filter=effectFilter(selectedFilter);ctx.drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)sendFiles([new File([blob],"instapro-camera-"+Date.now()+".jpg",{type:"image/jpeg"})]);},"image/jpeg",.94);
 }
 function startRecording(){
   const recordingFilter=selectedFilter; // Lock the filter highlighted in the white selection ring when recording starts.
@@ -189,7 +189,7 @@ function startRecording(){
     const drawFrame=()=>{
       if(!ctx||!preview.videoWidth)return;
       ctx.save();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);
-      ctx.filter=effectFilter(selectedFilter);
+      ctx.filter=effectFilter(recordingFilter);
       // Center-crop the camera source to 9:16 so recorded Reels are portrait,
       // without stretching the user's face or body.
       const targetRatio=9/16, sourceRatio=preview.videoWidth/preview.videoHeight;
