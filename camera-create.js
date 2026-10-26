@@ -129,7 +129,7 @@ function buildCamera() {
   captureButton.addEventListener("touchstart",e=>{recordSwipeStartX=e.touches[0]?.clientX??null;},{passive:true});
   captureButton.addEventListener("touchend",()=>recordSwipeStartX=null,{passive:true});
   captureButton.addEventListener("touchcancel",()=>recordSwipeStartX=null,{passive:true});
-  captureButton.onclick=()=>{if(Date.now()-lastFilterSwipeAt<500)return;capture();};
+  captureButton.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();if(Date.now()-lastFilterSwipeAt<500)return;capture();});
 }
 function toast(message){const el=$c("ipCamToast");if(!el)return;el.textContent=message;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.textContent="",2200);}
 function setMode(mode){
