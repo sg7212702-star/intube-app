@@ -28,7 +28,7 @@ function buildCamera() {
   .ipCamTool .num{position:absolute;font-size:12px;font-weight:800}
   .ipCamBottom{position:absolute;z-index:4;left:0;right:0;bottom:0;height:205px;background:#000;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
   .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center}
-  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:0;touch-action:pan-y}
+  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 3px #fff;padding:5px;touch-action:pan-y;display:grid;place-items:center;overflow:hidden;position:relative}#recordFilterPreview{display:block;width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8);border:2px solid #fff;box-shadow:0 0 0 1px #222 inset;pointer-events:none}#recordBtn.recording #recordFilterPreview{border-radius:12px;background:#ff2a6d!important;filter:none!important}#recordBtn.recording{background:#fff}
   #recordBtn.recording{background:#ff2a6d}
   .ipCamLenses{display:none}
   .ipCamUtility{position:absolute;top:86px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;z-index:35}
@@ -94,7 +94,7 @@ function buildCamera() {
     <div id="whiteRing" aria-hidden="true"></div><div id="whiteRingCenter" aria-hidden="true"></div>
     <div id="ipCamToast"></div>
     <div class="ipCamBottom">
-      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record"></button></div>
+      <div class="ipCamCaptureRow"><button id="recordBtn" aria-label="Record with Original filter"><span id="recordFilterPreview" aria-hidden="true"></span></button></div>
       <div class="ipCamUtility"><button class="ipCamGallery" id="ipCamGallery" aria-label="Gallery">▧</button><button class="ipCamFlip" id="ipCamFlip" aria-label="Flip camera">⇄</button></div>
       <div id="modeBar"><button class="mode" data-mode="POST">POST</button><button class="mode active" data-mode="STORY">STORY</button><button class="mode" data-mode="REEL">REEL</button></div>
     </div>
@@ -153,7 +153,7 @@ function toggleFilters(force){const bar=$c("filterTray");const yes=typeof force=
   const paint=()=>{if(!preview||!preview.videoWidth||!preview.videoHeight)return;cameraOverlay?.querySelectorAll("#filterTray .filter").forEach(btn=>{const canvas=btn.querySelector("canvas.filter-reference");if(!canvas)return;const ctx=canvas.getContext("2d");if(!ctx)return;const w=canvas.width,h=canvas.height,srcW=preview.videoWidth,srcH=preview.videoHeight,side=Math.min(srcW,srcH),sx=(srcW-side)/2,sy=(srcH-side)/2;ctx.save();ctx.clearRect(0,0,w,h);ctx.filter=effectFilter(btn.dataset.filter);if(facing==="user"){ctx.translate(w,0);ctx.scale(-1,1);}ctx.drawImage(preview,sx,sy,side,side,0,0,w,h);ctx.restore();});};
   paint();window.__ipFilterThumbTimer=setInterval(paint,350);
 }
-function selectFilter(name){selectedFilter=name;if(preview)preview.style.filter=effectFilter(name);cameraOverlay?.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));}
+function selectFilter(name){selectedFilter=name;if(preview)preview.style.filter=effectFilter(name);cameraOverlay?.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter===name));const chosen=REEL_EFFECTS.find(effect=>effect[0]===name);const swatch=cameraOverlay?.querySelector("#recordFilterPreview");const record=cameraOverlay?.querySelector("#recordBtn");if(swatch){swatch.style.filter=effectFilter(name);swatch.className="ipCamSwatch ipCam"+(chosen?.[1]||"Original");swatch.style.backgroundImage="linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)";}if(record)record.setAttribute("aria-label","Record with "+(chosen?.[1]||"Original")+" filter");}
 async function startCamera(){
   try{
     if(!navigator.mediaDevices?.getUserMedia)throw new Error("Camera API unavailable");
