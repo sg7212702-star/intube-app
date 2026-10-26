@@ -14,7 +14,7 @@ function buildCamera() {
   style.textContent = `
   #ipCameraCreate{position:fixed;inset:0;z-index:200000;display:none;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;isolation:isolate}
   #ipCameraCreate.open{display:block}#ipCameraCreate *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  #ipCameraCreate video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;background:#000}
+  #ipCameraCreate video{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:contain;object-position:50% 50%;transform:translate(-50%,-50%);background:#000}
   #ipCamShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0006,transparent 24%,transparent 70%,#0005)}
   .ipCamTop{position:absolute;z-index:5;top:max(10px,env(safe-area-inset-top));left:12px;right:12px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center}
   .ipCamIcon{width:42px;height:42px;background:transparent;color:#fff;border:0;display:grid;place-items:center;font-size:28px}
@@ -160,7 +160,7 @@ async function startCamera(){
     const old=stream;stream=null;if(old)old.getTracks().forEach(t=>t.stop());
     const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},aspectRatio:{ideal:9/16},width:{ideal:720},height:{ideal:1280},resizeMode:{ideal:"crop-and-scale"}},audio:true});
     if(!cameraOverlay?.classList.contains("open")){next.getTracks().forEach(t=>t.stop());return;}
-    stream=next;preview.srcObject=stream;preview.style.transform=facing==="user"?"scaleX(-1)":"scaleX(1)";preview.style.objectFit="cover";preview.style.objectPosition="50% 50%";const videoTrack=stream.getVideoTracks()[0];try{const caps=videoTrack?.getCapabilities?.();if(caps?.zoom){const minZoom=Number.isFinite(caps.zoom.min)?caps.zoom.min:1;await videoTrack.applyConstraints({advanced:[{zoom:minZoom}]});}}catch(_){}cameraReady=true;await preview.play().catch(()=>{});
+    stream=next;preview.srcObject=stream;preview.style.transform=facing==="user"?"translate(-50%,-50%) scaleX(-1)":"translate(-50%,-50%)";preview.style.objectFit="contain";preview.style.objectPosition="50% 50%";const videoTrack=stream.getVideoTracks()[0];try{const caps=videoTrack?.getCapabilities?.();if(caps?.zoom){const minZoom=Number.isFinite(caps.zoom.min)?caps.zoom.min:1;await videoTrack.applyConstraints({advanced:[{zoom:minZoom}]});}}catch(_){}cameraReady=true;await preview.play().catch(()=>{});
   }catch(e){cameraReady=false;toast("Camera permission needed. You can still choose media from Gallery.");console.warn("Insta Pro camera:",e);}
 }
 function stopCamera(){if(window.__ipFilterThumbTimer){clearInterval(window.__ipFilterThumbTimer);window.__ipFilterThumbTimer=null;}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}cameraReady=false;if(preview)preview.srcObject=null;}
