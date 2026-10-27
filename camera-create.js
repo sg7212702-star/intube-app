@@ -156,8 +156,12 @@
     shutter.addEventListener("pointerup",release);shutter.addEventListener("pointercancel",release);
     shutter.addEventListener("click",e=>{
       e.preventDefault();
+      e.stopPropagation();
+      // Use the visibly selected tab as the source of truth.
+      const selectedMode=$("icsModeBar")?.querySelector("[data-mode].active")?.dataset.mode;
+      if(selectedMode && selectedMode!==mode) setMode(selectedMode);
       if(mode==="REEL"){
-        if(recording)stopRecording();
+        if(recording) stopRecording();
         else startRecording();
         return;
       }
@@ -169,7 +173,7 @@
   }
   function tool(action){if(action==="effects"){const bar=$("icsFilterBar");bar.style.display=bar.style.display==="none"?"flex":"none";return;}if(action==="music"){$("icsAudio").click();return;}if(action==="post-media"){$("icsInput").click();return;}if(action==="duration"){toast("Reel recording can last up to 90 seconds.");return;}if(action==="handsfree"){handsFree=!handsFree;toast(handsFree?"Hands-free on: tap shutter to start/stop":"Hands-free off");return;}if(["create","boomerang","layout","avatar","draw"].includes(action))toast(action[0].toUpperCase()+action.slice(1)+" effect is not yet supported in this web camera.");}
   function countdownCapture(){const shutter=$("icsShutter");shutter.disabled=true;let left=timerSeconds;const tick=()=>{if(left<=0){shutter.disabled=false;capturePhoto();return;}toast(String(left));left--;setTimeout(tick,1000);};tick();}
-  function capturePhoto(){if(!ready||!video?.videoWidth){toast("Camera is still starting. Use Gallery or try again.");return;}const c=document.createElement("canvas");c.width=video.videoWidth;c.height=video.videoHeight;const ctx=c.getContext("2d");ctx.filter=effectCSS();if(facing==="user"){ctx.translate(c.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,c.width,c.height);c.toBlob(blob=>{if(blob)sendFiles([new File([blob],"intube-photo-"+Date.now()+".jpg",{type:"image/jpeg"})]);else toast("Could not capture photo.");},"image/jpeg",.94);}
+  function capturePhoto(){if(mode==="REEL"){toast("REEL mode: tap the record button to start video recording.");return;}if(!ready||!video?.videoWidth){toast("Camera is still starting. Use Gallery or try again.");return;}const c=document.createElement("canvas");c.width=video.videoWidth;c.height=video.videoHeight;const ctx=c.getContext("2d");ctx.filter=effectCSS();if(facing==="user"){ctx.translate(c.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,c.width,c.height);c.toBlob(blob=>{if(blob)sendFiles([new File([blob],"intube-photo-"+Date.now()+".jpg",{type:"image/jpeg"})]);else toast("Could not capture photo.");},"image/jpeg",.94);}
   function startRecording(){
     if(recording)return;
     if(!ready||!stream||!video?.videoWidth){toast("Camera is still starting. Try again.");return;}
