@@ -200,7 +200,7 @@
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
       recorder.onerror=e=>{console.error("Intube recording error",e);toast("Recording failed. Please try again.");};
       activeRecordingMode=mode;
-      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const savedMode=activeRecordingMode||mode;activeRecordingMode=null;const file=new File(chunks,"intube-"+savedMode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(savedMode==="REEL"){mode="REEL";sendFiles([file]);return;}mode=savedMode;sendFiles([file]);};
+      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const savedMode=activeRecordingMode||mode;activeRecordingMode=null;const file=new File(chunks,"intube-"+savedMode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(savedMode==="REEL"){mode="REEL";showReelReview(file);return;}mode=savedMode;sendFiles([file]);};
       recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";
       const clock=$("icsRecordTimer");if(clock){clock.classList.add("visible");clock.textContent="00:00";}
       clearInterval(recordClock);recordClock=setInterval(()=>{if(!recording)return;const sec=Math.floor((Date.now()-recordingStarted)/1000);const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss=String(sec%60).padStart(2,"0");if(clock)clock.textContent=mm+":"+ss;const progress=$("icsProgress")?.querySelector("span");if(progress)progress.style.width=Math.min(100,sec/(mode==="REEL"?90:60)*100)+"%";},200);
@@ -211,15 +211,24 @@
   function showReelReview(file){
     root.querySelector("#icsReelReview")?.remove();
     const panel=document.createElement("div");panel.id="icsReelReview";
-    panel.style.cssText="position:absolute;inset:0;z-index:2147482500;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 24px);gap:18px";
-    const preview=document.createElement("video");preview.controls=true;preview.playsInline=true;preview.autoplay=true;preview.src=URL.createObjectURL(file);preview.style.cssText="width:100%;height:100%;object-fit:cover;background:#000;border-radius:0";
-    const title=document.createElement("div");title.className="ics-review-title";title.textContent="Preview Reel";
-    const row=document.createElement("div");row.className="ics-review-actions";
-    const retake=document.createElement("button");retake.type="button";retake.textContent="Retake";retake.style.cssText="flex:1;height:48px;border:1px solid #ffffff65;border-radius:26px;background:#171717;color:#fff;font-size:16px;font-weight:700";
-    const next=document.createElement("button");next.type="button";next.textContent="Next →";next.style.cssText="flex:1;height:48px;border:0;border-radius:26px;background:#fff;color:#111;font-size:16px;font-weight:800";
-    row.append(retake,next);panel.append(preview,title,row);root.appendChild(panel);
-    retake.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();chunks=[];toast("Ready to record again.");};
-    next.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();sendFiles([file]);};
+    panel.style.cssText="position:absolute;inset:0;z-index:2147482500;background:#000;color:#fff;display:flex;flex-direction:column;overflow:hidden;padding:calc(env(safe-area-inset-top) + 12px) 0 calc(env(safe-area-inset-bottom) + 14px);font-family:system-ui,-apple-system,sans-serif";
+    panel.innerHTML=`<button type="button" data-act="back" aria-label="Back" style="position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);left:18px;width:44px;height:44px;border:0;background:#0008;color:#fff;font-size:32px;border-radius:50%">‹</button>
+      <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;padding:52px 0 8px"><video id="icsReviewVideo" playsinline autoplay loop style="width:100%;height:100%;object-fit:contain;background:#000"></video></div>
+      <div style="flex:0 0 auto;padding:0 18px 12px">
+        <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 18px;color:#fff">
+          <button type="button" data-tool="Audio">♫<small>Audio</small></button><button type="button" data-tool="Text">Aa<small>Text</small></button><button type="button" data-tool="Voice">♩<small>Voice</small></button><button type="button" data-tool="Captions">▣<small>Captions</small></button><button type="button" data-tool="Stickers">☺<small>Stickers</small></button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+          <button type="button" data-act="edit" style="flex:1;height:54px;border:0;border-radius:30px;background:#191b1f;color:#fff;font-size:16px;font-weight:700">Edit video</button>
+          <button type="button" data-act="next" style="flex:1;height:54px;border:0;border-radius:30px;background:#4b55f5;color:#fff;font-size:16px;font-weight:800">Next →</button>
+        </div>
+      </div>`;
+    const preview=panel.querySelector("#icsReviewVideo");preview.src=URL.createObjectURL(file);root.appendChild(panel);
+    const cleanup=()=>{preview.pause();URL.revokeObjectURL(preview.src);panel.remove();};
+    panel.querySelector('[data-act="back"]').onclick=()=>{cleanup();chunks=[];toast("Ready to record again.");};
+    panel.querySelector('[data-act="edit"]').onclick=()=>{cleanup();sendFiles([file]);};
+    panel.querySelector('[data-act="next"]').onclick=()=>{cleanup();sendFiles([file]);};
+    panel.querySelectorAll("[data-tool]").forEach(b=>{b.style.cssText="flex:1;min-width:0;max-width:76px;height:72px;border:0;border-radius:14px;background:#191b1f;color:#fff;font-size:25px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px";b.querySelector("small").style.cssText="font-size:11px;font-weight:500";b.onclick=()=>{if(b.dataset.tool==="Audio"){$("icsAudio")?.click();}else toast(b.dataset.tool+" can be added in Edit video.");};});
   }
   function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive"){try{recorder.requestData();}catch(_){}recorder.stop();}else{toast("Recording already stopped.");}}catch(e){console.warn("Recorder stop failed",e);toast("Video stop failed. Please try recording again.");try{outputStream?.getTracks().forEach(t=>t.stop());}catch(_){}outputStream=null;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";$("icsRecordTimer")?.classList.remove("visible");}}
   function sendFiles(files){
