@@ -138,7 +138,7 @@
     root.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>tool(b.dataset.action));
     const shutter=$("icsShutter");
     shutter.addEventListener("pointerdown",e=>{if(e.button!==undefined&&e.button!==0)return;e.preventDefault();pointerDownAt=Date.now();suppressClick=false;holdTimer=setTimeout(()=>{suppressClick=true;if(mode==="POST"){handsFree=true;startRecording();}else startRecording();},260);});
-    const release=e=>{if(holdTimer){clearTimeout(holdTimer);holdTimer=0;}if(recording){stopRecording();suppressClick=true;}else if(!suppressClick){if(timerSeconds)countdownCapture();else capturePhoto();}try{shutter.releasePointerCapture(e.pointerId);}catch(_){}};
+    const release=e=>{if(holdTimer){clearTimeout(holdTimer);holdTimer=0;}if(mode==="REEL"){if(recording){stopRecording();suppressClick=true;}else if(!suppressClick){startRecording();suppressClick=true;}}else if(recording){stopRecording();suppressClick=true;}else if(!suppressClick){if(timerSeconds)countdownCapture();else capturePhoto();}try{shutter.releasePointerCapture(e.pointerId);}catch(_){}};
     shutter.addEventListener("pointerup",release);shutter.addEventListener("pointercancel",release);
     shutter.addEventListener("click",e=>{e.preventDefault();if(suppressClick){suppressClick=false;return;}if(recording)stopRecording();else if(timerSeconds)countdownCapture();else if(mode==="REEL")startRecording();else capturePhoto();});
   }
@@ -159,10 +159,22 @@
       recorder=new MediaRecorder(outputStream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
       recorder.onerror=e=>{console.error("Intube recording error",e);toast("Recording failed. Please try again.");};
-      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";sendFiles([new File(chunks,"intube-"+mode.toLowerCase()+"-"+Date.now()+"."+ext,{type})]);};
+      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const file=new File(chunks,"intube-"+mode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(mode==="REEL"){showReelReview(file);return;}sendFiles([file]);};
       recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";toast("Recording… tap shutter to stop.");
       const limit=mode==="REEL"?90000:60000;maxTimer=setTimeout(()=>{if(recording)stopRecording();},limit);
     }catch(err){recording=false;cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;console.error(err);toast("Recording could not start. Please use Gallery.");}
+  }
+  function showReelReview(file){
+    root.querySelector("#icsReelReview")?.remove();
+    const panel=document.createElement("div");panel.id="icsReelReview";
+    panel.style.cssText="position:absolute;inset:0;z-index:2147482500;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 24px);gap:18px";
+    const preview=document.createElement("video");preview.controls=true;preview.playsInline=true;preview.autoplay=true;preview.src=URL.createObjectURL(file);preview.style.cssText="width:100%;height:min(68dvh,680px);object-fit:contain;background:#000;border-radius:12px";
+    const row=document.createElement("div");row.style.cssText="display:flex;gap:12px;width:100%;max-width:420px";
+    const retake=document.createElement("button");retake.type="button";retake.textContent="Retake";retake.style.cssText="flex:1;height:48px;border:1px solid #ffffff65;border-radius:26px;background:#171717;color:#fff;font-size:16px;font-weight:700";
+    const next=document.createElement("button");next.type="button";next.textContent="Next →";next.style.cssText="flex:1;height:48px;border:0;border-radius:26px;background:#fff;color:#111;font-size:16px;font-weight:800";
+    row.append(retake,next);panel.append(preview,row);root.appendChild(panel);
+    retake.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();chunks=[];toast("Ready to record again.");};
+    next.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();sendFiles([file]);};
   }
   function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive")recorder.stop();}catch(e){console.warn(e);} }
   function sendFiles(files){
