@@ -14,7 +14,7 @@
   let root=null, video=null, stream=null, recorder=null, outputStream=null, renderCanvas=null;
   let chunks=[], raf=0, mode="STORY", facing="user", filter="none", timerSeconds=0, zoom=1;
   let ready=false, recording=false, recordingStarted=0, maxTimer=0, recordClock=0, holdTimer=0, pointerDownAt=0, suppressClick=false;
-  let audioTrack=null, handsFree=false, flash=false;
+  let audioTrack=null, handsFree=false, flash=false, activeRecordingMode=null, lastDrawAt=0;
 
   function build() {
     if ($("ipCameraCreate")) { root=$("ipCameraCreate"); video=$("ipCamPreview"); return; }
@@ -120,7 +120,8 @@
     stopStream();
     if(!navigator.mediaDevices?.getUserMedia){toast("Camera needs HTTPS and browser permission. Gallery is available.");return;}
     try{
-      const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1080},height:{ideal:1920}},audio:true});
+      // Request the best portrait resolution the device/browser supports; constraints may be negotiated lower.
+      const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:2160},height:{ideal:3840},frameRate:{ideal:30,max:30}},audio:true});
       if(!root?.classList.contains("open")){s.getTracks().forEach(t=>t.stop());return;}
       stream=s;video.srcObject=s;video.style.transform=facing==="user"?"scaleX(-1)":"none";await video.play();ready=true;
       const track=s.getVideoTracks()[0];if(zoom>1&&track.getCapabilities?.().zoom){const cap=track.getCapabilities().zoom;await track.applyConstraints({advanced:[{zoom:Math.min(cap.max,Math.max(cap.min,zoom))}]}).catch(()=>{});}
@@ -186,16 +187,20 @@
     if(!ready||!stream||!video?.videoWidth){toast("Camera is still starting. Try again.");return;}
     if(!window.MediaRecorder){toast("Video recording is not supported by this browser. Use Gallery.");return;}
     try{
-      chunks=[];renderCanvas=document.createElement("canvas");renderCanvas.width=video.videoWidth;renderCanvas.height=video.videoHeight;
-      const ctx=renderCanvas.getContext("2d",{alpha:false});
-      const draw=()=>{if(!recording||!ctx)return;ctx.save();ctx.filter=effectCSS();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();raf=requestAnimationFrame(draw);};
-      // Build a separate video stream so the chosen filter is applied to the actual saved video.
+      chunks=[];renderCanvas=document.createElement("canvas");
+      // Keep the live preview at native negotiated resolution, but cap filtered recording work at portrait Full HD.
+      const sourceW=video.videoWidth,sourceH=video.videoHeight,scale=Math.min(1,1920/Math.max(sourceW,sourceH));
+      renderCanvas.width=Math.max(2,Math.round(sourceW*scale/2)*2);renderCanvas.height=Math.max(2,Math.round(sourceH*scale/2)*2);
+      const ctx=renderCanvas.getContext("2d",{alpha:false,desynchronized:true});
+      const draw=now=>{if(!recording||!ctx)return;if(now-lastDrawAt>=1000/30){lastDrawAt=now;ctx.save();ctx.filter=effectCSS();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();}raf=requestAnimationFrame(draw);};
+      // 30 fps capped canvas prevents a full-resolution 60 fps render loop from blocking the UI.
       outputStream=renderCanvas.captureStream(30);stream.getAudioTracks().forEach(t=>outputStream.addTrack(t));
       const mime=["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4"].find(t=>MediaRecorder.isTypeSupported(t));
       recorder=new MediaRecorder(outputStream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
       recorder.onerror=e=>{console.error("Intube recording error",e);toast("Recording failed. Please try again.");};
-      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const file=new File(chunks,"intube-"+mode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(mode==="REEL"){showReelReview(file);return;}sendFiles([file]);};
+      activeRecordingMode=mode;
+      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const savedMode=activeRecordingMode||mode;activeRecordingMode=null;const file=new File(chunks,"intube-"+savedMode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(savedMode==="REEL"){showReelReview(file);return;}mode=savedMode;sendFiles([file]);};
       recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";
       const clock=$("icsRecordTimer");if(clock){clock.classList.add("visible");clock.textContent="00:00";}
       clearInterval(recordClock);recordClock=setInterval(()=>{if(!recording)return;const sec=Math.floor((Date.now()-recordingStarted)/1000);const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss=String(sec%60).padStart(2,"0");if(clock)clock.textContent=mm+":"+ss;const progress=$("icsProgress")?.querySelector("span");if(progress)progress.style.width=Math.min(100,sec/(mode==="REEL"?90:60)*100)+"%";},200);
