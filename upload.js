@@ -172,7 +172,26 @@ function connectFileInput(inputId, type) {
 
     try {
       const chosenType = input.dataset.instaProUploadType || type;
-      if (chosenType === "post" && selectedFiles.every(f => f.type.startsWith("image/"))) {
+      const cameraRecordedVideo = input.dataset.instaProCameraRecordedVideo === "true";
+      delete input.dataset.instaProCameraRecordedVideo;
+      if (cameraRecordedVideo && file.type.startsWith("video/")) {
+        // Camera-recorded videos must always open the video editor before upload.
+        const editResult = await openPremiumReelEditor(file);
+        if (!editResult) return;
+        window.__instaProPendingMusicFile = null;
+        window.__instaProPendingMusicTrack = editResult.musicTrack || null;
+        if (chosenType === "reel") {
+          window.__instaProReelTitle = editResult.title || "";
+          window.__instaProReelCaption = editResult.caption || "";
+          window.__instaProReelHashtags = editResult.hashtags || "";
+          window.__instaProReelTaggedPeople = editResult.taggedPeople || "";
+          window.__instaProPostCaption = "";
+        } else {
+          window.__instaProPostCaption = editResult.caption || "";
+          window.__instaProReelCaption = "";
+        }
+        await handleFile(editResult.file, chosenType);
+      } else if (chosenType === "post" && selectedFiles.every(f => f.type.startsWith("image/"))) {
         delete input.dataset.instaProUploadType;
         const editResult = await openMultiPhotoPostEditor(selectedFiles);
         if (!editResult) return;
