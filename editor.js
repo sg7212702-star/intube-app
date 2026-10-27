@@ -35,10 +35,10 @@
       #instaproEditor{position:fixed;inset:0;z-index:1000000;background:#07070b;color:#fff;font-family:inherit;display:flex;flex-direction:column;overflow:hidden}
       #instaproEditor *{box-sizing:border-box}
       #instaproEditor .ipe-head{height:58px;display:flex;align-items:center;gap:12px;padding:0 14px;background:rgba(20,20,27,.62);border-bottom:1px solid rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);flex-shrink:0}
-      #instaproEditor .ipe-head strong{font-size:16px;flex:1;text-align:center;letter-spacing:.2px}
+      #instaproEditor .ipe-head strong{display:none}
       #instaproEditor button{color:#fff;cursor:pointer;font:inherit}
       #instaproEditor .ipe-glass{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.105);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:15px;min-height:40px;padding:9px 13px;box-shadow:inset 0 1px rgba(255,255,255,.08)}
-      #instaproEditor .ipe-next{background:rgba(116,75,255,.45);border-color:rgba(176,154,255,.65);font-weight:700;white-space:nowrap}
+      #instaproEditor .ipe-next{background:#202027;border-color:#202027;font-weight:600;white-space:nowrap;color:#fff;min-width:76px}\n      #instaproEditor .ipe-head [data-action="close"]{width:42px;height:42px;min-height:42px;padding:0;border:0;background:transparent;font-size:0;position:relative}\n      #instaproEditor .ipe-head [data-action="close"]::before,#instaproEditor .ipe-head [data-action="close"]::after{content:"";position:absolute;left:10px;top:20px;width:22px;height:2px;background:#f5f5f5;border-radius:2px;transform:rotate(45deg)}\n      #instaproEditor .ipe-head [data-action="close"]::after{transform:rotate(-45deg)}
       #instaproEditor .ipe-main{overflow:auto;overscroll-behavior:contain;flex:1;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
       #instaproEditor .ipe-preview-wrap{position:relative;margin:12px auto 14px;width:calc(100% - 24px);max-width:540px;height:min(49vh,520px);min-height:230px;display:flex;align-items:center;justify-content:center;border-radius:22px;overflow:hidden;background:radial-gradient(ellipse at top,rgba(104,83,158,.22),transparent 65%),#111;border:1px solid rgba(255,255,255,.14);box-shadow:0 16px 50px rgba(0,0,0,.32)}
       #instaproEditor #ipeMedia{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;transition:filter .12s,transform .12s}
@@ -59,7 +59,7 @@
       #instaproEditor .ipe-music-row .ipe-music-name{font-size:12px;opacity:.75;flex:1;min-width:100px;overflow-wrap:anywhere}
       #instaproEditor .ipe-hidden{display:none!important}
       #instaproEditor .ipe-hint{font-size:11px;line-height:1.5;opacity:.6;margin:9px 0 0}
-      #instaproEditor .ipe-footer{position:sticky;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;background:rgba(8,8,12,.82);border-top:1px solid rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+      #instaproEditor .ipe-footer{position:sticky;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;background:rgba(8,8,12,.82);border-top:1px solid rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}\n      #instaproEditor .ipe-bottom-tools{flex-shrink:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:10px 5px calc(7px + env(safe-area-inset-bottom));background:#090909;border-top:1px solid #1d1d1d}\n      #instaproEditor .ipe-bottom-tools button{border:0;background:transparent;min-width:0;min-height:55px;padding:3px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#e7e7e7;font-size:11px}\n      #instaproEditor .ipe-bottom-tools svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}\n      #instaproEditor .ipe-bottom-tools button:active{opacity:.65}
       #instaproEditor .ipe-footer button{flex:1;min-height:46px;border-radius:16px}
       #instaproEditor .ipe-cancel{background:rgba(255,255,255,.07)}
       #instaproEditor .ipe-publish{background:rgba(117,80,255,.5);border:1px solid rgba(187,166,255,.7);font-weight:750}
@@ -78,7 +78,7 @@
       #instaproEditor.ipe-reel-mode .ipe-tools{padding:4px 12px 9px;gap:7px}
       #instaproEditor.ipe-reel-mode .ipe-tools button{border-radius:999px;min-height:36px;padding:7px 12px;font-size:12px}
       #instaproEditor.ipe-reel-mode .ipe-section{margin:7px 12px 10px;padding:11px;border-radius:14px;background:#111;border-color:#292929}
-      #instaproEditor.ipe-reel-mode .ipe-footer{background:#000;border-top:1px solid #252525;padding-top:9px}
+      #instaproEditor.ipe-reel-mode .ipe-footer{background:#000;border-top:1px solid #252525;padding-top:9px}\n      #instaproEditor.ipe-reel-mode .ipe-bottom-tools{background:#080808}
       #instaproEditor.ipe-reel-mode .ipe-footer button{border-radius:999px;min-height:44px}
       #instaproEditor.ipe-reel-mode .ipe-publish{background:#fff;color:#111;border:0}
       #instaproEditor.ipe-reel-mode .ipe-cancel{background:#242424;border-color:#444}
@@ -141,7 +141,7 @@
     root.innerHTML = `
       <header class="ipe-head">
         <button class="ipe-glass" data-action="close" aria-label="Close editor">✕</button>
-        <strong>${uploadType === "reel" ? "Edit Reel" : "InstaPro Studio"}</strong>
+        <strong></strong>
         <button class="ipe-glass ipe-next" data-action="next">Next →</button>
       </header>
       <main class="ipe-main">
@@ -184,7 +184,7 @@
       <footer class="ipe-footer">
         <button class="ipe-glass ipe-cancel" data-action="close">Cancel</button>
         <button class="ipe-publish" data-action="next">${uploadType === "reel" ? "Next →" : "Next: Continue →"}</button>
-      </footer>`;
+      </footer>\n      <nav class="ipe-bottom-tools" aria-label="Editor tools">\n        <button type="button" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M3 6l6 6-6 6M21 6l-6 6 6 6M9 12h6"/></svg><span>Edit</span></button>\n        <button type="button" data-tool="audio"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Audio</span></button>\n        <button type="button" data-tool="text"><svg viewBox="0 0 24 24"><path d="M3 5h18M12 5v15"/></svg><span>Text</span></button>\n        <button type="button" data-tool="effects"><svg viewBox="0 0 24 24"><path d="M12 2l2.7 6.1L21 9l-4.6 4.3 1.2 6.4L12 16.4l-5.6 3.3 1.2-6.4L3 9l6.3-.9z"/></svg><span>Effects</span></button>\n        <button type="button" data-tool="overlay"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Overlay</span></button>\n        <button type="button" data-tool="captions"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9h12M6 13h7M6 16h5"/></svg><span>Captions</span></button>\n      </nav>`;
     document.body.appendChild(root);
     document.body.style.overflow = "hidden";
 
@@ -206,6 +206,19 @@
     }
 
     root.addEventListener("click", handleClick);
+    root.querySelectorAll("[data-tool]").forEach(button => button.addEventListener("click", () => {
+      const target = {
+        edit: root.querySelector(".ipe-tools"),
+        audio: root.querySelector("#ipeAudioSection"),
+        text: root.querySelector('[data-adjust="brightness"]')?.closest(".ipe-section"),
+        effects: root.querySelector("#ipeEffectsSection"),
+        overlay: root.querySelector(".ipe-tools"),
+        captions: root.querySelector('[data-adjust="contrast"]')?.closest(".ipe-section")
+      }[button.dataset.tool];
+      if (target) target.scrollIntoView({behavior:"smooth", block:"center"});
+      if (button.dataset.tool === "edit") root.querySelector('[data-action="rotate"]')?.focus({preventScroll:true});
+      if (button.dataset.tool === "overlay") root.querySelector('[data-action="crop"]')?.focus({preventScroll:true});
+    }));
     root.querySelectorAll("[data-adjust]").forEach(input => input.addEventListener("input", adjust));
     renderFilters();
     adjust();
