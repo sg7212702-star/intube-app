@@ -184,7 +184,14 @@
       <footer class="ipe-footer">
         <button class="ipe-glass ipe-cancel" data-action="close">Cancel</button>
         <button class="ipe-publish" data-action="next">${uploadType === "reel" ? "Next →" : "Next: Continue →"}</button>
-      </footer>\n      <nav class="ipe-bottom-tools" aria-label="Editor tools">\n        <button type="button" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M3 6l6 6-6 6M21 6l-6 6 6 6M9 12h6"/></svg><span>Edit</span></button>\n        <button type="button" data-tool="audio"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Audio</span></button>\n        <button type="button" data-tool="text"><svg viewBox="0 0 24 24"><path d="M3 5h18M12 5v15"/></svg><span>Text</span></button>\n        <button type="button" data-tool="effects"><svg viewBox="0 0 24 24"><path d="M12 2l2.7 6.1L21 9l-4.6 4.3 1.2 6.4L12 16.4l-5.6 3.3 1.2-6.4L3 9l6.3-.9z"/></svg><span>Effects</span></button>\n        <button type="button" data-tool="overlay"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Overlay</span></button>\n        <button type="button" data-tool="captions"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9h12M6 13h7M6 16h5"/></svg><span>Captions</span></button>\n      </nav>`;
+      </footer>\n      <nav class="ipe-bottom-tools" aria-label="Editor tools">
+        <button type="button" data-tool="edit"><svg viewBox="0 0 24 24"><path d="M3 6l6 6-6 6M21 6l-6 6 6 6M9 12h6"/></svg><span>Edit</span></button>
+        <button type="button" data-tool="audio"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Audio</span></button>
+        <button type="button" data-tool="text"><svg viewBox="0 0 24 24"><path d="M3 5h18M12 5v15"/></svg><span>Text</span></button>
+        <button type="button" data-tool="effects"><svg viewBox="0 0 24 24"><path d="M12 2l2.7 6.1L21 9l-4.6 4.3 1.2 6.4L12 16.4l-5.6 3.3 1.2-6.4L3 9l6.3-.9z"/></svg><span>Effects</span></button>
+        <button type="button" data-tool="overlay"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Overlay</span></button>
+        <button type="button" data-tool="captions"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9h12M6 13h7M6 16h5"/></svg><span>Captions</span></button>
+      </nav>`;
     document.body.appendChild(root);
     document.body.style.overflow = "hidden";
 
