@@ -169,7 +169,7 @@
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
     if(!input){toast("Upload option is missing. Please try again.");return;}
-    try{const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=mode.toLowerCase();close();input.dispatchEvent(new Event("change",{bubbles:true}));}
+    try{const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=mode.toLowerCase();if(videoFile)input.dataset.instaProCameraRecordedVideo="true";close();input.dispatchEvent(new Event("change",{bubbles:true}));}
     catch(err){console.error("Could not pass camera media to editor:",err);toast("Could not open editor. Please choose the media again.");}
   }
   window.openInstaProCamera=open;
