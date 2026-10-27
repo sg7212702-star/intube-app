@@ -1412,7 +1412,7 @@ function openPremiumReelEditor(file) {
 #ip-premium-reel-editor .track.selected{border-color:#ffd400;border-radius:12px;margin:0 8px}
 #ip-premium-reel-editor .clipstrip{height:56px;flex:1;min-width:0;overflow:hidden;border-radius:5px;background:repeating-linear-gradient(90deg,#45464b 0 35px,#27282d 35px 39px)}
 #ip-premium-reel-editor .clipstrip video{width:100%;height:100%;max-width:none;aspect-ratio:auto;object-fit:cover;border:0;border-radius:0;opacity:.8}
-#ip-premium-reel-editor .handle{width:18px;height:40px;border:0;border-radius:8px;background:#fff;color:#111!important;font-weight:900}
+#ip-premium-reel-editor #ipr-scrubber{display:none!important}#ip-premium-reel-editor #ipr-track>.handle{display:none!important}#ip-premium-reel-editor .handle{width:18px;height:40px;border:0;border-radius:8px;background:#fff;color:#111!important;font-weight:900}
 #ip-premium-reel-editor .addclip{width:44px;height:44px;border:0;border-radius:12px;background:#fff;color:#111!important;font-size:29px}
 #ip-premium-reel-editor .trackrow{height:48px;display:flex;align-items:center;gap:12px;padding:0 20px;border-top:4px solid #000;background:#222328;color:#c5c5d0}
 #ip-premium-reel-editor .trackrow button{border:0;background:transparent;font-size:15px;font-weight:600}
