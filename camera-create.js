@@ -42,7 +42,7 @@
       #icsShutter{width:76px;height:76px;flex:0 0 76px;border:3px solid #fff;border-radius:50%;background:transparent;box-shadow:0 0 0 2px #0007;position:relative;pointer-events:auto;touch-action:none;padding:0}
       #icsShutter:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff;transition:all .12s}
       #icsShutter.recording{border-color:#ff315f}#icsShutter.recording:after{inset:17px;border-radius:9px;background:#ff315f}
-      #icsRecordTimer{position:absolute;left:50%;top:40px;transform:translate(-50%,-100%);margin-top:-8px;min-width:58px;padding:4px 10px;border-radius:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;text-align:center;display:none;white-space:nowrap;pointer-events:none}
+      #icsRecordTimer{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);margin-top:-5px;min-width:58px;padding:4px 10px;border-radius:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;text-align:center;display:none;white-space:nowrap;pointer-events:none}
       #icsRecordTimer:before{content:"";display:inline-block;width:6px;height:6px;margin:0 6px 1px 0;border-radius:50%;background:#ff315f;vertical-align:middle}
       #icsRecordTimer.visible{display:block}
       #icsReelReview{padding:0!important;gap:0!important;background:#000!important}
@@ -216,7 +216,7 @@
     retake.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();chunks=[];toast("Ready to record again.");};
     next.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();sendFiles([file]);};
   }
-  function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive")recorder.stop();}catch(e){console.warn(e);} }
+  function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive"){try{recorder.requestData();}catch(_){}recorder.stop();}else{toast("Recording already stopped.");}}catch(e){console.warn("Recorder stop failed",e);toast("Video stop failed. Please try recording again.");try{outputStream?.getTracks().forEach(t=>t.stop());}catch(_){}outputStream=null;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";$("icsRecordTimer")?.classList.remove("visible");}}
   function sendFiles(files){
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
