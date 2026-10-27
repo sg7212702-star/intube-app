@@ -140,12 +140,12 @@
     $("icsSettings").onclick=()=>toast("Flash, zoom and timer depend on your device camera.");
     $("icsAudio").onclick=()=>{if(window.InstaProMusic?.openPicker){window.InstaProMusic.openPicker(track=>{audioTrack=track;window.__instaProSelectedMusicTrack=track;toast(track?.title?"Audio selected: "+track.title:"Audio selected");});}else toast("Music library is loading. Try again in a moment.");};
     $("icsGallery").onclick=()=>{$("icsInput").click();};
-    $("icsInput").onchange=()=>{const files=[...($("icsInput").files||[])];if(files.length)sendFiles(files);$("icsInput").value="";};
+    $("icsInput").onchange=()=>{const files=[...($("icsInput").files||[])];if(files.length){if(mode==="REEL"&&files[0].type.startsWith("video/")&&window.openIntubeReelEditor){close();window.openIntubeReelEditor(files[0]);}else sendFiles(files);}$("icsInput").value="";};
     $("icsModeBar").querySelectorAll("[data-mode]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(recording)stopRecording();setMode(b.dataset.mode);});
     $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>setFilter(b.dataset.filter));
     $("icsFilterBar").addEventListener("scroll",()=>{const center=innerWidth/2;let closest=null,d=Infinity;$("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.left+r.width/2-center);if(n<d){d=n;closest=b;}});if(closest)setFilter(closest.dataset.filter,false);},{passive:true});
     root.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>tool(b.dataset.action));
-    $("icsReelNext")?.addEventListener("click",()=>{const file=window.__intubeRecordedReelFile;if(!file){toast("Pehle reel record karein.");return;}window.__intubeRecordedReelFile=null;mode="REEL";sendFiles([file]);});
+    $("icsReelNext")?.addEventListener("click",()=>{const file=window.__intubeRecordedReelFile;if(!file){toast("Pehle reel record karein.");return;}window.__intubeRecordedReelFile=null;mode="REEL";close();if(window.openIntubeReelEditor){window.openIntubeReelEditor(file);}else{toast("Editor load nahi hua. Page refresh karein.");}});
     const shutter=$("icsShutter");
     // REEL uses click-only toggling. Do not start/stop on pointerup as well:
     // Android WebView can suppress the synthetic click after preventDefault,
