@@ -4,7 +4,7 @@ let cameraOverlay, preview, captureButton, galleryInput;
 let stream = null, recorder = null, recordedChunks = [], activeMode = "STORY";
 let activeTool = "", facing = "user", cameraReady = false, flashOn = false;
 let selectedFilter = "original";
-const REEL_EFFECTS = [["original","Original","none"],["warm","Warm","sepia(.22) saturate(1.25)"],["cool","Cool","hue-rotate(18deg) saturate(1.15)"],["mono","Mono","grayscale(1)"],["vintage","Vintage","sepia(.55) contrast(.92) saturate(.85)"],["dream","Dream","brightness(1.12) saturate(1.25)"],["glow","Glow","brightness(1.12) contrast(.9) saturate(1.35)"],["gold","Golden","sepia(.28) saturate(1.6) hue-rotate(-8deg)"],["rose","Rose","sepia(.18) saturate(1.25) hue-rotate(320deg)"],["lavender","Lavender","hue-rotate(255deg) saturate(.8) brightness(1.08)"],["mint","Mint","hue-rotate(75deg) saturate(.8)"],["sunset","Sunset","sepia(.25) saturate(1.55) hue-rotate(-12deg) contrast(1.08)"],["cinema","Cinema","contrast(1.25) saturate(.85) brightness(.92)"],["fade","Fade","contrast(.82) brightness(1.08) saturate(.8)"],["vivid","Vivid","saturate(1.8) contrast(1.08)"],["noir","Noir","grayscale(1) contrast(1.35)"],["soft","Soft","brightness(1.08) contrast(.88) saturate(1.05)"],["ice","Ice","hue-rotate(165deg) saturate(.7) brightness(1.08)"],["peach","Peach","sepia(.2) saturate(1.2) hue-rotate(340deg) brightness(1.05)"],["retro","Retro","sepia(.35) contrast(1.1) saturate(.9)"],["pop","Pop","saturate(1.65) contrast(1.2)"]];
+const REEL_EFFECTS = [["none","Normal","none"],["sunset","Sunset","sepia(.22) saturate(1.5) hue-rotate(-12deg) contrast(1.08)"],["cinema","Cinema","contrast(1.25) saturate(.85) brightness(.92)"],["fade","Fade","contrast(.82) brightness(1.08) saturate(.8)"],["vivid","Vivid","saturate(1.8) contrast(1.08)"],["noir","Noir","grayscale(1) contrast(1.35)"]];
 const effectFilter = name => REEL_EFFECTS.find(effect => effect[0] === name)?.[2] || "none";
 
 function buildCamera() {
@@ -43,7 +43,7 @@ function buildCamera() {
   .ipCamFilter{flex:0 0 58px;width:58px;min-width:58px;height:58px;min-height:58px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000}
   .ipCamSwatch{width:58px;height:58px;min-width:58px;min-height:58px;flex:0 0 58px;box-sizing:border-box;border-radius:50%;border:2px solid rgba(255,255,255,.88);display:block;box-shadow:0 0 0 1px rgba(0,0,0,.28) inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .ipCamFilter.active .ipCamSwatch{border:0;box-shadow:none}
-  .ipCamOriginal{background:linear-gradient(135deg,#181818,#383838)}.ipCamWarm{background:linear-gradient(135deg,#ffd16b,#f07824 60%,#8e3a18)}.ipCamCool{background:linear-gradient(135deg,#b5efff,#338cde 55%,#2d3c99)}.ipCamMono{background:linear-gradient(135deg,#fff,#777 55%,#222)}.ipCamVintage{background:linear-gradient(135deg,#e6c08b,#98613d 55%,#49301f)}
+  .ipCamOriginal{background:linear-gradient(135deg,#f3d4b7,#b8c6d9 48%,#262c3b)}.ipCamSunset{background:linear-gradient(45deg,#ff8a00,#e52e71)}.ipCamCinema{background:linear-gradient(45deg,#3a1c71,#d76d77)}.ipCamFade{background:linear-gradient(45deg,#a1a1a1,#e0c3a1)}.ipCamVivid{background:linear-gradient(45deg,#ff512f,#f09819)}.ipCamNoir{background:linear-gradient(135deg,#f4f4f4,#666 52%,#111);filter:grayscale(1)}
   @media(max-height:650px){.ipCamBottom{height:190px}.ipCamToolSet{gap:8px}.ipCamTool{width:35px;height:35px}#filterBar{bottom:77px;height:68px;padding-left:calc(50vw - 31px);padding-right:calc(50vw - 31px)}.ipCamFilter{height:58px;min-height:58px}.ipCamSwatch{width:58px;height:58px;min-width:58px;min-height:58px}#modeBar{top:145px}.ipCamUtility{top:50px}}
   #ipCamToast{position:absolute;z-index:12;left:50%;bottom:225px;transform:translateX(-50%);max-width:90%;padding:10px 14px;border-radius:18px;background:#232323f2;font-size:13px;text-align:center;pointer-events:none}
   #ipCamGalleryInput{display:none}
@@ -92,7 +92,7 @@ function buildCamera() {
   document.body.appendChild(cameraOverlay);
   preview=$c("ipCamPreview");captureButton=$c("recordBtn");galleryInput=$c("ipCamGalleryInput");
   const filterBar=$c("filterBar");
-  filterBar.innerHTML=REEL_EFFECTS.map(([id,label,filter])=>'<button type="button" class="ipCamFilter'+(id==="original"?' active':'')+'" data-filter="'+id+'" aria-label="'+label+' effect"><span class="ipCamSwatch '+(id==="original"?"ipCamOriginal":id==="warm"?"ipCamWarm":id==="cool"?"ipCamCool":id==="mono"?"ipCamMono":id==="vintage"?"ipCamVintage":"")+'" style="filter:'+filter+'"></span><span>'+label+'</span></button>').join("");
+  filterBar.innerHTML=REEL_EFFECTS.map(([id,label,filter])=>'<button type="button" class="ipCamFilter'+(id==="none"?' active':'')+'" data-filter="'+id+'" aria-label="'+label+' effect"><span class="ipCamSwatch '+(id==="original"?"ipCamOriginal":id==="sunset"?"ipCamWarm":id==="cinema"?"ipCamCool":id==="fade"?"ipCamMono":id==="vivid"?"ipCamVintage":"")+'" style="filter:'+filter+'"></span><span>'+label+'</span></button>').join("");
   let filterScrollTick=0,filterSnapTimer=0;
   function syncFilterToCenter(snapAfterScroll=false){
     const center=window.innerWidth/2;
@@ -139,9 +139,9 @@ function setMode(mode){
   $c("storyTools").hidden=mode!=="STORY";$c("reelTools").hidden=mode!=="REEL";$c("postTools").hidden=mode!=="POST";
   $c("ipCamAudio").style.display=mode==="REEL"?"block":"none";
   const filterBar=$c("filterBar");
-   selectedFilter="original";
+   selectedFilter="none";
    if(preview)preview.style.filter="none";
-   cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="original"));
+   cameraOverlay.querySelectorAll("[data-filter]").forEach(btn=>btn.classList.toggle("active",btn.dataset.filter==="none"));
    filterBar.style.display="flex";
    toggleFilters(true);
   if(mode==="REEL")toast("Reel mode ready. Swipe effects below.");
