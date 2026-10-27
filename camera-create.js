@@ -137,10 +137,35 @@
     $("icsFilterBar").addEventListener("scroll",()=>{const center=innerWidth/2;let closest=null,d=Infinity;$("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.left+r.width/2-center);if(n<d){d=n;closest=b;}});if(closest)setFilter(closest.dataset.filter,false);},{passive:true});
     root.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>tool(b.dataset.action));
     const shutter=$("icsShutter");
-    shutter.addEventListener("pointerdown",e=>{if(e.button!==undefined&&e.button!==0)return;e.preventDefault();pointerDownAt=Date.now();suppressClick=false;holdTimer=setTimeout(()=>{suppressClick=true;if(mode==="POST"){handsFree=true;startRecording();}else startRecording();},260);});
-    const release=e=>{if(holdTimer){clearTimeout(holdTimer);holdTimer=0;}if(mode==="REEL"){if(recording){stopRecording();suppressClick=true;}else if(!suppressClick){startRecording();suppressClick=true;}}else if(recording){stopRecording();suppressClick=true;}else if(!suppressClick){if(timerSeconds)countdownCapture();else capturePhoto();}try{shutter.releasePointerCapture(e.pointerId);}catch(_){}};
+    // REEL uses click-only toggling. Do not start/stop on pointerup as well:
+    // Android WebView can suppress the synthetic click after preventDefault,
+    // which previously left the shutter state inconsistent.
+    shutter.addEventListener("pointerdown",e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      if(mode==="REEL"){suppressClick=false;return;}
+      e.preventDefault();pointerDownAt=Date.now();suppressClick=false;
+      holdTimer=setTimeout(()=>{suppressClick=true;if(mode==="POST")handsFree=true;startRecording();},260);
+    });
+    const release=e=>{
+      if(mode==="REEL"){try{shutter.releasePointerCapture(e.pointerId);}catch(_){}return;}
+      if(holdTimer){clearTimeout(holdTimer);holdTimer=0;}
+      if(recording){stopRecording();suppressClick=true;}
+      else if(!suppressClick){if(timerSeconds)countdownCapture();else capturePhoto();}
+      try{shutter.releasePointerCapture(e.pointerId);}catch(_){}
+    };
     shutter.addEventListener("pointerup",release);shutter.addEventListener("pointercancel",release);
-    shutter.addEventListener("click",e=>{e.preventDefault();if(suppressClick){suppressClick=false;return;}if(recording)stopRecording();else if(timerSeconds)countdownCapture();else if(mode==="REEL")startRecording();else capturePhoto();});
+    shutter.addEventListener("click",e=>{
+      e.preventDefault();
+      if(mode==="REEL"){
+        if(recording)stopRecording();
+        else startRecording();
+        return;
+      }
+      if(suppressClick){suppressClick=false;return;}
+      if(recording)stopRecording();
+      else if(timerSeconds)countdownCapture();
+      else capturePhoto();
+    });
   }
   function tool(action){if(action==="effects"){const bar=$("icsFilterBar");bar.style.display=bar.style.display==="none"?"flex":"none";return;}if(action==="music"){$("icsAudio").click();return;}if(action==="post-media"){$("icsInput").click();return;}if(action==="duration"){toast("Reel recording can last up to 90 seconds.");return;}if(action==="handsfree"){handsFree=!handsFree;toast(handsFree?"Hands-free on: tap shutter to start/stop":"Hands-free off");return;}if(["create","boomerang","layout","avatar","draw"].includes(action))toast(action[0].toUpperCase()+action.slice(1)+" effect is not yet supported in this web camera.");}
   function countdownCapture(){const shutter=$("icsShutter");shutter.disabled=true;let left=timerSeconds;const tick=()=>{if(left<=0){shutter.disabled=false;capturePhoto();return;}toast(String(left));left--;setTimeout(tick,1000);};tick();}
