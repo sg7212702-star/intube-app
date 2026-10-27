@@ -92,7 +92,7 @@ function buildCamera() {
   document.body.appendChild(cameraOverlay);
   preview=$c("ipCamPreview");captureButton=$c("recordBtn");galleryInput=$c("ipCamGalleryInput");
   const filterBar=$c("filterBar");
-  filterBar.innerHTML=REEL_EFFECTS.map(([id,label,filter])=>'<button type="button" class="ipCamFilter'+(id==="none"?' active':'')+'" data-filter="'+id+'" aria-label="'+label+' effect"><span class="ipCamSwatch '+(id==="original"?"ipCamOriginal":id==="sunset"?"ipCamWarm":id==="cinema"?"ipCamCool":id==="fade"?"ipCamMono":id==="vivid"?"ipCamVintage":"")+'" style="filter:'+filter+'"></span><span>'+label+'</span></button>').join("");
+  filterBar.innerHTML=REEL_EFFECTS.map(([id,label,filter])=>'<button type="button" class="ipCamFilter'+(id==="none"?' active':'')+'" data-filter="'+id+'" aria-label="'+label+' effect"><span class="ipCamSwatch '+(id==="none"?"ipCamOriginal":id==="sunset"?"ipCamSunset":id==="cinema"?"ipCamCinema":id==="fade"?"ipCamFade":id==="vivid"?"ipCamVivid":id==="noir"?"ipCamNoir":"")+'" style="filter:'+filter+'"></span><span>'+label+'</span></button>').join("");
   let filterScrollTick=0,filterSnapTimer=0;
   function syncFilterToCenter(snapAfterScroll=false){
     const center=window.innerWidth/2;
