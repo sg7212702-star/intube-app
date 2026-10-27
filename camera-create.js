@@ -42,6 +42,7 @@
       #icsShutter{width:76px;height:76px;flex:0 0 76px;border:3px solid #fff;border-radius:50%;background:transparent;box-shadow:0 0 0 2px #0007;position:relative;pointer-events:auto;touch-action:none;padding:0}
       #icsShutter:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff;transition:all .12s}
       #icsShutter.recording{border-color:#ff315f}#icsShutter.recording:after{inset:17px;border-radius:9px;background:#ff315f}
+      #icsReelNext{display:none;position:absolute;left:calc(50% + 54px);top:50%;transform:translateY(-50%);height:48px;padding:0 17px;border:0;border-radius:25px;background:#4b55f5;color:#fff;font-size:15px;font-weight:800;pointer-events:auto;white-space:nowrap}#icsReelNext.visible{display:block}
       #icsRecordTimer{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);margin-top:-5px;min-width:58px;padding:4px 10px;border-radius:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;text-align:center;display:none;white-space:nowrap;pointer-events:none}
       #icsRecordTimer:before{content:"";display:inline-block;width:6px;height:6px;margin:0 6px 1px 0;border-radius:50%;background:#ff315f;vertical-align:middle}
       #icsRecordTimer.visible{display:block}
@@ -96,7 +97,7 @@
       <div id="icsFilterBar" aria-label="Camera filters"></div>
       <div class="ics-bottom">
         <div class="ics-gallery-row"><button class="ics-gallery" id="icsGallery" aria-label="Open gallery">▧</button><button class="ics-flip" id="icsFlip" aria-label="Switch camera">⇄</button></div>
-        <div id="icsShutterRow"><div id="icsRecordTimer" aria-live="off">00:00</div><button id="icsShutter" aria-label="Take photo or record video"></button></div>
+        <div id="icsShutterRow"><div id="icsRecordTimer" aria-live="off">00:00</div><button id="icsShutter" aria-label="Take photo or record video"></button><button id="icsReelNext" type="button">Next →</button></div>
         <div id="icsModeBar"><button type="button" data-mode="POST">POST</button><button type="button" data-mode="STORY" class="active">STORY</button><button type="button" data-mode="REEL">REEL</button></div>
       </div>
       <div id="icsProgress"><span></span></div><div id="icsToast" role="status" aria-live="polite"></div>
@@ -144,6 +145,7 @@
     $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>setFilter(b.dataset.filter));
     $("icsFilterBar").addEventListener("scroll",()=>{const center=innerWidth/2;let closest=null,d=Infinity;$("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.left+r.width/2-center);if(n<d){d=n;closest=b;}});if(closest)setFilter(closest.dataset.filter,false);},{passive:true});
     root.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>tool(b.dataset.action));
+    $("icsReelNext")?.addEventListener("click",()=>{const file=window.__intubeRecordedReelFile;if(!file){toast("Pehle reel record karein.");return;}window.__intubeRecordedReelFile=null;mode="REEL";sendFiles([file]);});
     const shutter=$("icsShutter");
     // REEL uses click-only toggling. Do not start/stop on pointerup as well:
     // Android WebView can suppress the synthetic click after preventDefault,
@@ -187,50 +189,48 @@
     if(!ready||!stream||!video?.videoWidth){toast("Camera is still starting. Try again.");return;}
     if(!window.MediaRecorder){toast("Video recording is not supported by this browser. Use Gallery.");return;}
     try{
-      chunks=[];renderCanvas=document.createElement("canvas");
-      // Keep the live preview at native negotiated resolution, but cap filtered recording work at portrait Full HD.
-      const sourceW=video.videoWidth,sourceH=video.videoHeight,scale=Math.min(1,1920/Math.max(sourceW,sourceH));
-      renderCanvas.width=Math.max(2,Math.round(sourceW*scale/2)*2);renderCanvas.height=Math.max(2,Math.round(sourceH*scale/2)*2);
-      const ctx=renderCanvas.getContext("2d",{alpha:false,desynchronized:true});
-      const draw=now=>{if(!recording||!ctx)return;if(now-lastDrawAt>=1000/30){lastDrawAt=now;ctx.save();ctx.filter=effectCSS();ctx.clearRect(0,0,renderCanvas.width,renderCanvas.height);if(facing==="user"){ctx.translate(renderCanvas.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,renderCanvas.width,renderCanvas.height);ctx.restore();}raf=requestAnimationFrame(draw);};
-      // 30 fps capped canvas prevents a full-resolution 60 fps render loop from blocking the UI.
-      outputStream=renderCanvas.captureStream(30);stream.getAudioTracks().forEach(t=>outputStream.addTrack(t));
+      chunks=[];
+      $("icsReelNext")?.classList.remove("visible");
+      // Record the camera stream directly. Avoid a per-frame canvas render loop that can freeze Android WebView.
       const mime=["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4"].find(t=>MediaRecorder.isTypeSupported(t));
-      recorder=new MediaRecorder(outputStream,mime?{mimeType:mime}:undefined);
+      recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
       recorder.onerror=e=>{console.error("Intube recording error",e);toast("Recording failed. Please try again.");};
       activeRecordingMode=mode;
-      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const savedMode=activeRecordingMode||mode;activeRecordingMode=null;const file=new File(chunks,"intube-"+savedMode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(savedMode==="REEL"){mode="REEL";showReelReview(file);return;}mode=savedMode;sendFiles([file]);};
-      recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";
+      recorder.onstop=()=>{
+        recording=false;
+        $("icsShutter")?.classList.remove("recording");
+        $("icsProgress").style.display="none";
+        clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;
+        $("icsRecordTimer")?.classList.remove("visible");
+        if(!chunks.length){toast("Video save nahi hua. Dobara record karein.");return;}
+        const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";
+        const savedMode=activeRecordingMode||mode;activeRecordingMode=null;
+        const file=new File(chunks,"intube-"+savedMode.toLowerCase()+"-"+Date.now()+"."+ext,{type});
+        if(savedMode==="REEL"){
+          mode="REEL";window.__intubeRecordedReelFile=file;
+          $("icsReelNext")?.classList.add("visible");
+          toast("Recording ready. Next dabayein.");
+          return;
+        }
+        mode=savedMode;sendFiles([file]);
+      };
+      recording=true;recordingStarted=Date.now();activeRecordingMode=mode;recorder.start(250);
+      $("icsShutter").classList.add("recording");$("icsProgress").style.display="block";
       const clock=$("icsRecordTimer");if(clock){clock.classList.add("visible");clock.textContent="00:00";}
-      clearInterval(recordClock);recordClock=setInterval(()=>{if(!recording)return;const sec=Math.floor((Date.now()-recordingStarted)/1000);const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss=String(sec%60).padStart(2,"0");if(clock)clock.textContent=mm+":"+ss;const progress=$("icsProgress")?.querySelector("span");if(progress)progress.style.width=Math.min(100,sec/(mode==="REEL"?90:60)*100)+"%";},200);
-      toast("Recording… tap shutter to stop.");
+      clearInterval(recordClock);recordClock=setInterval(()=>{
+        if(!recording)return;
+        const sec=Math.floor((Date.now()-recordingStarted)/1000);
+        const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss=String(sec%60).padStart(2,"0");
+        if(clock)clock.textContent=mm+":"+ss;
+        const progress=$("icsProgress")?.querySelector("span");
+        if(progress)progress.style.width=Math.min(100,sec/(activeRecordingMode==="REEL"?90:60)*100)+"%";
+      },250);
+      toast("Recording… tap the red button to stop.");
       const limit=mode==="REEL"?90000:60000;maxTimer=setTimeout(()=>{if(recording)stopRecording();},limit);
-    }catch(err){recording=false;cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;console.error(err);toast("Recording could not start. Please use Gallery.");}
+    }catch(err){recording=false;console.error(err);toast("Recording could not start. Please use Gallery.");}
   }
-  function showReelReview(file){
-    root.querySelector("#icsReelReview")?.remove();
-    const panel=document.createElement("div");panel.id="icsReelReview";
-    panel.style.cssText="position:absolute;inset:0;z-index:2147482500;background:#000;color:#fff;display:flex;flex-direction:column;overflow:hidden;padding:calc(env(safe-area-inset-top) + 12px) 0 calc(env(safe-area-inset-bottom) + 14px);font-family:system-ui,-apple-system,sans-serif";
-    panel.innerHTML=`<button type="button" data-act="back" aria-label="Back" style="position:absolute;z-index:3;top:calc(env(safe-area-inset-top) + 12px);left:18px;width:44px;height:44px;border:0;background:#0008;color:#fff;font-size:32px;border-radius:50%">‹</button>
-      <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;padding:52px 0 8px"><video id="icsReviewVideo" playsinline autoplay loop style="width:100%;height:100%;object-fit:contain;background:#000"></video></div>
-      <div style="flex:0 0 auto;padding:0 18px 12px">
-        <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 18px;color:#fff">
-          <button type="button" data-tool="Audio">♫<small>Audio</small></button><button type="button" data-tool="Text">Aa<small>Text</small></button><button type="button" data-tool="Voice">♩<small>Voice</small></button><button type="button" data-tool="Captions">▣<small>Captions</small></button><button type="button" data-tool="Stickers">☺<small>Stickers</small></button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
-          <button type="button" data-act="edit" style="flex:1;height:54px;border:0;border-radius:30px;background:#191b1f;color:#fff;font-size:16px;font-weight:700">Edit video</button>
-          <button type="button" data-act="next" style="flex:1;height:54px;border:0;border-radius:30px;background:#4b55f5;color:#fff;font-size:16px;font-weight:800">Next →</button>
-        </div>
-      </div>`;
-    const preview=panel.querySelector("#icsReviewVideo");preview.src=URL.createObjectURL(file);root.appendChild(panel);
-    const cleanup=()=>{preview.pause();URL.revokeObjectURL(preview.src);panel.remove();};
-    panel.querySelector('[data-act="back"]').onclick=()=>{cleanup();chunks=[];toast("Ready to record again.");};
-    panel.querySelector('[data-act="edit"]').onclick=()=>{cleanup();sendFiles([file]);};
-    panel.querySelector('[data-act="next"]').onclick=()=>{cleanup();sendFiles([file]);};
-    panel.querySelectorAll("[data-tool]").forEach(b=>{b.style.cssText="flex:1;min-width:0;max-width:76px;height:72px;border:0;border-radius:14px;background:#191b1f;color:#fff;font-size:25px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px";b.querySelector("small").style.cssText="font-size:11px;font-weight:500";b.onclick=()=>{if(b.dataset.tool==="Audio"){$("icsAudio")?.click();}else toast(b.dataset.tool+" can be added in Edit video.");};});
-  }
-  function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive"){try{recorder.requestData();}catch(_){}recorder.stop();}else{toast("Recording already stopped.");}}catch(e){console.warn("Recorder stop failed",e);toast("Video stop failed. Please try recording again.");try{outputStream?.getTracks().forEach(t=>t.stop());}catch(_){}outputStream=null;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";$("icsRecordTimer")?.classList.remove("visible");}}
+  function stopRecording(){if(!recording)return;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;try{if(recorder&&recorder.state!=="inactive"){recorder.stop();}else{toast("Recording already stopped.");}}catch(e){console.warn("Recorder stop failed",e);recording=false;toast("Video stop failed. Please try recording again.");$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";$("icsRecordTimer")?.classList.remove("visible");}}
   function sendFiles(files){
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
