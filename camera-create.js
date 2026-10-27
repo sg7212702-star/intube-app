@@ -13,7 +13,7 @@
   ];
   let root=null, video=null, stream=null, recorder=null, outputStream=null, renderCanvas=null;
   let chunks=[], raf=0, mode="STORY", facing="user", filter="none", timerSeconds=0, zoom=1;
-  let ready=false, recording=false, recordingStarted=0, maxTimer=0, holdTimer=0, pointerDownAt=0, suppressClick=false;
+  let ready=false, recording=false, recordingStarted=0, maxTimer=0, recordClock=0, holdTimer=0, pointerDownAt=0, suppressClick=false;
   let audioTrack=null, handsFree=false, flash=false;
 
   function build() {
@@ -42,6 +42,13 @@
       #icsShutter{width:76px;height:76px;flex:0 0 76px;border:3px solid #fff;border-radius:50%;background:transparent;box-shadow:0 0 0 2px #0007;position:relative;pointer-events:auto;touch-action:none;padding:0}
       #icsShutter:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff;transition:all .12s}
       #icsShutter.recording{border-color:#ff315f}#icsShutter.recording:after{inset:17px;border-radius:9px;background:#ff315f}
+      #icsRecordTimer{position:absolute;left:50%;top:40px;transform:translate(-50%,-100%);margin-top:-8px;min-width:58px;padding:4px 10px;border-radius:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:13px;font-weight:800;letter-spacing:.5px;text-align:center;display:none;white-space:nowrap;pointer-events:none}
+      #icsRecordTimer:before{content:"";display:inline-block;width:6px;height:6px;margin:0 6px 1px 0;border-radius:50%;background:#ff315f;vertical-align:middle}
+      #icsRecordTimer.visible{display:block}
+      #icsReelReview{padding:0!important;gap:0!important;background:#000!important}
+      #icsReelReview video{width:100%!important;height:100%!important;max-height:none!important;object-fit:cover!important;border-radius:0!important}
+      #icsReelReview .ics-review-actions{position:absolute;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom) + 24px);display:flex;gap:12px;max-width:420px;margin:auto}
+      #icsReelReview .ics-review-title{position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:18px;right:18px;text-align:center;color:#fff;font-weight:800;text-shadow:0 2px 10px #000;font-size:15px;pointer-events:none}
       #icsModeBar{position:absolute;top:140px;left:0;right:0;height:34px;display:flex;align-items:center;justify-content:center;gap:18px;pointer-events:auto}
       #icsModeBar button{height:30px;padding:0 2px;border:0;background:transparent;color:#c2c2c2;font-size:12px;letter-spacing:1.8px;font-weight:750;position:relative}
       #icsModeBar button.active{color:#fff;font-weight:900}#icsModeBar button.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:22px;height:2px;border-radius:2px;background:#fff}
@@ -89,7 +96,7 @@
       <div id="icsFilterBar" aria-label="Camera filters"></div>
       <div class="ics-bottom">
         <div class="ics-gallery-row"><button class="ics-gallery" id="icsGallery" aria-label="Open gallery">▧</button><button class="ics-flip" id="icsFlip" aria-label="Switch camera">⇄</button></div>
-        <div id="icsShutterRow"><button id="icsShutter" aria-label="Take photo or record video"></button></div>
+        <div id="icsShutterRow"><div id="icsRecordTimer" aria-live="off">00:00</div><button id="icsShutter" aria-label="Take photo or record video"></button></div>
         <div id="icsModeBar"><button type="button" data-mode="POST">POST</button><button type="button" data-mode="STORY" class="active">STORY</button><button type="button" data-mode="REEL">REEL</button></div>
       </div>
       <div id="icsProgress"><span></span></div><div id="icsToast" role="status" aria-live="polite"></div>
@@ -188,8 +195,11 @@
       recorder=new MediaRecorder(outputStream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
       recorder.onerror=e=>{console.error("Intube recording error",e);toast("Recording failed. Please try again.");};
-      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const file=new File(chunks,"intube-"+mode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(mode==="REEL"){showReelReview(file);return;}sendFiles([file]);};
-      recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";toast("Recording… tap shutter to stop.");
+      recorder.onstop=()=>{cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;recording=false;$("icsShutter")?.classList.remove("recording");$("icsProgress").style.display="none";clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;$("icsRecordTimer")?.classList.remove("visible");if(!chunks.length)return;const type=recorder.mimeType||"video/webm",ext=type.includes("mp4")?"mp4":"webm";const file=new File(chunks,"intube-"+mode.toLowerCase()+"-"+Date.now()+"."+ext,{type});if(mode==="REEL"){showReelReview(file);return;}sendFiles([file]);};
+      recording=true;recordingStarted=Date.now();draw();recorder.start(200);$("icsShutter").classList.add("recording");$("icsProgress").style.display="block";
+      const clock=$("icsRecordTimer");if(clock){clock.classList.add("visible");clock.textContent="00:00";}
+      clearInterval(recordClock);recordClock=setInterval(()=>{if(!recording)return;const sec=Math.floor((Date.now()-recordingStarted)/1000);const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss=String(sec%60).padStart(2,"0");if(clock)clock.textContent=mm+":"+ss;const progress=$("icsProgress")?.querySelector("span");if(progress)progress.style.width=Math.min(100,sec/(mode==="REEL"?90:60)*100)+"%";},200);
+      toast("Recording… tap shutter to stop.");
       const limit=mode==="REEL"?90000:60000;maxTimer=setTimeout(()=>{if(recording)stopRecording();},limit);
     }catch(err){recording=false;cancelAnimationFrame(raf);outputStream?.getTracks().forEach(t=>t.stop());outputStream=null;console.error(err);toast("Recording could not start. Please use Gallery.");}
   }
@@ -197,15 +207,16 @@
     root.querySelector("#icsReelReview")?.remove();
     const panel=document.createElement("div");panel.id="icsReelReview";
     panel.style.cssText="position:absolute;inset:0;z-index:2147482500;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 24px);gap:18px";
-    const preview=document.createElement("video");preview.controls=true;preview.playsInline=true;preview.autoplay=true;preview.src=URL.createObjectURL(file);preview.style.cssText="width:100%;height:min(68dvh,680px);object-fit:contain;background:#000;border-radius:12px";
-    const row=document.createElement("div");row.style.cssText="display:flex;gap:12px;width:100%;max-width:420px";
+    const preview=document.createElement("video");preview.controls=true;preview.playsInline=true;preview.autoplay=true;preview.src=URL.createObjectURL(file);preview.style.cssText="width:100%;height:100%;object-fit:cover;background:#000;border-radius:0";
+    const title=document.createElement("div");title.className="ics-review-title";title.textContent="Preview Reel";
+    const row=document.createElement("div");row.className="ics-review-actions";
     const retake=document.createElement("button");retake.type="button";retake.textContent="Retake";retake.style.cssText="flex:1;height:48px;border:1px solid #ffffff65;border-radius:26px;background:#171717;color:#fff;font-size:16px;font-weight:700";
     const next=document.createElement("button");next.type="button";next.textContent="Next →";next.style.cssText="flex:1;height:48px;border:0;border-radius:26px;background:#fff;color:#111;font-size:16px;font-weight:800";
-    row.append(retake,next);panel.append(preview,row);root.appendChild(panel);
+    row.append(retake,next);panel.append(preview,title,row);root.appendChild(panel);
     retake.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();chunks=[];toast("Ready to record again.");};
     next.onclick=()=>{URL.revokeObjectURL(preview.src);panel.remove();sendFiles([file]);};
   }
-  function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive")recorder.stop();}catch(e){console.warn(e);} }
+  function stopRecording(){if(!recording)return;recording=false;clearTimeout(maxTimer);clearInterval(recordClock);recordClock=0;cancelAnimationFrame(raf);try{if(recorder&&recorder.state!=="inactive")recorder.stop();}catch(e){console.warn(e);} }
   function sendFiles(files){
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
