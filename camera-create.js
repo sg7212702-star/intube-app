@@ -39,7 +39,6 @@ function buildCamera() {
   /* Instagram-style filter carousel, permanently visible above the shutter */
   #filterBar{display:none;position:absolute;z-index:11;left:calc(50% + 48px);right:8px;bottom:calc(158px + env(safe-area-inset-bottom));height:70px;padding:2px 4px;box-sizing:border-box;gap:8px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto;background:transparent}
   #filterBar::-webkit-scrollbar{display:none;width:0;height:0}
-  #filterSelectorRing{position:absolute;width:68px;height:68px;bottom:77px;left:50%;transform:translateX(-50%);border:3px solid #fff;border-radius:50%;box-sizing:border-box;pointer-events:none;z-index:12}
   .ipCamFilter{flex:0 0 52px;width:52px;min-width:52px;height:62px;min-height:62px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000}
   .ipCamSwatch{width:42px;height:42px;min-width:42px;min-height:42px;flex:0 0 42px;box-sizing:border-box;border-radius:50%;border:2px solid rgba(255,255,255,.88);display:block;box-shadow:0 0 0 1px rgba(0,0,0,.28) inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
   .ipCamFilter.active .ipCamSwatch{border:2px solid #ff2a6d;box-shadow:0 0 0 2px #fff}
