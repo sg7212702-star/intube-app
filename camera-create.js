@@ -26,18 +26,18 @@ function buildCamera() {
   .ipCamToolSet[hidden]{display:none!important}.ipCamTool{width:38px;height:38px;border:0;border-radius:10px;background:#0009;color:#fff;display:grid;place-items:center;position:relative;padding:0}
   .ipCamTool svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}.ipCamTool.active{outline:1.5px solid #fff}
   .ipCamTool .num{position:absolute;font-size:12px;font-weight:800}
-  .ipCamBottom{position:absolute;z-index:16;left:0;right:0;bottom:0;height:205px;background:transparent;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center;z-index:16}
-  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:transparent;border:3px solid #fff;box-shadow:0 0 0 2px #0008;padding:0;touch-action:pan-y;position:relative;z-index:17}
+  .ipCamBottom{position:absolute;z-index:16;left:0;right:0;bottom:0;height:205px;background:transparent;padding-bottom:calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+  .ipCamCaptureRow{position:absolute;top:-38px;left:0;right:0;height:84px;display:flex;align-items:center;justify-content:center;z-index:17;pointer-events:none}
+  #recordBtn{width:76px;height:76px;flex:0 0 76px;border-radius:50%;background:transparent;border:3px solid #fff;box-shadow:0 0 0 2px #0008;padding:0;touch-action:pan-y;position:relative;z-index:18;pointer-events:auto}
   #recordBtn.recording{border-color:#ff2a6d;background:transparent;box-shadow:0 0 0 2px #ff2a6d}
-  .ipCamUtility{position:absolute;top:56px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
-  .ipCamGallery{width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
-  .ipCamFlip{width:38px;height:38px;background:transparent;color:#fff;border:0;font-size:28px}
-  #modeBar{position:absolute;top:158px;left:0;right:0;height:30px;display:flex;justify-content:center;align-items:center;gap:13px;white-space:nowrap;letter-spacing:2px;font-size:12px;font-weight:700}
-  #modeBar .mode{height:28px;border:0;background:transparent;color:#929292;letter-spacing:2px;padding:0 1px;font-size:12px}
+  .ipCamUtility{position:absolute;z-index:18;pointer-events:auto;top:56px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
+  .ipCamGallery{pointer-events:auto;width:38px;height:38px;border:2px solid #fff;border-radius:8px;background:linear-gradient(135deg,#526e8c,#d1b6a3 52%,#344e4a);display:grid;place-items:center;color:#fff;font-size:21px}
+  .ipCamFlip{pointer-events:auto;width:38px;height:38px;background:transparent;color:#fff;border:0;font-size:28px}
+  #modeBar{position:absolute;z-index:18;pointer-events:auto;top:158px;left:0;right:0;height:30px;display:flex;justify-content:center;align-items:center;gap:13px;white-space:nowrap;letter-spacing:2px;font-size:12px;font-weight:700}
+  #modeBar .mode{pointer-events:auto;position:relative;z-index:19;height:28px;border:0;background:transparent;color:#929292;letter-spacing:2px;padding:0 1px;font-size:12px}
   #modeBar .mode.active{color:#fff;font-weight:900;position:relative}#modeBar .mode.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:22px;height:2px;background:#fff;border-radius:2px}
   /* Instagram-style filter carousel, permanently visible above the shutter */
-  #filterBar{display:none;position:absolute;z-index:15;left:0;right:0;bottom:calc(175px + env(safe-area-inset-bottom));width:100%;height:72px;padding:2px calc(50% - 31px);box-sizing:border-box;gap:10px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto;background:transparent}
+  #filterBar{display:none;position:absolute;z-index:17;left:0;right:0;bottom:calc(175px + env(safe-area-inset-bottom));width:100%;height:72px;padding:2px calc(50% - 31px);box-sizing:border-box;gap:10px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;touch-action:pan-x;pointer-events:auto;background:transparent}
   #filterBar::-webkit-scrollbar{display:none;width:0;height:0}
   .ipCamFilter{flex:0 0 58px;width:58px;min-width:58px;height:62px;min-height:62px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;color:#fff;padding:0;border:0;scroll-snap-align:center;font-size:9px;font-weight:600;text-shadow:0 1px 3px #000}
   .ipCamSwatch{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;box-sizing:border-box;border-radius:50%;border:2px solid rgba(255,255,255,.88);display:block;box-shadow:0 0 0 1px rgba(0,0,0,.28) inset;background-image:linear-gradient(135deg,#f6b77b,#b56d8d,#5369a8)}
