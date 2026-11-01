@@ -63,7 +63,7 @@
       #icsInput{display:none}
       @media(max-height:650px){.ics-tools{top:43%;gap:7px}.ics-tool{width:34px;height:34px}#icsFilterBar{bottom:calc(180px + env(safe-area-inset-bottom))}.ics-bottom{height:190px}#icsModeBar{top:133px}}
     `;
-    document.head.appendChild(style);
+    style.textContent+=`\n/* Keep the Story/Reel tool tray visible while opening and scrolling camera filters. */\n#ipCameraCreate #icsFilterBar{display:flex!important;z-index:12;pointer-events:auto;touch-action:pan-x;scroll-snap-type:x mandatory}\n#ipCameraCreate .ics-tools{z-index:13}\n#ipCameraCreate #icsFilterBar:after{pointer-events:none;z-index:14}\n`;document.head.appendChild(style);
     root=document.createElement("section");root.id="ipCameraCreate";root.setAttribute("aria-label","Camera");
     root.innerHTML=`
       <video id="ipCamPreview" autoplay playsinline muted></video><div id="ipCamShade"></div>
@@ -181,7 +181,7 @@
       else capturePhoto();
     });
   }
-  function tool(action){if(action==="effects"){const bar=$("icsFilterBar");bar.style.display=bar.style.display==="none"?"flex":"none";return;}if(action==="music"){$("icsAudio").click();return;}if(action==="post-media"){$("icsInput").click();return;}if(action==="duration"){toast("Reel recording can last up to 90 seconds.");return;}if(action==="handsfree"){handsFree=!handsFree;toast(handsFree?"Hands-free on: tap shutter to start/stop":"Hands-free off");return;}if(["create","boomerang","layout","avatar","draw"].includes(action))toast(action[0].toUpperCase()+action.slice(1)+" effect is not yet supported in this web camera.");}
+  function tool(action){if(action==="effects"){const bar=$("icsFilterBar");if(bar){bar.style.display="flex";const active=bar.querySelector("[data-filter].active")||bar.querySelector("[data-filter]");if(active)bar.scrollTo({left:Math.max(0,active.offsetLeft+active.offsetWidth/2-bar.clientWidth/2),behavior:"smooth"});}return;}if(action==="music"){$("icsAudio").click();return;}if(action==="post-media"){$("icsInput").click();return;}if(action==="duration"){toast("Reel recording can last up to 90 seconds.");return;}if(action==="handsfree"){handsFree=!handsFree;toast(handsFree?"Hands-free on: tap shutter to start/stop":"Hands-free off");return;}if(["create","boomerang","layout","avatar","draw"].includes(action))toast(action[0].toUpperCase()+action.slice(1)+" effect is not yet supported in this web camera.");}
   function countdownCapture(){const shutter=$("icsShutter");shutter.disabled=true;let left=timerSeconds;const tick=()=>{if(left<=0){shutter.disabled=false;capturePhoto();return;}toast(String(left));left--;setTimeout(tick,1000);};tick();}
   function capturePhoto(){if(mode==="REEL"){toast("REEL mode: tap the record button to start video recording.");return;}if(!ready||!video?.videoWidth){toast("Camera is still starting. Use Gallery or try again.");return;}const c=document.createElement("canvas");c.width=video.videoWidth;c.height=video.videoHeight;const ctx=c.getContext("2d");ctx.filter=effectCSS();if(facing==="user"){ctx.translate(c.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0,c.width,c.height);c.toBlob(blob=>{if(blob)sendFiles([new File([blob],"intube-photo-"+Date.now()+".jpg",{type:"image/jpeg"})]);else toast("Could not capture photo.");},"image/jpeg",.94);}
   function startRecording(){
