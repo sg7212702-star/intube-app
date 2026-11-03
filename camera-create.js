@@ -77,13 +77,21 @@
   transform:none!important;opacity:1!important;
 }
 #ipCameraCreate #icsFilterBar .ics-swatch{
-  width:70px!important;height:70px!important;min-width:70px!important;min-height:70px!important;
+  width:64px!important;height:64px!important;min-width:64px!important;min-height:64px!important;
   border:0!important;border-radius:50%!important;box-shadow:none!important;
   transition:filter .15s ease!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{
-  width:70px!important;height:70px!important;border:0!important;box-shadow:none!important;transform:none!important;
+  width:64px!important;height:64px!important;border:0!important;box-shadow:none!important;transform:none!important;
 }
+/* Align the fixed shutter ring to the carousel center (the row lives inside .ics-bottom). */
+#ipCameraCreate #icsShutterRow{
+  position:fixed!important;left:0!important;right:0!important;
+  bottom:calc(48px + env(safe-area-inset-bottom))!important;
+  top:auto!important;height:82px!important;z-index:20!important;
+}
+#ipCameraCreate #icsShutter{width:76px!important;height:76px!important;flex:0 0 76px!important;z-index:21!important}
+#ipCameraCreate #icsShutter:after{content:none!important;display:none!important}
 #ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"] .ics-swatch{background:#fff!important}
 #ipCameraCreate #icsShutterRow{
   left:0!important;right:0!important;top:auto!important;bottom:calc(48px + env(safe-area-inset-bottom))!important;
