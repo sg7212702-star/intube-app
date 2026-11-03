@@ -66,22 +66,23 @@
     style.textContent+=`\n/* Keep the Story/Reel tool tray visible while opening and scrolling camera filters. */\n#ipCameraCreate #icsFilterBar{display:flex!important;z-index:12;pointer-events:auto;touch-action:pan-x;scroll-snap-type:x mandatory}\n#ipCameraCreate .ics-tools{z-index:13}\n#ipCameraCreate #icsFilterBar:after{pointer-events:none;z-index:14}\n\n/* Use each filter swatch itself as the selector; remove the detached floating ring. */\n#ipCameraCreate #icsFilterBar:after{content:none!important;display:none!important}\n#ipCameraCreate #icsFilterBar{display:flex!important;visibility:visible!important;opacity:1!important}\n#ipCameraCreate .ics-filter.active .ics-swatch{border:3px solid #fff!important;box-shadow:0 0 0 2px #ff2d75,0 0 12px #ffffff70!important;transform:scale(1.04)}\n#ipCameraCreate .ics-filter .ics-swatch{transition:transform .16s ease,border .16s ease,box-shadow .16s ease}\n`;style.textContent+=`\n/* Precise centering: the existing shutter ring overlays the selected filter swatch. */\n#ipCameraCreate #icsFilterBar{left:0!important;right:0!important;width:auto!important;box-sizing:border-box!important;padding-left:calc(50% - 31px)!important;padding-right:calc(50% - 31px)!important;gap:12px!important;scroll-padding-left:calc(50% - 31px)!important;scroll-padding-right:calc(50% - 31px)!important;scroll-snap-type:x mandatory!important;scroll-behavior:auto!important}\n#ipCameraCreate #icsFilterBar .ics-filter{flex:0 0 62px!important;width:62px!important;scroll-snap-align:center!important;transform:none!important}\n#ipCameraCreate #icsFilterBar .ics-filter.active{transform:none!important}\n#ipCameraCreate #icsFilterBar .ics-filter .ics-swatch{width:54px!important;height:54px!important;border:2px solid #fff!important;box-shadow:none!important;transform:none!important}\n#ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{width:54px!important;height:54px!important;border:2px solid #fff!important;box-shadow:none!important;transform:none!important}\n#ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"] .ics-swatch{background:#fff!important;box-shadow:inset 0 0 0 7px #d9d9d9!important}\n#ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"].active .ics-swatch{box-shadow:inset 0 0 0 7px #d9d9d9!important}\n#ipCameraCreate #icsFilterBar:before{content:none!important;display:none!important}\n#ipCameraCreate #icsShutterRow{left:0!important;right:0!important;top:auto!important;bottom:calc(48px + env(safe-area-inset-bottom))!important;height:82px!important;justify-content:center!important;z-index:20!important;pointer-events:none!important}\n#ipCameraCreate #icsShutter{display:block!important;visibility:visible!important;opacity:1!important;width:76px!important;height:76px!important;flex:0 0 76px!important;z-index:21!important;pointer-events:auto!important}\n#ipCameraCreate #icsShutter:after{inset:5px!important;background:transparent!important;border:0!important}\n#ipCameraCreate #icsShutter.recording:after{inset:17px!important;border-radius:9px!important;background:#ff315f!important}\n\n/* Instagram-style filter carousel: the existing shutter ring is the fixed selector. */
 #ipCameraCreate #icsFilterBar{
   left:0!important;right:0!important;bottom:calc(48px + env(safe-area-inset-bottom))!important;
-  height:82px!important;padding:0 calc(50% - 31px)!important;gap:12px!important;
+  height:82px!important;padding:0 calc(50% - 37px)!important;gap:12px!important;
   display:flex!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;
-  scroll-snap-type:x mandatory!important;scroll-padding-inline:calc(50% - 31px)!important;
+  scroll-snap-type:x mandatory!important;scroll-padding-inline:calc(50% - 37px)!important;
   z-index:19!important;pointer-events:auto!important;touch-action:pan-x!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter{
-  flex:0 0 62px!important;width:62px!important;height:76px!important;
+  flex:0 0 74px!important;width:74px!important;height:78px!important;
   scroll-snap-align:center!important;display:flex!important;align-items:center!important;justify-content:center!important;
   transform:none!important;opacity:1!important;
 }
 #ipCameraCreate #icsFilterBar .ics-swatch{
-  width:64px!important;height:64px!important;border:2px solid #fff!important;
-  box-shadow:0 1px 5px #0008!important;transition:filter .15s ease!important;
+  width:70px!important;height:70px!important;min-width:70px!important;min-height:70px!important;
+  border:0!important;border-radius:50%!important;box-shadow:none!important;
+  transition:filter .15s ease!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{
-  width:64px!important;height:64px!important;border:2px solid #fff!important;box-shadow:0 1px 5px #0008!important;transform:none!important;
+  width:70px!important;height:70px!important;border:0!important;box-shadow:none!important;transform:none!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"] .ics-swatch{background:#fff!important}
 #ipCameraCreate #icsShutterRow{
