@@ -77,11 +77,11 @@
   transform:none!important;opacity:1!important;
 }
 #ipCameraCreate #icsFilterBar .ics-swatch{
-  width:58px!important;height:58px!important;border:2px solid #fff!important;
+  width:64px!important;height:64px!important;border:2px solid #fff!important;
   box-shadow:0 1px 5px #0008!important;transition:filter .15s ease!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{
-  border:2px solid #fff!important;box-shadow:0 1px 5px #0008!important;transform:none!important;
+  width:64px!important;height:64px!important;border:2px solid #fff!important;box-shadow:0 1px 5px #0008!important;transform:none!important;
 }
 #ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"] .ics-swatch{background:#fff!important}
 #ipCameraCreate #icsShutterRow{
@@ -169,7 +169,7 @@
     $("icsGallery").onclick=(e)=>{e.preventDefault();e.stopPropagation();const input=$("icsInput");if(!input)return;input.accept=mode==="REEL"?"video/*":"image/*,video/*";input.multiple=mode==="POST";input.value="";input.click();};
     let galleryHandling=false;$("icsInput").onchange=()=>{const input=$("icsInput");const files=[...(input.files||[])];if(!files.length)return;if(galleryHandling)return;galleryHandling=true;const chosenMode=mode;const file=files[0];input.value="";if(chosenMode==="REEL"){if(!file.type.startsWith("video/")){galleryHandling=false;toast("Reel ke liye gallery se video select karein.");return;}const launch=()=>{if(typeof window.openIntubeReelEditor!=="function"){galleryHandling=false;toast("Editor load nahi hua. Page refresh karke dobara try karein.");return;}close();setTimeout(()=>{try{window.openIntubeReelEditor(file);}finally{setTimeout(()=>{galleryHandling=false;},350);}},80);};launch();return;}sendFiles(files);setTimeout(()=>{galleryHandling=false;},350);};
     $("icsModeBar").querySelectorAll("[data-mode]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(recording)stopRecording();setMode(b.dataset.mode);});
-    $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{if(b.dataset.filter===filter){$("icsShutter").click();return;}setFilter(b.dataset.filter);});
+    $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();setFilter(b.dataset.filter);});
     let filterScrollFrame=0,filterScrollEnd=0,filterSnapLock=false;
      const nearestFilter=()=>{const bar=$("icsFilterBar");if(!bar)return null;const center=bar.getBoundingClientRect().left+bar.clientWidth/2;let closest=null,d=Infinity;bar.querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.left+r.width/2-center);if(n<d){d=n;closest=b;}});return closest;};
      const syncCenteredFilter=()=>{filterScrollFrame=0;const closest=nearestFilter();if(closest&&closest.dataset.filter!==filter)setFilter(closest.dataset.filter,false);};
