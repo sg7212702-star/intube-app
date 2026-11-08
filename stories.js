@@ -201,10 +201,10 @@ function groupsByUser(stories) {
   const groups = new Map();
   for (const story of stories) {
     const key = ownerId(story) || ("unknown:" + (story.email || ownerName(story)));
-    if (!groups.has(key)) groups.set(key, { key, uid: ownerId(story), name: ownerName(story), photo: story.photo || story.photoURL || "", stories: [] });
+    if (!groups.has(key)) groups.set(key, { key, uid: ownerId(story), name: ownerName(story), photo: getProfilePhoto(story, ""), stories: [] });
     const group = groups.get(key);
     group.stories.push(story);
-    if ((!group.photo || group.photo.length < 5) && (story.photo || story.photoURL)) group.photo = story.photo || story.photoURL;
+    if (!group.photo || group.photo.length < 5) group.photo = getProfilePhoto(story, group.photo);
   }
   return [...groups.values()].map(group => {
     group.stories.sort((a, b) => timestamp(a) - timestamp(b));
