@@ -1,5 +1,6 @@
 // InstaPro Stories — Instagram-style realtime stories
 import { db, auth } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 import {
   collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
   setDoc, addDoc, deleteDoc, serverTimestamp, increment
@@ -1028,7 +1029,7 @@ function showAt(index) {
   const renderStoryIdentity = (profile = {}) => {
     // Firestore users/{uid} is authoritative; story-upload/Auth snapshots are only fallbacks.
     const name = profile.username || profile.displayName || profile.name || currentGroup[0]?.name || ownerName(story);
-    const photo = profile.photoURL || profile.photoUrl || profile.profilePic || profile.photo || profile.avatar || currentGroup[0]?.photo || story.photo || story.photoURL || "";
+    const photo = getProfilePhoto(profile, getProfilePhoto(currentGroup[0], getProfilePhoto(story, "")));
     if (photo) avatar.src = photo;
     else avatar.removeAttribute("src");
     viewer.querySelector(".is-name").textContent = name;
