@@ -5,6 +5,7 @@
 // ======================================================
 
 import { auth, db } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 
 import {
   onAuthStateChanged
@@ -98,14 +99,7 @@ function getUsername(user) {
 }
 
 function getAvatar(user) {
-  return (
-    user?.photoURL ||
-    user?.photoUrl ||
-    user?.photo ||
-    user?.avatar ||
-    user?.userPhoto ||
-    "https://www.gravatar.com/avatar/?d=mp"
-  );
+  return getProfilePhoto(user);
 }
 
 // Store activity in the same per-user collection read by notifications.js.
@@ -240,7 +234,7 @@ function watchUserProfile(uid) {
       const nextProfile = {
         ...data,
         username: data.username || data.displayName || data.name || "InstaPro User",
-        photoURL: data.photoURL || data.photoUrl || data.profilePic || data.photo || data.avatar || ""
+        photoURL: getProfilePhoto(data, "")
       };
 
       const previous = profileCache.get(uid);
@@ -338,15 +332,7 @@ async function getUserProfile(uid, post = {}) {
           post.displayName ||
           "InstaPro User",
 
-        photoURL:
-          data.photoURL ||
-          data.photoUrl ||
-          data.photo ||
-          data.avatar ||
-          post.photoURL ||
-          post.photo ||
-          post.userPhoto ||
-          ""
+        photoURL: getProfilePhoto(data, getProfilePhoto(post, ""))
       };
 
       profileCache.set(uid, profile);
