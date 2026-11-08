@@ -73,10 +73,7 @@ function username(post) {
 }
 
 function photoURL(post) {
-  return post.photo ||
-    post.photoURL ||
-    post.photoUrl ||
-    "https://www.gravatar.com/avatar/?d=mp";
+  return getProfilePhoto(post);
 }
 
 // Additive recommendation ranking: uses only signals already available on posts.
