@@ -1,5 +1,6 @@
 // reels.js — InstaPro Reels System
 import { db, auth } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
@@ -691,7 +692,7 @@ function renderReelsSlides(track) {
         const snap = await getDoc(doc(db, "users", uid));
         if (!snap.exists()) return null;
         const data = snap.data();
-        return {uid, username: data.username || data.displayName || data.name || "InstaPro User", photo: data.photoURL || data.photoUrl || data.photo || data.profilePhoto || ""};
+        return {uid, username: data.username || data.displayName || data.name || "InstaPro User", photo: getProfilePhoto(data, "")};
       } catch (error) { console.warn("Like avatar load failed:", error); return null; }
     }));
     if (!box.isConnected) return;
