@@ -1,4 +1,5 @@
 import { db, auth } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 
 import {
   collection,
@@ -212,7 +213,7 @@ export function openNotif() {
         );
 
         const photo = escapeHTML(
-          n.fromPhoto || "https://www.gravatar.com/avatar/?d=mp"
+          getProfilePhoto(n)
         );
 
         const type = escapeHTML(n.type || "activity");
