@@ -1,4 +1,5 @@
 // app.js - ALL BUTTON WORKING - FINAL FIX - NO OVERLAP
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 const $ = id => document.getElementById(id);
 
 // Load the standalone Music Library without changing index.html or style.css.
@@ -1036,7 +1037,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
       const userRef = doc(db, "users", user.uid);
       const applyPhoto = data => {
-        const photo = data?.photoURL || data?.photoUrl || data?.profilePic || data?.photo || data?.avatar || auth.currentUser?.photoURL || fallback;
+        const photo = getProfilePhoto(data, auth.currentUser?.photoURL || fallback);
         [avatar, largeAvatar].filter(Boolean).forEach(img => {
           if (img.getAttribute("src") !== photo) img.src = photo;
           img.alt = "Your profile";
