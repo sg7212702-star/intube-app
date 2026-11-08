@@ -1,5 +1,6 @@
 // chat.js - InstaPro real-time direct messages
 import { auth, db } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
   doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, arrayRemove, arrayUnion
@@ -23,7 +24,7 @@ const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
   "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
 }[ch]));
-const photoOf = user => user?.photoURL || user?.photo || "https://www.gravatar.com/avatar/?d=mp";
+const photoOf = user => getProfilePhoto(user);
 const nameOf = user => user?.username || user?.displayName || user?.name || user?.email?.split("@")[0] || "user";
 const chatIdFor = (a, b) => [a, b].sort().join("_");
 
