@@ -555,7 +555,7 @@ async function addStoryToHighlights(){
   if(old.some(item=>item?.storyId===story.id)){alert("Yeh story pehle se highlight mein hai.");return;}
   const title=(prompt("Highlight ka naam likhein:","Highlight")||"").trim().slice(0,40);
   if(!title)return;
-  const highlight={storyId:story.id,title,emoji:"✦",mediaUrl:mediaUrl(story),createdAt:Date.now()};
+  const cover=mediaUrl(story);const highlight={storyId:story.id,title,emoji:"✦",mediaUrl:cover,coverUrl:cover,imageUrl:cover,thumbnailUrl:story.thumbnailUrl||story.thumbnail||cover,createdAt:Date.now()};
   try{
     await updateDoc(userRef,{highlights:arrayUnion(highlight)});
     alert("Story profile Highlights mein add ho gayi.");
