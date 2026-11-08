@@ -1,4 +1,5 @@
 import { db, auth } from "./firebase.js";
+import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108a";
 
 import {
   doc,
@@ -73,7 +74,7 @@ function usernameFor(data, uid) {
 function photoFor(data) {
   // Firestore profile photo is authoritative. Auth photo is only a fallback for the signed-in user's own profile,
   // never for another user's profile (otherwise their Gmail avatar leaks into every profile).
-  const saved = data.photoURL || data.photoUrl || data.profilePic || data.profilePhotoURL || data.profileImage || data.avatarUrl || data.photo || data.avatar;
+  const saved = getProfilePhoto(data, "");
   if (saved) return saved;
   if (viewingUid && viewingUid === auth.currentUser?.uid && auth.currentUser?.photoURL) {
     return auth.currentUser.photoURL;
