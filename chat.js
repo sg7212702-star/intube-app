@@ -240,7 +240,10 @@ function showChatMessage(message) {
   if (box) box.innerHTML = '<p style="text-align:center;opacity:.65;padding:24px;">' + escapeHTML(message) + '</p>';
 }
 
-function closeChat() {
+function closeChat(fromPop = false) {
+  if (!fromPop && history.state?.intubeChat) {
+    try { history.back(); } catch (_) {}
+  }
   if (chatListener) chatListener();
   chatListener = null;
   selectedUser = null;
@@ -444,12 +447,21 @@ function listenForIncomingCalls() {
   },err=>console.warn("Incoming call listener:",err));
 }
 
+if (!window.__intubeChatBackBound) {
+  window.__intubeChatBackBound = true;
+  window.addEventListener("popstate", event => {
+    const box = $("chatBoxView");
+    if (box && box.style.display !== "none" && !event.state?.intubeChat) closeChat(true);
+  });
+}
+
 function openChat(user) {
   if (!currentUser || currentUser.isAnonymous) {
     alert("Pehle Google se login karein.");
     return;
   }
   selectedUser = user;
+  try { history.pushState({ ...(history.state || {}), intubeChat: true, intubeChatUid: user.uid || user.id || "" }, "", location.href); } catch (error) { console.warn("Chat navigation history:", error); }
   $("chatListView").style.display = "none";
   $("chatBoxView").style.display = "flex";
   $("chatWithName").textContent = nameOf(user);
