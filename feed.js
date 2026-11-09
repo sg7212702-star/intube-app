@@ -714,14 +714,31 @@ function startFeedStories() {
   if (unsubscribeFeedStories) return;
   unsubscribeFeedStories = onSnapshot(collection(db, "stories"), snapshot => {
     const now = Date.now();
+    const viewerUid = getCurrentUser()?.uid || "";
     const next = new Set();
     snapshot.docs.forEach(item => {
       const story = item.data();
       const uid = story.uid || story.userId || story.authorId || story.ownerUid || story.userUID || "";
       const url = story.mediaUrl || story.imageUrl || story.url || story.videoUrl || story.image || "";
-      const created = story.createdAt?.toDate ? story.createdAt.toDate().getTime() : (typeof story.createdAt === "number" ? story.createdAt : Date.parse(story.createdAt || "") || 0);
-      const expiry = Number(story.expiresAt) || ((created || now) + 86400000);
-      if (uid && url && expiry > now) next.add(uid);
+      const createdValue = story.createdAt;
+      const created = createdValue?.toMillis ? createdValue.toMillis()
+        : createdValue?.toDate ? createdValue.toDate().getTime()
+        : (typeof createdValue === "number" ? createdValue : Date.parse(createdValue || "") || 0);
+      const expiryValue = story.expiresAt;
+      const expiry = expiryValue?.toMillis ? expiryValue.toMillis()
+        : expiryValue?.toDate ? expiryValue.toDate().getTime()
+        : (Number(expiryValue) || ((created || now) + 86400000));
+      const privacy = story.privacy || {};
+      const audience = privacy.audience || story.audience || "everyone";
+      const isOwner = !!viewerUid && uid === viewerUid;
+      const hiddenFrom = Array.isArray(privacy.hiddenFromUids) ? privacy.hiddenFromUids.map(String) : [];
+      const closeFriends = Array.isArray(privacy.closeFriendsUids) ? privacy.closeFriendsUids.map(String) : [];
+      const visible = isOwner || (
+        audience !== "onlyMe" &&
+        !hiddenFrom.includes(viewerUid) &&
+        (audience !== "closeFriends" || (!!viewerUid && closeFriends.includes(viewerUid)))
+      );
+      if (uid && url && expiry > now && visible) next.add(uid);
     });
     const changed = next.size !== activeStoryOwnerUids.size || [...next].some(uid => !activeStoryOwnerUids.has(uid));
     activeStoryOwnerUids = next;
