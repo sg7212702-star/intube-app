@@ -142,7 +142,7 @@ function animateStoryHeart() {
   setTimeout(()=>heart.remove(),900);
 }
 function ownerName(story) {
-  return story.username || story.displayName || story.email?.split("@")[0] || "InstaPro User";
+  return story.username || story.displayName || story.email?.split("@")[0] || "Intube User";
 }
 async function notifyStoryOwner(targetUid, type, message, story) {
   const user = signedInUser || auth.currentUser;
@@ -152,7 +152,7 @@ async function notifyStoryOwner(targetUid, type, message, story) {
       type,
       message,
       fromUid: user.uid,
-      fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+      fromUsername: user.displayName || user.email?.split("@")[0] || "Intube User",
       fromPhoto: user.photoURL || "",
       storyId: story?.id || "",
       storyMediaUrl: mediaUrl(story || {}),
@@ -360,7 +360,7 @@ async function getOtherUsers() {
   const snap=await getDocs(collection(db,"users"));
   return snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>u.uid!==user.uid);
 }
-function userLabel(u){return u.username||u.displayName||u.name||u.email?.split("@")[0]||"InstaPro User";}
+function userLabel(u){return u.username||u.displayName||u.name||u.email?.split("@")[0]||"Intube User";}
 async function openStoryViewers(){
   const story=currentGroup[currentIndex],user=signedInUser||auth.currentUser;
   if(!story||!user||ownerId(story)!==user.uid){alert("Viewer list sirf apni story par dikhegi.");return;}
@@ -388,8 +388,8 @@ async function openStoryViewers(){
       return;
     }
     const people=await Promise.all(ids.map(async uid=>{
-      try{const s=await getDoc(doc(db,"users",uid));return s.exists()?{uid,...s.data()}:{uid,username:"InstaPro User"};}
-      catch{return {uid,username:"InstaPro User"};}
+      try{const s=await getDoc(doc(db,"users",uid));return s.exists()?{uid,...s.data()}:{uid,username:"Intube User"};}
+      catch{return {uid,username:"Intube User"};}
     }));
     const body=panel.querySelector(".isp-body");
     body.innerHTML='<p style="font-size:13px;color:#777;margin-bottom:8px;">'+viewIds.length+' views · '+likedIds.length+' likes</p>'+
@@ -434,7 +434,7 @@ async function openStoryDmShare(){
           const cid=chatIdFor(user.uid,target.uid);
           await setDoc(doc(db,"chats",cid),{participants:[user.uid,target.uid],lastMessage:"Shared a story",lastSenderUid:user.uid,updatedAt:serverTimestamp()},{merge:true});
           await addDoc(collection(db,"chats",cid,"messages"),{text:"Shared a story",message:"Shared a story",senderUid:user.uid,receiverUid:target.uid,uid:user.uid,createdAt:serverTimestamp(),read:false,messageType:"story_share",storyId:story.id,storyMediaUrl:mediaUrl(story),storyOwnerUid:ownerId(story)});
-          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_share",message:"shared a story with you",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"InstaPro User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
+          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_share",message:"shared a story with you",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"Intube User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
           panel.remove();alert("Story DM mein send ho gayi.");
         }catch(e){console.error(e);alert("DM mein story send nahi hui. Firestore Rules check karein.");btn.disabled=false;}
       });
@@ -457,7 +457,7 @@ async function openStoryMention(){
         btn.disabled=true;const target=users.find(u=>u.uid===btn.dataset.uid);
         try{
           await updateDoc(doc(db,"stories",story.id),{mentionedUids:arrayUnion(target.uid),mentionedUsernames:arrayUnion(userLabel(target))});
-          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_mention",message:"mentioned you in a story",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"InstaPro User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
+          await addDoc(collection(db,"users",target.uid,"notifications"),{type:"story_mention",message:"mentioned you in a story",fromUid:user.uid,fromUsername:user.displayName||user.email?.split("@")[0]||"Intube User",storyId:story.id,storyMediaUrl:mediaUrl(story),createdAt:serverTimestamp(),read:false});
           story.mentionedUids=[...new Set([...(story.mentionedUids||[]),target.uid])];panel.remove();alert("@"+userLabel(target)+" ko story mein mention kar diya.");
         }catch(e){console.error(e);alert("Mention save nahi hua. Firestore Rules check karein.");btn.disabled=false;}
       });
@@ -617,7 +617,7 @@ function openStoryComments() {
     try {
       await addDoc(collection(db, "stories", story.id, "comments"), {
         uid: user.uid,
-        username: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+        username: user.displayName || user.email?.split("@")[0] || "Intube User",
         photo: user.photoURL || "",
         text: value,
         createdAt: serverTimestamp()
@@ -642,7 +642,7 @@ function openStoryComments() {
       list.innerHTML = snapshot.docs.map(item => {
         const comment = item.data();
         const photo = comment.photo || "https://www.gravatar.com/avatar/?d=mp";
-        return '<div class="isc-row"><img src="' + escapeHtml(photo) + '" alt=""><div style="font-size:13px;line-height:1.45;"><strong>' + escapeHtml(comment.username || "InstaPro User") + '</strong><div style="margin-top:2px;">' + escapeHtml(comment.text || "") + '</div></div></div>';
+        return '<div class="isc-row"><img src="' + escapeHtml(photo) + '" alt=""><div style="font-size:13px;line-height:1.45;"><strong>' + escapeHtml(comment.username || "Intube User") + '</strong><div style="margin-top:2px;">' + escapeHtml(comment.text || "") + '</div></div></div>';
       }).join("");
       list.scrollTop = list.scrollHeight;
     },
