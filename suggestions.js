@@ -30,7 +30,7 @@ function styles() {
   `;
   document.head.appendChild(s);
 }
-function personName(u){return u.username || u.displayName || u.name || u.email?.split("@")[0] || "InstaPro user";}
+function personName(u){return u.username || u.displayName || u.name || u.email?.split("@")[0] || "Intube user";}
 function personPhoto(u){return u.photoURL || u.photoUrl || u.profilePic || u.profilePhoto || u.profileImage || u.userPhoto || u.avatarUrl || u.avatar || u.photo || u.imageURL || u.imageUrl || "https://www.gravatar.com/avatar/?d=mp";}
 function uidOf(u){return u.uid || u.id || "";}
 function rankUsers() {
