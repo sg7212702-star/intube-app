@@ -30,7 +30,7 @@ async function saveUserProfile(user) {
   const fallbackName =
     user.displayName ||
     user.email?.split("@")[0] ||
-    "InstaPro User";
+    "Intube User";
   const fallbackUsername = (
     user.email?.split("@")[0] ||
     user.uid
@@ -108,7 +108,7 @@ window.registerUser = async function () {
 
     await saveUserProfile(credential.user);
 
-    alert("Insta Pro account ban gaya!");
+    alert("Intube account ban gaya!");
     window.location.href = "index.html";
   } catch (error) {
     console.error("Registration error:", error);
