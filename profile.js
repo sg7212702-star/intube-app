@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase.js";
-import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108a";
+import { getProfilePhoto } from "./profile-image.js";
 
 import {
   doc,

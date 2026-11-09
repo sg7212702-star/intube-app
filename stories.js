@@ -1,6 +1,6 @@
 // InstaPro Stories — Instagram-style realtime stories
 import { db, auth } from "./firebase.js";
-import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
+import { getProfilePhoto } from "./profile-image.js";
 import {
   collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
   setDoc, addDoc, deleteDoc, serverTimestamp, increment
