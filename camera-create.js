@@ -165,8 +165,25 @@
     }catch(err){ready=false;console.warn("Intube camera permission/device:",err);toast("Camera permission nahi mili. Gallery se media select karein.");}
   }
   function stopStream(){ready=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video)video.srcObject=null;}
-  function open(){build();root.classList.add("open");document.body.style.overflow="hidden";setMode("STORY");startCamera();}
-  function close(){if(recording)stopRecording();root?.classList.remove("open");stopStream();document.body.style.overflow="";}
+  function open(){
+    build();
+    if (!root.classList.contains("open")) {
+      try { history.pushState({ ...(history.state || {}), intubeCamera: true }, "", location.href); } catch (_) {}
+    }
+    root.classList.add("open");document.body.style.overflow="hidden";setMode("STORY");startCamera();
+  }
+  function close(fromPop = false){
+    if (!fromPop && history.state?.intubeCamera) {
+      try { history.back(); } catch (_) {}
+    }
+    if(recording)stopRecording();root?.classList.remove("open");stopStream();document.body.style.overflow="";
+  }
+  if (!window.__intubeCameraBackBound) {
+    window.__intubeCameraBackBound = true;
+    window.addEventListener("popstate", event => {
+      if (root?.classList.contains("open") && !event.state?.intubeCamera) close(true);
+    });
+  }
   function bind(){
     $("icsClose").onclick=close;
     $("icsFlip").onclick=async()=>{facing=facing==="user"?"environment":"user";await startCamera();};
