@@ -205,7 +205,7 @@ export function openNotif() {
         const n = item.data();
 
         const username = escapeHTML(
-          n.fromUsername || "InstaPro User"
+          n.fromUsername || "Intube User"
         );
 
         const message = escapeHTML(
