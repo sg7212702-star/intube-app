@@ -1089,7 +1089,7 @@ function openReelComments(postId) {
         const liked = !!me && likedBy.includes(me.uid);
         return `
           <div class="ipr-comment-row" data-comment-id="${escapeHTML(commentId)}">
-            <img src="${escapeHTML(comment.photo || "https://www.gravatar.com/avatar/?d=mp")}" alt="">
+            <img src="${escapeHTML(getProfilePhoto(comment))}" alt="">
             <div style="flex:1;min-width:0">
               <strong>${escapeHTML(comment.username || "User")} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></strong><br>
               <span>${escapeHTML(comment.text || "")}</span>
