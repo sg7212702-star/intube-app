@@ -866,10 +866,25 @@ function render(data = profileData, posts = profilePosts) {
             .slice(0, 12)
             .map(h => {
               const story = profileStories.find(item => item.id === h.storyId);
-              const cover = h.coverUrl || h.thumbnailUrl || h.imageUrl || h.mediaUrl || h.url || (story ? postUrl(story) : "");
+              // Prefer a real image thumbnail over the original story media URL.
+              // Video URLs cannot be rendered by an <img>; old highlights often saved
+              // the video URL into coverUrl while the actual poster is in thumbnailUrl.
+              const coverCandidates = [
+                h.thumbnailUrl, h.thumbnail, h.thumbnailURL, h.coverImageUrl,
+                h.coverUrl, h.imageUrl, h.imageURL, h.mediaUrl, h.mediaURL, h.url,
+                story?.thumbnailUrl, story?.thumbnail, story?.imageUrl, story?.imageURL,
+                story?.mediaUrl, story?.mediaURL, story?.url, story?.image
+              ].filter(value => typeof value === "string" && value.trim());
+              const cover = coverCandidates.find(value => !isVideo({ mediaUrl: value })) ||
+                (() => {
+                  const video = coverCandidates.find(value => isVideo({ mediaUrl: value }));
+                  if (!video || !/res\\.cloudinary\\.com\\/[^/]+\\/video\\/upload\\//i.test(video)) return "";
+                  const poster = video.replace("/video/upload/", "/video/upload/so_0,f_jpg/");
+                  return poster.replace(/\\.(mp4|webm|mov|m4v)(?=([?#]|$))/i, ".jpg");
+                })();
               return `
                 <button type="button" class="ipp-highlightBubble" data-story-id="${esc(h.storyId || "")}" aria-label="Open highlight ${esc(h.title || "Highlight")}" style="border:0;background:transparent;color:inherit;cursor:pointer;padding:0;">
-                  <i style="overflow:hidden;position:relative;">${cover ? `<img src="${esc(cover)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">` : esc(h.emoji || "✦")}</i>
+                  <i style="overflow:hidden;position:relative;">${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">` : esc(h.emoji || "✦")}</i>
                   ${esc(h.title || "Highlight")}
                 </button>
               `;
