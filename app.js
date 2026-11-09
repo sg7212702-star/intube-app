@@ -845,7 +845,34 @@ function openMenu(){
   m.classList.add("show");
   const sov=$("sideOverlay"); if(sov){sov.style.display="block";sov.classList.add("show");}
 }
-function openPage(name){
+// Restore the previous main tab when Android/browser Back is pressed.
+if (!window.__intubeMainPageBackBound) {
+  window.__intubeMainPageBackBound = true;
+  window.addEventListener("popstate", event => {
+    const pageName = event.state?.intubePage;
+    if (pageName && document.getElementById(pageName + "Page")) {
+      openPage(pageName, { fromPop: true });
+      document.querySelectorAll(".bBtn").forEach(button => {
+        button.classList.toggle("active", button.dataset.v === pageName || (pageName === "explore" && button.dataset.v === "search"));
+      });
+    }
+  });
+}
+
+function openPage(name, navigationOptions = {}){
+  const validPages = new Set(["home","explore","reels","chat","profile"]);
+  if (!validPages.has(name)) return;
+  const currentPage = document.querySelector(".page[style*='display: block'], .page[style*='display:block'], .page[style*='display: flex'], .page[style*='display:flex']");
+  const currentName = currentPage?.id?.replace(/Page$/, "") || "";
+  // Each main-tab change gets exactly one browser-history entry. A Back
+  // navigation restores a page without creating another entry.
+  if (!navigationOptions.fromPop && currentName !== name) {
+    try {
+      const state = { ...(history.state || {}), intubePage: name };
+      if (navigationOptions.replace) history.replaceState(state, "", location.href);
+      else history.pushState(state, "", location.href);
+    } catch (error) { console.warn("Intube navigation history:", error); }
+  }
   document.querySelectorAll(".page").forEach(p=>p.style.display="none");
   const home=document.getElementById("homePage");
   if(name==="home" && home){ home.style.display="block"; }
@@ -1113,6 +1140,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   });
 
-  openPage("home");
+  openPage("home", { replace: true });
   console.log("✅ Navigation initialized");
 });
