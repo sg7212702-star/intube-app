@@ -235,7 +235,7 @@ export function openNotif() {
         return;
       }
 
-      list.innerHTML = snapshot.docs.map((item) => {
+      const renderedRows = await Promise.all(snapshot.docs.map(async (item) => {
         const n = item.data();
 
         const username = escapeHTML(
@@ -333,7 +333,8 @@ export function openNotif() {
             ` : ""}
           </div>
         `;
-      }).join("");
+      }));
+      list.innerHTML = renderedRows.join("");
 
       list.querySelectorAll("[data-notif-profile]").forEach((person) => {
         const openPersonProfile = async (event) => {
