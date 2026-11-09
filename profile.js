@@ -686,7 +686,7 @@ function render(data = profileData, posts = profilePosts) {
   const bio =
     data.bio ||
     data.about ||
-    "Welcome to my InstaPro profile ✨";
+    "Welcome to my Intube profile ✨";
 
   const followers = Array.isArray(data.followers)
     ? data.followers.length
@@ -733,7 +733,7 @@ function render(data = profileData, posts = profilePosts) {
 
       <header class="ipp-top">
         <button class="ipp-btn" id="ippBack">‹ Back</button>
-        <strong style="font-size:17px">InstaPro ✦</strong>
+        <strong style="font-size:17px">Intube ✦</strong>
         <button class="ipp-btn" id="ippRefresh">↻</button>
       </header>
 
@@ -754,7 +754,7 @@ function render(data = profileData, posts = profilePosts) {
               font-weight:850;
               overflow-wrap:anywhere
             ">
-              ${esc(name)} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span>
+              ${esc(name)} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span>
             </div>
 
             <div style="font-size:12px;opacity:.68;margin-top:4px">
@@ -1086,7 +1086,7 @@ async function openSelectedPost(post) {
     <div style="max-width:650px;margin:0 auto;padding-bottom:30px;">
       <div style="display:flex;align-items:center;gap:10px;padding:12px;">
         <img src="${esc(post.photo || post.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
-        <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "InstaPro User")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong><div style="font-size:11px;opacity:.6;">InstaPro</div></div>
+        <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "Intube User")} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></strong><div style="font-size:11px;opacity:.6;">Intube</div></div>
         ${own ? '<button id="ippDeletePostTop" type="button" style="border:0;background:transparent;color:#ff6b8a;font-weight:700;">Delete</button>' : ""}
       </div>
       <div style="background:#080808;display:flex;align-items:center;justify-content:center;min-height:180px;max-height:72vh;">
@@ -1148,7 +1148,7 @@ async function openSelectedPost(post) {
             type: "like",
             message: "liked your post",
             fromUid: user.uid,
-            fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+            fromUsername: user.displayName || user.email?.split("@")[0] || "Intube User",
             fromPhoto: user.photoURL || "",
             postId: post.id,
             createdAt: serverTimestamp(),
@@ -1199,7 +1199,7 @@ async function openSelectedPost(post) {
     try {
       await addDoc(collection(db, "posts", post.id, "comments"), {
         uid: user.uid,
-        username: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+        username: user.displayName || user.email?.split("@")[0] || "Intube User",
         photo: user.photoURL || "",
         text,
         createdAt: serverTimestamp()
@@ -1212,7 +1212,7 @@ async function openSelectedPost(post) {
             type: "comment",
             message: "commented on your post",
             fromUid: user.uid,
-            fromUsername: user.displayName || user.email?.split("@")[0] || "InstaPro User",
+            fromUsername: user.displayName || user.email?.split("@")[0] || "Intube User",
             fromPhoto: user.photoURL || "",
             postId: post.id,
             createdAt: serverTimestamp(),
@@ -1246,7 +1246,7 @@ async function openSelectedPost(post) {
     if (snapshot.empty) { list.innerHTML = '<p style="font-size:13px;opacity:.6;padding:8px 0;">No comments yet. Be the first to comment.</p>'; return; }
     list.innerHTML = snapshot.docs.map(item => {
       const comment = item.data();
-      return `<div style="display:flex;gap:8px;padding:8px 0;overflow-wrap:anywhere;"><img src="${esc(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><div style="font-size:13px;line-height:1.45;"><strong>${esc(comment.username || "user")} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong> ${esc(comment.text || "")}</div></div>`;
+      return `<div style="display:flex;gap:8px;padding:8px 0;overflow-wrap:anywhere;"><img src="${esc(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"><div style="font-size:13px;line-height:1.45;"><strong>${esc(comment.username || "user")} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></strong> ${esc(comment.text || "")}</div></div>`;
     }).join("");
   }, error => {
     console.error("Profile comments listener:", error);
@@ -1366,7 +1366,7 @@ async function shareProfilePost(post) {
   const url = new URL(location.href);
   url.hash = "post-" + encodeURIComponent(post.id);
   try {
-    if (navigator.share) await navigator.share({ title: "InstaPro post", text: post.caption || "Check out this post", url: url.href });
+    if (navigator.share) await navigator.share({ title: "Intube post", text: post.caption || "Check out this post", url: url.href });
     else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(url.href); alert("Post link copied."); }
     else prompt("Copy post link:", url.href);
     await updateDoc(doc(db, "posts", post.id), { shareCount: increment(1) }).catch(() => {});
@@ -1488,7 +1488,7 @@ postTiles.forEach(tile => {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `${name} on InstaPro`,
+          title: `${name} on Intube`,
           text: `Check out @${username}`,
           url: link.href
         });
@@ -1585,7 +1585,7 @@ function showEdit(data) {
     <div class="ipp-editor-shell">
       <header class="ipp-editor-header">
         <button type="button" class="ipp-editor-back" id="ippCancel" aria-label="Back">‹</button>
-        <div><strong>Edit profile</strong><small>Personalise your InstaPro profile</small></div>
+        <div><strong>Edit profile</strong><small>Personalise your Intube profile</small></div>
         <button type="button" class="ipp-editor-save" id="ippSave">Save</button>
       </header>
 
@@ -1827,7 +1827,7 @@ async function toggleFollow() {
             type: "follow",
             message: "started following you",
             fromUid: actor.uid,
-            fromUsername: actor.displayName || actor.email?.split("@")[0] || "InstaPro User",
+            fromUsername: actor.displayName || actor.email?.split("@")[0] || "Intube User",
             fromPhoto: actor.photoURL || "",
             createdAt: serverTimestamp(),
             read: false
@@ -1889,7 +1889,7 @@ async function openFollowList(uid, type) {
       const photo = person.photoURL || person.profilePic || person.photoUrl || person.avatar || "";
       return `<button class="ipp-fl-row" type="button" data-follow-person="${esc(person.uid)}">
         <img src="${esc(photo || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='100%25' height='100%25' fill='%23333'/%3E%3C/svg%3E")}" alt="">
-        <span><div class="ipp-fl-name">${esc(name)} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></div><div class="ipp-fl-handle">@${esc(person.username || person.uid)}</div></span>
+        <span><div class="ipp-fl-name">${esc(name)} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></div><div class="ipp-fl-handle">@${esc(person.username || person.uid)}</div></span>
       </button>`;
     }).join("");
     list.querySelectorAll("[data-follow-person]").forEach(row => row.addEventListener("click", async () => {
@@ -1931,7 +1931,7 @@ async function openProfile(uid = null) {
           ‹ Back
         </button>
 
-        <strong>InstaPro ✦</strong>
+        <strong>Intube ✦</strong>
 
         <span></span>
       </header>
@@ -1960,15 +1960,15 @@ async function openProfile(uid = null) {
       await setDoc(
         userRef,
         {
-          name: user?.displayName || "InstaPro User",
-          displayName: user?.displayName || "InstaPro User",
+          name: user?.displayName || "Intube User",
+          displayName: user?.displayName || "Intube User",
 
           username: (
             user?.email?.split("@")[0] ||
             targetUid
           ).toLowerCase().replace(/[^a-z0-9._]/g, ""),
 
-          bio: "Welcome to my InstaPro profile ✨",
+          bio: "Welcome to my Intube profile ✨",
           photoURL: user?.photoURL || "",
 
           followers: [],
