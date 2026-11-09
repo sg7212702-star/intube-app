@@ -3,7 +3,7 @@ import { db, auth } from "./firebase.js";
 import { getProfilePhoto } from "./profile-image.js";
 import {
   collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
-  setDoc, addDoc, deleteDoc, serverTimestamp, increment
+  setDoc, addDoc, deleteDoc, serverTimestamp, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -1092,10 +1092,19 @@ function showAt(index) {
   updateLikeButton();
   if (user && !user.isAnonymous) {
     const storyRef = doc(db, "stories", story.id);
-    const seenBy = Array.isArray(story.seenBy) ? story.seenBy : [];
-    if (ownerId(story) !== user.uid && !seenBy.includes(user.uid)) {
-      updateDoc(storyRef, { seenBy: arrayUnion(user.uid), viewsCount: increment(1) })
-        .catch(error => console.warn("Story view save error:", error));
+    if (ownerId(story) !== user.uid) {
+      // Read the latest seenBy inside a transaction so two devices opening the
+      // same Story at nearly the same time cannot increment the view count twice.
+      runTransaction(db, async transaction => {
+        const latestStory = await transaction.get(storyRef);
+        if (!latestStory.exists()) return;
+        const latestSeenBy = Array.isArray(latestStory.data().seenBy) ? latestStory.data().seenBy : [];
+        if (latestSeenBy.includes(user.uid)) return;
+        transaction.update(storyRef, {
+          seenBy: arrayUnion(user.uid),
+          viewsCount: increment(1)
+        });
+      }).catch(error => console.warn("Story view save error:", error));
     }
     if(stopCurrentStory)stopCurrentStory();
     stopCurrentStory = onSnapshot(storyRef, snap => {
