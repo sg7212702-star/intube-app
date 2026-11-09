@@ -23,6 +23,24 @@ function escapeHTML(value = "") {
   })[char]);
 }
 
+function closeNotif(fromPop = false) {
+  const page = document.getElementById("notifFullPage");
+  if (!page) return;
+  if (!fromPop && history.state?.intubeNotifications) {
+    try { history.back(); } catch (_) {}
+  }
+  page.style.display = "none";
+  document.body.style.overflow = "";
+  if (unsubscribeNotifications) { unsubscribeNotifications(); unsubscribeNotifications = null; }
+}
+if (!window.__intubeNotificationsBackBound) {
+  window.__intubeNotificationsBackBound = true;
+  window.addEventListener("popstate", event => {
+    const page = document.getElementById("notifFullPage");
+    if (page && page.style.display !== "none" && !event.state?.intubeNotifications) closeNotif(true);
+  });
+}
+
 export function openNotif() {
   let page = document.getElementById("notifFullPage");
 
@@ -101,17 +119,12 @@ export function openNotif() {
 
     document.body.appendChild(page);
 
-    page.querySelector("#closeNotifFull").onclick = () => {
-      page.style.display = "none";
-      document.body.style.overflow = "";
-
-      if (unsubscribeNotifications) {
-        unsubscribeNotifications();
-        unsubscribeNotifications = null;
-      }
-    };
+    page.querySelector("#closeNotifFull").onclick = () => closeNotif();
   }
 
+  if (page.style.display === "none" || !history.state?.intubeNotifications) {
+    try { history.pushState({ ...(history.state || {}), intubeNotifications: true }, "", location.href); } catch (_) {}
+  }
   page.style.display = "block";
   document.body.style.overflow = "hidden";
 
