@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login or Sign Up • InstaPro</title>
-<meta name="description" content="Log in or create an InstaPro account to share photos, videos, stories and reels and connect with friends.">
+<title>Login or Sign Up • Intube</title>
+<meta name="description" content="Log in or create an Intube account to share photos, videos, stories and reels and connect with friends.">
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://sg7212702-star.github.io/intube-app/login.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="InstaPro">
-<meta property="og:title" content="Login or Sign Up • InstaPro">
-<meta property="og:description" content="Log in or create an InstaPro account to share photos, videos, stories and reels.">
+<meta property="og:site_name" content="Intube">
+<meta property="og:title" content="Login or Sign Up • Intube">
+<meta property="og:description" content="Log in or create an Intube account to share photos, videos, stories and reels.">
 <meta property="og:url" content="https://sg7212702-star.github.io/intube-app/login.html">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Login or Sign Up • InstaPro">
-<meta name="twitter:description" content="Log in or create an InstaPro account to share photos, videos, stories and reels.">
+<meta name="twitter:title" content="Login or Sign Up • Intube">
+<meta name="twitter:description" content="Log in or create an Intube account to share photos, videos, stories and reels.">
 <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
 <style>
 *{margin:0; padding:0; box-sizing:border-box}
@@ -50,7 +50,7 @@ body{height:100vh; background:#000; display:flex; align-items:center; justify-co
 <div class="bg"></div>
 <div class="wrap">
 <div class="card">
-  <div class="logo">InstaPro</div>
+  <div class="logo">Intube</div>
   <div class="tag">Glass • Transparent • Instagram</div>
 
   <div class="tabs">
@@ -143,7 +143,7 @@ async function saveProfile(user) {
 
   const profile = {
     uid: user.uid,
-    name: user.displayName || user.email?.split("@")[0] || "Insta Pro User",
+    name: user.displayName || user.email?.split("@")[0] || "Intube User",
     email: user.email || "",
     avatar: user.photoURL || "",
     updatedAt: serverTimestamp()
