@@ -57,10 +57,10 @@ async function action(a){
  if(a==="settings")return renderSettings();
  if(a==="dark"){state.darkMode=!state.darkMode;apply();renderMenu();return save("darkMode",state.darkMode);}
  if(a==="notifications")return renderSettings();
- if(a==="account"){const u=auth.currentUser;m.innerHTML=head("Account and login")+'<div class="ip-content"><b>'+esc(u?.displayName||"InstaPro User")+'</b><p>'+esc(u?.email||"Email unavailable")+'</p><small>UID: '+esc(u?.uid||"Not signed in")+'</small></div>';bind();return;}
+ if(a==="account"){const u=auth.currentUser;m.innerHTML=head("Account and login")+'<div class="ip-content"><b>'+esc(u?.displayName||"Intube User")+'</b><p>'+esc(u?.email||"Email unavailable")+'</p><small>UID: '+esc(u?.uid||"Not signed in")+'</small></div>';bind();return;}
  if(a==="privateAccount"){const api=window.InstaProPrivate;if(api?.openPrivateSettings){closeMenu();api.openPrivateSettings();}else{alert("Private Account system load nahi hua. Page refresh karein.");}return;}
  if(a==="privacy"){m.innerHTML=head("Privacy information")+'<div class="ip-content">These controls manage app preferences. Keep your account and content details updated in your profile settings.</div>';bind();return;}
- if(a==="help"){m.innerHTML=head("Help")+'<div class="ip-content"><h3>InstaPro Help</h3><p>For help, note the error message and send it with a screenshot to the app developer.</p></div>';bind();return;}
+ if(a==="help"){m.innerHTML=head("Help")+'<div class="ip-content"><h3>Intube Help</h3><p>For help, note the error message and send it with a screenshot to the app developer.</p></div>';bind();return;}
  if(a==="logout"){if(!confirm("Kya aap logout karna chahte hain?"))return;try{await signOut(auth);location.href="login.html";}catch(e){alert("Logout fail: "+e.message);}return;}
  if(a==="saved"||a==="activity")return postsPage(a);
 }
