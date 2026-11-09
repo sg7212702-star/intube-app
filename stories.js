@@ -641,7 +641,7 @@ function openStoryComments() {
       }
       list.innerHTML = snapshot.docs.map(item => {
         const comment = item.data();
-        const photo = comment.photo || "https://www.gravatar.com/avatar/?d=mp";
+        const photo = getProfilePhoto(comment);
         return '<div class="isc-row"><img src="' + escapeHtml(photo) + '" alt=""><div style="font-size:13px;line-height:1.45;"><strong>' + escapeHtml(comment.username || "Intube User") + '</strong><div style="margin-top:2px;">' + escapeHtml(comment.text || "") + '</div></div></div>';
       }).join("");
       list.scrollTop = list.scrollHeight;
