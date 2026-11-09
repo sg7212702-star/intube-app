@@ -166,7 +166,7 @@ function setupUI() {
     <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); background:rgba(15,15,18,.78);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 8px 24px rgba(0,0,0,.18);">
       <div class="backBtn" id="backToList" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
       <div style="width:34px; height:34px; border-radius:50%; padding:2px; background:linear-gradient(45deg,#feda75,#d62976,#962fbf);"><img id="chatWithAvatar" src="https://www.gravatar.com/avatar/?d=mp" style="width:100%; height:100%; border-radius:50%; border:2px solid #000; object-fit:cover;"></div>
-      <div style="flex:1;"><b id="chatWithName" style="font-size:14px; display:block;">username</b><span style="font-size:11px; opacity:.6;">InstaPro messages</span></div>
+      <div style="flex:1;"><b id="chatWithName" style="font-size:14px; display:block;">username</b><span style="font-size:11px; opacity:.6;">Intube messages</span></div>
       <div style="display:flex; gap:8px; font-size:20px; align-items:center;"><button id="chatAudioCall" type="button" aria-label="Start audio call" title="Audio call" class="ip-header-action" style="border:0;background:transparent;color:#d62976;cursor:pointer;padding:5px;" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.8 9.1 3c.7-.2 1.4.2 1.6.9l1 3.1c.2.6 0 1.2-.5 1.6l-1.5 1.1a14 14 0 0 0 5.7 5.7l1.1-1.5c.4-.5 1-.7 1.6-.5l3.1 1c.7.2 1.1.9.9 1.6l-.8 2.5c-.2.6-.8 1-1.4 1C10.8 19.5 4.5 13.2 4.5 5.2c0-.6.4-1.2 1-1.4Z"/></svg></button><button id="chatVideoCall" type="button" aria-label="Start video call" title="Video call" class="ip-header-action" style="border:0;background:transparent;color:#d62976;cursor:pointer;padding:5px;"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></button><button id="chatInfoToggle" type="button" aria-label="Chat details" class="ip-header-action" style="border:0;background:transparent;color:#fff;cursor:pointer;"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button></div>
     </div>
     <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:14px 12px 90px; display:flex; flex-direction:column; gap:6px; background:#000;"></div>
@@ -302,11 +302,11 @@ function renderList(users, chatMap = new Map()) {
   const list = $("usersList");
   if (!list) return;
   if (!currentUser || currentUser.isAnonymous) {
-    list.innerHTML = '<div style="text-align:center;opacity:.65;padding:40px;">Sign in to use InstaPro messages.</div>';
+    list.innerHTML = '<div style="text-align:center;opacity:.65;padding:40px;">Sign in to use Intube messages.</div>';
     return;
   }
   if (!users.length) {
-    list.innerHTML = '<div style="text-align:center;opacity:.55;padding:40px;">No other users yet<br><small>Invite friends to join InstaPro</small></div>';
+    list.innerHTML = '<div style="text-align:center;opacity:.55;padding:40px;">No other users yet<br><small>Invite friends to join Intube</small></div>';
     return;
   }
   const visibleUsers = users.filter(user => !chatMap.get(user.uid)?.hiddenFor?.map(String).includes(String(currentUser.uid)));
