@@ -199,7 +199,7 @@ function settingsPanelMarkup(user, secretMode = false) {
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Creator analytics</div><div class="isp-desc">Views, likes, followers and the last 28 days.</div></div><button class="isp-action" id="ispCreatorAnalytics">View</button></div>
       <div class="isp-subtitle" style="margin-top:18px">Instagram-style settings</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Notifications</div><div class="isp-desc">Manage push, likes, comments, follows and message alerts.</div></div><button class="isp-action isp-category" data-category="Notifications">Open</button></div>
-      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Privacy</div><div class="isp-desc">Private account, activity status and interaction controls.</div></div><button class="isp-action isp-category" data-category="Privacy">Open</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Privacy</div><div class="isp-desc">Activity status, story replies and interaction controls.</div></div><button class="isp-action isp-category" data-category="Privacy">Open</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Messages and replies</div><div class="isp-desc">Message requests, story replies and comment controls.</div></div><button class="isp-action isp-category" data-category="Messages and replies">Open</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Content preferences</div><div class="isp-desc">Suggested posts, sensitive content and muted words.</div></div><button class="isp-action isp-category" data-category="Content preferences">Open</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">Review account restrictions and blocked users.</div></div><button class="isp-action isp-category" data-category="Blocked accounts">Open</button></div>
@@ -695,15 +695,6 @@ async function openSettingsPanel(secretMode = false) {
 
 
 // Creator dashboard: live Firestore totals and a 28-day daily trend.
-// Shared entry point for privacy settings from the three-line menu.
-window.InstaProOpenPrivacySettings = async function() {
-  await openSettingsPanel();
-  const { auth } = await import("./firebase.js");
-  const user = auth.currentUser;
-  const panel = document.getElementById("instaproSettingsPanel");
-  if (user && panel) await openSettingsCategory("Privacy", user, panel);
-};
-
 async function openCreatorAnalytics(user, panel) {
   if (!user || user.isAnonymous) { alert("Creator analytics ke liye Google login karein."); return; }
   if (settingsUnsubscribe) { settingsUnsubscribe(); settingsUnsubscribe = null; }
@@ -809,7 +800,6 @@ function openMenu(){
   document.getElementById("creatorAnalyticsMenuItem")?.remove();
   const entries = [
     ["Your activity", "🕘", "Your activity"],
-    ["Account privacy", "🔒", "Privacy"],
     ["Blocked", "🚫", "Blocked accounts"],
     ["Message and story reply", "💬", "Messages and replies"],
     ["Data usage and media quality", "📶", "Data usage and media quality"],
@@ -842,7 +832,7 @@ function openMenu(){
         m.classList.remove("show");
         const overlay=document.getElementById("sideOverlay");
         if(overlay){overlay.classList.remove("show");overlay.style.display="none";}
-        const routes={"Your activity":"Your activity","Account privacy":"Privacy","Blocked":"Blocked accounts","Message and story reply":"Messages and replies","Data usage and media quality":"Data usage and media quality","Account type and tools":"Account type and tools","Insta Pro Verified":"Insta Pro Verified"};
+        const routes={"Your activity":"Your activity","Blocked":"Blocked accounts","Message and story reply":"Messages and replies","Data usage and media quality":"Data usage and media quality","Account type and tools":"Account type and tools","Insta Pro Verified":"Insta Pro Verified"};
         await openSettingsPanel();
         const panel=document.getElementById("instaproSettingsPanel"); if(!panel)return;
         await openSettingsCategory(routes[label],user,panel);
