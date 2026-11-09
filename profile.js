@@ -878,9 +878,9 @@ function render(data = profileData, posts = profilePosts) {
               const cover = coverCandidates.find(value => !isVideo({ mediaUrl: value })) ||
                 (() => {
                   const video = coverCandidates.find(value => isVideo({ mediaUrl: value }));
-                  if (!video || !/res\\.cloudinary\\.com\\/[^/]+\\/video\\/upload\\//i.test(video)) return "";
+                  if (!video || !/res\.cloudinary\.com\/[^/]+\/video\/upload\//i.test(video)) return "";
                   const poster = video.replace("/video/upload/", "/video/upload/so_0,f_jpg/");
-                  return poster.replace(/\\.(mp4|webm|mov|m4v)(?=([?#]|$))/i, ".jpg");
+                  return poster.replace(/\.(mp4|webm|mov|m4v)(?=([?#]|$))/i, ".jpg");
                 })();
               return `
                 <button type="button" class="ipp-highlightBubble" data-story-id="${esc(h.storyId || "")}" aria-label="Open highlight ${esc(h.title || "Highlight")}" style="border:0;background:transparent;color:inherit;cursor:pointer;padding:0;">
