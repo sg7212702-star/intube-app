@@ -8,7 +8,7 @@ import("./music.js").catch(error => console.error("Music Library failed to load:
 // Keep the Home screen focused on the feed; do not inject the suggested-people panel on startup.
 import("./suggestions.js").then(module => module.initSuggestions()).catch(error => console.error("People suggestions failed to load:", error));
 
-// Keep every video in InstaPro at its original 1x playback speed.
+// Keep every video in Intube at its original 1x playback speed.
 // This also applies to videos inserted later by Feed, Reels, Explore and Profile.
 function setInstaProNormalVideoSpeed(event) {
   const video = event.target;
@@ -58,7 +58,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 
-// Shared transparent-glass layer for all InstaPro pages and in-app sheets.
+// Shared transparent-glass layer for all Intube pages and in-app sheets.
 function installGlobalGlassStyles() {
   if (document.getElementById("instapro-global-glass-style")) return;
   const style = document.createElement("style");
@@ -183,14 +183,14 @@ function settingsPanelMarkup(user, secretMode = false) {
   const notifications = currentAppSettings.browserNotifications === true;
   return `
     <div class="isp-card ${secretMode ? "isp-secret-card" : ""}" role="dialog" aria-modal="true" aria-label="Settings and activity">
-      <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">${secretMode ? "Insta Pro Secret Settings" : "Settings and activity"}</div><button id="ispClose" aria-label="Close">×</button></div>
+      <div class="isp-head"><button id="ispBack" aria-label="Back">‹</button><div class="isp-title">${secretMode ? "Intube Secret Settings" : "Settings and activity"}</div><button id="ispClose" aria-label="Close">×</button></div>
       ${secretMode ? `<div class="isp-subtitle">Personalize your app</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">App theme</div><div class="isp-desc">Dark, Light, AMOLED black or custom background.</div></div><select class="isp-custom-select" id="ispSecretTheme" aria-label="App theme"><option value="dark">Dark</option><option value="light">Light</option><option value="amoled">AMOLED</option><option value="custom">Custom</option></select></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">App font</div><div class="isp-desc">Change text font across the app.</div></div><select class="isp-custom-select" id="ispSecretFont" aria-label="App font"><option value="system">System</option><option value="roboto">Roboto style</option><option value="serif">Serif</option><option value="mono">Monospace</option></select></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Font size</div><div class="isp-desc">Adjust text size from 85% to 125%.</div></div><input class="isp-custom-range" id="ispSecretFontSize" type="range" min="85" max="125" step="5" aria-label="Font size"><b id="ispSecretFontSizeValue">100%</b></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Accent / button color</div><div class="isp-desc">Customize highlights and accent color.</div></div><input class="isp-color" id="ispSecretAccent" type="color" aria-label="Accent color"></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Custom background</div><div class="isp-desc">Used when Custom theme is selected.</div></div><input class="isp-color" id="ispSecretBackground" type="color" aria-label="Custom background"></div>
-      <div class="isp-row" style="display:block"><div class="isp-label">Preview</div><div class="isp-custom-preview" id="ispSecretPreview" style="margin-top:8px">Insta Pro — Your personal style</div></div>
+      <div class="isp-row" style="display:block"><div class="isp-label">Preview</div><div class="isp-custom-preview" id="ispSecretPreview" style="margin-top:8px">Intube — Your personal style</div></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Reset appearance</div><div class="isp-desc">Restore default font, theme and colors.</div></div><button class="isp-action" id="ispSecretReset">Reset</button></div>` : ""}
       ${secretMode ? "" : `      <div class="isp-subtitle">Your account</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Signed in account</div><div class="isp-desc">${escapeSettingsText(user?.email || user?.displayName || "Google account")}</div></div><button class="isp-action" id="ispProfile">Profile</button></div>
@@ -205,7 +205,7 @@ function settingsPanelMarkup(user, secretMode = false) {
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Blocked accounts</div><div class="isp-desc">Review account restrictions and blocked users.</div></div><button class="isp-action isp-category" data-category="Blocked accounts">Open</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Your activity</div><div class="isp-desc">Review activity tools and account information.</div></div><button class="isp-action isp-category" data-category="Your activity">Open</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Account security</div><div class="isp-desc">Signed-in account, session and account actions.</div></div><button class="isp-action isp-category" data-category="Account security">Open</button></div>
-      <div class="isp-subtitle" style="margin-top:18px">How you use InstaPro</div>
+      <div class="isp-subtitle" style="margin-top:18px">How you use Intube</div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Light appearance</div><div class="isp-desc">Change the app's appearance on this device and save your choice.</div></div><button class="isp-switch ${theme ? "on" : ""}" id="ispTheme" role="switch" aria-checked="${theme}" aria-label="Light appearance"></button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Browser notifications</div><div class="isp-desc">Allow this browser to show notifications, if supported.</div></div><button class="isp-switch ${notifications ? "on" : ""}" id="ispNotifications" role="switch" aria-checked="${notifications}" aria-label="Browser notifications"></button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Data saver</div><div class="isp-desc">Use lazy-loaded images and lighter video preloading on this device.</div></div><button class="isp-switch ${currentAppSettings.dataSaver ? "on" : ""}" id="ispDataSaver" role="switch" aria-checked="${!!currentAppSettings.dataSaver}" aria-label="Data saver"></button></div>
@@ -337,7 +337,7 @@ async function openSettingsCategory(category, user, panel) {
   if (!me || me.uid !== user.uid) throw new Error("Login session badal gaya. Dobara login karein.");
   panel.innerHTML = `<div class="isp-card" role="dialog" aria-modal="true">
     <div class="isp-head"><button id="ispCategoryBack" aria-label="Back">‹</button><div class="isp-title">${escapeSettingsText(category)}</div><button id="ispCategoryClose" aria-label="Close">×</button></div>
-    <p class="isp-desc" style="margin:0 0 14px">Changes aapke Insta Pro account mein save honge.</p>
+    <p class="isp-desc" style="margin:0 0 14px">Changes aapke Intube account mein save honge.</p>
     <div id="ispCategoryRows"><div class="isp-row">Loading…</div></div><div class="isp-status" id="ispCategoryStatus" aria-live="polite"></div>
   </div>`;
   const close = () => panel.classList.remove("open");
@@ -405,7 +405,7 @@ async function openSettingsCategory(category, user, panel) {
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Posts and Reels</div><div class="isp-desc">Aapke published content ki list.</div></div><button class="isp-action" data-activity-list="content">View</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Followers and following</div><div class="isp-desc">Current account connection lists.</div></div><button class="isp-action" data-activity-list="follows">View</button></div>
       <div class="isp-subtitle">Account history on this device</div>
-      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Search history</div><div class="isp-desc">Insta Pro is device par save ki gayi searches.</div></div><button class="isp-action" data-activity-list="searches">View</button></div>
+      <div class="isp-row"><div class="isp-copy"><div class="isp-label">Search history</div><div class="isp-desc">Intube is device par save ki gayi searches.</div></div><button class="isp-action" data-activity-list="searches">View</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Recently deleted</div><div class="isp-desc">Is device par locally remembered deleted post/Reel IDs.</div></div><button class="isp-action" data-activity-list="deleted">View</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Time spent</div><div class="isp-desc" id="ipaTimeSpent">Is device par app use ka available record.</div></div><button class="isp-action" data-activity-list="time">View</button></div>
       <div class="isp-row"><div class="isp-copy"><div class="isp-label">Account information</div><div class="isp-desc">Account ID, username, email aur account creation date.</div></div><button class="isp-action" data-activity-list="account">View</button></div>
@@ -520,8 +520,8 @@ async function openSettingsCategory(category, user, panel) {
     return;
   }
 
-  if (category === "Insta Pro Verified") {
-    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">🔵 Insta Pro Verified is ON</div><div class="isp-desc">Is app mein har account ko automatic Verified Badge milta hai — 0 followers, naya account, Personal, Creator ya Business. Koi application ya approval required nahi hai.</div></div><span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></div>'
+  if (category === "Intube Verified") {
+    rows.innerHTML = '<div class="isp-row"><div class="isp-copy"><div class="isp-label">🔵 Intube Verified is ON</div><div class="isp-desc">Is app mein har account ko automatic Verified Badge milta hai — 0 followers, naya account, Personal, Creator ya Business. Koi application ya approval required nahi hai.</div></div><span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></div>'
       + '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Badge kahan dikhega?</div><div class="isp-desc">Profile, Home Feed, Reels Feed aur comments mein username ke saath.</div></div></div>'
       + '<div class="isp-row"><div class="isp-copy"><div class="isp-label">Automatic eligibility</div><div class="isp-desc">Follower count check nahi hota. App ke sabhi accounts ko ek jaisa badge diya jata hai.</div></div></div>';
     return;
@@ -646,7 +646,7 @@ async function openSettingsPanel(secretMode = false) {
   };
   panel.querySelector("#ispHelp").onclick = () => { status().textContent = "Help: app ka screenshot aur Console error share karein."; };
   panel.querySelector("#ispLogout").onclick = async () => {
-    if (!confirm("Kya aap InstaPro se log out karna chahte hain?")) return;
+    if (!confirm("Kya aap Intube se log out karna chahte hain?")) return;
     try {
       const { auth } = await import("./firebase.js");
       const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
@@ -787,7 +787,7 @@ function bindSideMenuItems() {
     try { await saveAppSetting("theme", next); } catch (error) { console.error("Theme save error:", error); }
   };
   if (items[3]) items[3].onclick = async () => {
-    if (!confirm("Kya aap InstaPro se log out karna chahte hain?")) return;
+    if (!confirm("Kya aap Intube se log out karna chahte hain?")) return;
     try { const { auth } = await import("./firebase.js"); const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"); await signOut(auth); location.reload(); }
     catch (error) { alert("Logout nahi hua: " + error.message); }
   };
@@ -804,7 +804,7 @@ function openMenu(){
     ["Message and story reply", "💬", "Messages and replies"],
     ["Data usage and media quality", "📶", "Data usage and media quality"],
     ["Account type and tools", "🧰", "Account type and tools"],
-    ["Insta Pro Verified", "✓", "Insta Pro Verified"],
+    ["Intube Verified", "✓", "Intube Verified"],
     ["Log out", "🚪", "Log out"]
   ];
   entries.forEach(([label,icon,action])=>{
@@ -816,7 +816,7 @@ function openMenu(){
         const {auth}=await import("./firebase.js"); const user=auth.currentUser;
         if(label==="Log out") {
           if(!user){alert("Aap pehle se logged out hain.");return;}
-          if(!confirm("Kya aap Insta Pro se log out karna chahte hain?")) return;
+          if(!confirm("Kya aap Intube se log out karna chahte hain?")) return;
           try {
             if(settingsUnsubscribe){settingsUnsubscribe();settingsUnsubscribe=null;}
             const {signOut}=await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
@@ -832,7 +832,7 @@ function openMenu(){
         m.classList.remove("show");
         const overlay=document.getElementById("sideOverlay");
         if(overlay){overlay.classList.remove("show");overlay.style.display="none";}
-        const routes={"Your activity":"Your activity","Blocked":"Blocked accounts","Message and story reply":"Messages and replies","Data usage and media quality":"Data usage and media quality","Account type and tools":"Account type and tools","Insta Pro Verified":"Insta Pro Verified"};
+        const routes={"Your activity":"Your activity","Blocked":"Blocked accounts","Message and story reply":"Messages and replies","Data usage and media quality":"Data usage and media quality","Account type and tools":"Account type and tools","Intube Verified":"Intube Verified"};
         await openSettingsPanel();
         const panel=document.getElementById("instaproSettingsPanel"); if(!panel)return;
         await openSettingsCategory(routes[label],user,panel);
@@ -922,8 +922,8 @@ document.addEventListener("DOMContentLoaded",()=>{
     const trigger = document.createElement("button");
     trigger.type = "button";
     trigger.id = "instaproSecretTrigger";
-    trigger.textContent = "⚙️ Insta Pro Settings";
-    trigger.setAttribute("aria-label", "Open Insta Pro Secret Settings");
+    trigger.textContent = "⚙️ Intube Settings";
+    trigger.setAttribute("aria-label", "Open Intube Secret Settings");
     trigger.setAttribute("aria-hidden", "true");
     trigger.style.setProperty("display", "none", "important");
     trigger.style.visibility = "hidden";
