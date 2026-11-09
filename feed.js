@@ -94,7 +94,7 @@ function getUsername(user) {
     user?.displayName ||
     user?.name ||
     user?.email?.split("@")[0] ||
-    "InstaPro User"
+    "Intube User"
   );
 }
 
@@ -233,7 +233,7 @@ function watchUserProfile(uid) {
       const data = snapshot.data();
       const nextProfile = {
         ...data,
-        username: data.username || data.displayName || data.name || "InstaPro User",
+        username: data.username || data.displayName || data.name || "Intube User",
         photoURL: getProfilePhoto(data, "")
       };
 
@@ -277,7 +277,7 @@ async function getUserProfile(uid, post = {}) {
       username:
         post.username ||
         post.displayName ||
-        "InstaPro User",
+        "Intube User",
 
       photoURL:
         post.photoURL ||
@@ -299,7 +299,7 @@ async function getUserProfile(uid, post = {}) {
         cached.username ||
         post.username ||
         post.displayName ||
-        "InstaPro User",
+        "Intube User",
 
       photoURL:
         cached.photoURL ||
@@ -328,7 +328,7 @@ async function getUserProfile(uid, post = {}) {
           data.name ||
           post.username ||
           post.displayName ||
-          "InstaPro User",
+          "Intube User",
 
         photoURL: getProfilePhoto(data, getProfilePhoto(post, ""))
       };
@@ -350,7 +350,7 @@ async function getUserProfile(uid, post = {}) {
     username:
       post.username ||
       post.displayName ||
-      "InstaPro User",
+      "Intube User",
 
     photoURL:
       post.photoURL ||
@@ -877,9 +877,9 @@ async function renderFeed() {
       const profile = await getUserProfile(ownerUid, post);
 
       const ownerName = escapeHTML(
-        profile.username || "InstaPro User"
+        profile.username || "Intube User"
       );
-      const ownerVerifiedName = ownerName + ' <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span>';
+      const ownerVerifiedName = ownerName + ' <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span>';
 
       const avatar = escapeHTML(
         profile.photoURL ||
@@ -1549,7 +1549,7 @@ async function sharePost(postId) {
   try {
     if (navigator.share) {
       await navigator.share({
-        title: "InstaPro",
+        title: "Intube",
         text: "Yeh post dekhein!",
         url
       });
@@ -1699,7 +1699,7 @@ function openCommentsPanel(postId) {
       const me = getCurrentUser();
       list.innerHTML = snapshot.docs.map(item => {
         const comment = item.data();
-        const username = escapeHTML(comment.username || "InstaPro User");
+        const username = escapeHTML(comment.username || "Intube User");
         const text = escapeHTML(comment.text || "");
         const photo = escapeHTML(comment.photo || comment.photoURL || "https://www.gravatar.com/avatar/?d=mp");
         const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy : [];
@@ -1710,7 +1710,7 @@ function openCommentsPanel(postId) {
           <div data-feed-comment-row="${cid}" style="display:flex;align-items:flex-start;gap:10px;margin:12px;overflow-wrap:anywhere">
             <img src="${photo}" alt="" style="width:36px;height:36px;min-width:36px;border-radius:50%;object-fit:cover">
             <div style="min-width:0;flex:1">
-              <strong>${username} <span class="instapro-verified-badge" title="Insta Pro Verified" aria-label="Insta Pro Verified">✓</span></strong> <span>${text}</span>
+              <strong>${username} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></strong> <span>${text}</span>
               <div style="display:flex;gap:14px;align-items:center;margin-top:6px;font-size:12px">
                 <button type="button" data-feed-comment-like="${cid}" style="border:0;background:none;color:${liked ? "#ff4d86" : "inherit"};padding:2px 0;font:inherit;cursor:pointer">${liked ? "♥ Liked" : "♡ Like"}${likedBy.length ? " · "+likedBy.length : ""}</button>
                 <button type="button" data-feed-comment-reply="${cid}" style="border:0;background:none;color:inherit;opacity:.75;padding:2px 0;font:inherit;cursor:pointer">Reply</button>
