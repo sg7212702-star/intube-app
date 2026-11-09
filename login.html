@@ -140,16 +140,21 @@ function setupRecaptcha(){
 async function saveProfile(user) {
   const userRef = doc(db, "users", user.uid);
   const snapshot = await getDoc(userRef);
+  const existing = snapshot.exists() ? snapshot.data() : {};
 
   const profile = {
     uid: user.uid,
-    name: user.displayName || user.email?.split("@")[0] || "Intube User",
-    email: user.email || "",
-    avatar: user.photoURL || "",
+    name: existing.name || existing.displayName || user.displayName || user.email?.split("@")[0] || "Intube User",
+    email: user.email || existing.email || "",
     updatedAt: serverTimestamp()
   };
 
+  // Only initialize a photo for a new profile. Never overwrite an existing
+  // Cloudinary/custom avatar with the Google Auth photo on every login.
   if (!snapshot.exists()) {
+    profile.photoURL = user.photoURL || "";
+    profile.photo = user.photoURL || "";
+    profile.avatar = user.photoURL || "";
     profile.bio = "";
     profile.followers = 0;
     profile.following = 0;
