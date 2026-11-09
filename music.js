@@ -59,7 +59,7 @@ import {
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
     panel.innerHTML = `
-      <header class="ipml-head"><button class="ipml-glass" data-ipml="close">✕</button><strong>🎵 InstaPro Music</strong><button class="ipml-glass" data-ipml="refresh">↻</button></header>
+      <header class="ipml-head"><button class="ipml-glass" data-ipml="close">✕</button><strong>🎵 Intube Music</strong><button class="ipml-glass" data-ipml="refresh">↻</button></header>
       <div class="ipml-search"><input id="ipmlSearch" type="search" placeholder="Search song, artist or language…"><button class="ipml-glass" data-ipml="search">Search</button></div>
       <div class="ipml-cats" id="ipmlCats"></div>
       <p class="ipml-note">यहाँ Creator-uploaded / अनुमति प्राप्त Audio दिखेंगे। केवल वही Music अपलोड करें जिसके अधिकार आपके पास हैं। यह लाइब्रेरी अपने-आप Bollywood या अन्य फिल्मी गानों के अधिकार नहीं देती।</p>
@@ -193,7 +193,7 @@ import {
     const user = auth.currentUser;
     if (!user || user.isAnonymous) { alert("Audio upload करने के लिए पहले Google से login करें।"); return; }
     const title = panel.querySelector("#ipmlTitle").value.trim();
-    const artistName = panel.querySelector("#ipmlArtist").value.trim() || user.displayName || "InstaPro Creator";
+    const artistName = panel.querySelector("#ipmlArtist").value.trim() || user.displayName || "Intube Creator";
     const language = panel.querySelector("#ipmlLanguage").value;
     const file = panel.querySelector("#ipmlFile").files?.[0];
     if (!title) { alert("Song / Audio title लिखें।"); return; }
