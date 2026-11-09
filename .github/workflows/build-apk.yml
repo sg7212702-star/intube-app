@@ -84,6 +84,18 @@ jobs:
       - name: Sync web app into Android
         run: npx cap sync android
 
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Increase Gradle distribution download timeout
+        run: |
+          WRAPPER_FILE="android/gradle/wrapper/gradle-wrapper.properties"
+          if ! grep -q '^networkTimeout=' "$WRAPPER_FILE"; then
+            printf '\\nnetworkTimeout=120000\\n' >> "$WRAPPER_FILE"
+          else
+            sed -i 's/^networkTimeout=.*/networkTimeout=120000/' "$WRAPPER_FILE"
+          fi
+
       - name: Build installable debug APK
         run: |
           cd android
