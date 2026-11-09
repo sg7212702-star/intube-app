@@ -1,6 +1,6 @@
 // chat.js - InstaPro real-time direct messages
 import { auth, db } from "./firebase.js";
-import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
+import { getProfilePhoto } from "./profile-image.js";
 import {
   collection, addDoc, query, where, orderBy, onSnapshot,
   doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, arrayRemove, arrayUnion

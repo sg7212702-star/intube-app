@@ -5,7 +5,7 @@
 // ======================================================
 
 import { auth, db } from "./firebase.js";
-import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
+import { getProfilePhoto } from "./profile-image.js";
 
 import {
   onAuthStateChanged

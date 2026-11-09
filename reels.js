@@ -1,6 +1,6 @@
 // reels.js — InstaPro Reels System
 import { db, auth } from "./firebase.js";
-import { getProfilePhoto } from "./profile-image.js?v=profile-image-system20261108b";
+import { getProfilePhoto } from "./profile-image.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
