@@ -19,8 +19,7 @@ const $ = (id) => document.getElementById(id);
 let authInitialized = false;
 
 // Firebase user profile create/update.
-// Preserve user-edited profile fields while normalizing fields used by Feed,
-// Follow, Profile, Stories and Chat.
+// Preserve user-edited profile fields while normalizing fields used by all features.
 async function saveUserProfile(user) {
   if (!user?.uid) return;
 
@@ -36,15 +35,23 @@ async function saveUserProfile(user) {
     user.uid
   ).toLowerCase().replace(/[^a-z0-9._]/g, "");
 
+  const savedPhoto = [
+    existing.photoURL, existing.photoUrl, existing.profilePic,
+    existing.profilePhotoURL, existing.profilePhoto, existing.profileImage,
+    existing.imageURL, existing.imageUrl, existing.avatarUrl,
+    existing.userPhoto, existing.photo, existing.avatar
+  ].find(value => typeof value === "string" && value.trim())?.trim() || user.photoURL || "";
+
   const profile = {
     uid: user.uid,
     email: user.email || existing.email || "",
     username: existing.username || fallbackUsername,
     name: existing.name || existing.displayName || fallbackName,
     displayName: existing.displayName || existing.name || fallbackName,
-    photoURL: existing.photoURL || existing.photoUrl || existing.profilePic || existing.photo || existing.avatar || user.photoURL || "",
-    photo: existing.profilePic || existing.photo || existing.photoURL || existing.photoUrl || existing.avatar || user.photoURL || "",
-    avatar: existing.avatar || existing.profilePic || existing.photoURL || existing.photoUrl || existing.photo || user.photoURL || "",
+    // Normalize aliases without replacing a saved Cloudinary photo with Google's Auth photo.
+    photoURL: savedPhoto,
+    photo: savedPhoto,
+    avatar: savedPhoto,
     bio: typeof existing.bio === "string" ? existing.bio : "",
     // Follow logic requires arrays of UIDs, not numeric counters.
     followers: Array.isArray(existing.followers) ? existing.followers : [],
