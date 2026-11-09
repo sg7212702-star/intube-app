@@ -1085,7 +1085,7 @@ async function openSelectedPost(post) {
     </div>
     <div style="max-width:650px;margin:0 auto;padding-bottom:30px;">
       <div style="display:flex;align-items:center;gap:10px;padding:12px;">
-        <img src="${esc(post.photo || post.photoURL || "https://www.gravatar.com/avatar/?d=mp")}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
+        <img src="${esc(getProfilePhoto(post))}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
         <div style="flex:1;min-width:0;"><strong>${esc(post.username || post.displayName || post.email?.split("@")[0] || "Intube User")} <span class="instapro-verified-badge" title="Intube Verified" aria-label="Intube Verified">✓</span></strong><div style="font-size:11px;opacity:.6;">Intube</div></div>
         ${own ? '<button id="ippDeletePostTop" type="button" style="border:0;background:transparent;color:#ff6b8a;font-weight:700;">Delete</button>' : ""}
       </div>
