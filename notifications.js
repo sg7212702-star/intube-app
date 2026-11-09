@@ -7,11 +7,32 @@ import {
   orderBy,
   onSnapshot,
   doc,
+  getDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 let unsubscribeNotifications = null;
+const notificationProfileCache = new Map();
+
+// Notifications often contain only fromUid/fromUsername. Resolve the latest
+// profile document so every actor gets their saved Cloudinary/Firebase avatar.
+async function getNotificationActorPhoto(notification) {
+  const directPhoto = getProfilePhoto(notification, "");
+  if (directPhoto) return directPhoto;
+  const uid = notification?.fromUid;
+  if (!uid) return getProfilePhoto(null);
+  if (!notificationProfileCache.has(uid)) {
+    const request = getDoc(doc(db, "users", uid))
+      .then(snapshot => snapshot.exists() ? getProfilePhoto(snapshot.data()) : getProfilePhoto(null))
+      .catch(error => {
+        console.warn("Notification profile photo lookup failed:", uid, error);
+        return getProfilePhoto(null);
+      });
+    notificationProfileCache.set(uid, request);
+  }
+  return notificationProfileCache.get(uid);
+}
 
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -177,7 +198,7 @@ export function openNotif() {
   unsubscribeNotifications = onSnapshot(
     notificationsQuery,
 
-    (snapshot) => {
+    async (snapshot) => {
       // Opening the Notifications page marks existing unread items as read,
       // so the badge clears. Future notifications can then animate from zero.
       snapshot.docs.forEach((item) => {
@@ -225,9 +246,7 @@ export function openNotif() {
           n.message || "interacted with you"
         );
 
-        const photo = escapeHTML(
-          getProfilePhoto(n)
-        );
+        const photo = escapeHTML(await getNotificationActorPhoto(n));
 
         const type = escapeHTML(n.type || "activity");
 
