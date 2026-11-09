@@ -638,19 +638,21 @@ function addStyles() {
   document.head.appendChild(style);
 }
 
-function closeProfile() {
+function closeProfile(forceClose = false) {
+  // Back button should pop exactly one Profile entry. Internal transitions
+  // can force-close without consuming the browser history entry.
+  if (!forceClose && history.state?.intubeProfile) {
+    history.back();
+    return;
+  }
   stopListeners();
 
   $("#ipProfileOverlay")?.remove();
 
   document.body.style.overflow = "";
 
-  // Main InstaPro profile ko automatically open na karein.
-  document.querySelectorAll(".page").forEach(page => {
-    if (page.id === "homePage") {
-      page.style.display = "block";
-    }
-  });
+  // Keep the underlying app page as-is; never force navigation to Home.
+
 }
 function render(data = profileData, posts = profilePosts) {
   const page = $("#ipProfileOverlay");
@@ -1414,7 +1416,7 @@ postTiles.forEach(tile => {
     // including uploads whose stored type is "video" instead of "reel".
     const isProfileReel = activeTab === "reels" || isReel(post) || isVideo(post);
     closePostViewer();
-    closeProfile();
+    closeProfile(true);
 
     document.querySelectorAll(".page").forEach(section => {
       section.style.display = "none";
@@ -1561,7 +1563,7 @@ postTiles.forEach(tile => {
   $("#ippMessage", page)?.addEventListener("click", async () => {
     const target = viewingUid;
     try {
-      closeProfile();
+      closeProfile(true);
       if (typeof window.openChatWithUser === "function") {
         await window.openChatWithUser(target);
       } else {
@@ -1918,13 +1920,19 @@ async function openFollowList(uid, type) {
   }
 }
 
-async function openProfile(uid = null) {
+async function openProfile(uid = null, navigationOptions = {}) {
   const currentId = myId();
   const targetUid = uid || currentId;
 
   if (!targetUid) {
     alert("Profile dekhne ke liye pehle login karein.");
     return;
+  }
+
+  if (!navigationOptions.fromPop) {
+    try {
+      history.pushState({ ...(history.state || {}), intubeProfile: true, intubeProfileUid: targetUid }, "", location.href);
+    } catch (error) { console.warn("Profile navigation history:", error); }
   }
 
   viewingUid = targetUid;
@@ -2232,6 +2240,18 @@ postsUnsub = () => ownerQueryUnsubs.forEach(stop => stop());
 
 export function closeProfilePage() {
   closeProfile();
+}
+
+// Restore the previous profile (or underlying app page) on Android/browser Back.
+if (!window.__intubeProfileBackBound) {
+  window.__intubeProfileBackBound = true;
+  window.addEventListener("popstate", event => {
+    if (event.state?.intubeProfile && event.state.intubeProfileUid) {
+      openProfile(event.state.intubeProfileUid, { fromPop: true });
+      return;
+    }
+    if (document.getElementById("ipProfileOverlay")) closeProfile(true);
+  });
 }
 
 // Existing HTML ke saath compatibility.
