@@ -177,15 +177,79 @@ function connectFileInput(inputId, type) {
       delete input.dataset.instaProUploadType;
       window.__instaProPendingMusicFile = null;
       window.__instaProPendingMusicTrack = null;
-      if (chosenType === "post" && selectedFiles.length > 1 && selectedFiles.every(f => f.type.startsWith("image/"))) {
-        await handleMultiplePhotoFiles(selectedFiles, window.__instaProPostCaption || "", null, null);
-      } else {
-        await handleFile(file, chosenType);
-      }
+      openIntubeMediaReview(selectedFiles, chosenType, async caption => {
+        if (chosenType === "post" && selectedFiles.length > 1 && selectedFiles.every(f => f.type.startsWith("image/"))) {
+          await handleMultiplePhotoFiles(selectedFiles, caption || "", null, null);
+        } else {
+          await handleFile(file, chosenType);
+        }
+      });
     } finally {
       input.value = "";
     }
   });
+}
+
+// Review selected or recorded media before any Cloudinary/Firebase upload.
+function openIntubeMediaReview(files, type, onConfirm) {
+  const list = Array.from(files || []).filter(Boolean);
+  if (!list.length) return;
+  let index = 0, busy = false;
+  const urls = list.map(file => URL.createObjectURL(file));
+  let modal = document.getElementById("intubeMediaReview");
+  if (!modal) {
+    modal = document.createElement("section");
+    modal.id = "intubeMediaReview";
+    modal.innerHTML = '<div class="imr-card"><header class="imr-head"><button type="button" id="imrCancel" aria-label="Cancel">‹</button><b id="imrTitle">Review before sharing</b><span id="imrCount"></span></header><div class="imr-preview" id="imrPreview"></div><div class="imr-nav"><button type="button" id="imrPrev">‹</button><span id="imrFileName"></span><button type="button" id="imrNext">›</button></div><label class="imr-caption-label" for="imrCaption">Caption (optional)</label><textarea id="imrCaption" maxlength="2200" placeholder="Write a caption…"></textarea><footer><button type="button" id="imrCancelBottom">Cancel</button><button type="button" id="imrShare">Share now</button></footer><p class="imr-note">Your media will not upload until you tap Share now.</p></div>';
+    document.body.appendChild(modal);
+    const style = document.createElement("style");
+    style.id = "intubeMediaReviewStyle";
+    style.textContent = '#intubeMediaReview{position:fixed;inset:0;z-index:2147483647;background:#08080bf5;color:#fff;display:flex;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));font:14px system-ui}#intubeMediaReview *{box-sizing:border-box}#intubeMediaReview .imr-card{width:min(100%,520px);height:min(100%,850px);display:flex;flex-direction:column;gap:12px;background:#15151c;border:1px solid #ffffff22;border-radius:22px;padding:14px;overflow:auto}#intubeMediaReview .imr-head{display:flex;align-items:center;gap:12px;min-height:42px}#intubeMediaReview .imr-head b{flex:1;font-size:17px}#intubeMediaReview button{border:0;border-radius:12px;padding:10px 14px;background:#ffffff18;color:#fff;font:inherit;font-weight:650}#intubeMediaReview #imrCancel{font-size:25px;padding:4px 12px}#intubeMediaReview #imrCount,#intubeMediaReview .imr-note{opacity:.65;font-size:12px}#intubeMediaReview .imr-preview{flex:1;min-height:180px;max-height:58vh;display:flex;align-items:center;justify-content:center;background:#050505;border-radius:14px;overflow:hidden}#intubeMediaReview .imr-preview img,#intubeMediaReview .imr-preview video{display:block;max-width:100%;max-height:58vh;width:100%;height:100%;object-fit:contain}#intubeMediaReview .imr-nav{display:flex;align-items:center;gap:10px}#intubeMediaReview .imr-nav span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:12px;opacity:.75}#intubeMediaReview .imr-caption-label{font-weight:650}#intubeMediaReview textarea{width:100%;min-height:76px;resize:vertical;border:1px solid #ffffff25;border-radius:12px;background:#09090e;color:#fff;padding:12px;font:inherit}#intubeMediaReview footer{display:flex;gap:10px}#intubeMediaReview footer button{flex:1;min-height:46px}#intubeMediaReview #imrShare{background:linear-gradient(110deg,#874cff,#ff348b);color:white}#intubeMediaReview button:disabled{opacity:.5}';
+    document.head.appendChild(style);
+  }
+  const $r = id => modal.querySelector("#" + id);
+  const title = type === "story" ? "Review your Story" : type === "reel" ? "Review your Reel" : "Review your Post";
+  $r("imrTitle").textContent = title;
+  const captionKey = type === "story" ? "__instaProStoryCaption" : type === "reel" ? "__instaProReelCaption" : "__instaProPostCaption";
+  $r("imrCaption").value = window[captionKey] || "";
+  function render() {
+    const file = list[index], preview = $r("imrPreview");
+    preview.replaceChildren();
+    const media = document.createElement(file.type.startsWith("video/") ? "video" : "img");
+    media.src = urls[index];
+    if (media.tagName === "VIDEO") { media.controls = true; media.playsInline = true; media.preload = "metadata"; }
+    else media.alt = "Selected media preview";
+    preview.appendChild(media);
+    $r("imrCount").textContent = list.length > 1 ? (index + 1) + " / " + list.length : "";
+    $r("imrFileName").textContent = file.name || "Selected media";
+    $r("imrPrev").disabled = list.length < 2 || index === 0;
+    $r("imrNext").disabled = list.length < 2 || index === list.length - 1;
+  }
+  function cleanup() {
+    urls.forEach(url => URL.revokeObjectURL(url));
+    modal.classList.remove("open");
+    modal.style.display = "none";
+    modal.querySelectorAll("video").forEach(v => { v.pause(); v.removeAttribute("src"); v.load(); });
+  }
+  const cancel = () => { if (busy) return; cleanup(); };
+  $r("imrPrev").onclick = () => { if (index > 0) { index--; render(); } };
+  $r("imrNext").onclick = () => { if (index < list.length - 1) { index++; render(); } };
+  $r("imrCancel").onclick = cancel;
+  $r("imrCancelBottom").onclick = cancel;
+  $r("imrShare").onclick = async () => {
+    if (busy) return;
+    busy = true;
+    const share = $r("imrShare");
+    share.disabled = true;
+    share.textContent = "Preparing…";
+    window[captionKey] = $r("imrCaption").value.trim();
+    cleanup();
+    try { await onConfirm(window[captionKey]); }
+    catch (error) { console.error("Intube media review confirm failed:", error); alert("Media upload start nahi ho paya: " + (error.message || "Unknown error")); }
+  };
+  modal.style.display = "flex";
+  modal.classList.add("open");
+  render();
 }
 
 // Instagram-style multi-photo post editor: swipe previews, then add one shared caption.
