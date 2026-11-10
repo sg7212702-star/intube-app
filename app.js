@@ -1144,6 +1144,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   });
 
-  openPage("home", { replace: true });
+  // Seed the first browser-history entry with Home even when Home was already
+  // visible (openPage skips history writes when the selected tab is unchanged).
+  try {
+    history.replaceState({ ...(history.state || {}), intubePage: "home" }, "", location.href);
+  } catch (error) { console.warn("Intube initial history:", error); }
+  openPage("home", { fromPop: true });
   console.log("✅ Navigation initialized");
 });
