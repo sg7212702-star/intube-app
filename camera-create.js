@@ -313,8 +313,31 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
     if(!input){toast("Upload option is missing. Please try again.");return;}
-    try{const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=mode.toLowerCase();if(videoFile)input.dataset.instaProCameraRecordedVideo="true";closeForEditor();input.dispatchEvent(new Event("change",{bubbles:true}));}
-    catch(err){console.error("Could not pass camera media to editor:",err);toast("Could not open editor. Please choose the media again.");}
+    try{
+      const dt=new DataTransfer();
+      list.forEach(f=>dt.items.add(f));
+      input.files=dt.files;
+      input.dataset.instaProUploadType=mode.toLowerCase();
+      if(videoFile)input.dataset.instaProCameraRecordedVideo="true";
+      // Hide the camera first, then hand the selected File objects to the
+      // upload module on the next paint. This avoids opening the editor while
+      // the camera/WebView is still changing its full-screen layer.
+      closeForEditor();
+      const dispatch=()=> {
+        try {
+          input.dispatchEvent(new Event("change",{bubbles:true}));
+        } catch(err) {
+          console.error("Could not open media editor:",err);
+          toast("Editor open nahi hua. Dobara media select karein.");
+        }
+      };
+      if(typeof requestAnimationFrame==="function") requestAnimationFrame(()=>setTimeout(dispatch,0));
+      else setTimeout(dispatch,0);
+    }
+    catch(err){
+      console.error("Could not pass camera media to editor:",err);
+      toast("Could not open editor. Please choose the media again.");
+    }
   }
   window.openInstaProCamera=open;
   window.closeInstaProCamera=close;
