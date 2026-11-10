@@ -99,7 +99,18 @@
 }
 #ipCameraCreate #icsShutter{position:relative!important;z-index:21!important;pointer-events:auto!important}
 #ipCameraCreate #icsShutter:after{inset:5px!important;background:transparent!important;border:0!important}
-`;document.head.appendChild(style);
+`;
+/* Vertical side filter rail; recording control stays separate at bottom center. */
+#ipCameraCreate #icsFilterBar{position:absolute!important;left:auto!important;right:8px!important;top:25%!important;bottom:calc(170px + env(safe-area-inset-bottom))!important;width:72px!important;height:auto!important;max-height:55vh!important;padding:10px 4px!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;overflow-x:hidden!important;overflow-y:auto!important;touch-action:pan-y!important;overscroll-behavior-y:contain!important;scroll-snap-type:y mandatory!important;scroll-padding-block:10px!important;z-index:18!important;background:#08080845!important;border-radius:18px!important;scrollbar-width:none!important}
+#ipCameraCreate #icsFilterBar::-webkit-scrollbar{display:none!important}
+#ipCameraCreate #icsFilterBar .ics-filter{flex:0 0 66px!important;width:64px!important;height:66px!important;min-height:66px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;scroll-snap-align:center!important;transform:none!important}
+#ipCameraCreate #icsFilterBar .ics-swatch,#ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;border:2px solid #fff!important;border-radius:50%!important;box-shadow:none!important}
+#ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{border:3px solid #fff!important;box-shadow:0 0 0 2px #ff2d75,0 0 10px #ffffff70!important}
+#ipCameraCreate #icsFilterBar .ics-filter[data-filter="none"] .ics-swatch{background:#fff!important}
+#ipCameraCreate #icsShutterRow{position:absolute!important;left:0!important;right:0!important;top:auto!important;bottom:calc(48px + env(safe-area-inset-bottom))!important;height:82px!important;z-index:20!important;justify-content:center!important}
+#ipCameraCreate #icsShutter{position:relative!important;z-index:21!important}
+@media(max-height:650px){#ipCameraCreate #icsFilterBar{top:22%!important;bottom:calc(155px + env(safe-area-inset-bottom))!important;max-height:52vh!important}#ipCameraCreate #icsFilterBar .ics-filter{flex-basis:58px!important;height:58px!important;min-height:58px!important}#ipCameraCreate #icsFilterBar .ics-swatch,#ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}}
+document.head.appendChild(style);
     root=document.createElement("section");root.id="ipCameraCreate";root.setAttribute("aria-label","Camera");
     root.innerHTML=`
       <video id="ipCamPreview" autoplay playsinline muted></video><div id="ipCamShade"></div>
@@ -145,7 +156,7 @@
   }
   function toast(text){const el=$("icsToast");if(!el)return;el.textContent=text;el.style.display="block";clearTimeout(toast.timer);toast.timer=setTimeout(()=>{if(el)el.textContent="";},2200);}
   function effectCSS(){return EFFECTS.find(e=>e.id===filter)?.css||"none";}
-  function centerFilterItem(el,behavior="smooth"){const bar=$("icsFilterBar");if(!bar||!el)return;const x=el.offsetLeft+el.offsetWidth/2-bar.clientWidth/2;bar.scrollTo({left:Math.max(0,Math.min(x,bar.scrollWidth-bar.clientWidth)),behavior});}function setFilter(id,scroll=true){filter=id;if(video)video.style.filter=effectCSS();const bar=$("icsFilterBar");bar?.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===id));if(scroll&&bar){const el=bar.querySelector('[data-filter="'+id+'"]');if(el)requestAnimationFrame(()=>centerFilterItem(el,"smooth"));}}
+  function centerFilterItem(el,behavior="smooth"){const bar=$("icsFilterBar");if(!bar||!el)return;const y=el.offsetTop+el.offsetHeight/2-bar.clientHeight/2;bar.scrollTo({top:Math.max(0,Math.min(y,bar.scrollHeight-bar.clientHeight)),behavior});}function setFilter(id,scroll=true){filter=id;if(video)video.style.filter=effectCSS();const bar=$("icsFilterBar");bar?.querySelectorAll("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===id));if(scroll&&bar){const el=bar.querySelector('[data-filter="'+id+'"]');if(el)requestAnimationFrame(()=>centerFilterItem(el,"smooth"));}}
   function setMode(next){if(!["POST","STORY","REEL"].includes(next))return;mode=next;
     $("icsModeBar").querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===next));
     $("icsStoryTools").hidden=next!=="STORY";$("icsReelTools").hidden=next!=="REEL";$("icsPostTools").hidden=next!=="POST";
@@ -197,9 +208,9 @@
     $("icsModeBar").querySelectorAll("[data-mode]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(recording)stopRecording();setMode(b.dataset.mode);});
     $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();setFilter(b.dataset.filter);});
     let filterScrollFrame=0,filterScrollEnd=0,filterSnapLock=false;
-     const nearestFilter=()=>{const bar=$("icsFilterBar");if(!bar)return null;const center=bar.getBoundingClientRect().left+bar.clientWidth/2;let closest=null,d=Infinity;bar.querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.left+r.width/2-center);if(n<d){d=n;closest=b;}});return closest;};
+     const nearestFilter=()=>{const bar=$("icsFilterBar");if(!bar)return null;const center=bar.getBoundingClientRect().top+bar.clientHeight/2;let closest=null,d=Infinity;bar.querySelectorAll("[data-filter]").forEach(b=>{const r=b.getBoundingClientRect(),n=Math.abs(r.top+r.height/2-center);if(n<d){d=n;closest=b;}});return closest;};
      const syncCenteredFilter=()=>{filterScrollFrame=0;const closest=nearestFilter();if(closest&&closest.dataset.filter!==filter)setFilter(closest.dataset.filter,false);};
-     $("icsFilterBar").addEventListener("scroll",()=>{if(filterScrollFrame)return;filterScrollFrame=requestAnimationFrame(syncCenteredFilter);clearTimeout(filterScrollEnd);filterScrollEnd=setTimeout(()=>{const closest=nearestFilter();if(!closest)return;const bar=$("icsFilterBar"),br=bar.getBoundingClientRect(),r=closest.getBoundingClientRect(),delta=(r.left+r.width/2)-(br.left+br.width/2);if(Math.abs(delta)>0.5&&!filterSnapLock){filterSnapLock=true;bar.scrollBy({left:delta,behavior:"smooth"});setTimeout(()=>{filterSnapLock=false;syncCenteredFilter();},240);}else syncCenteredFilter();},130);},{passive:true});
+     $("icsFilterBar").addEventListener("scroll",()=>{if(filterScrollFrame)return;filterScrollFrame=requestAnimationFrame(syncCenteredFilter);clearTimeout(filterScrollEnd);filterScrollEnd=setTimeout(()=>{const closest=nearestFilter();if(!closest)return;const bar=$("icsFilterBar"),br=bar.getBoundingClientRect(),r=closest.getBoundingClientRect(),delta=(r.top+r.height/2)-(br.top+br.height/2);if(Math.abs(delta)>0.5&&!filterSnapLock){filterSnapLock=true;bar.scrollBy({top:delta,behavior:"smooth"});setTimeout(()=>{filterSnapLock=false;syncCenteredFilter();},240);}else syncCenteredFilter();},130);},{passive:true});
     root.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>tool(b.dataset.action));
     $("icsReelNext")?.addEventListener("click",()=>{const file=window.__intubeRecordedReelFile;if(!file){toast("Pehle reel record karein.");return;}window.__intubeRecordedReelFile=null;mode="REEL";close();if(window.openIntubeReelEditor){window.openIntubeReelEditor(file);}else{toast("Editor load nahi hua. Page refresh karein.");}});
     const shutter=$("icsShutter");
