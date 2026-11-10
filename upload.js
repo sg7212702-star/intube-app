@@ -247,6 +247,8 @@ function openIntubeMediaReview(files, type, onConfirm) {
     try { await onConfirm(window[captionKey]); }
     catch (error) { console.error("Intube media review confirm failed:", error); alert("Media upload start nahi ho paya: " + (error.message || "Unknown error")); }
   };
+  $r("imrShare").disabled = false;
+  $r("imrShare").textContent = "Share now";
   modal.style.display = "flex";
   modal.classList.add("open");
   render();
