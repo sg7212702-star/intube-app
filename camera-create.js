@@ -193,6 +193,8 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
   // the main-page popstate handler while the editor is opening and can switch
   // the underlying tab (often exposing the Profile placeholder).
   function closeForEditor(){
+    // Suppress any delayed WebView popstate while selected media is handed to its editor.
+    window.__intubeMediaEditorHandoffUntil = Date.now() + 2500;
     if (history.state?.intubeCamera) {
       const state = { ...(history.state || {}) };
       delete state.intubeCamera;
