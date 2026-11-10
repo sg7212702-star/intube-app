@@ -189,6 +189,17 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
     }
     if(recording)stopRecording();root?.classList.remove("open");stopStream();document.body.style.overflow="";
   }
+  // Hand media to an editor without popping camera history. Popping here fires
+  // the main-page popstate handler while the editor is opening and can switch
+  // the underlying tab (often exposing the Profile placeholder).
+  function closeForEditor(){
+    if (history.state?.intubeCamera) {
+      const state = { ...(history.state || {}) };
+      delete state.intubeCamera;
+      try { history.replaceState(state, "", location.href); } catch (_) {}
+    }
+    close(true);
+  }
   if (!window.__intubeCameraBackBound) {
     window.__intubeCameraBackBound = true;
     window.addEventListener("popstate", event => {
@@ -204,7 +215,7 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
     $("icsSettings").onclick=()=>toast("Flash, zoom and timer depend on your device camera.");
     $("icsAudio").onclick=()=>{if(window.InstaProMusic?.openPicker){window.InstaProMusic.openPicker(track=>{audioTrack=track;window.__instaProSelectedMusicTrack=track;toast(track?.title?"Audio selected: "+track.title:"Audio selected");});}else toast("Music library is loading. Try again in a moment.");};
     $("icsGallery").onclick=(e)=>{e.preventDefault();e.stopPropagation();const input=$("icsInput");if(!input)return;input.accept=mode==="REEL"?"video/*":"image/*,video/*";input.multiple=mode==="POST";input.value="";input.click();};
-    let galleryHandling=false;$("icsInput").onchange=()=>{const input=$("icsInput");const files=[...(input.files||[])];if(!files.length)return;if(galleryHandling)return;galleryHandling=true;const chosenMode=mode;const file=files[0];input.value="";if(chosenMode==="REEL"){if(!file.type.startsWith("video/")){galleryHandling=false;toast("Reel ke liye gallery se video select karein.");return;}const launch=()=>{if(typeof window.openIntubeReelEditor!=="function"){galleryHandling=false;toast("Editor load nahi hua. Page refresh karke dobara try karein.");return;}close();setTimeout(()=>{try{window.openIntubeReelEditor(file);}finally{setTimeout(()=>{galleryHandling=false;},350);}},80);};launch();return;}sendFiles(files);setTimeout(()=>{galleryHandling=false;},350);};
+    let galleryHandling=false;$("icsInput").onchange=()=>{const input=$("icsInput");const files=[...(input.files||[])];if(!files.length)return;if(galleryHandling)return;galleryHandling=true;const chosenMode=mode;const file=files[0];input.value="";if(chosenMode==="REEL"){if(!file.type.startsWith("video/")){galleryHandling=false;toast("Reel ke liye gallery se video select karein.");return;}const launch=()=>{if(typeof window.openIntubeReelEditor!=="function"){galleryHandling=false;toast("Editor load nahi hua. Page refresh karke dobara try karein.");return;}closeForEditor();setTimeout(()=>{try{window.openIntubeReelEditor(file);}finally{setTimeout(()=>{galleryHandling=false;},350);}},80);};launch();return;}sendFiles(files);setTimeout(()=>{galleryHandling=false;},350);};
     $("icsModeBar").querySelectorAll("[data-mode]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(recording)stopRecording();setMode(b.dataset.mode);});
     $("icsFilterBar").querySelectorAll("[data-filter]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();setFilter(b.dataset.filter);});
     let filterScrollFrame=0,filterScrollEnd=0,filterSnapLock=false;
@@ -302,7 +313,7 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
     const list=mode==="POST"?files:files.slice(0,1);const videoFile=list.some(f=>f.type.startsWith("video/"));
     const id=mode==="REEL"?"reelFile":mode==="STORY"?"storyFile":"postFile";const input=$(id);
     if(!input){toast("Upload option is missing. Please try again.");return;}
-    try{const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=mode.toLowerCase();if(videoFile)input.dataset.instaProCameraRecordedVideo="true";close();input.dispatchEvent(new Event("change",{bubbles:true}));}
+    try{const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));input.files=dt.files;input.dataset.instaProUploadType=mode.toLowerCase();if(videoFile)input.dataset.instaProCameraRecordedVideo="true";closeForEditor();input.dispatchEvent(new Event("change",{bubbles:true}));}
     catch(err){console.error("Could not pass camera media to editor:",err);toast("Could not open editor. Please choose the media again.");}
   }
   window.openInstaProCamera=open;
