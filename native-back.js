@@ -11,6 +11,40 @@ function hasIntubeHistoryEntry() {
     (typeof state.intubePage === "string" && state.intubePage !== "home");
 }
 
+function closeMediaEditor() {
+  // Media editors are full-screen overlays but intentionally do not create
+  // their own history entries. Close the editor before navigating tabs/exiting.
+  const storyEditor = document.getElementById("ip-story-editor");
+  if (storyEditor) {
+    storyEditor.querySelector('[data-act="cancel"]')?.click();
+    if (storyEditor.isConnected) storyEditor.remove();
+    return true;
+  }
+
+  const multiPhotoEditor = document.getElementById("ip-multi-photo-editor");
+  if (multiPhotoEditor) {
+    multiPhotoEditor.querySelector('[data-act="cancel"]')?.click();
+    if (multiPhotoEditor.isConnected) multiPhotoEditor.remove();
+    return true;
+  }
+
+  const photoEditor = document.getElementById("ip-post-photo-editor");
+  if (photoEditor) {
+    photoEditor.querySelector('[data-act="cancel"]')?.click();
+    if (photoEditor.isConnected) photoEditor.remove();
+    return true;
+  }
+
+  const reelEditor = document.getElementById("intubeReelEditor");
+  if (reelEditor?.classList.contains("open")) {
+    if (typeof window.closeIntubeReelEditor === "function") window.closeIntubeReelEditor();
+    else reelEditor.classList.remove("open");
+    return true;
+  }
+
+  return false;
+}
+
 function closeUntrackedOverlay() {
   const settings = document.getElementById("instaproSettingsPanel");
   if (settings?.classList.contains("open")) {
@@ -63,6 +97,9 @@ App.addListener("backButton", async () => {
   if (handlingBack) return;
   handlingBack = true;
   try {
+    // Editors have no history marker, so dismiss them before consuming the
+    // underlying tab history entry or exiting the Android app.
+    if (closeMediaEditor()) return;
     if (hasIntubeHistoryEntry()) {
       history.back();
       return;
