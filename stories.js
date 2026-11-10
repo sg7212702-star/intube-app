@@ -406,7 +406,7 @@ async function openStoryViewers(){
         const targetUid=row.getAttribute("data-story-viewer-uid");
         // Remove the full Story Viewer before opening the profile. The viewer uses
         // z-index 1000000, so leaving it open covers the profile until Back is pressed.
-        closeViewer();
+        closeViewer(false, true);
         requestAnimationFrame(() => {
           if(typeof window.openProfile==="function") window.openProfile(targetUid);
           else if(typeof window.showProfile==="function") window.showProfile(targetUid);
@@ -728,7 +728,14 @@ function triggerStoryLikeHeartBurst(button) {
     setTimeout(() => heart.remove(), 1150 + delay);
   }
 }
-function closeViewer() {
+function closeViewer(fromPop = false, discardHistory = false) {
+  if (discardHistory && history.state?.intubeStoryViewer) {
+    const state = { ...(history.state || {}) };
+    delete state.intubeStoryViewer;
+    try { history.replaceState(state, "", location.href); } catch (_) {}
+  } else if (!fromPop && history.state?.intubeStoryViewer) {
+    try { history.back(); } catch (_) {}
+  }
   stopStoryFloatingHearts();
   if (viewerTimer) clearTimeout(viewerTimer);
   if (stopStoryComments) stopStoryComments();
@@ -762,7 +769,11 @@ function openStoryGroup(group, startIndex = 0) {
   } catch (error) {
     console.warn("Could not pause feed media before story:", error);
   }
-  closeViewer();
+  const storyAlreadyOpen = !!viewer;
+  closeViewer(true);
+  if (!storyAlreadyOpen) {
+    try { history.pushState({ ...(history.state || {}), intubeStoryViewer: true }, "", location.href); } catch (_) {}
+  }
   currentGroup = group.stories.slice();
   currentIndex = 0;
   viewer = document.createElement("div");
@@ -833,7 +844,7 @@ style.textContent += " .instapro-story-viewer .is-footer{display:flex!important;
     }
     // The story viewer has a higher z-index than the profile overlay.
     // Close it first so the requested profile is immediately visible.
-    closeViewer();
+    closeViewer(false, true);
     requestAnimationFrame(() => {
       if (typeof window.openProfile === "function") window.openProfile(uid);
       else if (typeof window.showProfile === "function") window.showProfile(uid);
@@ -1210,8 +1221,13 @@ if (otherStoriesBox) {
     console.error("InstaPro stories load error:", error);
   });
 }
+window.addEventListener("popstate", event => {
+  if (viewer && !event.state?.intubeStoryViewer) closeViewer(true);
+});
+
+// Clean up Story media without adding another history navigation on page exit.
 window.addEventListener("pagehide", () => {
   if (stopStories) stopStories();
   if (expiryTimer) clearTimeout(expiryTimer);
-  closeViewer();
+  closeViewer(true, true);
 });
