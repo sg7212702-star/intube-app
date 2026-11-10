@@ -252,6 +252,17 @@ function openIntubeMediaReview(files, type, onConfirm) {
   render();
 }
 
+// Shared hand-off for the camera Reel editor: edited media still goes through the review screen.
+window.__intubeQueueMediaForUpload = (file, type = "reel") => {
+  if (!file) return;
+  openIntubeMediaReview([file], type, async caption => {
+    if (type === "story") window.__instaProStoryCaption = caption || "";
+    else if (type === "reel") window.__instaProReelCaption = caption || "";
+    else window.__instaProPostCaption = caption || "";
+    await handleFile(file, type);
+  });
+};
+
 // Instagram-style multi-photo post editor: swipe previews, then add one shared caption.
 async function handleMultiplePhotoFiles(files, caption, musicFile = null, musicTrack = null) {
   if(uploadInProgress){alert("Ek upload pehle se chal raha hai.");return;}
