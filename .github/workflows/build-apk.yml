@@ -45,6 +45,9 @@ jobs:
           mkdir -p www
           rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='android' --exclude='www' --exclude='package.json' --exclude='package-lock.json' --exclude='capacitor.config.json' ./ www/
 
+      - name: Prepare native Android Back handler
+        run: npm run bundle:native-back
+
       - name: Add Android project
         run: npx cap add android
 
