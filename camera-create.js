@@ -110,7 +110,7 @@ style.textContent+=`\n/* Vertical side filter rail; recording control stays sepa
 #ipCameraCreate #icsShutterRow{position:absolute!important;left:0!important;right:0!important;top:auto!important;bottom:calc(48px + env(safe-area-inset-bottom))!important;height:82px!important;z-index:20!important;justify-content:center!important}
 #ipCameraCreate #icsShutter{position:relative!important;z-index:21!important}
 @media(max-height:650px){#ipCameraCreate #icsFilterBar{top:22%!important;bottom:calc(155px + env(safe-area-inset-bottom))!important;max-height:52vh!important}#ipCameraCreate #icsFilterBar .ics-filter{flex-basis:58px!important;height:58px!important;min-height:58px!important}#ipCameraCreate #icsFilterBar .ics-swatch,#ipCameraCreate #icsFilterBar .ics-filter.active .ics-swatch{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}}
-document.head.appendChild(style);
+`;document.head.appendChild(style);
     root=document.createElement("section");root.id="ipCameraCreate";root.setAttribute("aria-label","Camera");
     root.innerHTML=`
       <video id="ipCamPreview" autoplay playsinline muted></video><div id="ipCamShade"></div>
