@@ -849,6 +849,13 @@ function openMenu(){
 if (!window.__intubeMainPageBackBound) {
   window.__intubeMainPageBackBound = true;
   window.addEventListener("popstate", event => {
+    // A file-picker/editor handoff may coincide with an Android WebView
+    // history event. Never let that event switch the underlying tab.
+    if (Number(window.__intubeMediaEditorHandoffUntil || 0) > Date.now()) return;
+    if (document.getElementById("ip-story-editor") ||
+        document.getElementById("ip-post-photo-editor") ||
+        document.getElementById("ip-multi-photo-editor") ||
+        document.getElementById("intubeReelEditor")?.classList.contains("open")) return;
     const pageName = event.state?.intubePage;
     if (pageName && document.getElementById(pageName + "Page")) {
       const visiblePage = document.querySelector(".page[style*='display: block'], .page[style*='display:block'], .page[style*='display: flex'], .page[style*='display:flex']");
