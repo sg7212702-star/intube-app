@@ -5,13 +5,15 @@
   "description": "Android packaging wrapper for Intube",
   "scripts": {
     "build:android": "cap sync android",
-    "bundle:native-auth": "esbuild native-google-auth.js --bundle --format=iife --outfile=www/native-google-auth.bundle.js"
+    "bundle:native-auth": "esbuild native-google-auth.js --bundle --format=iife --outfile=www/native-google-auth.bundle.js",
+    "bundle:native-back": "esbuild native-back.js --bundle --format=iife --outfile=www/native-back.bundle.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.1",
     "@capacitor/android": "^6.2.1",
     "@capacitor-firebase/authentication": "^6.0.0",
-    "firebase": "^10.9.0"
+    "firebase": "^10.9.0",
+    "@capacitor/app": "^6.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.1",
