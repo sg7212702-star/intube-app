@@ -100,7 +100,7 @@
 #ipCameraCreate #icsShutter{position:relative!important;z-index:21!important;pointer-events:auto!important}
 #ipCameraCreate #icsShutter:after{inset:5px!important;background:transparent!important;border:0!important}
 `;
-/* Vertical side filter rail; recording control stays separate at bottom center. */
+style.textContent+=`\n/* Vertical side filter rail; recording control stays separate at bottom center. */
 #ipCameraCreate #icsFilterBar{position:absolute!important;left:auto!important;right:8px!important;top:25%!important;bottom:calc(170px + env(safe-area-inset-bottom))!important;width:72px!important;height:auto!important;max-height:55vh!important;padding:10px 4px!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;overflow-x:hidden!important;overflow-y:auto!important;touch-action:pan-y!important;overscroll-behavior-y:contain!important;scroll-snap-type:y mandatory!important;scroll-padding-block:10px!important;z-index:18!important;background:#08080845!important;border-radius:18px!important;scrollbar-width:none!important}
 #ipCameraCreate #icsFilterBar::-webkit-scrollbar{display:none!important}
 #ipCameraCreate #icsFilterBar .ics-filter{flex:0 0 66px!important;width:64px!important;height:66px!important;min-height:66px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;scroll-snap-align:center!important;transform:none!important}
