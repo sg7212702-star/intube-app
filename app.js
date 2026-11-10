@@ -851,7 +851,11 @@ if (!window.__intubeMainPageBackBound) {
   window.addEventListener("popstate", event => {
     const pageName = event.state?.intubePage;
     if (pageName && document.getElementById(pageName + "Page")) {
-      openPage(pageName, { fromPop: true });
+      const visiblePage = document.querySelector(".page[style*='display: block'], .page[style*='display:block'], .page[style*='display: flex'], .page[style*='display:flex']");
+      const visibleName = visiblePage?.id?.replace(/Page$/, "") || "";
+      // Overlay/camera/editor history pops must not reopen the same underlying tab.
+      // Only switch main pages when the restored history entry points to a different tab.
+      if (visibleName !== pageName) openPage(pageName, { fromPop: true });
       document.querySelectorAll(".bBtn").forEach(button => {
         button.classList.toggle("active", button.dataset.v === pageName || (pageName === "explore" && button.dataset.v === "search"));
       });
